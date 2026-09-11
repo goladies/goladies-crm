@@ -3012,6 +3012,7 @@ function puxarDadosLead(){
 }
 function openParceiroModal(id){
   editingParceiroId = id || null;
+  parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecto");
   document.getElementById("parceiro-modal-title").textContent = id ? "Editar parceira (o)" : "Nova parceira (o)";
   document.getElementById("p-puxar-lead-wrap").style.display = id ? "none" : "block";
@@ -3074,9 +3075,9 @@ async function saveParceiro(){
   if(isNew){
     editingParceiroId = data[0].id;
     document.getElementById("parceiro-modal-title").textContent = "Editar parceira (o)";
-    if(document.getElementById("pc-numero").value.trim()) await addContatoParceiro();
-    if(document.getElementById("pl-url").value.trim()) await addLinkParceiro();
-    if(document.getElementById("pe-endereco").value.trim()) await addEnderecoParceiro();
+    await gravarContatosPendentesParceiro();
+    await gravarLinksPendentesParceiro();
+    await gravarEnderecosPendentesParceiro();
     if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
   }
   await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes");
@@ -3091,41 +3092,62 @@ async function deleteParceiro(id){
 }
 
 // Contatos (celular/fixo) do parceiro
+// Em parceira (o) ainda não salva, "+ Adicionar" guarda em memória (pendentes) e
+// tudo é gravado junto no "Salvar"; depois de salva, vai direto pro banco.
+// Mesma lógica em links e endereços (e no cadastro de Eventos).
+let parceiroContatosPendentes = [];
+function avisoPendentes(lista, singular, plural){
+  return `<p style="color:var(--muted); font-size:12.5px;">${lista.length ? `Esses ${plural} serão gravados quando você clicar em "Salvar".` : `Pode adicionar os ${plural} aqui: eles são gravados junto quando você clicar em "Salvar".`}</p>`;
+}
 function renderContatosParceiro(){
   const wrap = document.getElementById("p-contatos-lista");
-  const campos = document.querySelectorAll("#p-contatos-wrap button");
-  if(!editingParceiroId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher o 1º contato aqui: ele é salvo junto quando você clicar em "Salvar" no cadastro.</p>`;
-    campos.forEach(el=>el.disabled = true);
-    return;
-  }
-  campos.forEach(el=>el.disabled = false);
-  const contatos = parceiroContatos.filter(c=>c.parceiro_id===editingParceiroId);
-  wrap.innerHTML = contatos.map(c=>`
+  const linha = (c, acoes) => `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;">
       <span>${escapeHtml(c.tipo)}: ${escapeHtml(c.numero||"-")}${c.descricao?" · "+escapeHtml(c.descricao):""}</span>
-      <span>${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})">🗑️</button></span>
-    </div>
-  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
+      <span>${acoes}</span>
+    </div>`;
+  if(!editingParceiroId){
+    wrap.innerHTML = parceiroContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteParceiro(${i})">🗑️</button>`)).join("")
+      + avisoPendentes(parceiroContatosPendentes, "contato", "contatos");
+    return;
+  }
+  const contatos = parceiroContatos.filter(c=>c.parceiro_id===editingParceiroId);
+  wrap.innerHTML = contatos.map(c=>linha(c, `${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})">🗑️</button>`)).join("")
+    || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
-async function addContatoParceiro(){
-  if(!editingParceiroId) return;
+function lerContatoParceiroForm(){
   const numero = document.getElementById("pc-numero").value.trim();
-  if(!numero){ alert("Informe o número"); return; }
-  const payload = {
-    parceiro_id: editingParceiroId,
-    tipo: document.getElementById("pc-tipo").value,
-    numero,
-    descricao: document.getElementById("pc-descricao").value,
-  };
-  const { error } = await sb.from("parceiro_contatos").insert(payload);
+  if(!numero) return null;
+  return { tipo: document.getElementById("pc-tipo").value, numero, descricao: document.getElementById("pc-descricao").value };
+}
+function limparContatoParceiroForm(){ document.getElementById("pc-numero").value = ""; document.getElementById("pc-descricao").value = ""; }
+function removerContatoPendenteParceiro(i){ parceiroContatosPendentes.splice(i,1); renderContatosParceiro(); }
+async function addContatoParceiro(){
+  const c = lerContatoParceiroForm();
+  if(!c){ alert("Informe o número"); return; }
+  if(!editingParceiroId){
+    parceiroContatosPendentes.push(c);
+    limparContatoParceiroForm();
+    renderContatosParceiro();
+    return;
+  }
+  const { error } = await sb.from("parceiro_contatos").insert({ parceiro_id: editingParceiroId, ...c });
   if(error){ alert("Erro ao adicionar contato: " + error.message); return; }
   const { data } = await sb.from("parceiro_contatos").select("*").order("id");
   parceiroContatos = data || [];
-  document.getElementById("pc-numero").value = "";
-  document.getElementById("pc-descricao").value = "";
+  limparContatoParceiroForm();
   renderContatosParceiro();
   renderParceiros();
+}
+// Grava os pendentes (+ o que ainda estiver digitado no formulário) logo depois do 1º "Salvar".
+async function gravarContatosPendentesParceiro(){
+  const digitado = lerContatoParceiroForm();
+  const lista = [...parceiroContatosPendentes, ...(digitado ? [digitado] : [])];
+  parceiroContatosPendentes = [];
+  if(!lista.length) return;
+  const { error } = await sb.from("parceiro_contatos").insert(lista.map(c=>({ parceiro_id: editingParceiroId, ...c })));
+  if(error){ alert("Cadastro salvo, mas houve erro ao gravar os contatos: " + error.message); return; }
+  limparContatoParceiroForm();
 }
 async function deleteContatoParceiro(id){
   if(!confirm("Excluir este contato?")) return;
@@ -3138,38 +3160,53 @@ async function deleteContatoParceiro(id){
 }
 
 // Site e redes sociais do parceiro
+let parceiroLinksPendentes = [];
 function renderLinksParceiro(){
   const wrap = document.getElementById("p-links-lista");
-  const campos = document.querySelectorAll("#p-links-wrap button");
+  const linha = (l, acao) => `
+    <div style="padding:8px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <span style="min-width:0; overflow:hidden; text-overflow:ellipsis;"><strong>${escapeHtml(l.tipo)}:</strong> <a href="${escapeHtml(normalizarLink(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></span>
+      ${acao}
+    </div>`;
   if(!editingParceiroId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher o 1º link aqui: ele é salvo junto quando você clicar em "Salvar" no cadastro.</p>`;
-    campos.forEach(el=>el.disabled = true);
+    wrap.innerHTML = parceiroLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteParceiro(${i})">🗑️</button>`)).join("")
+      + avisoPendentes(parceiroLinksPendentes, "link", "links");
     return;
   }
-  campos.forEach(el=>el.disabled = false);
   const registros = parceiroLinks.filter(l=>l.parceiro_id===editingParceiroId);
-  wrap.innerHTML = registros.map(l=>`
-    <div style="padding:8px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-      <span><strong>${l.tipo}:</strong> <a href="${normalizarLink(l.url)}" target="_blank" rel="noopener">${l.url}</a></span>
-      <button class="icon-btn" type="button" onclick="deleteLinkParceiro(${l.id})">🗑️</button>
-    </div>
-  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
+  wrap.innerHTML = registros.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkParceiro(${l.id})">🗑️</button>`)).join("")
+    || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
 }
-async function addLinkParceiro(){
-  if(!editingParceiroId) return;
+function lerLinkParceiroForm(){
   const url = document.getElementById("pl-url").value.trim();
-  if(!url){ alert("Informe o link"); return; }
-  const payload = {
-    parceiro_id: editingParceiroId,
-    tipo: document.getElementById("pl-tipo").value,
-    url: normalizarLink(url),
-  };
-  const { error } = await sb.from("parceiro_links").insert(payload);
+  if(!url) return null;
+  return { tipo: document.getElementById("pl-tipo").value, url: normalizarLink(url) };
+}
+function removerLinkPendenteParceiro(i){ parceiroLinksPendentes.splice(i,1); renderLinksParceiro(); }
+async function addLinkParceiro(){
+  const l = lerLinkParceiroForm();
+  if(!l){ alert("Informe o link"); return; }
+  if(!editingParceiroId){
+    parceiroLinksPendentes.push(l);
+    document.getElementById("pl-url").value = "";
+    renderLinksParceiro();
+    return;
+  }
+  const { error } = await sb.from("parceiro_links").insert({ parceiro_id: editingParceiroId, ...l });
   if(error){ alert("Erro ao adicionar link: " + error.message); return; }
   const { data } = await sb.from("parceiro_links").select("*").order("id");
   parceiroLinks = data || [];
   document.getElementById("pl-url").value = "";
   renderLinksParceiro();
+}
+async function gravarLinksPendentesParceiro(){
+  const digitado = lerLinkParceiroForm();
+  const lista = [...parceiroLinksPendentes, ...(digitado ? [digitado] : [])];
+  parceiroLinksPendentes = [];
+  if(!lista.length) return;
+  const { error } = await sb.from("parceiro_links").insert(lista.map(l=>({ parceiro_id: editingParceiroId, ...l })));
+  if(error){ alert("Cadastro salvo, mas houve erro ao gravar os links: " + error.message); return; }
+  document.getElementById("pl-url").value = "";
 }
 async function deleteLinkParceiro(id){
   if(!confirm("Excluir este link?")) return;
@@ -3181,39 +3218,54 @@ async function deleteLinkParceiro(id){
 }
 
 // Endereços (loja, oficina, empresa etc.) do parceiro
+let parceiroEnderecosPendentes = [];
 function renderEnderecosParceiro(){
   const wrap = document.getElementById("p-enderecos-lista");
-  const campos = document.querySelectorAll("#p-enderecos-wrap button");
-  if(!editingParceiroId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher o 1º endereço aqui: ele é salvo junto quando você clicar em "Salvar" no cadastro.</p>`;
-    campos.forEach(el=>el.disabled = true);
-    return;
-  }
-  campos.forEach(el=>el.disabled = false);
-  const enderecos = parceiroEnderecos.filter(e=>e.parceiro_id===editingParceiroId);
-  wrap.innerHTML = enderecos.map(e=>`
+  const linha = (e, acao) => `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;">
       <span>${e.descricao?"<strong>"+escapeHtml(e.descricao)+":</strong> ":""}${escapeHtml(e.endereco||"-")}</span>
-      <button class="icon-btn" type="button" onclick="deleteEnderecoParceiro(${e.id})">🗑️</button>
-    </div>
-  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum endereço registrado ainda.</p>`;
+      ${acao}
+    </div>`;
+  if(!editingParceiroId){
+    wrap.innerHTML = parceiroEnderecosPendentes.map((e,i)=>linha(e, `<button class="icon-btn" type="button" onclick="removerEnderecoPendenteParceiro(${i})">🗑️</button>`)).join("")
+      + avisoPendentes(parceiroEnderecosPendentes, "endereço", "endereços");
+    return;
+  }
+  const enderecos = parceiroEnderecos.filter(e=>e.parceiro_id===editingParceiroId);
+  wrap.innerHTML = enderecos.map(e=>linha(e, `<button class="icon-btn" type="button" onclick="deleteEnderecoParceiro(${e.id})">🗑️</button>`)).join("")
+    || `<p style="color:var(--muted); font-size:12.5px;">Nenhum endereço registrado ainda.</p>`;
 }
-async function addEnderecoParceiro(){
-  if(!editingParceiroId) return;
+function lerEnderecoParceiroForm(){
   const endereco = document.getElementById("pe-endereco").value.trim();
-  if(!endereco){ alert("Informe o endereço"); return; }
-  const payload = {
-    parceiro_id: editingParceiroId,
-    endereco,
-    descricao: document.getElementById("pe-descricao").value,
-  };
-  const { error } = await sb.from("parceiro_enderecos").insert(payload);
+  if(!endereco) return null;
+  return { endereco, descricao: document.getElementById("pe-descricao").value };
+}
+function limparEnderecoParceiroForm(){ document.getElementById("pe-endereco").value = ""; document.getElementById("pe-descricao").value = ""; }
+function removerEnderecoPendenteParceiro(i){ parceiroEnderecosPendentes.splice(i,1); renderEnderecosParceiro(); }
+async function addEnderecoParceiro(){
+  const e = lerEnderecoParceiroForm();
+  if(!e){ alert("Informe o endereço"); return; }
+  if(!editingParceiroId){
+    parceiroEnderecosPendentes.push(e);
+    limparEnderecoParceiroForm();
+    renderEnderecosParceiro();
+    return;
+  }
+  const { error } = await sb.from("parceiro_enderecos").insert({ parceiro_id: editingParceiroId, ...e });
   if(error){ alert("Erro ao adicionar endereço: " + error.message); return; }
   const { data } = await sb.from("parceiro_enderecos").select("*").order("id");
   parceiroEnderecos = data || [];
-  document.getElementById("pe-endereco").value = "";
-  document.getElementById("pe-descricao").value = "";
+  limparEnderecoParceiroForm();
   renderEnderecosParceiro();
+}
+async function gravarEnderecosPendentesParceiro(){
+  const digitado = lerEnderecoParceiroForm();
+  const lista = [...parceiroEnderecosPendentes, ...(digitado ? [digitado] : [])];
+  parceiroEnderecosPendentes = [];
+  if(!lista.length) return;
+  const { error } = await sb.from("parceiro_enderecos").insert(lista.map(e=>({ parceiro_id: editingParceiroId, ...e })));
+  if(error){ alert("Cadastro salvo, mas houve erro ao gravar os endereços: " + error.message); return; }
+  limparEnderecoParceiroForm();
 }
 async function deleteEnderecoParceiro(id){
   if(!confirm("Excluir este endereço?")) return;
