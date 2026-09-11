@@ -63,6 +63,7 @@ body{
 }
 .btn:hover{background:#b8265a;}
 .btn.secondary{background:#fff; color:var(--pink); border:1px solid var(--pink);}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
 .btn.ghost{background:transparent; color:var(--muted); border:1px solid var(--border); font-weight:400;}
 .btn.small{padding:5px 10px; font-size:12px;}
 .cards{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
@@ -4589,6 +4590,7 @@ function renderEventosDashboard(){
 let editingEventoId = null;
 function openEventoModal(id, dataPre){
   editingEventoId = id || null;
+  eventoContatosPendentes = []; eventoLinksPendentes = [];
   fillSelectGrupos(document.getElementById("ev-tipo"), EVENTO_TIPOS_GRUPOS, "Outro");
   fillSelect(document.getElementById("ev-status"), EVENTO_STATUS, "Descoberto");
   fillSelect(document.getElementById("ev-origem"), ["",...EVENTO_ORIGENS], "");
@@ -4724,8 +4726,8 @@ async function saveEvento(){
     editingEventoId = data[0].id;
     document.getElementById("evento-modal-title").textContent = "Editar evento";
     document.getElementById("btn-excluir-evento").style.display = "inline-block";
-    if(document.getElementById("evc-nome").value.trim() || document.getElementById("evc-telefone").value.trim()) await addContatoEvento();
-    if(document.getElementById("evl-url").value.trim()) await addLinkEvento();
+    await gravarContatosPendentesEvento();
+    await gravarLinksPendentesEvento();
     if(document.getElementById("ev-arquivo-file").files.length) await addArquivoEvento();
     if(document.getElementById("evi-assunto").value.trim()) await addInteracaoEvento();
   }
@@ -4765,39 +4767,59 @@ function criarViagemDoEvento(){
 }
 
 // --- Contatos do organizador ---
+// Em evento ainda não salvo, "+ Adicionar" guarda em memória (pendentes) e tudo
+// é gravado junto no "Salvar"; depois de salvo, vai direto pro banco.
+let eventoContatosPendentes = [];
 function renderContatosEvento(){
   const wrap = document.getElementById("ev-contatos-lista");
-  const botoes = document.querySelectorAll("#ev-contatos-wrap button");
-  if(!editingEventoId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher o 1º contato aqui: ele é salvo junto quando você clicar em "Salvar".</p>`;
-    botoes.forEach(el=>el.disabled = true);
-    return;
-  }
-  botoes.forEach(el=>el.disabled = false);
-  const lista = eventoContatos.filter(c=>c.evento_id===editingEventoId);
-  wrap.innerHTML = lista.map(c=>`
+  const linha = (c, acoes) => `
     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;">
       <span><strong>${escapeHtml(c.nome||"-")}</strong>${c.cargo?" · "+escapeHtml(c.cargo):""}${c.telefone?" · "+numeroClicavel(c.telefone):""}${c.email?` · <a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>`:""}</span>
-      <span style="white-space:nowrap;">${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button></span>
-    </div>
-  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
+      <span style="white-space:nowrap;">${acoes}</span>
+    </div>`;
+  if(!editingEventoId){
+    wrap.innerHTML = eventoContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteEvento(${i})">🗑️</button>`)).join("")
+      + `<p style="color:var(--muted); font-size:12.5px;">${eventoContatosPendentes.length ? "Esses contatos serão gravados quando você clicar em \"Salvar\"." : "Pode adicionar os contatos aqui: eles são gravados junto quando você clicar em \"Salvar\"."}</p>`;
+    return;
+  }
+  const lista = eventoContatos.filter(c=>c.evento_id===editingEventoId);
+  wrap.innerHTML = lista.map(c=>linha(c, `${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button>`)).join("")
+    || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
-async function addContatoEvento(){
-  if(!editingEventoId) return;
+function lerContatoEventoForm(){
   const nome = document.getElementById("evc-nome").value.trim();
   const telefone = document.getElementById("evc-telefone").value.trim();
-  if(!nome && !telefone){ alert("Informe pelo menos o nome ou o telefone"); return; }
-  const { error } = await sb.from("evento_contatos").insert({
-    evento_id: editingEventoId, nome, telefone,
-    cargo: document.getElementById("evc-cargo").value.trim(),
-    email: document.getElementById("evc-email").value.trim(),
-  });
+  if(!nome && !telefone) return null;
+  return { nome, telefone, cargo: document.getElementById("evc-cargo").value.trim(), email: document.getElementById("evc-email").value.trim() };
+}
+function limparContatoEventoForm(){ ["evc-nome","evc-cargo","evc-telefone","evc-email"].forEach(i=>document.getElementById(i).value=""); }
+function removerContatoPendenteEvento(i){ eventoContatosPendentes.splice(i,1); renderContatosEvento(); }
+async function addContatoEvento(){
+  const c = lerContatoEventoForm();
+  if(!c){ alert("Informe pelo menos o nome ou o telefone"); return; }
+  if(!editingEventoId){
+    eventoContatosPendentes.push(c);
+    limparContatoEventoForm();
+    renderContatosEvento();
+    return;
+  }
+  const { error } = await sb.from("evento_contatos").insert({ evento_id: editingEventoId, ...c });
   if(error){ alert("Erro ao adicionar contato: " + error.message); return; }
   const { data } = await sb.from("evento_contatos").select("*").order("id");
   eventoContatos = data || [];
-  ["evc-nome","evc-cargo","evc-telefone","evc-email"].forEach(i=>document.getElementById(i).value="");
+  limparContatoEventoForm();
   renderContatosEvento();
   renderEventos();
+}
+// Grava os pendentes (+ o que ainda estiver digitado no formulário) logo depois do 1º "Salvar".
+async function gravarContatosPendentesEvento(){
+  const digitado = lerContatoEventoForm();
+  const lista = [...eventoContatosPendentes, ...(digitado ? [digitado] : [])];
+  eventoContatosPendentes = [];
+  if(!lista.length) return;
+  const { error } = await sb.from("evento_contatos").insert(lista.map(c=>({ evento_id: editingEventoId, ...c })));
+  if(error){ alert("Evento salvo, mas houve erro ao gravar os contatos: " + error.message); return; }
+  limparContatoEventoForm();
 }
 async function deleteContatoEvento(id){
   if(!confirm("Excluir este contato?")) return;
@@ -4810,33 +4832,54 @@ async function deleteContatoEvento(id){
 }
 
 // --- Redes sociais e links ---
+// Mesma lógica dos contatos: pendentes em memória até o 1º "Salvar".
+let eventoLinksPendentes = [];
 function renderLinksEvento(){
   const wrap = document.getElementById("ev-links-lista");
-  const botoes = document.querySelectorAll("#ev-links-wrap button");
-  if(!editingEventoId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode colar o 1º link aqui: ele é salvo junto quando você clicar em "Salvar".</p>`;
-    botoes.forEach(el=>el.disabled = true);
-    return;
-  }
-  botoes.forEach(el=>el.disabled = false);
-  const lista = eventoLinks.filter(l=>l.evento_id===editingEventoId);
-  wrap.innerHTML = lista.map(l=>`
+  const linha = (l, acao) => `
     <div style="padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
       <span style="min-width:0; overflow:hidden; text-overflow:ellipsis;"><strong>${escapeHtml(l.tipo)}:</strong> <a href="${escapeHtml(normalizarLink(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></span>
-      <button class="icon-btn" type="button" onclick="deleteLinkEvento(${l.id})">🗑️</button>
-    </div>
-  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
+      ${acao}
+    </div>`;
+  if(!editingEventoId){
+    wrap.innerHTML = eventoLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteEvento(${i})">🗑️</button>`)).join("")
+      + `<p style="color:var(--muted); font-size:12.5px;">${eventoLinksPendentes.length ? "Esses links serão gravados quando você clicar em \"Salvar\"." : "Pode colar os links aqui: eles são gravados junto quando você clicar em \"Salvar\"."}</p>`;
+    return;
+  }
+  const lista = eventoLinks.filter(l=>l.evento_id===editingEventoId);
+  wrap.innerHTML = lista.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkEvento(${l.id})">🗑️</button>`)).join("")
+    || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
 }
-async function addLinkEvento(){
-  if(!editingEventoId) return;
+function lerLinkEventoForm(){
   const url = document.getElementById("evl-url").value.trim();
-  if(!url){ alert("Informe o link"); return; }
-  const { error } = await sb.from("evento_links").insert({ evento_id: editingEventoId, tipo: document.getElementById("evl-tipo").value, url: normalizarLink(url) });
+  if(!url) return null;
+  return { tipo: document.getElementById("evl-tipo").value, url: normalizarLink(url) };
+}
+function removerLinkPendenteEvento(i){ eventoLinksPendentes.splice(i,1); renderLinksEvento(); }
+async function addLinkEvento(){
+  const l = lerLinkEventoForm();
+  if(!l){ alert("Informe o link"); return; }
+  if(!editingEventoId){
+    eventoLinksPendentes.push(l);
+    document.getElementById("evl-url").value = "";
+    renderLinksEvento();
+    return;
+  }
+  const { error } = await sb.from("evento_links").insert({ evento_id: editingEventoId, ...l });
   if(error){ alert("Erro ao adicionar link: " + error.message); return; }
   const { data } = await sb.from("evento_links").select("*").order("id");
   eventoLinks = data || [];
   document.getElementById("evl-url").value = "";
   renderLinksEvento();
+}
+async function gravarLinksPendentesEvento(){
+  const digitado = lerLinkEventoForm();
+  const lista = [...eventoLinksPendentes, ...(digitado ? [digitado] : [])];
+  eventoLinksPendentes = [];
+  if(!lista.length) return;
+  const { error } = await sb.from("evento_links").insert(lista.map(l=>({ evento_id: editingEventoId, ...l })));
+  if(error){ alert("Evento salvo, mas houve erro ao gravar os links: " + error.message); return; }
+  document.getElementById("evl-url").value = "";
 }
 async function deleteLinkEvento(id){
   if(!confirm("Excluir este link?")) return;
