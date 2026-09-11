@@ -250,6 +250,30 @@ tr.tr-click:hover{background:#fff7fa;}
 @media (max-width:700px){
   .kanban-col{flex-basis:100%;}
 }
+/* Calendário mensal de Eventos */
+.cal-head{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+.cal-head strong{font-size:15px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px;}
+.cal-dow{font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; text-align:center; padding:4px 0;}
+.cal-day{min-height:86px; border:1px solid var(--border); border-radius:8px; padding:4px; background:#fff; font-size:11.5px; cursor:pointer; display:flex; flex-direction:column; gap:3px;}
+.cal-day:hover{border-color:var(--pink);}
+.cal-day.fora{background:#faf7f9; color:#c9bfc5; cursor:default;}
+.cal-day.fora:hover{border-color:var(--border);}
+.cal-day.hoje .cal-num{background:var(--pink); color:#fff;}
+.cal-num{font-weight:700; font-size:11px; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;}
+.cal-ev{display:block; border-radius:5px; padding:2px 5px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;}
+.cal-ev.cont{margin-left:-5px; border-radius:0 5px 5px 0;}
+.cal-mais{font-size:10px; color:var(--muted);}
+.ev-lembrete{font-size:11px; color:var(--amber); font-weight:600;}
+.ev-lembrete.vencido{color:var(--red);}
+.ev-arquivo{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;}
+.ev-arquivo img{width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--border); background:#faf7f9;}
+.ev-arquivo .ev-pdf{width:52px; height:52px; border-radius:6px; border:1px solid var(--border); background:#fdf1f5; display:flex; align-items:center; justify-content:center; font-size:20px;}
+@media (max-width:700px){
+  .cal-day{min-height:54px; padding:2px;}
+  .cal-ev{font-size:0; padding:0; height:6px; border-radius:3px;}
+  .cal-dow{font-size:9px;}
+}
 .toast{
   position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(12px);
   background:var(--green); color:#fff; padding:10px 20px; border-radius:8px;
@@ -332,6 +356,16 @@ tr.tr-click:hover{background:#fff7fa;}
         <h3>🎂 Aniversários próximos</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">De hoje até o fim do mês que vem</p>
         <table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Data</th></tr></thead><tbody id="dash-aniversarios"></tbody></table>
+      </div>
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin-top:0;">📅 Próximos eventos</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Próximos 30 dias, mais os lembretes de contato que já venceram</p>
+          </div>
+          <button class="btn secondary small" type="button" onclick="irParaEventos()">Ver agenda completa</button>
+        </div>
+        <table class="tbl"><thead><tr><th>Evento</th><th>Quando</th><th>Cidade</th><th>Status</th><th>Lembrete</th></tr></thead><tbody id="dash-eventos"></tbody></table>
       </div>
       <div class="dash-grid">
         <div class="panel">
@@ -459,6 +493,7 @@ tr.tr-click:hover{background:#fff7fa;}
         <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')">Clientes</button>
         <button type="button" class="subnav-item" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
+        <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
       </div>
 
       <div id="subtab-motoristas">
@@ -517,6 +552,46 @@ tr.tr-click:hover{background:#fff7fa;}
             <thead><tr id="thead-avaliacoes"></tr></thead>
             <tbody id="avaliacoes-body"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div id="subtab-eventos" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:16px;">Eventos</h2><p>Feiras, shows, congressos, festas... que você descobre antes de acontecer, pra oferecer o transporte</p></div>
+          <button class="btn" onclick="openEventoModal()">+ Novo evento</button>
+        </div>
+        <div class="panel">
+          <table class="tbl tbl-funil"><thead><tr id="evento-funnel-head"></tr></thead><tbody><tr id="evento-funnel-body"></tr></tbody></table>
+        </div>
+        <div class="filters">
+          <div class="subnav" style="margin:0;">
+            <button type="button" class="subnav-item active" data-visao="lista" onclick="mostrarVisaoEventos('lista')">Lista</button>
+            <button type="button" class="subnav-item" data-visao="calendario" onclick="mostrarVisaoEventos('calendario')">Calendário</button>
+          </div>
+          <select id="filter-evento-status" onchange="renderEventos()"><option value="">Todos os status</option></select>
+          <select id="filter-evento-tipo" onchange="renderEventos()"><option value="">Todos os tipos</option></select>
+          <select id="filter-evento-cidade" onchange="renderEventos()"><option value="">Todas as cidades</option></select>
+          <input type="month" id="filter-evento-mes" onchange="renderEventos()" title="Mês do evento">
+          <input type="text" id="filter-evento-busca" placeholder="Buscar evento, local, organizador..." oninput="renderEventos()">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);"><input type="checkbox" id="filter-evento-passados" onchange="renderEventos()" style="width:auto;"> Mostrar passados</label>
+        </div>
+        <div id="eventos-visao-lista" class="panel">
+          <table class="tbl">
+            <thead><tr id="thead-eventos"></tr></thead>
+            <tbody id="eventos-body"></tbody>
+          </table>
+        </div>
+        <div id="eventos-visao-calendario" class="panel" style="display:none;">
+          <div class="cal-head">
+            <button class="btn ghost small" type="button" onclick="mudarMesCalendario(-1)">‹ Anterior</button>
+            <strong id="cal-titulo"></strong>
+            <div style="display:flex; gap:6px;">
+              <button class="btn ghost small" type="button" onclick="irMesAtualCalendario()">Hoje</button>
+              <button class="btn ghost small" type="button" onclick="mudarMesCalendario(1)">Próximo ›</button>
+            </div>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Clique num evento pra abrir o cadastro. Clique num dia vazio pra criar um evento naquela data.</p>
         </div>
       </div>
     </div>
@@ -1232,6 +1307,91 @@ tr.tr-click:hover{background:#fff7fa;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="evento-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="evento-modal-title" style="margin:0;">Novo evento</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('evento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Nome do evento *</label><input type="text" id="ev-nome" placeholder="Ex: Feira do Livro, Show da Ivete, Congresso de Enfermagem"></div>
+      <div><label>Tipo</label><select id="ev-tipo"></select></div>
+      <div><label>Status</label><select id="ev-status"></select></div>
+      <div><label>Data de início *</label><input type="date" id="ev-data-inicio"></div>
+      <div><label>Data de fim <span style="font-weight:400; color:var(--muted);">(se for mais de um dia)</span></label><input type="date" id="ev-data-fim"></div>
+      <div><label>Horário de início</label><input type="time" id="ev-hora-inicio"></div>
+      <div><label>Horário de fim</label><input type="time" id="ev-hora-fim"></div>
+      <div class="full"><label>Nome do local</label><input type="text" id="ev-local-nome" placeholder="Ex: Centro de Eventos FIERGS, Arena do Grêmio"></div>
+      <div class="full"><label>Endereço</label><input type="text" id="ev-endereco" placeholder="Rua, número, bairro"></div>
+      <div><label>Cidade</label><input type="text" id="ev-cidade" placeholder="Porto Alegre"></div>
+      <div><label>Estado</label><select id="ev-estado"></select></div>
+      <div><label>Organizador (a)</label><input type="text" id="ev-organizador" placeholder="Empresa ou pessoa que organiza"></div>
+      <div><label>Público estimado</label><input type="number" id="ev-publico" min="0" placeholder="Ex: 5000"></div>
+      <div><label>Onde você viu</label><select id="ev-origem"></select></div>
+      <div><label>Parceira (o) ligada <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><select id="ev-parceiro"><option value="">-</option></select></div>
+      <div><label>🔔 Lembrar de fazer contato em</label><input type="date" id="ev-lembrar-em"></div>
+      <div><label style="visibility:hidden;">.</label><div id="ev-lembrete-info" style="font-size:12px; color:var(--muted);"></div></div>
+      <div class="full" id="ev-motivo-perda-wrap"><label>Motivo (se não fechou)</label><input type="text" id="ev-motivo-perda" placeholder="Ex: já tinham transporte, preço, sem retorno"></div>
+      <div class="full"><label>Observações</label><textarea id="ev-observacoes" rows="2"></textarea></div>
+    </div>
+
+    <div id="ev-acoes-wrap" style="display:none; margin-top:14px; gap:8px; flex-wrap:wrap;">
+      <button class="btn secondary small" type="button" onclick="criarViagemDoEvento()">🚗 Criar viagem a partir deste evento</button>
+      <a class="btn secondary small" id="ev-link-gcal" href="#" target="_blank" rel="noopener" style="text-decoration:none;">📆 Adicionar ao Google Agenda</a>
+      <a class="btn secondary small" id="ev-link-maps" href="#" target="_blank" rel="noopener" style="text-decoration:none;">📍 Ver no Google Maps</a>
+    </div>
+
+    <div id="ev-contatos-wrap" style="margin-top:18px;">
+      <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Contatos do organizador</h4>
+      <div id="ev-contatos-lista"></div>
+      <div class="formgrid" style="margin-top:8px;">
+        <div><label>Nome</label><input type="text" id="evc-nome"></div>
+        <div><label>Cargo / função</label><input type="text" id="evc-cargo" placeholder="Ex: produtora, coordenadora"></div>
+        <div><label>Telefone / WhatsApp</label><input type="text" id="evc-telefone" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
+        <div><label>E-mail</label><input type="email" id="evc-email"></div>
+        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addContatoEvento()">+ Adicionar contato</button></div>
+      </div>
+    </div>
+
+    <div id="ev-links-wrap" style="margin-top:18px;">
+      <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Redes sociais e links</h4>
+      <div id="ev-links-lista"></div>
+      <div class="formgrid" style="margin-top:8px;">
+        <div><label>Tipo</label><select id="evl-tipo"><option>Instagram</option><option>Site</option><option>Sympla / Ingressos</option><option>Facebook</option><option>LinkedIn</option><option>WhatsApp (grupo)</option><option>Outro</option></select></div>
+        <div class="full"><label>Link</label><input type="text" id="evl-url" placeholder="https://..."></div>
+        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addLinkEvento()">+ Adicionar link</button></div>
+      </div>
+    </div>
+
+    <div id="ev-arquivos-wrap" style="margin-top:18px;">
+      <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Fotos, prints e PDFs</h4>
+      <div id="ev-arquivos-lista"></div>
+      <div class="formgrid" style="margin-top:8px;">
+        <div class="full"><label>Arquivo <span style="font-weight:400; color:var(--muted);">(imagem ou PDF, pode escolher vários)</span></label><input type="file" id="ev-arquivo-file" accept="image/*,.pdf" multiple></div>
+        <div class="full"><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="ev-arquivo-descricao" placeholder="Ex: print do Instagram, programação"></div>
+        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" id="btn-add-arquivo-evento" onclick="addArquivoEvento()">+ Enviar arquivo</button></div>
+      </div>
+    </div>
+
+    <div id="ev-interacoes-wrap" style="margin-top:18px;">
+      <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Histórico de conversas</h4>
+      <div id="ev-interacoes-lista"></div>
+      <div class="formgrid" style="margin-top:8px;">
+        <div><label>Data</label><input type="date" id="evi-data"></div>
+        <div><label>Assunto</label><input type="text" id="evi-assunto"></div>
+        <div class="full"><label>Próximos passos</label><input type="text" id="evi-proximos"></div>
+        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addInteracaoEvento()">+ Adicionar registro</button></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-evento" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteEvento()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('evento-modal')">Sair</button>
+      <button class="btn" onclick="saveEvento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="parcela-modal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1365,6 +1525,14 @@ const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
 // Funil de parceiros — o mesmo que a Juliana já documenta e usa
 // (Processo_Parceiros_LadiesInDrive.docx), não o funil de leads.
+// Agenda de Eventos (Transporte → Eventos): funil de prospecção de eventos
+// futuros pra oferecer transporte antes de acontecerem.
+const EVENTO_STATUS = ["Descoberto","Contato feito","Em negociação","Fechado","Descartado"];
+const EVENTO_STATUS_CLASS = {"Descoberto":"indigo","Contato feito":"amber","Em negociação":"teal","Fechado":"green","Descartado":"gray"};
+const EVENTO_STATUS_COR = {"Descoberto":"#3B4EC2","Contato feito":"#B8730A","Em negociação":"#0F8A8A","Fechado":"#2f9e5b","Descartado":"#6B6470"};
+const EVENTO_TIPOS = ["Feira","Show","Congresso","Festa","Formatura","Casamento","Esportivo","Corporativo","Religioso","Cultural","Outro"];
+const EVENTO_ORIGENS = ["Instagram","Facebook","Grupo de WhatsApp","Indicação","Site / Sympla","Jornal / TV","Rua / Cartaz","Outro"];
+const ESTADOS_BR = ["RS","SC","PR","SP","RJ","MG","ES","BA","SE","AL","PE","PB","RN","CE","PI","MA","PA","AP","AM","RR","RO","AC","TO","GO","DF","MT","MS"];
 const PARCEIRO_ETAPAS = ["Prospecto","Qualificado","Abordado","Em negociação","Parceiro ativo","Descartado"];
 const PARCEIRO_ETAPA_CLASS = {"Prospecto":"indigo","Qualificado":"amber","Abordado":"pink","Em negociação":"teal","Parceiro ativo":"green","Descartado":"red"};
 const STATUS_PECA = ["Aberto","Em busca","Encontrado","Não encontrado","Encerrado"];
@@ -1521,6 +1689,11 @@ let parceiroLinks = [];
 let divulgacoes = [];
 let vagas = [];
 let vagasCandidatas = [];
+let eventos = [];
+let eventoContatos = [];
+let eventoLinks = [];
+let eventoInteracoes = [];
+let eventoArquivos = [];
 
 // ===== AUTENTICAÇÃO =====
 const loginForm = document.getElementById("login-form");
@@ -1787,6 +1960,21 @@ async function carregarDadosInterno(){
   motoristaObservacoes = aplicarConsulta("motorista_observacoes", rmo, motoristaObservacoes);
   viagemOfertas = aplicarConsulta("viagem_ofertas", rvo, viagemOfertas);
 
+  // Agenda de Eventos (schema_eventos.sql) — em chamada separada pra, se o
+  // SQL ainda não tiver sido rodado, o erro ficar restrito a estas 5 tabelas.
+  const [rev, revc, revl, revi, reva] = await Promise.all([
+    sb.from("eventos").select("*").order("data_inicio"),
+    sb.from("evento_contatos").select("*").order("id"),
+    sb.from("evento_links").select("*").order("id"),
+    sb.from("evento_interacoes").select("*").order("id"),
+    sb.from("evento_arquivos").select("*").order("id"),
+  ]);
+  eventos = aplicarConsulta("eventos", rev, eventos);
+  eventoContatos = aplicarConsulta("evento_contatos", revc, eventoContatos);
+  eventoLinks = aplicarConsulta("evento_links", revl, eventoLinks);
+  eventoInteracoes = aplicarConsulta("evento_interacoes", revi, eventoInteracoes);
+  eventoArquivos = aplicarConsulta("evento_arquivos", reva, eventoArquivos);
+
   renderAll();
   marcarAtualizado();
 
@@ -1894,6 +2082,11 @@ const TABELA_ATUALIZA = {
   vagas_candidatas: v => vagasCandidatas = v,
   motorista_observacoes: v => motoristaObservacoes = v,
   viagem_ofertas: v => viagemOfertas = v,
+  eventos: v => eventos = v,
+  evento_contatos: v => eventoContatos = v,
+  evento_links: v => eventoLinks = v,
+  evento_interacoes: v => eventoInteracoes = v,
+  evento_arquivos: v => eventoArquivos = v,
 };
 // Atualiza só as tabelas que uma ação realmente mudou, em vez de recarregar
 // as ~28 tabelas inteiras a cada Salvar/Excluir — reduz a carga no banco
@@ -1955,6 +2148,7 @@ function renderDashboard(){
     options:{ responsive:true, maintainAspectRatio:false, indexAxis:"y", plugins:{legend:{display:false}}, scales:{x:{ticks:{stepSize:1}}} }
   });
   renderAniversariosDashboard();
+  renderEventosDashboard();
 }
 
 function proximoAniversario(dataStr){
@@ -2148,10 +2342,10 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
 
 function mostrarSubTab(nome){
-  document.querySelectorAll("#tab-transporte .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
+  document.querySelectorAll("#tab-transporte .subnav-item[data-subtab]").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-transporte [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
 }
@@ -4178,6 +4372,582 @@ async function deleteAvaliacao(id){
   const { error } = await sb.from("avaliacoes").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("avaliacoes");
+}
+
+// ===== TRANSPORTE: AGENDA DE EVENTOS =====
+// Radar de oportunidades: eventos futuros (feira, show, congresso...) que a
+// Juliana descobre por aí, pra prospectar transporte ANTES de acontecerem.
+// Tabelas em schema_eventos.sql. Vira viagem (tabela viagens) só quando fecha.
+function hojeLocalISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function dataFimEvento(e){ return e.data_fim || e.data_inicio || null; }
+function eventoPassou(e){
+  const fim = dataFimEvento(e);
+  return !!fim && fim < hojeLocalISO();
+}
+function quandoEvento(e, curto){
+  if(!e.data_inicio) return "sem data";
+  const ini = formatarDataBR(e.data_inicio), fim = e.data_fim && e.data_fim!==e.data_inicio ? formatarDataBR(e.data_fim) : null;
+  const fmt = d => curto ? d.slice(0,5) : d;
+  let txt = fim ? `${fmt(ini)} a ${fmt(fim)}` : fmt(ini);
+  if(e.hora_inicio) txt += ` · ${e.hora_inicio.slice(0,5)}${e.hora_fim ? "–"+e.hora_fim.slice(0,5) : ""}`;
+  return txt;
+}
+function localEvento(e){
+  return [e.local_nome, e.cidade ? (e.cidade + (e.estado ? "/"+e.estado : "")) : e.estado].filter(Boolean).join(" · ");
+}
+function primeiroContatoEvento(e){
+  return eventoContatos.find(c=>c.evento_id===e.id) || null;
+}
+function lembreteEventoHtml(e){
+  if(!e.lembrar_em) return "-";
+  const txt = formatarDataBR(e.lembrar_em).slice(0,5);
+  if(e.lembrete_enviado_em) return `<span class="ev-lembrete" style="color:var(--green);" title="WhatsApp de lembrete já enviado">✅ ${txt}</span>`;
+  const vencido = e.lembrar_em <= hojeLocalISO() && !["Fechado","Descartado"].includes(e.status);
+  return `<span class="ev-lembrete ${vencido?"vencido":""}" title="${vencido?"Lembrete vencido: hora de fazer contato":"Lembrete agendado"}">🔔 ${txt}</span>`;
+}
+
+let eventosVisao = "lista";
+let calMesAtual = (()=>{ const d = new Date(); return { ano: d.getFullYear(), mes: d.getMonth() }; })();
+
+function mostrarVisaoEventos(v){
+  eventosVisao = v;
+  document.querySelectorAll("#subtab-eventos .subnav-item[data-visao]").forEach(b=>b.classList.toggle("active", b.dataset.visao===v));
+  document.getElementById("eventos-visao-lista").style.display = v==="lista" ? "block" : "none";
+  document.getElementById("eventos-visao-calendario").style.display = v==="calendario" ? "block" : "none";
+  renderEventos();
+}
+function mudarMesCalendario(delta){
+  let m = calMesAtual.mes + delta, a = calMesAtual.ano;
+  if(m < 0){ m = 11; a--; } if(m > 11){ m = 0; a++; }
+  calMesAtual = { ano: a, mes: m };
+  renderEventos();
+}
+function irMesAtualCalendario(){
+  const d = new Date();
+  calMesAtual = { ano: d.getFullYear(), mes: d.getMonth() };
+  renderEventos();
+}
+function irParaEventos(){
+  const nav = document.querySelector('.nav-item[data-tab="transporte"]');
+  if(nav) nav.click();
+  mostrarSubTab("eventos");
+}
+
+function renderEventos(){
+  const fs = document.getElementById("filter-evento-status");
+  if(!fs) return;
+  const ft = document.getElementById("filter-evento-tipo");
+  const fc = document.getElementById("filter-evento-cidade");
+  if(!fs.dataset.filled){ fillSelect(fs, ["",...EVENTO_STATUS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
+  if(!ft.dataset.filled){ fillSelect(ft, ["",...EVENTO_TIPOS], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
+  // Cidades vêm do que já está cadastrado (lista cresce sozinha).
+  const cidadeAtual = fc.value;
+  const cidades = [...new Set(eventos.map(e=>(e.cidade||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  fc.innerHTML = `<option value="">Todas as cidades</option>` + cidades.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  fc.value = cidades.includes(cidadeAtual) ? cidadeAtual : "";
+
+  // Funil por status (só eventos futuros/em andamento, o passado não é oportunidade)
+  const ativos = eventos.filter(e=>!eventoPassou(e));
+  document.getElementById("evento-funnel-head").innerHTML = EVENTO_STATUS.map(s=>`<th>${s}</th>`).join("");
+  document.getElementById("evento-funnel-body").innerHTML = EVENTO_STATUS.map(s=>`<td><span class="status-badge ${EVENTO_STATUS_CLASS[s]}">${ativos.filter(e=>e.status===s).length}</span></td>`).join("");
+
+  const statusF = fs.value, tipoF = ft.value, cidadeF = fc.value;
+  const mesF = document.getElementById("filter-evento-mes").value; // "AAAA-MM"
+  const buscaF = document.getElementById("filter-evento-busca").value.trim().toLowerCase();
+  const mostrarPassados = document.getElementById("filter-evento-passados").checked;
+
+  const filtrados = eventos.filter(e=>{
+    if(statusF && e.status!==statusF) return false;
+    if(tipoF && e.tipo!==tipoF) return false;
+    if(cidadeF && (e.cidade||"").trim()!==cidadeF) return false;
+    if(mesF && !((e.data_inicio||"").startsWith(mesF) || (e.data_fim||"").startsWith(mesF) || (e.data_inicio && e.data_fim && e.data_inicio < mesF+"-01" && e.data_fim > mesF+"-31"))) return false;
+    if(!mostrarPassados && eventoPassou(e)) return false;
+    if(buscaF){
+      const alvo = [e.nome, e.local_nome, e.organizador, e.cidade, e.observacoes].map(x=>(x||"").toLowerCase()).join(" ");
+      if(!alvo.includes(buscaF)) return false;
+    }
+    return true;
+  });
+
+  if(eventosVisao === "calendario"){
+    // No calendário o filtro de mês não faz sentido (a navegação já é por mês),
+    // e passados aparecem sempre, senão o mês anterior fica vazio.
+    const base = eventos.filter(e=>{
+      if(statusF && e.status!==statusF) return false;
+      if(tipoF && e.tipo!==tipoF) return false;
+      if(cidadeF && (e.cidade||"").trim()!==cidadeF) return false;
+      return true;
+    });
+    renderCalendarioEventos(base);
+    aplicarRotulos();
+    return;
+  }
+
+  renderCabecalho("thead-eventos", [
+    {label:"Evento", campo:"nome"}, {label:"Quando", campo:"data_inicio"}, {label:"Local", campo:"local_nome"},
+    {label:"Cidade", campo:"cidade"}, {label:"Organizador (a)", campo:"organizador"}, {label:"Status", campo:"status"},
+    {label:"Lembrete", campo:"lembrar_em"}, {label:"", campo:null}
+  ], "eventos");
+  const ordenados = sortState["eventos"]
+    ? aplicarOrdenacao("eventos", filtrados)
+    : [...filtrados].sort((a,b)=>(a.data_inicio||"9999").localeCompare(b.data_inicio||"9999"));
+  document.getElementById("eventos-body").innerHTML = ordenados.map(e=>{
+    const contato = primeiroContatoEvento(e);
+    const passou = eventoPassou(e);
+    return `<tr class="tr-click" onclick="openEventoModal(${e.id})" style="${passou?"opacity:.6;":""}">
+      <td><strong>${escapeHtml(e.nome)}</strong>${e.tipo?` <span class="tag novo">${escapeHtml(e.tipo)}</span>`:""}${eventoArquivos.some(a=>a.evento_id===e.id)?' <span title="Tem foto/print anexado">📎</span>':""}</td>
+      <td style="white-space:nowrap;">${quandoEvento(e)}</td>
+      <td>${escapeHtml(e.local_nome||"-")}</td>
+      <td>${escapeHtml(e.cidade||"-")}${e.estado?"/"+escapeHtml(e.estado):""}</td>
+      <td>${escapeHtml(e.organizador||"-")}${contato&&contato.telefone?" "+botaoWhats(contato.telefone, contato.nome):""}</td>
+      <td><span class="status-badge ${EVENTO_STATUS_CLASS[e.status]||""}">${escapeHtml(e.status||"-")}</span></td>
+      <td>${lembreteEventoHtml(e)}</td>
+      <td onclick="event.stopPropagation()"><button class="icon-btn" onclick="openEventoModal(${e.id})">✏️</button> <button class="icon-btn" onclick="deleteEvento(${e.id})">🗑️</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="8">${eventos.length ? "Nenhum evento com esses filtros" : "Nenhum evento cadastrado ainda. Viu um evento no Instagram, num grupo ou na rua? Cadastra aqui pra não esquecer de oferecer o transporte."}</td></tr>`;
+  // Filtros e troca de visão chamam esta função direto (fora do renderAll),
+  // então os rótulos dos cartões no celular precisam ser reaplicados aqui.
+  aplicarRotulos();
+}
+
+function renderCalendarioEventos(lista){
+  const { ano, mes } = calMesAtual;
+  const primeiro = new Date(ano, mes, 1);
+  const tituloMes = primeiro.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
+  document.getElementById("cal-titulo").textContent = tituloMes.charAt(0).toUpperCase() + tituloMes.slice(1);
+  const hoje = hojeLocalISO();
+  const diasNoMes = new Date(ano, mes+1, 0).getDate();
+  const inicioGrade = new Date(ano, mes, 1 - primeiro.getDay()); // domingo antes ou no dia 1
+  const celulas = [];
+  ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].forEach(d=>celulas.push(`<div class="cal-dow">${d}</div>`));
+  const totalCelulas = Math.ceil((primeiro.getDay() + diasNoMes) / 7) * 7;
+  for(let i=0; i<totalCelulas; i++){
+    const d = new Date(inicioGrade.getFullYear(), inicioGrade.getMonth(), inicioGrade.getDate()+i);
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const fora = d.getMonth() !== mes;
+    const doDia = lista.filter(e=>e.data_inicio && e.data_inicio <= iso && dataFimEvento(e) >= iso)
+      .sort((a,b)=>(a.hora_inicio||"").localeCompare(b.hora_inicio||""));
+    const MAX = 3;
+    const chips = doDia.slice(0, MAX).map(e=>{
+      const cor = EVENTO_STATUS_COR[e.status] || "#3B4EC2";
+      const continua = e.data_inicio < iso;
+      const hora = e.hora_inicio && !continua ? e.hora_inicio.slice(0,5)+" " : "";
+      return `<span class="cal-ev ${continua?"cont":""}" style="background:${cor};" title="${escapeHtml(e.nome)} · ${quandoEvento(e)}" onclick="event.stopPropagation(); openEventoModal(${e.id})">${hora}${escapeHtml(e.nome)}</span>`;
+    }).join("");
+    const mais = doDia.length > MAX ? `<span class="cal-mais">+${doDia.length-MAX} mais</span>` : "";
+    celulas.push(`<div class="cal-day ${fora?"fora":""} ${iso===hoje?"hoje":""}" ${fora?"":`onclick="openEventoModal(null, '${iso}')"`}><span class="cal-num">${d.getDate()}</span>${chips}${mais}</div>`);
+  }
+  document.getElementById("cal-grid").innerHTML = celulas.join("");
+}
+
+function renderEventosDashboard(){
+  const el = document.getElementById("dash-eventos");
+  if(!el) return;
+  const hoje = hojeLocalISO();
+  const limite = new Date(); limite.setDate(limite.getDate()+30);
+  const limiteISO = `${limite.getFullYear()}-${String(limite.getMonth()+1).padStart(2,"0")}-${String(limite.getDate()).padStart(2,"0")}`;
+  const lista = eventos.filter(e=>{
+    if(["Descartado"].includes(e.status)) return false;
+    const lembreteVencido = e.lembrar_em && e.lembrar_em <= hoje && !e.lembrete_enviado_em && e.status!=="Fechado";
+    const proximo = e.data_inicio && dataFimEvento(e) >= hoje && e.data_inicio <= limiteISO;
+    return lembreteVencido || proximo;
+  }).sort((a,b)=>(a.data_inicio||"9999").localeCompare(b.data_inicio||"9999"));
+  el.innerHTML = lista.map(e=>`
+    <tr class="tr-click" onclick="openEventoModal(${e.id})">
+      <td><strong>${escapeHtml(e.nome)}</strong></td>
+      <td style="white-space:nowrap;">${quandoEvento(e, true)}</td>
+      <td>${escapeHtml(e.cidade||"-")}</td>
+      <td><span class="status-badge ${EVENTO_STATUS_CLASS[e.status]||""}">${escapeHtml(e.status||"-")}</span></td>
+      <td>${lembreteEventoHtml(e)}</td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="5">Nenhum evento nos próximos 30 dias</td></tr>`;
+}
+
+// --- Modal de evento ---
+let editingEventoId = null;
+function openEventoModal(id, dataPre){
+  editingEventoId = id || null;
+  fillSelect(document.getElementById("ev-tipo"), EVENTO_TIPOS, "Outro");
+  fillSelect(document.getElementById("ev-status"), EVENTO_STATUS, "Descoberto");
+  fillSelect(document.getElementById("ev-origem"), ["",...EVENTO_ORIGENS], "");
+  document.getElementById("ev-origem").querySelector("option").textContent = "-";
+  fillSelect(document.getElementById("ev-estado"), ["",...ESTADOS_BR], "RS");
+  document.getElementById("ev-estado").querySelector("option").textContent = "-";
+  document.getElementById("ev-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+  document.getElementById("evento-modal-title").textContent = id ? "Editar evento" : "Novo evento";
+  const e = eventos.find(x=>x.id===id) || {};
+  document.getElementById("ev-nome").value = e.nome||"";
+  document.getElementById("ev-tipo").value = e.tipo||"Outro";
+  document.getElementById("ev-status").value = e.status||"Descoberto";
+  document.getElementById("ev-data-inicio").value = e.data_inicio || dataPre || "";
+  document.getElementById("ev-data-fim").value = e.data_fim||"";
+  document.getElementById("ev-hora-inicio").value = e.hora_inicio ? e.hora_inicio.slice(0,5) : "";
+  document.getElementById("ev-hora-fim").value = e.hora_fim ? e.hora_fim.slice(0,5) : "";
+  document.getElementById("ev-local-nome").value = e.local_nome||"";
+  document.getElementById("ev-endereco").value = e.endereco||"";
+  document.getElementById("ev-cidade").value = e.cidade || (id ? "" : "Porto Alegre");
+  document.getElementById("ev-estado").value = e.estado || (id ? "" : "RS");
+  document.getElementById("ev-organizador").value = e.organizador||"";
+  document.getElementById("ev-publico").value = e.publico_estimado ?? "";
+  document.getElementById("ev-origem").value = e.origem||"";
+  document.getElementById("ev-parceiro").value = e.parceiro_id||"";
+  document.getElementById("ev-lembrar-em").value = e.lembrar_em||"";
+  document.getElementById("ev-motivo-perda").value = e.motivo_perda||"";
+  document.getElementById("ev-observacoes").value = e.observacoes||"";
+  const info = document.getElementById("ev-lembrete-info");
+  if(e.lembrete_enviado_em) info.textContent = "✅ Lembrete enviado no WhatsApp em " + new Date(e.lembrete_enviado_em).toLocaleString("pt-BR") + ". Pra lembrar de novo, troque a data.";
+  else if(e.lembrar_em) info.textContent = "Aparece em destaque no Dashboard nesse dia e, com o n8n ligado, chega um WhatsApp de manhã.";
+  else info.textContent = "Escolha um dia pra ser lembrada de ligar/mandar mensagem pro organizador.";
+  // Campos de "adicionar rápido" sempre limpos ao abrir (ver v13)
+  ["evc-nome","evc-cargo","evc-telefone","evc-email","evl-url","ev-arquivo-descricao","evi-data","evi-assunto","evi-proximos"].forEach(i=>document.getElementById(i).value="");
+  document.getElementById("evl-tipo").value = "Instagram";
+  document.getElementById("ev-arquivo-file").value = "";
+  document.getElementById("btn-excluir-evento").style.display = id ? "inline-block" : "none";
+  atualizarAcoesEvento(e);
+  renderContatosEvento();
+  renderLinksEvento();
+  renderArquivosEvento();
+  renderInteracoesEvento();
+  document.getElementById("evento-modal").classList.add("open");
+}
+document.getElementById("ev-lembrar-em").addEventListener("change", ()=>{
+  const info = document.getElementById("ev-lembrete-info");
+  const e = eventos.find(x=>x.id===editingEventoId) || {};
+  const v = document.getElementById("ev-lembrar-em").value;
+  if(!v) info.textContent = "Escolha um dia pra ser lembrada de ligar/mandar mensagem pro organizador.";
+  else if(e.lembrete_enviado_em && v !== e.lembrar_em) info.textContent = "Data nova: o lembrete vai ser enviado de novo nesse dia.";
+  else info.textContent = "Aparece em destaque no Dashboard nesse dia e, com o n8n ligado, chega um WhatsApp de manhã.";
+});
+function atualizarAcoesEvento(e){
+  const wrap = document.getElementById("ev-acoes-wrap");
+  if(!editingEventoId){ wrap.style.display = "none"; return; }
+  wrap.style.display = "flex";
+  document.getElementById("ev-link-gcal").href = linkGoogleAgendaEvento(e);
+  const mapsQ = [e.local_nome, e.endereco, e.cidade, e.estado].filter(Boolean).join(", ");
+  const maps = document.getElementById("ev-link-maps");
+  maps.href = mapsQ ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapsQ) : "#";
+  maps.style.display = mapsQ ? "inline-block" : "none";
+}
+// Link direto pro Google Agenda (sem API, sem custo): abre a tela de criar
+// evento já preenchida, ela só confirma. Sem horário vira evento de dia inteiro.
+function linkGoogleAgendaEvento(e){
+  if(!e.data_inicio) return "#";
+  const compact = s => s.replace(/-/g,"");
+  const fim = e.data_fim || e.data_inicio;
+  let dates;
+  if(e.hora_inicio){
+    const hi = e.hora_inicio.slice(0,5).replace(":","") + "00";
+    const hf = (e.hora_fim || e.hora_inicio).slice(0,5).replace(":","") + "00";
+    dates = `${compact(e.data_inicio)}T${hi}/${compact(fim)}T${hf}`;
+  } else {
+    const d = new Date(fim+"T00:00:00"); d.setDate(d.getDate()+1); // Google trata o fim de dia inteiro como exclusivo
+    const fimExc = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    dates = `${compact(e.data_inicio)}/${fimExc}`;
+  }
+  const detalhes = [
+    e.organizador ? "Organizador (a): " + e.organizador : "",
+    e.publico_estimado ? "Público estimado: " + e.publico_estimado : "",
+    e.observacoes || "",
+    "Cadastrado no CRM Go Ladies (Transporte → Eventos)"
+  ].filter(Boolean).join("\n");
+  const local = [e.local_nome, e.endereco, e.cidade, e.estado].filter(Boolean).join(", ");
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE"
+    + "&text=" + encodeURIComponent((e.tipo && e.tipo!=="Outro" ? e.tipo + ": " : "") + e.nome)
+    + "&dates=" + dates
+    + "&details=" + encodeURIComponent(detalhes)
+    + (local ? "&location=" + encodeURIComponent(local) : "")
+    + "&ctz=America/Sao_Paulo";
+}
+async function saveEvento(){
+  const nome = document.getElementById("ev-nome").value.trim();
+  if(!nome){ alert("Nome do evento é obrigatório"); return; }
+  const dataInicio = document.getElementById("ev-data-inicio").value;
+  if(!dataInicio){ alert("Data de início é obrigatória"); return; }
+  const dataFim = document.getElementById("ev-data-fim").value || null;
+  if(dataFim && dataFim < dataInicio){ alert("A data de fim não pode ser antes da data de início"); return; }
+  const anterior = eventos.find(x=>x.id===editingEventoId) || {};
+  const lembrarEm = document.getElementById("ev-lembrar-em").value || null;
+  const payload = {
+    nome,
+    tipo: document.getElementById("ev-tipo").value,
+    status: document.getElementById("ev-status").value,
+    data_inicio: dataInicio,
+    data_fim: dataFim,
+    hora_inicio: document.getElementById("ev-hora-inicio").value || null,
+    hora_fim: document.getElementById("ev-hora-fim").value || null,
+    local_nome: document.getElementById("ev-local-nome").value.trim(),
+    endereco: document.getElementById("ev-endereco").value.trim(),
+    cidade: document.getElementById("ev-cidade").value.trim(),
+    estado: document.getElementById("ev-estado").value || null,
+    organizador: document.getElementById("ev-organizador").value.trim(),
+    publico_estimado: document.getElementById("ev-publico").value === "" ? null : Number(document.getElementById("ev-publico").value),
+    origem: document.getElementById("ev-origem").value || null,
+    parceiro_id: Number(document.getElementById("ev-parceiro").value) || null,
+    lembrar_em: lembrarEm,
+    motivo_perda: document.getElementById("ev-motivo-perda").value.trim(),
+    observacoes: document.getElementById("ev-observacoes").value,
+  };
+  // Trocou a data do lembrete: zera o "enviado" pra o n8n mandar de novo no dia novo.
+  if(lembrarEm !== (anterior.lembrar_em || null)) payload.lembrete_enviado_em = null;
+  const isNew = !editingEventoId;
+  const { data, error } = editingEventoId
+    ? await sb.from("eventos").update(payload).eq("id", editingEventoId)
+    : await sb.from("eventos").insert(payload).select();
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  showToast("Salvo!");
+  if(isNew){
+    editingEventoId = data[0].id;
+    document.getElementById("evento-modal-title").textContent = "Editar evento";
+    document.getElementById("btn-excluir-evento").style.display = "inline-block";
+    if(document.getElementById("evc-nome").value.trim() || document.getElementById("evc-telefone").value.trim()) await addContatoEvento();
+    if(document.getElementById("evl-url").value.trim()) await addLinkEvento();
+    if(document.getElementById("ev-arquivo-file").files.length) await addArquivoEvento();
+    if(document.getElementById("evi-assunto").value.trim()) await addInteracaoEvento();
+  }
+  await recarregarTabelas("eventos", "evento_contatos", "evento_links", "evento_arquivos", "evento_interacoes");
+  if(isNew){
+    atualizarAcoesEvento(eventos.find(x=>x.id===editingEventoId) || {});
+    renderContatosEvento(); renderLinksEvento(); renderArquivosEvento(); renderInteracoesEvento();
+  } else { closeModal("evento-modal"); }
+}
+async function deleteEvento(id){
+  const alvo = id || editingEventoId;
+  if(!alvo) return;
+  if(!confirm("Excluir este evento? Contatos, links, fotos e histórico dele também são excluídos.")) return;
+  // Apaga os arquivos do Storage antes (o cascade do banco só apaga as linhas).
+  const paths = eventoArquivos.filter(a=>a.evento_id===alvo).map(a=>a.path);
+  if(paths.length) await sb.storage.from("eventos-arquivos").remove(paths);
+  const { error } = await sb.from("eventos").delete().eq("id", alvo);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  closeModal("evento-modal");
+  await recarregarTabelas("eventos", "evento_contatos", "evento_links", "evento_arquivos", "evento_interacoes");
+}
+
+// Ponte com Viagens: abre o cadastro de viagem já com destino, data e horário
+// do evento. A viagem continua sendo a tabela viagens de sempre.
+function criarViagemDoEvento(){
+  const e = eventos.find(x=>x.id===editingEventoId);
+  if(!e) return;
+  closeModal("evento-modal");
+  openViagemModal();
+  document.getElementById("vg-tipo-servico").value = "Evento";
+  document.getElementById("vg-evento-descricao").value = e.nome + (e.organizador ? " · " + e.organizador : "");
+  document.getElementById("vg-destino-endereco").value = [e.local_nome, e.endereco, e.cidade, e.estado].filter(Boolean).join(", ");
+  document.getElementById("vg-data").value = e.data_inicio || "";
+  if(e.hora_inicio) document.getElementById("vg-horario-chegada").value = e.hora_inicio.slice(0,5);
+  if(e.origem === "Instagram" || e.origem === "Facebook") document.getElementById("vg-canal").value = "Redes sociais";
+  showToast("Viagem pré-preenchida com os dados do evento");
+}
+
+// --- Contatos do organizador ---
+function renderContatosEvento(){
+  const wrap = document.getElementById("ev-contatos-lista");
+  const botoes = document.querySelectorAll("#ev-contatos-wrap button");
+  if(!editingEventoId){
+    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher o 1º contato aqui: ele é salvo junto quando você clicar em "Salvar".</p>`;
+    botoes.forEach(el=>el.disabled = true);
+    return;
+  }
+  botoes.forEach(el=>el.disabled = false);
+  const lista = eventoContatos.filter(c=>c.evento_id===editingEventoId);
+  wrap.innerHTML = lista.map(c=>`
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;">
+      <span><strong>${escapeHtml(c.nome||"-")}</strong>${c.cargo?" · "+escapeHtml(c.cargo):""}${c.telefone?" · "+numeroClicavel(c.telefone):""}${c.email?` · <a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>`:""}</span>
+      <span style="white-space:nowrap;">${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button></span>
+    </div>
+  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
+}
+async function addContatoEvento(){
+  if(!editingEventoId) return;
+  const nome = document.getElementById("evc-nome").value.trim();
+  const telefone = document.getElementById("evc-telefone").value.trim();
+  if(!nome && !telefone){ alert("Informe pelo menos o nome ou o telefone"); return; }
+  const { error } = await sb.from("evento_contatos").insert({
+    evento_id: editingEventoId, nome, telefone,
+    cargo: document.getElementById("evc-cargo").value.trim(),
+    email: document.getElementById("evc-email").value.trim(),
+  });
+  if(error){ alert("Erro ao adicionar contato: " + error.message); return; }
+  const { data } = await sb.from("evento_contatos").select("*").order("id");
+  eventoContatos = data || [];
+  ["evc-nome","evc-cargo","evc-telefone","evc-email"].forEach(i=>document.getElementById(i).value="");
+  renderContatosEvento();
+  renderEventos();
+}
+async function deleteContatoEvento(id){
+  if(!confirm("Excluir este contato?")) return;
+  const { error } = await sb.from("evento_contatos").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  const { data } = await sb.from("evento_contatos").select("*").order("id");
+  eventoContatos = data || [];
+  renderContatosEvento();
+  renderEventos();
+}
+
+// --- Redes sociais e links ---
+function renderLinksEvento(){
+  const wrap = document.getElementById("ev-links-lista");
+  const botoes = document.querySelectorAll("#ev-links-wrap button");
+  if(!editingEventoId){
+    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode colar o 1º link aqui: ele é salvo junto quando você clicar em "Salvar".</p>`;
+    botoes.forEach(el=>el.disabled = true);
+    return;
+  }
+  botoes.forEach(el=>el.disabled = false);
+  const lista = eventoLinks.filter(l=>l.evento_id===editingEventoId);
+  wrap.innerHTML = lista.map(l=>`
+    <div style="padding:6px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <span style="min-width:0; overflow:hidden; text-overflow:ellipsis;"><strong>${escapeHtml(l.tipo)}:</strong> <a href="${escapeHtml(normalizarLink(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></span>
+      <button class="icon-btn" type="button" onclick="deleteLinkEvento(${l.id})">🗑️</button>
+    </div>
+  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
+}
+async function addLinkEvento(){
+  if(!editingEventoId) return;
+  const url = document.getElementById("evl-url").value.trim();
+  if(!url){ alert("Informe o link"); return; }
+  const { error } = await sb.from("evento_links").insert({ evento_id: editingEventoId, tipo: document.getElementById("evl-tipo").value, url: normalizarLink(url) });
+  if(error){ alert("Erro ao adicionar link: " + error.message); return; }
+  const { data } = await sb.from("evento_links").select("*").order("id");
+  eventoLinks = data || [];
+  document.getElementById("evl-url").value = "";
+  renderLinksEvento();
+}
+async function deleteLinkEvento(id){
+  if(!confirm("Excluir este link?")) return;
+  const { error } = await sb.from("evento_links").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  const { data } = await sb.from("evento_links").select("*").order("id");
+  eventoLinks = data || [];
+  renderLinksEvento();
+}
+
+// --- Fotos, prints e PDFs (bucket privado eventos-arquivos) ---
+function renderArquivosEvento(){
+  const wrap = document.getElementById("ev-arquivos-lista");
+  const botoes = document.querySelectorAll("#ev-arquivos-wrap button");
+  if(!editingEventoId){
+    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode escolher o 1º arquivo aqui: ele sobe junto quando você clicar em "Salvar".</p>`;
+    botoes.forEach(el=>el.disabled = true);
+    return;
+  }
+  botoes.forEach(el=>el.disabled = false);
+  const lista = eventoArquivos.filter(a=>a.evento_id===editingEventoId);
+  wrap.innerHTML = lista.map(a=>{
+    const ehImagem = (a.tipo_mime||"").startsWith("image/");
+    const thumb = ehImagem
+      ? `<img id="ev-thumb-${a.id}" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">`
+      : `<div class="ev-pdf">📄</div>`;
+    return `<div class="ev-arquivo">
+      <a href="#" onclick="abrirArquivoEvento('${escapeHtml(a.path)}'); return false;" title="Abrir">${thumb}</a>
+      <div style="flex:1; min-width:0;">
+        <a href="#" onclick="abrirArquivoEvento('${escapeHtml(a.path)}'); return false;" style="font-weight:600; word-break:break-all;">${escapeHtml(a.nome||"arquivo")}</a>
+        ${a.descricao?`<div style="color:var(--muted);">${escapeHtml(a.descricao)}</div>`:""}
+        <div style="color:var(--muted); font-size:11px;">${a.criado_em ? new Date(a.criado_em).toLocaleDateString("pt-BR") : ""}</div>
+      </div>
+      <button class="icon-btn" type="button" onclick="deleteArquivoEvento(${a.id})">🗑️</button>
+    </div>`;
+  }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma foto ou arquivo ainda.</p>`;
+  // Miniaturas das imagens: o bucket é privado, então cada uma precisa de um
+  // link assinado (curto). Carrega depois de montar a lista pra não travar.
+  lista.filter(a=>(a.tipo_mime||"").startsWith("image/")).forEach(async a=>{
+    const { data } = await sb.storage.from("eventos-arquivos").createSignedUrl(a.path, 600);
+    const img = document.getElementById("ev-thumb-"+a.id);
+    if(img && data) img.src = data.signedUrl;
+  });
+}
+async function abrirArquivoEvento(path){
+  const { data, error } = await sb.storage.from("eventos-arquivos").createSignedUrl(path, 120);
+  if(error || !data){ alert("Não foi possível abrir o arquivo: " + (error?.message||"")); return; }
+  window.open(data.signedUrl, "_blank");
+}
+async function addArquivoEvento(){
+  if(!editingEventoId) return;
+  const input = document.getElementById("ev-arquivo-file");
+  const arquivos = [...input.files];
+  if(!arquivos.length){ alert("Escolha uma imagem ou PDF primeiro"); return; }
+  const descricao = document.getElementById("ev-arquivo-descricao").value.trim();
+  const btn = document.getElementById("btn-add-arquivo-evento");
+  btn.disabled = true; btn.textContent = "Enviando...";
+  let erros = 0;
+  for(const arquivo of arquivos){
+    if(arquivo.size > 15 * 1024 * 1024){ alert(`"${arquivo.name}" tem mais de 15 MB, pula esse.`); erros++; continue; }
+    const seguro = arquivo.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
+    const path = `${editingEventoId}/${Date.now()}_${seguro}`;
+    const { error: ue } = await sb.storage.from("eventos-arquivos").upload(path, arquivo, { contentType: arquivo.type || undefined });
+    if(ue){ alert(`Erro ao subir "${arquivo.name}": ` + ue.message); erros++; continue; }
+    const { error } = await sb.from("evento_arquivos").insert({ evento_id: editingEventoId, nome: arquivo.name, path, tipo_mime: arquivo.type, descricao });
+    if(error){ alert("Erro ao registrar arquivo: " + error.message); erros++; }
+  }
+  btn.disabled = false; btn.textContent = "+ Enviar arquivo";
+  const { data } = await sb.from("evento_arquivos").select("*").order("id");
+  eventoArquivos = data || [];
+  input.value = "";
+  document.getElementById("ev-arquivo-descricao").value = "";
+  renderArquivosEvento();
+  renderEventos();
+  if(!erros) showToast(arquivos.length > 1 ? `${arquivos.length} arquivos enviados!` : "Arquivo enviado!");
+}
+async function deleteArquivoEvento(id){
+  const a = eventoArquivos.find(x=>x.id===id);
+  if(!a) return;
+  if(!confirm("Excluir este arquivo?")) return;
+  await sb.storage.from("eventos-arquivos").remove([a.path]);
+  const { error } = await sb.from("evento_arquivos").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  const { data } = await sb.from("evento_arquivos").select("*").order("id");
+  eventoArquivos = data || [];
+  renderArquivosEvento();
+  renderEventos();
+}
+
+// --- Histórico de conversas com o organizador ---
+function renderInteracoesEvento(){
+  const wrap = document.getElementById("ev-interacoes-lista");
+  const botoes = document.querySelectorAll("#ev-interacoes-wrap button");
+  if(!editingEventoId){
+    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Pode preencher a 1ª conversa aqui: ela é salva junto quando você clicar em "Salvar".</p>`;
+    botoes.forEach(el=>el.disabled = true);
+    return;
+  }
+  botoes.forEach(el=>el.disabled = false);
+  const lista = eventoInteracoes.filter(i=>i.evento_id===editingEventoId).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  wrap.innerHTML = lista.map(i=>`
+    <div style="padding:8px 0; border-bottom:1px solid #f4eaf0; font-size:12.5px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <strong>${i.data ? formatarDataBR(i.data) : "Sem data"} · ${escapeHtml(i.assunto||"-")}</strong>
+        <button class="icon-btn" type="button" onclick="deleteInteracaoEvento(${i.id})">🗑️</button>
+      </div>
+      ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${escapeHtml(i.proximos_passos)}</div>`:""}
+    </div>
+  `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma conversa registrada ainda.</p>`;
+}
+async function addInteracaoEvento(){
+  if(!editingEventoId) return;
+  const assunto = document.getElementById("evi-assunto").value.trim();
+  if(!assunto){ alert("Informe o assunto"); return; }
+  const { error } = await sb.from("evento_interacoes").insert({
+    evento_id: editingEventoId,
+    data: document.getElementById("evi-data").value || hojeLocalISO(),
+    assunto,
+    proximos_passos: document.getElementById("evi-proximos").value.trim(),
+  });
+  if(error){ alert("Erro ao adicionar registro: " + error.message); return; }
+  const { data } = await sb.from("evento_interacoes").select("*").order("id");
+  eventoInteracoes = data || [];
+  ["evi-data","evi-assunto","evi-proximos"].forEach(i=>document.getElementById(i).value="");
+  renderInteracoesEvento();
+}
+async function deleteInteracaoEvento(id){
+  if(!confirm("Excluir este registro?")) return;
+  const { error } = await sb.from("evento_interacoes").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  const { data } = await sb.from("evento_interacoes").select("*").order("id");
+  eventoInteracoes = data || [];
+  renderInteracoesEvento();
 }
 
 // ===== FINANCEIRO: CONTAS A RECEBER (parcelas das vendas) =====
