@@ -1533,7 +1533,17 @@ const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 const EVENTO_STATUS = ["Descoberto","Contato feito","Em negociação","Fechado","Descartado"];
 const EVENTO_STATUS_CLASS = {"Descoberto":"indigo","Contato feito":"amber","Em negociação":"teal","Fechado":"green","Descartado":"gray"};
 const EVENTO_STATUS_COR = {"Descoberto":"#3B4EC2","Contato feito":"#B8730A","Em negociação":"#0F8A8A","Fechado":"#2f9e5b","Descartado":"#6B6470"};
-const EVENTO_TIPOS = ["Feira","Show","Congresso","Festa","Formatura","Casamento","Esportivo","Corporativo","Religioso","Cultural","Outro"];
+// Tipos de evento agrupados por categoria (viram <optgroup> no select).
+const EVENTO_TIPOS_GRUPOS = {
+  "Corporativos e de Negócios": ["Congresso","Seminário","Simpósio","Convenção","Feira de Negócios / Exposição","Lançamento de Produto"],
+  "Educacionais e de Capacitação": ["Treinamento","Workshop / Oficina","Palestra","Curso / Imersão","Masterclass","Hackathon"],
+  "Sociais e Festivos": ["Casamento","Aniversário / Festa Infantil","Formatura","Bodas","Chá de Bebê / Chá de Panela"],
+  "Entretenimento e Culturais": ["Show / Concerto","Festival","Teatro e Espetáculo","Mostra / Mostra de Cinema","Feira Gastronômica"],
+  "Esportivos": ["Torneio / Campeonato","Maratona / Corrida de Rua","Exibição Esportiva"],
+  "Religiosos e Comunitários": ["Culto / Missa","Retiro","Ação Social / Mutirão"],
+  "Outros": ["Outro"]
+};
+const EVENTO_TIPOS = Object.values(EVENTO_TIPOS_GRUPOS).flat();
 const EVENTO_ORIGENS = ["Instagram","Facebook","Grupo de WhatsApp","Indicação","Site / Sympla","Jornal / TV","Rua / Cartaz","Outro"];
 const ESTADOS_BR = ["RS","SC","PR","SP","RJ","MG","ES","BA","SE","AL","PE","PB","RN","CE","PI","MA","PA","AP","AM","RR","RO","AC","TO","GO","DF","MT","MS"];
 const PARCEIRO_ETAPAS = ["Prospecto","Qualificado","Abordado","Em negociação","Parceiro ativo","Descartado"];
@@ -2116,6 +2126,12 @@ async function recarregarTabelas(...nomes){
 }
 function fillSelect(el, options, selected){
   el.innerHTML = options.map(o=>`<option value="${o}" ${o===selected?"selected":""}>${o}</option>`).join("");
+}
+// Mesma coisa, mas com <optgroup>: grupos = {"Nome do grupo": [opções]}; primeiraOpcao (opcional) entra solta no topo.
+function fillSelectGrupos(el, grupos, selected, primeiraOpcao){
+  const opt = o=>`<option value="${o}" ${o===selected?"selected":""}>${o}</option>`;
+  el.innerHTML = (primeiraOpcao!==undefined ? `<option value="" ${selected===""?"selected":""}>${primeiraOpcao}</option>` : "")
+    + Object.entries(grupos).map(([g,ops])=>`<optgroup label="${g}">${ops.map(opt).join("")}</optgroup>`).join("");
 }
 
 function renderDashboard(){
@@ -4445,7 +4461,7 @@ function renderEventos(){
   const ft = document.getElementById("filter-evento-tipo");
   const fc = document.getElementById("filter-evento-cidade");
   if(!fs.dataset.filled){ fillSelect(fs, ["",...EVENTO_STATUS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
-  if(!ft.dataset.filled){ fillSelect(ft, ["",...EVENTO_TIPOS], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
+  if(!ft.dataset.filled){ fillSelectGrupos(ft, EVENTO_TIPOS_GRUPOS, "", "Todos os tipos"); ft.dataset.filled=1; }
   // Cidades vêm do que já está cadastrado (lista cresce sozinha).
   const cidadeAtual = fc.value;
   const cidades = [...new Set(eventos.map(e=>(e.cidade||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
@@ -4573,7 +4589,7 @@ function renderEventosDashboard(){
 let editingEventoId = null;
 function openEventoModal(id, dataPre){
   editingEventoId = id || null;
-  fillSelect(document.getElementById("ev-tipo"), EVENTO_TIPOS, "Outro");
+  fillSelectGrupos(document.getElementById("ev-tipo"), EVENTO_TIPOS_GRUPOS, "Outro");
   fillSelect(document.getElementById("ev-status"), EVENTO_STATUS, "Descoberto");
   fillSelect(document.getElementById("ev-origem"), ["",...EVENTO_ORIGENS], "");
   document.getElementById("ev-origem").querySelector("option").textContent = "-";
@@ -4583,7 +4599,10 @@ function openEventoModal(id, dataPre){
   document.getElementById("evento-modal-title").textContent = id ? "Editar evento" : "Novo evento";
   const e = eventos.find(x=>x.id===id) || {};
   document.getElementById("ev-nome").value = e.nome||"";
-  document.getElementById("ev-tipo").value = e.tipo||"Outro";
+  // Tipo antigo que saiu da lista (ex: "Esportivo") entra como opção avulsa pra não sumir ao editar.
+  const evTipo = document.getElementById("ev-tipo");
+  if(e.tipo && !EVENTO_TIPOS.includes(e.tipo)) evTipo.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(e.tipo)}">${escapeHtml(e.tipo)}</option>`);
+  evTipo.value = e.tipo||"Outro";
   document.getElementById("ev-status").value = e.status||"Descoberto";
   document.getElementById("ev-data-inicio").value = e.data_inicio || dataPre || "";
   document.getElementById("ev-data-fim").value = e.data_fim||"";

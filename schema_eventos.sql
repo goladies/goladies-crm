@@ -15,7 +15,7 @@
 create table if not exists public.eventos (
   id bigint generated always as identity primary key,
   nome text not null,
-  tipo text default 'Outro',                     -- Feira, Show, Congresso, Festa, Esportivo, Formatura, Corporativo, Religioso, Outro
+  tipo text default 'Outro',                     -- Congresso, Treinamento, Workshop / Oficina, Casamento, Show / Concerto... (lista agrupada em EVENTO_TIPOS_GRUPOS no index.html)
   data_inicio date,
   data_fim date,
   hora_inicio time,
