@@ -64,6 +64,8 @@ body{
 .btn:hover{background:#b8265a;}
 .btn.secondary{background:#fff; color:var(--pink); border:1px solid var(--pink);}
 .btn:disabled{opacity:.45; cursor:not-allowed;}
+/* "Virar..." (lead / cliente de viagem) ao lado de cada contato salvo */
+.select-promover{font-size:11.5px; padding:2px 4px; border:1px solid var(--pink); border-radius:6px; color:var(--pink); background:#fff; cursor:pointer; width:auto; vertical-align:middle;}
 .btn.ghost{background:transparent; color:var(--muted); border:1px solid var(--border); font-weight:400;}
 .btn.small{padding:5px 10px; font-size:12px;}
 .cards{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
@@ -3112,7 +3114,7 @@ function renderContatosParceiro(){
     return;
   }
   const contatos = parceiroContatos.filter(c=>c.parceiro_id===editingParceiroId);
-  wrap.innerHTML = contatos.map(c=>linha(c, `${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = contatos.map(c=>linha(c, `${selectPromoverContato("parceiro", c.id)} ${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})">🗑️</button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
 function lerContatoParceiroForm(){
@@ -4818,6 +4820,85 @@ function criarViagemDoEvento(){
   showToast("Viagem pré-preenchida com os dados do evento");
 }
 
+// ===== Ponte Contato (de evento ou parceira) → Lead / Cliente de viagem =====
+// Abre o cadastro já preenchido com os dados do contato; nada é criado sem
+// clicar em Salvar. Se já existir lead/cliente com o mesmo WhatsApp, abre esse
+// pra edição em vez de duplicar.
+function mesmoTelefone(a, b){
+  const n = t => (t||"").replace(/\D/g,"").replace(/^55/,"");
+  const x = n(a), y = n(b);
+  return x.length >= 8 && y.length >= 8 && x.slice(-8) === y.slice(-8);
+}
+// Monta o "pacote" de dados a partir do contato salvo (evento ou parceira).
+function dadosContatoEvento(id){
+  const c = eventoContatos.find(x=>x.id===id); if(!c) return null;
+  const e = eventos.find(x=>x.id===c.evento_id) || {};
+  return {
+    nome: c.nome || "", telefone: c.telefone || "", email: c.email || "",
+    bairro: "", cidade: e.cidade || "", estado: e.estado || "", regiao: [e.cidade, e.estado].filter(Boolean).join(" / "),
+    origem: "Evento: " + (e.nome || ""),
+    nota: `Contato do evento "${e.nome || ""}"${c.cargo ? " (" + c.cargo + ")" : ""}${e.organizador ? ", organizador: " + e.organizador : ""}`,
+  };
+}
+function dadosContatoParceiro(id){
+  const c = parceiroContatos.find(x=>x.id===id); if(!c) return null;
+  const p = parceiros.find(x=>x.id===c.parceiro_id) || {};
+  // Região da parceira é texto livre ("bairro, cidade, UF"): tenta separar pelo padrão.
+  const partes = (p.regiao || "").split(",").map(s=>s.trim()).filter(Boolean);
+  let estado = "", cidade = "", bairro = "";
+  if(partes.length && partes[partes.length-1].length === 2){ estado = partes.pop().toUpperCase(); }
+  if(partes.length){ cidade = partes.pop(); }
+  if(partes.length){ bairro = partes.join(", "); }
+  if(!cidade && !estado && !bairro){ cidade = p.regiao || ""; }
+  return {
+    nome: c.descricao || p.nome || "", telefone: c.numero || "", email: "",
+    bairro, cidade, estado, regiao: p.regiao || "",
+    origem: "Parceira (o): " + (p.nome || ""),
+    nota: `Contato da parceira (o) "${p.nome || ""}"${c.descricao ? " (" + c.descricao + ")" : ""}`,
+  };
+}
+// Chamado pelo select "Virar..." de cada contato salvo. fonte = "evento" | "parceiro".
+function promoverContato(sel, fonte, id){
+  const destino = sel.value; sel.value = "";
+  if(!destino) return;
+  const d = fonte === "evento" ? dadosContatoEvento(id) : dadosContatoParceiro(id);
+  if(!d) return;
+  closeModal(fonte === "evento" ? "evento-modal" : "parceiro-modal");
+  if(destino === "lead") contatoParaLead(d); else contatoParaClienteViagem(d);
+}
+function contatoParaLead(d){
+  const existente = d.telefone && leads.find(l=>mesmoTelefone(l.whatsapp, d.telefone));
+  if(existente){ openLeadModal(existente.id); showToast("Esse contato já é lead: " + existente.nome); return; }
+  openLeadModal(null);
+  document.getElementById("f-nome").value = d.nome;
+  document.getElementById("f-whatsapp").value = d.telefone;
+  document.getElementById("f-email").value = d.email;
+  document.getElementById("f-bairro").value = d.bairro;
+  document.getElementById("f-cidade").value = d.cidade;
+  document.getElementById("f-estado").value = d.estado;
+  document.getElementById("f-origem").value = "Outro";
+  document.getElementById("f-origem-outro").value = d.origem;
+  toggleOrigemOutro();
+  document.getElementById("f-notas").value = d.nota;
+  showToast("Lead pré-preenchido com os dados do contato");
+}
+function contatoParaClienteViagem(d){
+  const existente = d.telefone && clientesTransporte.find(c=>mesmoTelefone(c.whatsapp, d.telefone));
+  if(existente){ openClienteTransporteModal(existente.id); showToast("Esse contato já é cliente de viagem: " + existente.nome); return; }
+  openClienteTransporteModal(null);
+  document.getElementById("ct-nome").value = d.nome;
+  document.getElementById("ct-whatsapp").value = d.telefone;
+  document.getElementById("ct-email").value = d.email;
+  document.getElementById("ct-regiao").value = d.regiao;
+  document.getElementById("ct-origem").value = "Outro";
+  document.getElementById("ct-notas").value = d.nota + " (" + d.origem + ")";
+  showToast("Cliente de viagem pré-preenchida com os dados do contato");
+}
+function selectPromoverContato(fonte, id){
+  return `<select class="select-promover" title="Criar lead ou cliente de viagem a partir deste contato" onchange="promoverContato(this,'${fonte}',${id})">
+    <option value="">Virar...</option><option value="lead">Lead</option><option value="cliente">Cliente de viagem</option></select>`;
+}
+
 // --- Contatos do organizador ---
 // Em evento ainda não salvo, "+ Adicionar" guarda em memória (pendentes) e tudo
 // é gravado junto no "Salvar"; depois de salvo, vai direto pro banco.
@@ -4835,7 +4916,7 @@ function renderContatosEvento(){
     return;
   }
   const lista = eventoContatos.filter(c=>c.evento_id===editingEventoId);
-  wrap.innerHTML = lista.map(c=>linha(c, `${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = lista.map(c=>linha(c, `${selectPromoverContato("evento", c.id)} ${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
 function lerContatoEventoForm(){
