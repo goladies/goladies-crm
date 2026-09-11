@@ -487,7 +487,7 @@ tr.tr-click{cursor:pointer;}
     <div id="login-carregando">Entrando...</div>
     <p id="login-ajuda">Suporte: <a href="mailto:contato@goladies.com.br">contato@goladies.com.br</a></p>
   </form>
-  <div id="login-tema">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">🌙 Escuro</button></div>
+  <div id="login-tema">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">☀️ Claro</button></div>
 </div>
 
 <div class="app">
@@ -495,7 +495,7 @@ tr.tr-click{cursor:pointer;}
     <button type="button" id="btn-menu" aria-label="Abrir menu">☰</button>
     <span class="topbar-brand"><img class="logo-branco" src="images/logo-branco.png" alt="Go Ladies"><img class="logo-rosa" src="images/logo-rosa.png" alt="Go Ladies"></span>
     <span style="display:flex; gap:6px;">
-      <button type="button" class="js-btn-tema-icone" onclick="toggleTema()" aria-label="Trocar tema">🌙</button>
+      <button type="button" class="js-btn-tema-icone" onclick="toggleTema()" aria-label="Trocar tema">☀️</button>
       <button type="button" id="btn-atualizar-mobile" aria-label="Atualizar dados">🔄</button>
       <button type="button" id="btn-logout-mobile" class="js-logout" aria-label="Sair">🚪</button>
     </span>
@@ -523,7 +523,7 @@ tr.tr-click{cursor:pointer;}
     </div>
     <div class="sidebar-footer">
       <div class="nav-item nav-atualizar" id="btn-atualizar" title="Buscar de novo os dados no servidor">🔄 Atualizar<span id="lbl-atualizado"></span></div>
-      <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">🌙 Escuro</button></div>
+      <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">☀️ Claro</button></div>
       <div class="user-pill">
         <div class="user-avatar js-user-avatar">GL</div>
         <div class="user-name js-user-name">Go Ladies</div>
@@ -1967,8 +1967,9 @@ function aplicarTema(tema){
   if(claro) document.documentElement.setAttribute("data-tema","claro");
   else document.documentElement.removeAttribute("data-tema");
   try{ localStorage.setItem("gl-tema", claro ? "claro" : "escuro"); }catch(e){}
-  document.querySelectorAll(".js-btn-tema").forEach(b=>b.textContent = claro ? "☀️ Claro" : "🌙 Escuro");
-  document.querySelectorAll(".js-btn-tema-icone").forEach(b=>b.textContent = claro ? "☀️" : "🌙");
+  // O botão mostra pra onde ele leva, não o tema atual (decisão dela, 11/09/2026)
+  document.querySelectorAll(".js-btn-tema").forEach(b=>b.textContent = claro ? "🌙 Escuro" : "☀️ Claro");
+  document.querySelectorAll(".js-btn-tema-icone").forEach(b=>b.textContent = claro ? "🌙" : "☀️");
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute("content", claro ? "#FFFFFF" : "#141417");
   configurarCoresGrafico();
