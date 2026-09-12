@@ -4487,9 +4487,12 @@ function urgenciaViagem(v){
   const partida = new Date(v.data + "T" + v.horario_partida);
   const diffMin = (partida - new Date()) / 60000;
   if(diffMin < 0) return {classe:"urg-atraso", texto:"⚠️ Atrasada, sem confirmação"};
-  if(diffMin <= 15) return {classe:"urg-15", texto:"🔴 Faltam " + Math.max(0,Math.round(diffMin)) + " min"};
-  if(diffMin <= 30) return {classe:"urg-30", texto:"🟠 Faltam ~30 min"};
-  if(diffMin <= 60) return {classe:"urg-60", texto:"🟡 Falta ~1h"};
+  // Minutos reais em todas as faixas; só a cor muda por faixa (antes 31 min virava "~1h").
+  const min = Math.max(0,Math.round(diffMin));
+  const txt = (min === 1 ? "Falta 1 min" : "Faltam " + min + " min");
+  if(diffMin <= 15) return {classe:"urg-15", texto:"🔴 " + txt};
+  if(diffMin <= 30) return {classe:"urg-30", texto:"🟠 " + txt};
+  if(diffMin <= 60) return {classe:"urg-60", texto:"🟡 " + txt};
   return null;
 }
 if(!window._intervaloUrgenciaKanban){
