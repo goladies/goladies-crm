@@ -5639,7 +5639,7 @@ function listaContasAPagarUnificada(){
     return {
       origem: "Motorista", id: p.id, viagemId: p.viagem_id,
       descricao: "Pagamento — " + (nomesMotoristas||"motorista") + (viagem?" (viagem #"+viagem.id+")":""),
-      categoria: "Motorista", valor: p.valor_repassado, vencimento: null,
+      categoria: "Motorista", valor: p.valor_repassado, vencimento: p.data_prevista_pagamento || null,
       data_pagamento: p.data_pagamento, status: p.status || "Pendente",
     };
   });
