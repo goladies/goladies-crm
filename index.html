@@ -186,6 +186,25 @@ a{color:var(--rosa-texto);}
 .topbar-desk .user-avatar{cursor:default;}
 .main{flex:1; padding:24px 28px; min-width:0;}
 
+/* ---------- BOAS-VINDAS (Dashboard), no estilo do Lapidar ---------- */
+.boas-vindas{display:flex; align-items:center; justify-content:space-between; gap:16px; margin:-4px 0 22px;}
+.bv-data{font-size:13px; color:var(--text3); margin-bottom:4px; text-transform:none;}
+.bv-data::first-letter{text-transform:uppercase;}
+.bv-ola{font-size:28px; font-weight:700; letter-spacing:-.4px; margin:0; line-height:1.15;}
+.bv-coracao{display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; text-decoration:none; cursor:pointer;}
+.bv-coracao .coracao{position:relative; width:74px; height:68px; filter:drop-shadow(0 6px 14px rgba(255,45,156,.35));}
+.bv-coracao .coracao svg{width:100%; height:100%; fill:var(--rosa);}
+.bv-coracao .coracao b{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; font-weight:800; padding-bottom:8px;}
+.bv-coracao small{font-size:10.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--text3); font-weight:600;}
+.user-pill{cursor:pointer;}
+.user-pill:hover{background:var(--bg-hover);}
+.user-pill .user-sair{position:relative; z-index:1;}
+@media (max-width:700px){
+  .bv-ola{font-size:22px;}
+  .bv-coracao .coracao{width:62px; height:57px;}
+  .bv-coracao .coracao b{font-size:20px;}
+}
+
 /* ---------- CABEÇALHO DE TELA E BOTÕES ---------- */
 .pagehead{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
 .pagehead h2{margin:0 0 3px; font-size:20px; font-weight:600; letter-spacing:-.2px;}
@@ -496,6 +515,7 @@ tr.tr-click{cursor:pointer;}
     <span class="topbar-brand"><img class="logo-branco" src="images/logo-branco.png" alt="Go Ladies"><img class="logo-rosa" src="images/logo-rosa.png" alt="Go Ladies"></span>
     <span style="display:flex; gap:6px;">
       <button type="button" class="js-btn-tema-icone" onclick="toggleTema()" aria-label="Trocar tema">☀️</button>
+      <button type="button" onclick="openMeusDadosModal()" aria-label="Meus dados">👤</button>
       <button type="button" id="btn-atualizar-mobile" aria-label="Atualizar dados">🔄</button>
       <button type="button" id="btn-logout-mobile" class="js-logout" aria-label="Sair">🚪</button>
     </span>
@@ -524,10 +544,10 @@ tr.tr-click{cursor:pointer;}
     <div class="sidebar-footer">
       <div class="nav-item nav-atualizar" id="btn-atualizar" title="Buscar de novo os dados no servidor">🔄 Atualizar<span id="lbl-atualizado"></span></div>
       <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">☀️ Claro</button></div>
-      <div class="user-pill">
+      <div class="user-pill" onclick="openMeusDadosModal()" title="Meus dados">
         <div class="user-avatar js-user-avatar">GL</div>
         <div class="user-name js-user-name">Go Ladies</div>
-        <button type="button" class="user-sair js-logout" id="btn-logout">Sair</button>
+        <button type="button" class="user-sair js-logout" id="btn-logout" onclick="event.stopPropagation()">Sair</button>
       </div>
     </div>
   </div>
@@ -539,12 +559,21 @@ tr.tr-click{cursor:pointer;}
       <input type="text" id="busca-global" placeholder="Buscar nome, telefone, e-mail..." autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)">
       <div class="search-results" id="busca-global-resultados"></div>
     </div>
-    <div class="user-avatar js-user-avatar">GL</div>
+    <div class="user-avatar js-user-avatar" onclick="openMeusDadosModal()" title="Meus dados" style="cursor:pointer;">GL</div>
   </div>
   <div class="main">
 
     <div id="tab-dashboard">
-      <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
+      <div class="boas-vindas">
+        <div>
+          <div class="bv-data" id="bv-data"></div>
+          <h2 class="bv-ola" id="bv-ola">Olá!</h2>
+        </div>
+        <a class="bv-coracao" href="#" onclick="irParaLeadsNovos(); return false;" title="Leads novos ainda sem contato">
+          <div class="coracao"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21.4 3.3 12.9A5.6 5.6 0 0 1 11.2 5l.8.8.8-.8a5.6 5.6 0 0 1 7.9 7.9z"/></svg><b id="bv-coracao-num">0</b></div>
+          <small>Leads novos</small>
+        </a>
+      </div>
       <div class="cards" id="dash-cards"></div>
       <div class="panel">
         <h3>Funil de atendimento</h3>
@@ -898,6 +927,26 @@ tr.tr-click{cursor:pointer;}
     </div>
 
   </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="meus-dados-modal">
+  <div class="modal" style="width:420px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">Meus dados</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('meus-dados-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid" style="margin-top:14px;">
+      <div class="full"><label>Como você quer ser chamada no painel</label><input type="text" id="md-apelido" placeholder="Ex.: Jú" maxlength="40"></div>
+      <div class="full"><label>E-mail de login</label><input type="email" id="md-email" disabled></div>
+      <div class="full" style="margin-top:6px; padding-top:12px; border-top:1px solid var(--border);"><label style="font-weight:600; color:var(--text2);">Trocar senha (deixe em branco pra manter a atual)</label></div>
+      <div><label>Nova senha</label><input type="password" id="md-senha" autocomplete="new-password" minlength="6"></div>
+      <div><label>Confirmar nova senha</label><input type="password" id="md-senha2" autocomplete="new-password" minlength="6"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" onclick="closeModal('meus-dados-modal')">Cancelar</button>
+      <button class="btn" type="button" id="md-salvar" onclick="saveMeusDados()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -1994,12 +2043,71 @@ function configurarCoresGrafico(){
 aplicarTema((()=>{ try{ return localStorage.getItem("gl-tema") || "escuro"; }catch(e){ return "escuro"; } })());
 
 // ===== AVATAR / NOME DE QUEM ESTÁ LOGADA =====
+let usuariaAtual = null;
 function mostrarUsuaria(user){
+  usuariaAtual = user || null;
   const email = (user && user.email) || "";
-  const nome = email.split("@")[0] || "Go Ladies";
-  const iniciais = nome.replace(/[^a-zA-Z0-9]/g," ").trim().split(/\s+/).slice(0,2).map(p=>p[0]||"").join("").toUpperCase() || "GL";
+  // Apelido fica no cadastro de login (user_metadata), sem tabela nem SQL.
+  const apelido = (user && user.user_metadata && user.user_metadata.apelido || "").trim();
+  const nome = apelido || email.split("@")[0] || "Go Ladies";
+  const iniciais = nome.replace(/[^a-zA-Z0-9À-ÿ]/g," ").trim().split(/\s+/).slice(0,2).map(p=>p[0]||"").join("").toUpperCase() || "GL";
   document.querySelectorAll(".js-user-avatar").forEach(el=>{ el.textContent = iniciais; el.title = email; });
-  document.querySelectorAll(".js-user-name").forEach(el=>{ el.textContent = email || "Go Ladies"; el.title = email; });
+  document.querySelectorAll(".js-user-name").forEach(el=>{ el.textContent = nome; el.title = email; });
+  const ola = document.getElementById("bv-ola");
+  if(ola) ola.textContent = "Olá, " + nome;
+}
+
+// Relógio do cabeçalho de boas-vindas: "Sexta-feira, 11 de setembro de 2026 · 20:53"
+function renderDataHora(){
+  const el = document.getElementById("bv-data");
+  if(!el) return;
+  const agora = new Date();
+  const data = agora.toLocaleDateString("pt-BR", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+  const hora = agora.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  el.textContent = data + " · " + hora;
+}
+renderDataHora();
+setInterval(renderDataHora, 15000);
+
+function irParaLeadsNovos(){
+  document.querySelector('.nav-item[data-tab="leads"]').click();
+  const f = document.getElementById("filter-etapa");
+  if(f){ f.value = "Novo lead"; renderLeads(); }
+}
+
+// ===== MEUS DADOS (apelido + senha) =====
+function openMeusDadosModal(){
+  const u = usuariaAtual || {};
+  document.getElementById("md-apelido").value = (u.user_metadata && u.user_metadata.apelido) || "";
+  document.getElementById("md-email").value = u.email || "";
+  document.getElementById("md-senha").value = "";
+  document.getElementById("md-senha2").value = "";
+  document.getElementById("meus-dados-modal").classList.add("open");
+  fecharMenu();
+}
+async function saveMeusDados(){
+  const apelido = document.getElementById("md-apelido").value.trim();
+  const senha = document.getElementById("md-senha").value;
+  const senha2 = document.getElementById("md-senha2").value;
+  if(senha || senha2){
+    if(senha.length < 6){ showToast("A senha precisa ter pelo menos 6 caracteres", true); return; }
+    if(senha !== senha2){ showToast("As duas senhas não batem", true); return; }
+  }
+  const btn = document.getElementById("md-salvar");
+  btn.disabled = true;
+  try{
+    const payload = { data: { apelido } };
+    if(senha) payload.password = senha;
+    const { data, error } = await sb.auth.updateUser(payload);
+    if(error) throw error;
+    mostrarUsuaria(data.user);
+    closeModal("meus-dados-modal");
+    showToast(senha ? "Dados e senha salvos!" : "Salvo!");
+  }catch(e){
+    showToast("Não deu pra salvar: " + (e.message || e), true);
+  }finally{
+    btn.disabled = false;
+  }
 }
 
 // ===== BUSCA GLOBAL (barra do topo) =====
@@ -2442,6 +2550,8 @@ function renderDashboard(){
   const totalClientes = leads.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)).length;
   const parceirosAtivos = parceiros.filter(p=>p.status==="Parceiro ativo").length;
   const orcAbertos = orcamentos.filter(o=>["Solicitado","Enviado"].includes(o.status)).length;
+  const coracao = document.getElementById("bv-coracao-num");
+  if(coracao) coracao.textContent = leads.filter(l=>l.etapa==="Novo lead").length;
   cards.innerHTML = `
     <div class="card"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
     <div class="card"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
