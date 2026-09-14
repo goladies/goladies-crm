@@ -756,7 +756,12 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="filters">
           <select id="filter-cliente-segmento" onchange="renderTransporteClientes()"><option value="">Todos os segmentos</option></select>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">Viagens de <input type="date" id="filter-cliente-de" onchange="renderTransporteClientes()"></label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">até <input type="date" id="filter-cliente-ate" onchange="renderTransporteClientes()"></label>
+          <button type="button" class="act" onclick="limparPeriodoClientes()">Limpar período</button>
+          <button type="button" class="act" onclick="exportarClientesCsv()">⬇️ CSV</button>
         </div>
+        <div id="clientes-transporte-resumo" style="font-size:12.5px; color:var(--muted); margin:-6px 0 10px;"></div>
         <div class="panel">
           <table class="tbl">
             <thead><tr id="thead-clientes-transporte"></tr></thead>
@@ -4296,25 +4301,103 @@ async function deleteMotorista(id){
 }
 
 // ===== TRANSPORTE: CLIENTES DE VIAGEM =====
+// A listagem é também o relatório por cliente: cruza viagens, pagamentos da
+// cliente e avaliações já carregados na memória (mesma conta da consulta em
+// relatorio_clientes_transporte.sql). Com período preenchido, só entram as
+// viagens daquele intervalo (pela data da viagem) e quem não viajou no
+// período some da lista; sem período, todo mundo aparece, inclusive com zero.
+function resumoClienteViagem(c, de, ate){
+  const vs = viagens.filter(v => v.cliente_id===c.id && (!de || (v.data||"") >= de) && (!ate || (v.data||"") <= ate));
+  const ids = new Set(vs.map(v=>v.id));
+  const pgs = pagamentosCliente.filter(p => ids.has(p.viagem_id));
+  const avs = avaliacoes.filter(a => ids.has(a.viagem_id));
+  const concluidas = vs.filter(v=>v.status==="Concluída");
+  const pago = pgs.filter(p=>p.status==="Pago").reduce((s,p)=>s+Number(p.valor_recebido||0), 0);
+  // Pendente = pagamentos lançados e não pagos + viagens concluídas sem nenhum pagamento lançado (fica o preço cotado)
+  const comPgto = new Set(pgs.map(p=>p.viagem_id));
+  const pendente = pgs.filter(p=>p.status!=="Pago").reduce((s,p)=>s+Number(p.valor_recebido||0), 0)
+    + concluidas.filter(v=>!comPgto.has(v.id)).reduce((s,v)=>s+Number(v.preco_cotado||0), 0);
+  const notas = avs.map(a=>a.nota_motorista).filter(n=>n!=null && n!=="");
+  const nota = notas.length ? notas.reduce((s,n)=>s+Number(n),0)/notas.length : null;
+  const porMotorista = {};
+  concluidas.forEach(v=>{ if(v.motorista_id_confirmada) porMotorista[v.motorista_id_confirmada] = (porMotorista[v.motorista_id_confirmada]||0)+1; });
+  const topId = Object.keys(porMotorista).sort((a,b)=>porMotorista[b]-porMotorista[a])[0];
+  const topM = topId ? motoristas.find(m=>m.id===Number(topId)) : null;
+  const unico = arr => [...new Set(arr.filter(Boolean))].join(", ");
+  return {
+    ...c,
+    qtd_viagens: vs.length,
+    qtd_concluidas: concluidas.length,
+    ultima_viagem: vs.map(v=>v.data).filter(Boolean).sort().slice(-1)[0] || null,
+    pago, pendente, nota,
+    qtd_avaliacoes: notas.length,
+    motorista_top: topM ? topM.nome : null,
+    motorista_top_qtd: topId ? porMotorista[topId] : 0,
+    preferida: vs.filter(v=>v.motorista_preferida).length,
+    canais: unico(vs.map(v=>v.canal_recepcao)),
+    formas: unico(pgs.map(p=>p.forma_pagamento)),
+    servicos: unico(vs.map(v=>v.tipo_servico))
+  };
+}
+let clientesTransporteRelatorio = [];
 function renderTransporteClientes(){
   const fs = document.getElementById("filter-cliente-segmento");
   if(!fs.dataset.filled){ fillSelect(fs, ["",...SEGMENTO_CLIENTE], ""); fs.querySelector("option").textContent="Todos os segmentos"; fs.dataset.filled=1; }
   const segF = fs.value;
+  const de = document.getElementById("filter-cliente-de").value;
+  const ate = document.getElementById("filter-cliente-ate").value;
+  const temPeriodo = !!(de || ate);
   renderCabecalho("thead-clientes-transporte", [
-    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Região", campo:"regiao"},
-    {label:"Segmento", campo:"segmento"}, {label:"Aniversário", campo:"aniversario"}, {label:"", campo:null}
+    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Segmento", campo:"segmento"},
+    {label:"Viagens", campo:"qtd_viagens", tipo:"numero"}, {label:"Última", campo:"ultima_viagem"},
+    {label:"Pago", campo:"pago", tipo:"numero"}, {label:"Pendente", campo:"pendente", tipo:"numero"},
+    {label:"Nota", campo:"nota", tipo:"numero"}, {label:"Motorista", campo:"motorista_top"}, {label:"", campo:null}
   ], "clientesTransporte");
-  const filtradas = aplicarOrdenacao("clientesTransporte", clientesTransporte.filter(c=>!segF || c.segmento===segF));
-  document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(c=>`
-    <tr class="tr-click" onclick="openClienteTransporteModal(${c.id})">
-      <td><strong>${escapeHtml(c.nome)}</strong></td>
-      <td>${numeroClicavel(c.whatsapp)}</td>
-      <td>${escapeHtml(c.regiao||"-")}</td>
-      <td>${c.segmento?`<span class="tag novo">${escapeHtml(c.segmento)}</span>`:"-"}</td>
-      <td>${c.aniversario||"-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(c.whatsapp, c.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${c.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${c.id})">🗑️</button></td>
+  const base = clientesTransporte.filter(c=>!segF || c.segmento===segF).map(c=>resumoClienteViagem(c, de, ate)).filter(r=>!temPeriodo || r.qtd_viagens>0);
+  const filtradas = aplicarOrdenacao("clientesTransporte", base);
+  clientesTransporteRelatorio = filtradas;
+  const tot = base.reduce((t,r)=>({viagens:t.viagens+r.qtd_viagens, pago:t.pago+r.pago, pendente:t.pendente+r.pendente}), {viagens:0,pago:0,pendente:0});
+  document.getElementById("clientes-transporte-resumo").textContent =
+    `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
+  document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
+    <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
+      <td><strong>${escapeHtml(r.nome)}</strong>${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${numeroClicavel(r.whatsapp)}</td>
+      <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
+      <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
+      <td>${r.ultima_viagem ? formatarDataBR(r.ultima_viagem) : "-"}</td>
+      <td style="white-space:nowrap;">${r.pago ? formatarMoedaBR(r.pago) : "-"}</td>
+      <td style="white-space:nowrap;">${r.pendente ? `<span class="status-badge red">${formatarMoedaBR(r.pendente)}</span>` : "-"}</td>
+      <td>${r.nota!=null ? `${r.nota.toFixed(1)} <small style="color:var(--muted);">(${r.qtd_avaliacoes})</small>` : "-"}</td>
+      <td>${r.motorista_top ? `${escapeHtml(r.motorista_top.split(" ")[0])} <small style="color:var(--muted);">(${r.motorista_top_qtd}x)</small>` : "-"}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(r.whatsapp, r.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${r.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${r.id})">🗑️</button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="6">Nenhuma cliente de viagem cadastrada ainda</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="10">${temPeriodo ? "Nenhuma cliente viajou nesse período" : "Nenhuma cliente de viagem cadastrada ainda"}</td></tr>`;
+}
+function limparPeriodoClientes(){
+  document.getElementById("filter-cliente-de").value = "";
+  document.getElementById("filter-cliente-ate").value = "";
+  renderTransporteClientes();
+}
+// Exporta a lista como está na tela (filtros e ordenação aplicados), com as
+// colunas do relatório completo, pra abrir no Excel/Google Planilhas.
+function exportarClientesCsv(){
+  const cols = [
+    ["Nome", r=>r.nome], ["WhatsApp", r=>r.whatsapp], ["E-mail", r=>r.email], ["Região", r=>r.regiao], ["Segmento", r=>r.segmento],
+    ["Como chegou", r=>r.origem], ["Viagens", r=>r.qtd_viagens], ["Concluídas", r=>r.qtd_concluidas], ["Última viagem", r=>r.ultima_viagem ? formatarDataBR(r.ultima_viagem) : ""],
+    ["Pago", r=>r.pago.toFixed(2).replace(".",",")], ["Pendente", r=>r.pendente.toFixed(2).replace(".",",")],
+    ["Formas de pagamento", r=>r.formas], ["Formas de atendimento", r=>r.canais], ["Tipos de serviço", r=>r.servicos],
+    ["Viagens com motorista preferida", r=>r.preferida], ["Motorista mais frequente", r=>r.motorista_top ? `${r.motorista_top} (${r.motorista_top_qtd}x)` : ""],
+    ["Nota média", r=>r.nota!=null ? r.nota.toFixed(1).replace(".",",") : ""], ["Avaliações", r=>r.qtd_avaliacoes], ["Notas", r=>r.notas]
+  ];
+  const cel = v => { const s = (v??"").toString(); return /[";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const linhas = [cols.map(c=>c[0]).join(";"), ...clientesTransporteRelatorio.map(r=>cols.map(c=>cel(c[1](r))).join(";"))];
+  const blob = new Blob(["﻿" + linhas.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `clientes-viagem-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 let editingClienteTransporteId = null;
 function openClienteTransporteModal(id){
