@@ -185,6 +185,30 @@ a{color:var(--rosa-texto);}
 .sr-item small{color:var(--text3); font-size:11.5px; white-space:nowrap;}
 .sr-vazio{padding:12px; color:var(--text3); font-size:12.5px; text-align:center;}
 .topbar-desk .user-avatar{cursor:default;}
+/* ── Assistente IA (voz / texto / foto → ação no CRM) ── */
+.btn-assistente{
+  display:inline-flex; align-items:center; gap:7px; background:var(--rosa-bg); color:var(--rosa-texto);
+  border:1.5px solid var(--rosa); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:600;
+  font-family:inherit; cursor:pointer; white-space:nowrap; transition:background .15s;
+}
+.btn-assistente:hover{background:var(--rosa); color:#fff;}
+.ia-entrada{display:flex; flex-direction:column; gap:10px;}
+.ia-entrada textarea{width:100%; min-height:92px; resize:vertical;}
+.ia-acoes{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+.ia-acoes .btn.gravando{background:var(--c-red); border-color:var(--c-red); color:#fff; animation:ia-pulsa 1s infinite;}
+@keyframes ia-pulsa{0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.5);} 50%{box-shadow:0 0 0 7px rgba(255,107,107,0);}}
+.ia-arquivo{display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text2); background:var(--bg-input); border:1px dashed var(--border2); border-radius:10px; padding:8px 10px;}
+.ia-arquivo img{width:54px; height:54px; object-fit:cover; border-radius:8px; border:1px solid var(--border);}
+.ia-status{font-size:12.5px; color:var(--text3); min-height:18px;}
+.ia-card{background:var(--bg-card2); border:1px solid var(--rosa-borda); border-radius:12px; padding:14px; margin-top:12px;}
+.ia-card h4{margin:0 0 8px; font-size:14px; color:var(--rosa-texto);}
+.ia-card .ia-resumo{font-size:13.5px; color:var(--text1); margin-bottom:10px; line-height:1.45;}
+.ia-card ul{margin:0 0 4px; padding-left:18px; font-size:12.5px; color:var(--text2); line-height:1.6;}
+.ia-card ul li b{color:var(--text1); font-weight:600;}
+.ia-card .ia-aviso{font-size:12px; color:var(--c-amber); margin-top:8px;}
+.ia-exemplos{font-size:11.5px; color:var(--text3); line-height:1.5;}
+.ia-alterado{border-color:var(--rosa) !important; box-shadow:0 0 0 2px var(--rosa-bg) !important;}
+@media (max-width:860px){ .btn-assistente{order:2; padding:7px 10px;} .btn-assistente span{display:none;} }
 .main{flex:1; padding:24px 28px; min-width:0;}
 
 /* ---------- BOAS-VINDAS na barra do topo (fixo em todas as telas), no estilo do Lapidar ---------- */
@@ -573,6 +597,7 @@ tr.tr-click{cursor:pointer;}
       <div class="coracao"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21.4 3.3 12.9A5.6 5.6 0 0 1 11.2 5l.8.8.8-.8a5.6 5.6 0 0 1 7.9 7.9z"/></svg><b id="bv-coracao-num">0</b></div>
       <small>Leads novos</small>
     </a>
+    <button type="button" class="btn-assistente" onclick="openAssistenteModal()" title="Assistente IA: fale, escreva ou mande uma foto e ela prepara o cadastro">✨ <span>Assistente IA</span></button>
     <div class="search-global">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="busca-global" placeholder="Buscar nome, telefone, e-mail..." autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)">
@@ -1584,6 +1609,34 @@ tr.tr-click{cursor:pointer;}
       <button class="btn ghost" onclick="closeModal('avaliacao-modal')">Sair</button>
       <button class="btn" onclick="saveAvaliacao()">Salvar</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== ASSISTENTE IA: voz / texto / foto → ação no CRM (v1: Eventos e Viagens) ===== -->
+<div class="modal-backdrop" id="assistente-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">✨ Assistente IA</h3>
+      <button class="icon-btn" type="button" onclick="closeAssistenteModal()" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p style="color:var(--text3); font-size:12.5px; margin:6px 0 12px;">Fale, escreva ou mande uma foto, print ou PDF. Eu interpreto, você confere e só então o cadastro é salvo.</p>
+    <div class="ia-entrada">
+      <textarea id="ia-texto" placeholder="Ex: cadastra uma viagem da Fernanda amanhã às 14h do Menino Deus até o aeroporto por 60 reais&#10;Ex: muda o preço da viagem da Carla de sexta pra 75&#10;Ex: (só a foto do flyer) → cadastra o evento"></textarea>
+      <div class="ia-acoes">
+        <button type="button" class="btn secondary small" id="ia-btn-mic" onclick="alternarVozIA()">🎤 Falar</button>
+        <button type="button" class="btn secondary small" onclick="document.getElementById('ia-arquivo').click()">📷 Foto / PDF</button>
+        <input type="file" id="ia-arquivo" accept="image/*,application/pdf" style="display:none;" onchange="selecionarArquivoAssistente(this)">
+        <button type="button" class="btn small" id="ia-btn-enviar" onclick="interpretarAssistente()" style="margin-left:auto;">✨ Interpretar</button>
+      </div>
+      <div class="ia-arquivo" id="ia-arquivo-box" style="display:none;">
+        <img id="ia-arquivo-prev" alt="" style="display:none;">
+        <span id="ia-arquivo-nome" style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;"></span>
+        <button class="icon-btn" type="button" onclick="limparArquivoAssistente()" aria-label="Remover arquivo">🗑️</button>
+      </div>
+      <div class="ia-status" id="ia-status"></div>
+      <div class="ia-exemplos" id="ia-exemplos">Dica: no celular, "Foto / PDF" abre a câmera ou a galeria. Também dá pra colar um print (Ctrl+V) aqui dentro. Por enquanto entendo <b>Eventos</b> e <b>Viagens</b> (criar e alterar).</div>
+    </div>
+    <div id="ia-resultado"></div>
   </div>
 </div>
 
@@ -3950,6 +4003,313 @@ function renderTransporteMotoristas(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(m.whatsapp, m.nome)} <button class="act act-edit" onclick="openMotoristaModal(${m.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMotorista(${m.id})">🗑️</button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="8">Nenhuma motorista cadastrada ainda</td></tr>`;
+}
+
+// ===== ASSISTENTE IA (voz / texto / foto → ação no CRM) =====
+// Mesmo desenho do ler-cnh: o arquivo/texto vai pra Edge Function
+// "assistente-crm", o Claude devolve UMA ação estruturada (criar/editar
+// evento ou viagem) e aqui a gente mostra um cartão de confirmação. Ao
+// confirmar, o modal normal abre já preenchido e ela clica em Salvar: a IA
+// nunca grava direto, e todas as regras/automações do modal continuam valendo.
+let iaAssistArquivo = null;      // File já reduzido, pronto pra enviar
+let iaAssistAcao = null;         // { acao, dados } devolvido pela function
+let iaReconhecimento = null;     // instância do SpeechRecognition (voz)
+let iaGravando = false;
+
+function openAssistenteModal(){
+  document.getElementById("ia-resultado").innerHTML = "";
+  document.getElementById("ia-status").textContent = "";
+  iaAssistAcao = null;
+  document.getElementById("assistente-modal").classList.add("open");
+  setTimeout(()=>document.getElementById("ia-texto").focus(), 50);
+}
+function closeAssistenteModal(){
+  pararVozIA();
+  closeModal("assistente-modal");
+}
+function statusAssistente(msg, cor){
+  const el = document.getElementById("ia-status");
+  el.textContent = msg || "";
+  el.style.color = cor ? `var(--${cor})` : "var(--text3)";
+}
+
+// ── Voz: reconhecimento nativo do navegador (pt-BR, sem custo) ──
+// Igual ao Lapidar: Chrome/Android e Safari/iPhone têm; Firefox não.
+function alternarVozIA(){
+  if(iaGravando){ pararVozIA(); return; }
+  const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Reconhecedor){
+    statusAssistente("Este navegador não tem reconhecimento de voz. Use o Chrome (Android/PC) ou o Safari (iPhone), ou digite o pedido.", "c-amber");
+    return;
+  }
+  const area = document.getElementById("ia-texto");
+  const textoAntes = area.value.trim() ? area.value.trim() + " " : "";
+  let textoFinal = "";
+  iaReconhecimento = new Reconhecedor();
+  iaReconhecimento.lang = "pt-BR";
+  iaReconhecimento.continuous = true;
+  iaReconhecimento.interimResults = true;
+  iaReconhecimento.onresult = (e)=>{
+    let parcial = "";
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const trecho = e.results[i][0].transcript;
+      if(e.results[i].isFinal) textoFinal += trecho + " ";
+      else parcial += trecho;
+    }
+    area.value = (textoAntes + textoFinal + parcial).trim();
+  };
+  iaReconhecimento.onerror = (e)=>{
+    if(e.error === "not-allowed") statusAssistente("Preciso da permissão do microfone: confirme no aviso do navegador.", "c-red");
+    else if(e.error !== "aborted" && e.error !== "no-speech") statusAssistente("Erro no microfone: " + e.error, "c-red");
+    pararVozIA();
+  };
+  iaReconhecimento.onend = ()=>{ if(iaGravando) pararVozIA(); };
+  try{ iaReconhecimento.start(); }catch(err){ statusAssistente("Não consegui ligar o microfone.", "c-red"); return; }
+  iaGravando = true;
+  const btn = document.getElementById("ia-btn-mic");
+  btn.textContent = "⏹ Parar"; btn.classList.add("gravando");
+  statusAssistente("🎙️ Ouvindo... fale o pedido e clique em Parar.", "rosa-texto");
+}
+function pararVozIA(){
+  if(iaReconhecimento){ try{ iaReconhecimento.stop(); }catch(e){} iaReconhecimento = null; }
+  if(iaGravando){
+    iaGravando = false;
+    const btn = document.getElementById("ia-btn-mic");
+    btn.textContent = "🎤 Falar"; btn.classList.remove("gravando");
+    statusAssistente("Confira o texto e clique em Interpretar.");
+  }
+}
+
+// ── Foto / PDF: reduz a imagem no navegador antes de enviar (foto de
+// celular tem 3 a 5MB; 1600px basta pra IA ler e sobe bem mais rápido) ──
+async function reduzirImagem(arquivo){
+  if(!arquivo.type.startsWith("image/")) return arquivo;
+  const MAX = 1600;
+  try{
+    const bitmap = await createImageBitmap(arquivo);
+    const escala = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+    if(escala === 1 && arquivo.size < 1.5 * 1024 * 1024) return arquivo;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * escala);
+    canvas.height = Math.round(bitmap.height * escala);
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(res=>canvas.toBlob(res, "image/jpeg", 0.88));
+    return new File([blob], (arquivo.name || "foto").replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  }catch(e){ return arquivo; }
+}
+async function selecionarArquivoAssistente(input){
+  const arquivo = input.files && input.files[0];
+  if(!arquivo) return;
+  await usarArquivoAssistente(arquivo);
+  input.value = "";
+}
+async function usarArquivoAssistente(arquivo){
+  if(!/^image\/(jpeg|png|webp)$|^application\/pdf$/.test(arquivo.type) && !arquivo.type.startsWith("image/")){
+    statusAssistente("Envie uma foto (JPG/PNG/WEBP) ou PDF.", "c-red"); return;
+  }
+  statusAssistente("Preparando arquivo...");
+  iaAssistArquivo = await reduzirImagem(arquivo);
+  const box = document.getElementById("ia-arquivo-box");
+  const prev = document.getElementById("ia-arquivo-prev");
+  document.getElementById("ia-arquivo-nome").textContent = iaAssistArquivo.name + " (" + Math.round(iaAssistArquivo.size/1024) + " KB)";
+  if(iaAssistArquivo.type.startsWith("image/")){ prev.src = URL.createObjectURL(iaAssistArquivo); prev.style.display = "block"; }
+  else { prev.style.display = "none"; }
+  box.style.display = "flex";
+  statusAssistente("Arquivo pronto. Se quiser, escreva o que fazer com ele e clique em Interpretar.");
+}
+function limparArquivoAssistente(){
+  iaAssistArquivo = null;
+  document.getElementById("ia-arquivo-box").style.display = "none";
+  document.getElementById("ia-arquivo-prev").src = "";
+}
+// Colar print (Ctrl+V) com o modal aberto
+document.addEventListener("paste", (e)=>{
+  if(!document.getElementById("assistente-modal").classList.contains("open")) return;
+  const item = [...(e.clipboardData?.items || [])].find(i=>i.type.startsWith("image/"));
+  if(!item) return;
+  e.preventDefault();
+  const f = item.getAsFile();
+  if(f) usarArquivoAssistente(new File([f], "print-colado.png", { type: f.type }));
+});
+
+// ── Contexto: data de hoje (Porto Alegre) + listas curtas com id e nome,
+// pra IA apontar ids em vez de adivinhar ──
+function hojePOA(){ return new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }); }
+function montarContextoAssistente(){
+  const hoje = hojePOA();
+  const limite = new Date(hoje + "T00:00:00"); limite.setDate(limite.getDate() - 30);
+  const desde = limite.toISOString().slice(0,10);
+  const nomeCliente = id => (clientesTransporte.find(c=>c.id===id) || {}).nome || "";
+  const nomeMoto = id => (motoristas.find(m=>m.id===id) || {}).nome || "";
+  return {
+    hoje,
+    dia_semana_hoje: new Date().toLocaleDateString("pt-BR", { weekday: "long", timeZone: "America/Sao_Paulo" }),
+    clientes: clientesTransporte.map(c=>({ id: c.id, nome: c.nome })),
+    motoristas: motoristas.filter(m=>!["Inativa","Recusada"].includes(m.status)).map(m=>({ id: m.id, nome: m.nome, status: m.status })),
+    viagens: viagens
+      .filter(v=>!v.data || v.data >= desde)
+      .sort((a,b)=>(b.data||"").localeCompare(a.data||""))
+      .slice(0, 80)
+      .map(v=>({ id: v.id, cliente: nomeCliente(v.cliente_id), data: v.data, horario: v.horario_partida ? v.horario_partida.slice(0,5) : "", destino: v.destino_endereco, preco: v.preco_cotado, status: v.status, motorista: nomeMoto(v.motorista_id_confirmada) })),
+    eventos: eventos
+      .filter(e=>!e.data_inicio || e.data_inicio >= desde)
+      .slice(0, 60)
+      .map(e=>({ id: e.id, nome: e.nome, data_inicio: e.data_inicio, status: e.status })),
+  };
+}
+
+async function interpretarAssistente(){
+  const texto = document.getElementById("ia-texto").value.trim();
+  if(!texto && !iaAssistArquivo){ statusAssistente("Escreva, fale ou mande uma foto primeiro.", "c-amber"); return; }
+  pararVozIA();
+  const btn = document.getElementById("ia-btn-enviar");
+  btn.disabled = true; btn.style.opacity = ".6";
+  document.getElementById("ia-resultado").innerHTML = "";
+  iaAssistAcao = null;
+  statusAssistente("⏳ Interpretando com IA...", "c-amber");
+  try{
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session) throw new Error("Não autenticada");
+    const formData = new FormData();
+    formData.append("texto", texto);
+    formData.append("contexto", JSON.stringify(montarContextoAssistente()));
+    if(iaAssistArquivo) formData.append("arquivo", iaAssistArquivo, iaAssistArquivo.name);
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/assistente-crm`, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_KEY },
+      body: formData,
+    });
+    const result = await resp.json();
+    if(!resp.ok || result.error) throw new Error(result.error || "Erro na interpretação");
+    iaAssistAcao = result;
+    statusAssistente("");
+    renderResultadoAssistente(result.acao, result.dados);
+  }catch(e){
+    statusAssistente("❌ " + (e.message || "Erro ao interpretar. Tente de novo."), "c-red");
+    console.error(e);
+  }finally{
+    btn.disabled = false; btn.style.opacity = "1";
+  }
+}
+
+// ── Cartão de confirmação ──
+const IA_ROTULOS = {
+  nome:"Nome", tipo:"Tipo", status:"Status", data_inicio:"Data", data_fim:"Data de fim", hora_inicio:"Horário", hora_fim:"Horário de fim",
+  local_nome:"Local", endereco:"Endereço", cidade:"Cidade", estado:"UF", organizador:"Organizador (a)", publico_estimado:"Público estimado",
+  origem:"Onde viu", observacoes:"Observações", links:"Links", contatos:"Contatos",
+  cliente_nome:"Cliente", cliente_id:"Cliente (cadastro)", motorista_ids:"Motoristas", tipo_servico:"Tipo de serviço", evento_descricao:"Evento",
+  canal_recepcao:"Canal", origem_endereco:"Saída", destino_endereco:"Destino", data:"Data", horario_partida:"Saída às", horario_chegada:"Chegar às",
+  data_retorno:"Data da volta", horario_retorno:"Volta às", preco_cotado:"Preço cliente", preco_motorista:"Repasse motorista", distancia_km:"Distância (km)", motivo_perda:"Motivo",
+};
+function fmtDataBR(iso){ return /^\d{4}-\d{2}-\d{2}$/.test(iso||"") ? iso.split("-").reverse().join("/") : iso; }
+function valorPreenchido(v){ return !(v === "" || v === null || v === undefined || (Array.isArray(v) && !v.length)); }
+function fmtValorIA(chave, v){
+  if(chave === "links") return v.map(l=>`${escapeHtml(l.tipo)}: ${escapeHtml(l.url)}`).join("; ");
+  if(chave === "contatos") return v.map(c=>[c.nome, c.cargo, c.telefone, c.email].filter(Boolean).map(escapeHtml).join(" · ")).join("; ");
+  if(chave === "motorista_ids") return v.map(id=>escapeHtml((motoristas.find(m=>m.id===id)||{}).nome || "#"+id)).join(", ");
+  if(chave === "cliente_id") return escapeHtml((clientesTransporte.find(c=>c.id===v)||{}).nome || "#"+v);
+  if(/^data/.test(chave)) return fmtDataBR(v);
+  if(/^preco/.test(chave)) return "R$ " + Number(v).toFixed(2).replace(".", ",");
+  return escapeHtml(String(v));
+}
+function renderResultadoAssistente(acao, d){
+  const box = document.getElementById("ia-resultado");
+  if(acao === "nao_entendi"){
+    box.innerHTML = `<div class="ia-card"><h4>🤔 Preciso de mais detalhes</h4>
+      <div class="ia-resumo">${escapeHtml(d.mensagem||"")}</div>
+      ${(d.perguntas||[]).length ? `<ul>${d.perguntas.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>` : ""}
+      <div class="ia-aviso">Complete o texto acima e clique em Interpretar de novo.</div></div>`;
+    return;
+  }
+  const titulos = { criar_evento:"📅 Novo evento", editar_evento:"📅 Alterar evento", criar_viagem:"🚗 Nova viagem", editar_viagem:"🚗 Alterar viagem" };
+  const alvo = acao === "editar_evento" ? (eventos.find(e=>e.id===d.evento_id)||{}).nome
+             : acao === "editar_viagem" ? (()=>{ const v = viagens.find(x=>x.id===d.viagem_id); return v ? `#${v.id} · ${(clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome||"sem cliente"} · ${fmtDataBR(v.data)||""}` : null; })()
+             : null;
+  const ocultar = ["resumo","evento_id","viagem_id"];
+  const itens = Object.keys(d).filter(k=>!ocultar.includes(k) && valorPreenchido(d[k]) && !(k==="cliente_nome" && valorPreenchido(d.cliente_id)))
+    .map(k=>`<li><b>${IA_ROTULOS[k]||k}:</b> ${fmtValorIA(k, d[k])}</li>`).join("");
+  const avisos = [];
+  if((acao==="editar_evento" && !eventos.find(e=>e.id===d.evento_id)) || (acao==="editar_viagem" && !viagens.find(v=>v.id===d.viagem_id))) avisos.push("Não achei esse registro no CRM. Clique em Atualizar e tente de novo.");
+  if((acao==="criar_viagem" || acao==="editar_viagem") && !valorPreenchido(d.cliente_id) && valorPreenchido(d.cliente_nome)) avisos.push(`"${escapeHtml(d.cliente_nome)}" não está no cadastro de clientes: escolha a cliente no modal (ou cadastre antes em Clientes).`);
+  if(acao==="criar_viagem" && !valorPreenchido(d.cliente_id) && !valorPreenchido(d.cliente_nome)) avisos.push("Nenhuma cliente identificada: escolha no modal.");
+  box.innerHTML = `<div class="ia-card"><h4>${titulos[acao]||acao}${alvo ? ` <span style="color:var(--text2); font-weight:400;">· ${escapeHtml(alvo)}</span>` : ""}</h4>
+    <div class="ia-resumo">${escapeHtml(d.resumo||"")}</div>
+    ${itens ? `<ul>${itens}</ul>` : `<div class="ia-aviso">Nenhum campo identificado.</div>`}
+    ${avisos.map(a=>`<div class="ia-aviso">⚠️ ${a}</div>`).join("")}
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn ghost small" type="button" onclick="document.getElementById('ia-resultado').innerHTML=''; iaAssistAcao=null;">Cancelar</button>
+      <button class="btn small" type="button" onclick="confirmarAssistente()">✅ Confirmar e conferir</button>
+    </div>
+    <div style="font-size:11.5px; color:var(--text3); margin-top:6px;">Ao confirmar, o cadastro abre preenchido (campos em rosa vieram da IA). Nada é salvo até você clicar em Salvar lá.</div>
+  </div>`;
+}
+
+// ── Aplicar: abre o modal normal já preenchido e destaca o que veio da IA ──
+function iaSet(id, valor){
+  if(!valorPreenchido(valor)) return;
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(el.tagName === "SELECT" && ![...el.options].some(o=>o.value === String(valor))) return; // valor fora da lista: não força
+  el.value = valor;
+  el.classList.add("ia-alterado");
+}
+function iaLimparDestaques(){ document.querySelectorAll(".ia-alterado").forEach(el=>el.classList.remove("ia-alterado")); }
+function confirmarAssistente(){
+  if(!iaAssistAcao) return;
+  const { acao, dados: d } = iaAssistAcao;
+  iaLimparDestaques();
+  if(acao === "criar_evento" || acao === "editar_evento"){
+    if(acao === "editar_evento" && !eventos.find(e=>e.id===d.evento_id)){ statusAssistente("Evento não encontrado. Clique em Atualizar e tente de novo.", "c-red"); return; }
+    closeAssistenteModal();
+    irParaEventos();
+    openEventoModal(acao === "editar_evento" ? d.evento_id : null);
+    iaSet("ev-nome", d.nome); iaSet("ev-tipo", d.tipo); iaSet("ev-status", d.status);
+    iaSet("ev-data-inicio", d.data_inicio); iaSet("ev-data-fim", d.data_fim);
+    iaSet("ev-hora-inicio", d.hora_inicio); iaSet("ev-hora-fim", d.hora_fim);
+    iaSet("ev-local-nome", d.local_nome); iaSet("ev-endereco", d.endereco);
+    iaSet("ev-cidade", d.cidade); iaSet("ev-estado", d.estado);
+    iaSet("ev-organizador", d.organizador); iaSet("ev-publico", d.publico_estimado); iaSet("ev-origem", d.origem);
+    if(valorPreenchido(d.observacoes)){
+      const obs = document.getElementById("ev-observacoes");
+      obs.value = acao === "editar_evento" && obs.value.trim() ? obs.value.trim() + "\n" + d.observacoes : d.observacoes;
+      obs.classList.add("ia-alterado");
+    }
+    if(acao === "criar_evento"){
+      (d.links||[]).forEach(l=>{ if(l.url) eventoLinksPendentes.push({ tipo: l.tipo || "Outro", url: typeof normalizarLink === "function" ? normalizarLink(l.url) : l.url }); });
+      (d.contatos||[]).forEach(c=>{ if(c.nome || c.telefone) eventoContatosPendentes.push({ nome: c.nome||"", cargo: c.cargo||"", telefone: c.telefone||"", email: c.email||"" }); });
+      renderLinksEvento(); renderContatosEvento();
+    } else {
+      // Em edição, link/contato novo entra pelo formulário rápido do modal, pra ela conferir antes de gravar.
+      const l = (d.links||[])[0]; if(l && l.url){ iaSet("evl-url", l.url); iaSet("evl-tipo", l.tipo); }
+      const c = (d.contatos||[])[0]; if(c && (c.nome||c.telefone)){ iaSet("evc-nome", c.nome); iaSet("evc-cargo", c.cargo); iaSet("evc-telefone", c.telefone); iaSet("evc-email", c.email); }
+    }
+    showToast("Confira os campos em rosa e clique em Salvar");
+    return;
+  }
+  if(acao === "criar_viagem" || acao === "editar_viagem"){
+    if(acao === "editar_viagem" && !viagens.find(v=>v.id===d.viagem_id)){ statusAssistente("Viagem não encontrada. Clique em Atualizar e tente de novo.", "c-red"); return; }
+    closeAssistenteModal();
+    const nav = document.querySelector('.nav-item[data-tab="transporte"]'); if(nav) nav.click();
+    mostrarSubTab("viagens");
+    openViagemModal(acao === "editar_viagem" ? d.viagem_id : null);
+    iaSet("vg-cliente", d.cliente_id);
+    if((d.motorista_ids||[]).length){
+      document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]").forEach(cb=>{
+        if(d.motorista_ids.includes(Number(cb.value))){ cb.checked = true; cb.parentElement.classList.add("ia-alterado"); }
+      });
+    }
+    iaSet("vg-tipo-servico", d.tipo_servico); iaSet("vg-evento-descricao", d.evento_descricao); iaSet("vg-canal", d.canal_recepcao);
+    iaSet("vg-origem-endereco", d.origem_endereco); iaSet("vg-destino-endereco", d.destino_endereco);
+    iaSet("vg-data", d.data); iaSet("vg-horario-partida", d.horario_partida); iaSet("vg-horario-chegada", d.horario_chegada);
+    iaSet("vg-data-retorno", d.data_retorno); iaSet("vg-horario-retorno", d.horario_retorno);
+    if(valorPreenchido(d.distancia_km)){ iaSet("vg-distancia-km", d.distancia_km); if(typeof recalcularCotacao === "function") recalcularCotacao(); }
+    iaSet("vg-preco-cotado", d.preco_cotado); iaSet("vg-preco-motorista", d.preco_motorista);
+    iaSet("vg-viagem-status", d.status); iaSet("vg-motivo-perda", d.motivo_perda);
+    recalcularComissaoCotacao(); atualizarStatusOferta(); marcarObrigatoriosViagem();
+    showToast("Confira os campos em rosa e clique em Salvar");
+    return;
+  }
+  statusAssistente("Ação ainda não suportada: " + acao, "c-amber");
 }
 
 // ===== LEITURA DE CNH/CRLV COM IA =====
