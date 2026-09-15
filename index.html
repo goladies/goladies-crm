@@ -356,6 +356,7 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .kanban-card.urg-atraso{border-left-color:#D62839; background:var(--c-red-bg); animation:pulseAtraso 1.6s infinite;}
 @keyframes pulseAtraso{0%,100%{box-shadow:0 1px 4px rgba(214,40,57,.15);} 50%{box-shadow:0 1px 12px rgba(214,40,57,.5);}}
 .kc-alerta{display:block; font-size:10.5px; font-weight:800; margin-bottom:4px;}
+.kc-pix{display:inline-block; font-size:10.5px; font-weight:800; margin-bottom:4px; padding:2px 7px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber);}
 .kc-alerta.urg-60{color:#F2A900;}
 .kc-alerta.urg-30{color:#E86A1C;}
 .kc-alerta.urg-15,.kc-alerta.urg-atraso{color:var(--c-red);}
@@ -1437,6 +1438,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
       <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
       <div class="full"><label>Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
+      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Pode pagar depois (pós-pago) <span style="color:var(--muted);">(cliente de confiança: a oferta abre pras motoristas sem esperar o Pix, e o Pix é pedido quando a viagem termina)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
     </div>
     <div class="modal-actions">
@@ -1453,7 +1455,7 @@ tr.tr-click{cursor:pointer;}
       <button class="icon-btn" type="button" onclick="closeModal('viagem-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <div class="formgrid">
-      <div class="full"><label>Cliente</label><select id="vg-cliente"></select></div>
+      <div class="full"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta()"></select></div>
       <div class="full">
         <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
         <div id="vg-motoristas-wrap" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
@@ -1501,6 +1503,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preco-confirmado" style="width:auto;" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
+      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
       <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
       <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preparacao" style="width:auto;"> Preparação pré-viagem confirmada</label></div>
@@ -1512,19 +1515,23 @@ tr.tr-click{cursor:pointer;}
           <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()">📨 Reenviar código pra cliente</button>
           <span id="vg-reenvio-codigo-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
         </div>
-        <div id="vg-reenvio-oferta" style="display:none;">
+        <div id="vg-reenvio-oferta" style="display:none; margin-bottom:8px;">
           <button type="button" class="btn secondary small" onclick="reenviarAvisoOfertas()">📨 Reenviar aviso pras motoristas</button>
           <span id="vg-reenvio-oferta-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+        </div>
+        <div id="vg-reenvio-pix" style="display:none;">
+          <button type="button" class="btn secondary small" onclick="reenviarPixCliente()">📨 Reenviar pedido de Pix pra cliente</button>
+          <span id="vg-reenvio-pix-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
         </div>
       </div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-grupo-whats" style="width:auto;"> Grupo de WhatsApp criado</label></div>
     </div>
 
-    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💵 Pagamento da cliente à Go Ladies</h4>
+    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💵 Pagamento da cliente à Go Ladies <span style="font-weight:400; color:var(--muted);">(Pix na sua conta; marcar Pago avisa a cliente e abre a oferta pras motoristas)</span></h4>
     <div class="formgrid">
       <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(realizado — previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
       <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
-      <div><label>Status do pagamento</label><select id="vg-lid-status"><option>Pendente</option><option>Pago</option></select></div>
+      <div><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
       <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
       <div class="full"><label>Notas</label><textarea id="vg-lid-notas" rows="2"></textarea></div>
     </div>
@@ -4414,6 +4421,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-segmento").value = c.segmento||"";
   document.getElementById("ct-origem").value = c.origem||"Indicação";
   document.getElementById("ct-familiares").value = c.familiares||"";
+  document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
@@ -4429,6 +4437,7 @@ async function saveClienteTransporte(){
     segmento: document.getElementById("ct-segmento").value || null,
     origem: document.getElementById("ct-origem").value,
     familiares: document.getElementById("ct-familiares").value,
+    pos_pago: document.getElementById("ct-pos-pago").checked,
     notas: document.getElementById("ct-notas").value,
   };
   const { error } = editingClienteTransporteId
@@ -4529,9 +4538,22 @@ function renderMotoristasCheckboxes(selecionados){
   const wrap = document.getElementById("vg-motoristas-wrap");
   wrap.innerHTML = motoristas.map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${selecionados.includes(m.id)?"checked":""} onchange="atualizarStatusOferta()"> ${escapeHtml(m.nome)}</label>`).join("") || `<span style="color:var(--muted); font-size:12.5px;">Nenhuma motorista cadastrada ainda</span>`;
 }
+// Espelha no CRM a regra "pagamento_cliente_ok" do banco
+// (schema_pagamento_pix_cliente.sql): viagem sem preço não precisa de
+// pagamento; pós-pago (cliente ou viagem) libera; senão precisa de um
+// pagamento da cliente marcado como Pago.
+function pagamentoClienteOk(v){
+  if(!v) return true;
+  if(v.preco_cotado == null || Number(v.preco_cotado) <= 0) return true;
+  if(v.liberar_sem_pagamento) return true;
+  const c = clientesTransporte.find(x=>x.id===v.cliente_id);
+  if(c && c.pos_pago) return true;
+  return pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
+}
 // Espelha no CRM a regra "oferta_liberada_para_motoristas" do banco
 // (schema_oferta_apos_confirmacao_preco.sql): enquanto tiver preço cotado sem
-// confirmação da cliente, as motoristas marcadas não veem a corrida.
+// confirmação da cliente, as motoristas marcadas não veem a corrida. E, desde
+// schema_pagamento_pix_cliente.sql, também não veem enquanto o Pix não cair.
 function atualizarStatusOferta(){
   const el = document.getElementById("vg-oferta-status");
   if(!el) return;
@@ -4539,18 +4561,27 @@ function atualizarStatusOferta(){
   const cotado = document.getElementById("vg-preco-cotado").value;
   const confirmado = document.getElementById("vg-preco-confirmado").checked;
   const marcadas = document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked").length;
+  // Estado do pagamento lido dos campos do próprio modal (o que ela está
+  // vendo agora), não do banco, pra refletir a mudança antes de salvar.
+  const clienteSel = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
+  const pagoOk = cotado === "" || Number(cotado) <= 0
+    || document.getElementById("vg-liberar-sem-pgto").checked
+    || !!(clienteSel && clienteSel.pos_pago)
+    || document.getElementById("vg-lid-status").value === "Pago";
   if(status === "Aguardando cliente confirmar preço"){
     el.textContent = "🔒 Oferta fechada: esperando a cliente responder o preço no WhatsApp. Quem você marcar aqui só vê a corrida quando ela aceitar.";
   } else if(status === "Preço recusado pela cliente"){
     el.textContent = "🔒 Oferta fechada: a cliente pediu ajuste. Corrija o valor e volte o status pra 'Aguardando cliente confirmar preço' pra reenviar.";
   } else if(status === "Cancelada"){
     el.textContent = "🔒 Viagem cancelada, nenhuma motorista vê essa oferta.";
-  } else if(status === "Aguardando aceite de motorista"){
-    el.textContent = "⏳ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas já foram avisadas e" : "a motorista marcada já foi avisada e") + " a corrida está esperando alguém clicar em Aceitar. Quando isso acontecer o status vira 'Confirmada' sozinho.";
   } else if(cotado !== "" && !confirmado){
     el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção de cotação pra liberar agora.";
+  } else if(!pagoOk){
+    el.textContent = "💵 Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, marque 'Liberar oferta sem esperar o Pix'.";
+  } else if(status === "Aguardando aceite de motorista"){
+    el.textContent = "⏳ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas já foram avisadas e" : "a motorista marcada já foi avisada e") + " a corrida está esperando alguém clicar em Aceitar. Quando isso acontecer o status vira 'Confirmada' sozinho.";
   } else if(marcadas){
-    el.textContent = "✅ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas marcadas veem" : "a motorista marcada vê") + " essa corrida no painel e recebe aviso no WhatsApp em até 3 min.";
+    el.textContent = "✅ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas marcadas veem" : "a motorista marcada vê") + " essa corrida no painel e recebe aviso no WhatsApp em até 1 min.";
   } else {
     el.textContent = "Marque agora quem pode pegar essa corrida. A oferta abre sozinha pra elas quando a cliente confirmar o valor.";
   }
@@ -4597,8 +4628,15 @@ function renderTransporteViagens(){
         const cliente = clientesTransporte.find(c=>c.id===v.cliente_id);
         const nomesMotoristas = nomesMotoristasViagem(v);
         const urg = urgenciaViagem(v);
+        // Selo do Pix: pré-paga esperando o Pix cair (oferta fechada) ou
+        // viagem concluída sem pagamento lançado.
+        let pix = "";
+        if(v.preco_cotado && Number(v.preco_cotado) > 0 && !pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago")){
+          if(v.status === "Concluída") pix = `<span class="kc-pix">💵 Pagamento pendente</span>`;
+          else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada") pix = `<span class="kc-pix">💵 Aguardando Pix</span>`;
+        }
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
-          ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}
+          ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-top">#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</div>
           <div style="color:var(--muted);">${escapeHtml(nomesMotoristas || "Sem motorista")}</div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
@@ -4646,6 +4684,7 @@ function openViagemModal(id){
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
+  document.getElementById("vg-liberar-sem-pgto").checked = !!v.liberar_sem_pagamento;
   const statusPreco = document.getElementById("vg-status-preco-cliente");
   if(v.preco_confirmado_cliente){
     statusPreco.style.display = "block";
@@ -4733,6 +4772,7 @@ async function saveViagem(){
     preco_cotado: document.getElementById("vg-preco-cotado").value === "" ? null : Number(document.getElementById("vg-preco-cotado").value),
     preco_motorista: document.getElementById("vg-preco-motorista").value === "" ? null : Number(document.getElementById("vg-preco-motorista").value),
     preco_confirmado_cliente: document.getElementById("vg-preco-confirmado").checked,
+    liberar_sem_pagamento: document.getElementById("vg-liberar-sem-pgto").checked,
     // Marcar na mão libera a oferta na hora; desmarcar volta a travar. Se a
     // cliente já tinha confirmado pelo WhatsApp, preserva a data original.
     preco_confirmado_em: (()=>{
@@ -4844,23 +4884,48 @@ function renderReenvios(id, v){
     document.getElementById("vg-reenvio-oferta-info").textContent = `${semResposta} · ${estado}`;
   }
 
-  wrap.style.display = (mostraCodigo || mostraOferta) ? "block" : "none";
+  // Pedido de Pix: aparece enquanto a viagem tiver preço e nenhum pagamento
+  // Pago. Descreve em que pé está o envio automático (mesmo padrão do código).
+  const boxPix = document.getElementById("vg-reenvio-pix");
+  const pago = pagamentosCliente.some(p=>p.viagem_id===id && p.status==="Pago");
+  const clienteV = clientesTransporte.find(c=>c.id===v.cliente_id);
+  const posPago = !!(v.liberar_sem_pagamento || (clienteV && clienteV.pos_pago));
+  // Pré-paga: o pedido existe desde a confirmação do preço. Pós-paga: só
+  // depois de concluída (antes disso o n8n não mandaria mesmo).
+  const momentoPix = posPago ? v.status === "Concluída" : !!v.preco_confirmado_cliente;
+  const mostraPix = !!(ativa && v.preco_cotado && Number(v.preco_cotado) > 0 && !pago && momentoPix);
+  boxPix.style.display = mostraPix ? "block" : "none";
+  if(mostraPix){
+    document.getElementById("vg-reenvio-pix-info").textContent =
+      descricaoEnvioCodigo(v.pix_solicitado_em, v.pix_envio_tentativas);
+  }
+
+  wrap.style.display = (mostraCodigo || mostraOferta || mostraPix) ? "block" : "none";
+}
+async function reenviarPixCliente(){
+  if(!editingViagemId) return;
+  if(!confirm("Reenviar pra cliente o pedido de Pix com o valor da viagem?\n\nEle não sai agora: o envio automático manda em até 1 minuto.")) return;
+  const { error } = await sb.rpc("reenviar_pix_cliente", { p_viagem_id: editingViagemId });
+  if(error){ alert("Erro ao liberar o reenvio: " + error.message); return; }
+  showToast("Reenvio liberado! A cliente recebe em até 1 minuto.");
+  closeModal("viagem-modal");
+  await recarregarTabelas("viagens");
 }
 async function reenviarCodigoCliente(){
   if(!editingViagemId) return;
-  if(!confirm("Reenviar pra cliente a mensagem com o código, o carro e a placa?\n\nEla não sai agora: o envio automático manda em até 5 minutos.")) return;
+  if(!confirm("Reenviar pra cliente a mensagem com o código, o carro e a placa?\n\nEla não sai agora: o envio automático manda em até 1 minuto.")) return;
   const { error } = await sb.rpc("reenviar_codigo_cliente", { p_viagem_id: editingViagemId });
   if(error){ alert("Erro ao liberar o reenvio: " + error.message); return; }
-  showToast("Reenvio liberado! A cliente recebe em até 5 minutos.");
+  showToast("Reenvio liberado! A cliente recebe em até 1 minuto.");
   closeModal("viagem-modal");
   await recarregarTabelas("viagens");
 }
 async function reenviarAvisoOfertas(){
   if(!editingViagemId) return;
-  if(!confirm("Reenviar o aviso de corrida pras motoristas que ainda não responderam?\n\nEle não sai agora: o envio automático manda em até 3 minutos.")) return;
+  if(!confirm("Reenviar o aviso de corrida pras motoristas que ainda não responderam?\n\nEle não sai agora: o envio automático manda em até 1 minuto.")) return;
   const { error } = await sb.rpc("reenviar_aviso_ofertas", { p_viagem_id: editingViagemId });
   if(error){ alert("Erro ao liberar o reenvio: " + error.message); return; }
-  showToast("Reenvio liberado! As motoristas recebem em até 3 minutos.");
+  showToast("Reenvio liberado! As motoristas recebem em até 1 minuto.");
   closeModal("viagem-modal");
   await recarregarTabelas("viagem_ofertas");
 }
