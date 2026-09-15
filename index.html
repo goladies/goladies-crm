@@ -4112,8 +4112,12 @@ async function usarArquivoAssistente(arquivo){
   const box = document.getElementById("ia-arquivo-box");
   const prev = document.getElementById("ia-arquivo-prev");
   document.getElementById("ia-arquivo-nome").textContent = iaAssistArquivo.name + " (" + Math.round(iaAssistArquivo.size/1024) + " KB)";
-  if(iaAssistArquivo.type.startsWith("image/")){ prev.src = URL.createObjectURL(iaAssistArquivo); prev.style.display = "block"; }
-  else { prev.style.display = "none"; }
+  if(iaAssistArquivo.type.startsWith("image/")){
+    // Data URL em vez de createObjectURL: o Safari do iPhone mostrava a miniatura em branco.
+    const leitor = new FileReader();
+    leitor.onload = ()=>{ prev.src = leitor.result; prev.style.display = "block"; };
+    leitor.readAsDataURL(iaAssistArquivo);
+  } else { prev.style.display = "none"; }
   box.style.display = "flex";
   statusAssistente("Arquivo pronto. Se quiser, escreva o que fazer com ele e clique em Interpretar.");
 }
