@@ -303,6 +303,16 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .campo-moeda .prefixo{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:13px; pointer-events:none;}
 .campo-moeda input{padding-left:30px !important;}
 .formgrid select,.formgrid input,.formgrid textarea{width:100%;}
+/* Campos obrigatórios (modal de Viagem): rótulo rosa com asterisco e borda rosa;
+   enquanto estiver vazio, vira vermelho pra saltar aos olhos */
+.formgrid .obrig>label{color:var(--rosa-texto); font-weight:600;}
+.formgrid .obrig>label::after{content:" *";}
+.formgrid .obrig>input,.formgrid .obrig>select,.formgrid .obrig .campo-moeda>input,.formgrid .obrig>.obrig-box{border-color:var(--rosa); box-shadow:0 0 0 1px var(--rosa) inset;}
+.formgrid .obrig.vazio>label{color:var(--c-red);}
+.formgrid .obrig.vazio>input,.formgrid .obrig.vazio>select,.formgrid .obrig.vazio .campo-moeda>input,.formgrid .obrig.vazio>.obrig-box{border-color:var(--c-red); box-shadow:0 0 0 1px var(--c-red) inset; background:var(--c-red-bg);}
+.legenda-obrig{font-size:12px; color:var(--text3); margin:6px 0 12px;}
+.legenda-obrig b{color:var(--rosa-texto);}
+.legenda-obrig i{color:var(--c-red); font-style:normal; font-weight:600;}
 .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
 .chartwrap{height:230px;}
 .badge-seal{background:var(--rosa-bg); color:var(--rosa-texto); border:1px solid var(--rosa-borda); padding:1px 8px; border-radius:20px; font-size:11px; font-weight:600;}
@@ -1454,24 +1464,25 @@ tr.tr-click{cursor:pointer;}
       <h3 id="viagem-modal-title" style="margin:0;">Nova viagem</h3>
       <button class="icon-btn" type="button" onclick="closeModal('viagem-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
+    <p class="legenda-obrig"><b>* Em rosa</b> = obrigatório pra viagem rodar; <i>vermelho</i> = ainda está vazio.</p>
     <div class="formgrid">
-      <div class="full"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta()"></select></div>
-      <div class="full">
+      <div class="full obrig"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta()"></select></div>
+      <div class="full obrig">
         <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
-        <div id="vg-motoristas-wrap" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
+        <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
         <div id="vg-oferta-status" style="margin-top:6px; font-size:12.5px; color:var(--muted);"></div>
       </div>
       <div><label>Tipo de serviço</label><select id="vg-tipo-servico"></select></div>
       <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Só se Tipo de serviço = Evento"></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
       <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
-      <div><label>Status</label><select id="vg-viagem-status" onchange="atualizarStatusOferta()"></select></div>
-      <div class="full"><label>Endereço de origem</label><input type="text" id="vg-origem-endereco"></div>
-      <div class="full"><label>Endereço de destino</label><input type="text" id="vg-destino-endereco"></div>
+      <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="atualizarStatusOferta()"></select></div>
+      <div class="full obrig"><label>Endereço de origem</label><input type="text" id="vg-origem-endereco"></div>
+      <div class="full obrig"><label>Endereço de destino</label><input type="text" id="vg-destino-endereco"></div>
       <div class="full"><button type="button" class="btn ghost" style="font-size:12.5px;" onclick="abrirRotaMaps()">📍 Ver rota no Google Maps</button></div>
-      <div><label>Data</label><input type="date" id="vg-data"></div>
-      <div><label>Horário previsto de partida</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
-      <div><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"></div>
+      <div class="obrig"><label>Data</label><input type="date" id="vg-data"></div>
+      <div class="obrig"><label>Horário previsto de partida</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
+      <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"></div>
       <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
       <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
       <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno"></div>
@@ -1496,11 +1507,11 @@ tr.tr-click{cursor:pointer;}
         </div>
       </div>
       <div><label>Código de início <span style="font-weight:400; color:var(--muted);">(gerado quando a motorista confirma)</span></label><input type="text" id="vg-codigo-inicio" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div><label>Distância (km)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
+      <div class="obrig"><label>Distância (km)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
       <div><label>Tarifa fixa</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
       <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
-      <div><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
-      <div><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
+      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
+      <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preco-confirmado" style="width:auto;" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
@@ -4741,10 +4752,25 @@ function openViagemModal(id){
   document.getElementById("vg-pg-notas").value = pg.notas || "";
   recalcularComissaoCotacao();
   atualizarStatusOferta();
+  marcarObrigatoriosViagem();
 
   document.getElementById("btn-excluir-viagem").style.display = id ? "inline-block" : "none";
   document.getElementById("viagem-modal").classList.add("open");
 }
+// Só visual (não trava o Salvar): marca de vermelho os campos obrigatórios
+// que ainda estão vazios. Viagem que chega pelo site entra sem duração/
+// distância, então ela precisa conseguir salvar aos poucos.
+function marcarObrigatoriosViagem(){
+  document.querySelectorAll("#viagem-modal .obrig").forEach(div=>{
+    let vazio;
+    const box = div.querySelector(".obrig-box");
+    if(box) vazio = !box.querySelector("input[type=checkbox]:checked");
+    else { const c = div.querySelector("input,select"); vazio = !c || c.value === ""; }
+    div.classList.toggle("vazio", vazio);
+  });
+}
+document.getElementById("viagem-modal").addEventListener("input", marcarObrigatoriosViagem);
+document.getElementById("viagem-modal").addEventListener("change", marcarObrigatoriosViagem);
 async function saveViagem(){
   const payload = {
     cliente_id: Number(document.getElementById("vg-cliente").value) || null,
