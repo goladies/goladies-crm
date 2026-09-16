@@ -441,6 +441,67 @@ tr.tr-click{cursor:pointer;}
 .cal-ev{display:block; border-radius:5px; padding:2px 5px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;}
 .cal-ev.cont{margin-left:-5px; border-radius:0 5px 5px 0;}
 .cal-mais{font-size:10px; color:var(--text3);}
+
+/* ---------- AGENDA VISUAL (estilo Google Agenda) ---------- */
+/* Um componente só (renderAgenda), usado no Dashboard (compacta) e em Eventos. */
+.ag{--ag-hora:44px; --ag-col-h:48px; font-size:12px;}
+.ag.compacta{--ag-hora:36px;}
+.ag.compacta .cal-day{min-height:64px;}
+.ag-head{display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; margin-bottom:12px;}
+.ag-nav{display:flex; gap:4px; align-items:center;}
+.ag-nav .btn{padding:5px 9px; font-size:13px; line-height:1;}
+.ag-titulo{font-size:15px; font-weight:700; flex:1; min-width:150px;}
+.ag-visoes{display:flex; gap:2px; background:var(--bg-input); border:1px solid var(--border2); border-radius:20px; padding:3px;}
+.ag-visoes button{background:transparent; border:0; color:var(--text2); padding:4px 11px; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s;}
+.ag-visoes button:hover{color:var(--text1);}
+.ag-visoes button.active{background:var(--rosa); color:#fff;}
+/* Semana / Dia: cabeçalho de dias + faixa "dia inteiro" + grade de horas */
+.ag-sem{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-card2);}
+.ag-sem-cab, .ag-inteiro, .ag-corpo-grid{display:grid; grid-template-columns:var(--ag-col-h) repeat(var(--ag-cols),minmax(0,1fr));}
+.ag-sem-cab{border-bottom:1px solid var(--border);}
+.ag-dia-cab{text-align:center; padding:6px 2px 4px; border-left:1px solid var(--border); cursor:pointer;}
+.ag-dia-cab:hover{background:var(--bg-hover);}
+.ag-dia-cab small{display:block; font-size:10px; text-transform:uppercase; color:var(--text3); font-weight:700; letter-spacing:.03em;}
+.ag-dia-cab b{display:inline-flex; width:26px; height:26px; border-radius:50%; align-items:center; justify-content:center; font-size:14px; margin-top:2px;}
+.ag-dia-cab.hoje small{color:var(--rosa-texto);}
+.ag-dia-cab.hoje b{background:var(--rosa); color:#fff;}
+.ag-inteiro{border-bottom:1px solid var(--border);}
+.ag-inteiro .ag-rotulo{font-size:10px; color:var(--text3); padding:4px 6px 4px 0; text-align:right; align-self:center;}
+.ag-inteiro-grid{grid-column:2 / -1; display:grid; grid-template-columns:repeat(var(--ag-cols),minmax(0,1fr)); grid-auto-flow:row dense; gap:2px 0; padding:3px 0; min-height:10px;}
+.ag-ev-inteiro{margin:0 2px; border-radius:5px; padding:2px 6px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; min-width:0;}
+.ag-ev-inteiro.cont-esq{margin-left:0; border-radius:0 5px 5px 0;}
+.ag-ev-inteiro.cont-dir{margin-right:0; border-radius:5px 0 0 5px;}
+.ag-corpo{max-height:540px; overflow-y:auto; position:relative;}
+.ag.compacta .ag-corpo{max-height:380px;}
+.ag-horas{position:relative;}
+.ag-horas span{display:block; height:var(--ag-hora); font-size:10px; color:var(--text3); text-align:right; padding-right:6px; transform:translateY(-6px);}
+.ag-col{position:relative; border-left:1px solid var(--border); height:calc(var(--ag-hora) * 24); cursor:pointer;
+  background-image:repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px var(--ag-hora));}
+.ag-col:hover{background-color:var(--bg-hover);}
+.ag-col.hoje{background-color:rgba(255,45,156,.06);}
+.ag-bloco{position:absolute; border-radius:6px; padding:3px 5px; color:#fff; font-size:11px; font-weight:600; overflow:hidden; cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.3); border-left:3px solid rgba(255,255,255,.55); line-height:1.25; z-index:2; box-sizing:border-box;}
+.ag-bloco:hover{filter:brightness(1.1); z-index:4;}
+.ag-bloco small{display:block; font-weight:500; opacity:.9; font-size:10px;}
+.ag-bloco.curto{padding:1px 5px; white-space:nowrap; text-overflow:ellipsis;}
+.ag-agora{position:absolute; left:0; right:0; height:2px; background:#EA4335; z-index:3; pointer-events:none;}
+.ag-agora::before{content:""; position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#EA4335;}
+/* Agenda (lista cronológica) */
+.ag-lista-dia{display:grid; grid-template-columns:64px 1fr; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+.ag-lista-dia:last-child{border-bottom:none;}
+.ag-lista-data{text-align:center; cursor:pointer;}
+.ag-lista-data b{display:inline-flex; width:34px; height:34px; border-radius:50%; align-items:center; justify-content:center; font-size:17px;}
+.ag-lista-data small{display:block; font-size:10px; text-transform:uppercase; color:var(--text3); font-weight:700; letter-spacing:.03em;}
+.ag-lista-data.hoje b{background:var(--rosa); color:#fff;}
+.ag-lista-ev{display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:8px; cursor:pointer; min-width:0;}
+.ag-lista-ev:hover{background:var(--bg-hover);}
+.ag-ponto{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+.ag-lista-ev .ag-hora{width:96px; color:var(--text3); font-size:11.5px; flex-shrink:0;}
+.ag-lista-ev .ag-nome{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ag-lista-ev .ag-nome small{color:var(--text3); font-weight:400;}
+.ag-vazio{color:var(--text3); text-align:center; padding:22px 10px; font-size:12.5px;}
+.ag-legenda{display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; font-size:11px; color:var(--text3);}
+.ag-legenda span{display:inline-flex; align-items:center; gap:5px;}
 .ev-lembrete{font-size:11px; color:var(--c-amber); font-weight:600;}
 .ev-lembrete.vencido{color:var(--c-red);}
 .ev-arquivo{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
@@ -526,6 +587,20 @@ tr.tr-click{cursor:pointer;}
   .cal-day{min-height:54px; padding:2px;}
   .cal-ev{font-size:0; padding:0; height:6px; border-radius:3px;}
   .cal-dow{font-size:9px;}
+  .ag{--ag-col-h:34px;}
+  .ag-titulo{font-size:13.5px; flex-basis:100%; order:3;}
+  .ag-visoes{margin-left:auto;}
+  .ag-visoes button{padding:4px 8px; font-size:11px;}
+  .ag-dia-cab small{font-size:8.5px;}
+  .ag-dia-cab b{width:22px; height:22px; font-size:12px;}
+  .ag-horas span{font-size:9px; padding-right:3px;}
+  .ag-bloco{font-size:9.5px; padding:2px 3px; border-left-width:2px;}
+  .ag-bloco small{display:none;}
+  .ag-ev-inteiro{font-size:9.5px; padding:1px 4px;}
+  .ag-lista-dia{grid-template-columns:48px 1fr; gap:6px;}
+  .ag-lista-ev{flex-wrap:wrap; gap:4px 8px;}
+  .ag-lista-ev .ag-hora{width:auto;}
+  .ag-lista-ev .ag-nome{flex-basis:100%; white-space:normal;}
 }
 @media (max-width:480px){
   .cards{grid-template-columns:1fr 1fr;}
@@ -654,6 +729,7 @@ tr.tr-click{cursor:pointer;}
           <button class="btn secondary small" type="button" onclick="irParaEventos()">Ver agenda completa</button>
         </div>
         <table class="tbl"><thead><tr><th>Evento</th><th>Quando</th><th>Cidade</th><th>Status</th><th>Lembrete</th></tr></thead><tbody id="dash-eventos"></tbody></table>
+        <div id="agenda-dash" class="ag compacta" style="margin-top:18px;"></div>
       </div>
       <div class="dash-grid">
         <div class="panel">
@@ -875,16 +951,8 @@ tr.tr-click{cursor:pointer;}
           </table>
         </div>
         <div id="eventos-visao-calendario" class="panel" style="display:none;">
-          <div class="cal-head">
-            <button class="btn ghost small" type="button" onclick="mudarMesCalendario(-1)">‹ Anterior</button>
-            <strong id="cal-titulo"></strong>
-            <div style="display:flex; gap:6px;">
-              <button class="btn ghost small" type="button" onclick="irMesAtualCalendario()">Hoje</button>
-              <button class="btn ghost small" type="button" onclick="mudarMesCalendario(1)">Próximo ›</button>
-            </div>
-          </div>
-          <div class="cal-grid" id="cal-grid"></div>
-          <p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Clique num evento pra abrir o cadastro. Clique num dia vazio pra criar um evento naquela data.</p>
+          <div id="agenda-eventos" class="ag"></div>
+          <p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Clique num evento pra abrir o cadastro. Clique num dia ou horário vazio pra criar um evento ali.</p>
         </div>
       </div>
     </div>
@@ -2890,6 +2958,8 @@ function mostrarSubTab(nome){
   document.querySelectorAll("#tab-transporte .subnav-item[data-subtab]").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-transporte [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
+  // A agenda visual precisa estar visível pra rolar a grade de horas até a manhã
+  if(nome==="eventos" && eventosVisao==="calendario") renderEventos();
 }
 
 function mostrarSubTabFinanceiro(nome){
@@ -5489,7 +5559,6 @@ function lembreteEventoHtml(e){
 }
 
 let eventosVisao = "lista";
-let calMesAtual = (()=>{ const d = new Date(); return { ano: d.getFullYear(), mes: d.getMonth() }; })();
 
 function mostrarVisaoEventos(v){
   eventosVisao = v;
@@ -5498,16 +5567,18 @@ function mostrarVisaoEventos(v){
   document.getElementById("eventos-visao-calendario").style.display = v==="calendario" ? "block" : "none";
   renderEventos();
 }
-function mudarMesCalendario(delta){
-  let m = calMesAtual.mes + delta, a = calMesAtual.ano;
-  if(m < 0){ m = 11; a--; } if(m > 11){ m = 0; a++; }
-  calMesAtual = { ano: a, mes: m };
-  renderEventos();
-}
-function irMesAtualCalendario(){
-  const d = new Date();
-  calMesAtual = { ano: d.getFullYear(), mes: d.getMonth() };
-  renderEventos();
+// Filtros de status/tipo/cidade valem também na agenda visual; mês e "passados"
+// não (a navegação da agenda já é por período).
+function eventosFiltradosAgenda(){
+  const statusF = document.getElementById("filter-evento-status").value;
+  const tipoF = document.getElementById("filter-evento-tipo").value;
+  const cidadeF = document.getElementById("filter-evento-cidade").value;
+  return eventos.filter(e=>{
+    if(statusF && e.status!==statusF) return false;
+    if(tipoF && e.tipo!==tipoF) return false;
+    if(cidadeF && (e.cidade||"").trim()!==cidadeF) return false;
+    return true;
+  });
 }
 function irParaEventos(){
   const nav = document.querySelector('.nav-item[data-tab="transporte"]');
@@ -5552,15 +5623,7 @@ function renderEventos(){
   });
 
   if(eventosVisao === "calendario"){
-    // No calendário o filtro de mês não faz sentido (a navegação já é por mês),
-    // e passados aparecem sempre, senão o mês anterior fica vazio.
-    const base = eventos.filter(e=>{
-      if(statusF && e.status!==statusF) return false;
-      if(tipoF && e.tipo!==tipoF) return false;
-      if(cidadeF && (e.cidade||"").trim()!==cidadeF) return false;
-      return true;
-    });
-    renderCalendarioEventos(base);
+    renderAgenda("agenda-eventos");
     aplicarRotulos();
     return;
   }
@@ -5592,37 +5655,242 @@ function renderEventos(){
   aplicarRotulos();
 }
 
-function renderCalendarioEventos(lista){
-  const { ano, mes } = calMesAtual;
+// ===== AGENDA VISUAL (estilo Google Agenda) =====
+// Um componente só, instanciado no Dashboard (compacta, semana atual) e em
+// Transporte → Eventos (aba Calendário). Cada instância guarda a visão
+// (mês/semana/dia/agenda) e a data âncora; a visão escolhida fica no localStorage.
+const AGENDA_CONFIG = {
+  "agenda-dash":    { visao:"semana", compacta:true,  fonte: ()=>eventos.filter(e=>e.status!=="Descartado") },
+  "agenda-eventos": { visao:"mes",    compacta:false, fonte: eventosFiltradosAgenda },
+};
+const agendas = {};
+const AG_DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const AG_VISOES = [["mes","Mês"],["semana","Semana"],["dia","Dia"],["agenda","Agenda"]];
+const AG_DIAS_LISTA = 30; // quantos dias a visão Agenda mostra por vez
+
+function isoLocal(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function dataDeISO(iso){ const [a,m,d] = iso.split("-").map(Number); return new Date(a, m-1, d); }
+function somarDias(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); }
+function minutosDe(hora){ if(!hora) return null; const [h,m] = hora.split(":").map(Number); return h*60+(m||0); }
+function capitalizar(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function mesCurto(d){ return d.toLocaleDateString("pt-BR", { month:"short" }).replace(".",""); }
+function corEvento(e){ return EVENTO_STATUS_COR[e.status] || "#3B4EC2"; }
+function eventoNoDia(e, iso){ return e.data_inicio && e.data_inicio <= iso && dataFimEvento(e) >= iso; }
+// "Dia inteiro" = sem horário de início ou ocupando mais de um dia (vai na faixa
+// de cima, como no Google Agenda); o resto vira bloco na grade de horas.
+function eventoDiaInteiro(e){ return !e.hora_inicio || (e.data_fim && e.data_fim !== e.data_inicio); }
+function horarioEvento(e){
+  if(!e.hora_inicio) return "Dia inteiro";
+  return e.hora_inicio.slice(0,5) + (e.hora_fim ? " – " + e.hora_fim.slice(0,5) : "");
+}
+
+function criarAgenda(id){
+  const cfg = AGENDA_CONFIG[id];
+  let salva = null;
+  try{ salva = localStorage.getItem("gl-agenda-"+id); }catch(_){}
+  const ancora = new Date(); ancora.setHours(0,0,0,0);
+  agendas[id] = { id, visao: AG_VISOES.some(v=>v[0]===salva) ? salva : cfg.visao, ancora, compacta: cfg.compacta };
+}
+function agendaVisao(id, v){
+  agendas[id].visao = v;
+  try{ localStorage.setItem("gl-agenda-"+id, v); }catch(_){}
+  renderAgenda(id);
+}
+function agendaHoje(id){
+  const d = new Date(); d.setHours(0,0,0,0);
+  agendas[id].ancora = d;
+  renderAgenda(id);
+}
+function agendaNavegar(id, delta){
+  const ag = agendas[id], a = ag.ancora;
+  if(ag.visao==="mes") ag.ancora = new Date(a.getFullYear(), a.getMonth()+delta, 1);
+  else if(ag.visao==="semana") ag.ancora = somarDias(a, 7*delta);
+  else if(ag.visao==="dia") ag.ancora = somarDias(a, delta);
+  else ag.ancora = somarDias(a, AG_DIAS_LISTA*delta);
+  renderAgenda(id);
+}
+// Atalhos entre visões: clicar no número do dia (mês/semana/agenda) abre o Dia.
+function agendaAbrirDia(id, iso){
+  agendas[id].ancora = dataDeISO(iso);
+  agendaVisao(id, "dia");
+}
+// Clique num espaço vazio da grade de horas: cria evento naquele dia/hora.
+function agendaClicouColuna(ev, iso){
+  const r = ev.currentTarget.getBoundingClientRect();
+  const horaPx = r.height / 24;
+  const h = Math.min(23, Math.max(0, Math.floor((ev.clientY - r.top) / horaPx)));
+  openEventoModal(null, iso, String(h).padStart(2,"0")+":00");
+}
+
+function renderAgenda(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(!agendas[id]) criarAgenda(id);
+  const ag = agendas[id];
+  const lista = AGENDA_CONFIG[id].fonte().filter(e=>e.data_inicio);
+  // Guarda a rolagem da grade de horas pra atualização automática não pular pra cima
+  const corpoAntes = el.querySelector(".ag-corpo");
+  const scrollAntes = corpoAntes ? corpoAntes.scrollTop : 0;
+
+  let r;
+  if(ag.visao==="mes") r = agendaMes(id, ag, lista);
+  else if(ag.visao==="semana") r = agendaGrade(id, ag, lista, 7);
+  else if(ag.visao==="dia") r = agendaGrade(id, ag, lista, 1);
+  else r = agendaLista(id, ag, lista);
+
+  el.className = "ag" + (ag.compacta ? " compacta" : "");
+  el.innerHTML = `
+    <div class="ag-head">
+      <div class="ag-nav">
+        <button class="btn ghost small" type="button" onclick="agendaHoje('${id}')">Hoje</button>
+        <button class="btn ghost small" type="button" onclick="agendaNavegar('${id}',-1)" title="Anterior">‹</button>
+        <button class="btn ghost small" type="button" onclick="agendaNavegar('${id}',1)" title="Próximo">›</button>
+      </div>
+      <div class="ag-titulo">${r.titulo}</div>
+      <div class="ag-visoes">${AG_VISOES.map(([v,l])=>`<button type="button" class="${ag.visao===v?"active":""}" onclick="agendaVisao('${id}','${v}')">${l}</button>`).join("")}</div>
+    </div>
+    ${r.corpo}
+    <div class="ag-legenda">${EVENTO_STATUS.map(s=>`<span><i class="ag-ponto" style="background:${EVENTO_STATUS_COR[s]};"></i>${s}</span>`).join("")}</div>`;
+
+  const corpo = el.querySelector(".ag-corpo");
+  if(corpo){
+    // Começa mostrando a manhã (7h), como o Google Agenda; se já estava rolado, mantém.
+    const horaPx = parseFloat(getComputedStyle(el).getPropertyValue("--ag-hora")) || 44;
+    corpo.scrollTop = scrollAntes > 0 ? scrollAntes : horaPx * 7;
+  }
+}
+
+function agendaMes(id, ag, lista){
+  const ano = ag.ancora.getFullYear(), mes = ag.ancora.getMonth();
   const primeiro = new Date(ano, mes, 1);
-  const tituloMes = primeiro.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
-  document.getElementById("cal-titulo").textContent = tituloMes.charAt(0).toUpperCase() + tituloMes.slice(1);
+  const titulo = capitalizar(primeiro.toLocaleDateString("pt-BR", { month:"long", year:"numeric" }));
   const hoje = hojeLocalISO();
   const diasNoMes = new Date(ano, mes+1, 0).getDate();
-  const inicioGrade = new Date(ano, mes, 1 - primeiro.getDay()); // domingo antes ou no dia 1
-  const celulas = [];
-  ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].forEach(d=>celulas.push(`<div class="cal-dow">${d}</div>`));
+  const inicioGrade = somarDias(primeiro, -primeiro.getDay()); // domingo antes ou no dia 1
+  const celulas = AG_DOW.map(d=>`<div class="cal-dow">${d}</div>`);
   const totalCelulas = Math.ceil((primeiro.getDay() + diasNoMes) / 7) * 7;
+  const MAX = ag.compacta ? 2 : 3;
   for(let i=0; i<totalCelulas; i++){
-    const d = new Date(inicioGrade.getFullYear(), inicioGrade.getMonth(), inicioGrade.getDate()+i);
-    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const d = somarDias(inicioGrade, i);
+    const iso = isoLocal(d);
     const fora = d.getMonth() !== mes;
-    const doDia = lista.filter(e=>e.data_inicio && e.data_inicio <= iso && dataFimEvento(e) >= iso)
-      .sort((a,b)=>(a.hora_inicio||"").localeCompare(b.hora_inicio||""));
-    const MAX = 3;
+    const doDia = lista.filter(e=>eventoNoDia(e, iso)).sort((a,b)=>(a.hora_inicio||"").localeCompare(b.hora_inicio||""));
     const chips = doDia.slice(0, MAX).map(e=>{
-      const cor = EVENTO_STATUS_COR[e.status] || "#3B4EC2";
       const continua = e.data_inicio < iso;
       const hora = e.hora_inicio && !continua ? e.hora_inicio.slice(0,5)+" " : "";
-      return `<span class="cal-ev ${continua?"cont":""}" style="background:${cor};" title="${escapeHtml(e.nome)} · ${quandoEvento(e)}" onclick="event.stopPropagation(); openEventoModal(${e.id})">${hora}${escapeHtml(e.nome)}</span>`;
+      return `<span class="cal-ev ${continua?"cont":""}" style="background:${corEvento(e)};" title="${escapeHtml(e.nome)} · ${quandoEvento(e)}" onclick="event.stopPropagation(); openEventoModal(${e.id})">${hora}${escapeHtml(e.nome)}</span>`;
     }).join("");
-    const mais = doDia.length > MAX ? `<span class="cal-mais">+${doDia.length-MAX} mais</span>` : "";
-    celulas.push(`<div class="cal-day ${fora?"fora":""} ${iso===hoje?"hoje":""}" ${fora?"":`onclick="openEventoModal(null, '${iso}')"`}><span class="cal-num">${d.getDate()}</span>${chips}${mais}</div>`);
+    const mais = doDia.length > MAX ? `<span class="cal-mais" onclick="event.stopPropagation(); agendaAbrirDia('${id}','${iso}')">+${doDia.length-MAX} mais</span>` : "";
+    celulas.push(`<div class="cal-day ${fora?"fora":""} ${iso===hoje?"hoje":""}" ${fora?"":`onclick="openEventoModal(null, '${iso}')"`}>
+      <span class="cal-num" title="Ver o dia" onclick="event.stopPropagation(); agendaAbrirDia('${id}','${iso}')">${d.getDate()}</span>${chips}${mais}</div>`);
   }
-  document.getElementById("cal-grid").innerHTML = celulas.join("");
+  return { titulo, corpo: `<div class="cal-grid">${celulas.join("")}</div>` };
+}
+
+// Semana (7 colunas, domingo a sábado) e Dia (1 coluna) usam a mesma grade de horas.
+function agendaGrade(id, ag, lista, cols){
+  const inicio = cols===7 ? somarDias(ag.ancora, -ag.ancora.getDay()) : ag.ancora;
+  const fim = somarDias(inicio, cols-1);
+  const hoje = hojeLocalISO();
+  const dias = Array.from({length:cols}, (_,i)=>somarDias(inicio, i));
+  const isos = dias.map(isoLocal);
+
+  let titulo;
+  if(cols===1) titulo = capitalizar(inicio.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long", year:"numeric" }));
+  else if(inicio.getMonth()===fim.getMonth()) titulo = `${inicio.getDate()} – ${fim.getDate()} de ${inicio.toLocaleDateString("pt-BR",{month:"long"})} de ${fim.getFullYear()}`;
+  else titulo = `${inicio.getDate()} de ${mesCurto(inicio)}${inicio.getFullYear()!==fim.getFullYear()?" de "+inicio.getFullYear():""} – ${fim.getDate()} de ${mesCurto(fim)} de ${fim.getFullYear()}`;
+
+  // Cabeçalho dos dias
+  const cab = dias.map((d,i)=>`<div class="ag-dia-cab ${isos[i]===hoje?"hoje":""}" title="Ver o dia" onclick="agendaAbrirDia('${id}','${isos[i]}')"><small>${AG_DOW[d.getDay()]}</small><b>${d.getDate()}</b></div>`).join("");
+
+  // Faixa "dia inteiro": eventos sem hora ou de vários dias, esticados pelas colunas que ocupam
+  const inteiros = lista.filter(e=>eventoDiaInteiro(e) && e.data_inicio <= isos[cols-1] && dataFimEvento(e) >= isos[0])
+    .sort((a,b)=>a.data_inicio.localeCompare(b.data_inicio));
+  const faixa = inteiros.map(e=>{
+    const fimE = dataFimEvento(e);
+    // Já filtrado pra cruzar o período, então o que cai fora só pode ser antes/depois
+    const ini = e.data_inicio < isos[0] ? 0 : isos.indexOf(e.data_inicio);
+    const idxFim = fimE > isos[cols-1] ? cols-1 : isos.indexOf(fimE);
+    const cls = (e.data_inicio < isos[0] ? " cont-esq" : "") + (fimE > isos[cols-1] ? " cont-dir" : "");
+    return `<span class="ag-ev-inteiro${cls}" style="grid-column:${ini+1} / ${idxFim+2}; background:${corEvento(e)};" title="${escapeHtml(e.nome)} · ${quandoEvento(e)}" onclick="openEventoModal(${e.id})">${escapeHtml(e.nome)}</span>`;
+  }).join("");
+
+  // Grade de horas: um bloco por evento com horário, dividindo a largura quando dois se sobrepõem
+  const agora = new Date();
+  const minAgora = agora.getHours()*60 + agora.getMinutes();
+  const colunas = isos.map(iso=>{
+    const doDia = lista.filter(e=>!eventoDiaInteiro(e) && e.data_inicio===iso)
+      .map(e=>{ const ini = minutosDe(e.hora_inicio); const fimM = e.hora_fim ? minutosDe(e.hora_fim) : null; return { e, ini, fim: Math.max(fimM ?? ini+60, ini+30) }; })
+      .sort((a,b)=>a.ini-b.ini || b.fim-a.fim);
+    // Grupos de sobreposição → faixas (lanes) dentro do grupo
+    const blocos = [];
+    let grupo = [], fimGrupo = -1;
+    const fecharGrupo = ()=>{
+      const lanes = [];
+      grupo.forEach(b=>{
+        let l = lanes.findIndex(fimLane=>fimLane <= b.ini);
+        if(l === -1){ lanes.push(b.fim); l = lanes.length-1; } else lanes[l] = b.fim;
+        b.lane = l;
+      });
+      grupo.forEach(b=>{ b.total = lanes.length; blocos.push(b); });
+      grupo = []; fimGrupo = -1;
+    };
+    doDia.forEach(b=>{
+      if(grupo.length && b.ini >= fimGrupo) fecharGrupo();
+      grupo.push(b); fimGrupo = Math.max(fimGrupo, b.fim);
+    });
+    if(grupo.length) fecharGrupo();
+    const html = blocos.map(b=>{
+      const top = b.ini/60*100/24, alt = (b.fim-b.ini)/60*100/24;
+      const larg = 100/b.total, esq = b.lane*larg;
+      const curto = (b.fim-b.ini) < 45;
+      return `<div class="ag-bloco ${curto?"curto":""}" style="top:${top}%; height:calc(${alt}% - 2px); left:calc(${esq}% + 2px); width:calc(${larg}% - 4px); background:${corEvento(b.e)};"
+        title="${escapeHtml(b.e.nome)} · ${quandoEvento(b.e)}${b.e.local_nome?" · "+escapeHtml(b.e.local_nome):""}" onclick="event.stopPropagation(); openEventoModal(${b.e.id})">
+        ${curto ? `${b.e.hora_inicio.slice(0,5)} ${escapeHtml(b.e.nome)}` : `${escapeHtml(b.e.nome)}<small>${horarioEvento(b.e)}${b.e.local_nome?" · "+escapeHtml(b.e.local_nome):""}</small>`}
+      </div>`;
+    }).join("");
+    const linhaAgora = iso===hoje ? `<div class="ag-agora" style="top:${minAgora/60*100/24}%;"></div>` : "";
+    return `<div class="ag-col ${iso===hoje?"hoje":""}" onclick="agendaClicouColuna(event,'${iso}')">${html}${linhaAgora}</div>`;
+  }).join("");
+  const horas = Array.from({length:24}, (_,h)=>`<span>${h?String(h).padStart(2,"0")+":00":""}</span>`).join("");
+
+  const corpo = `<div class="ag-sem" style="--ag-cols:${cols};">
+    <div class="ag-sem-cab"><div></div>${cab}</div>
+    <div class="ag-inteiro"><div class="ag-rotulo">${inteiros.length?"Dia inteiro":""}</div><div class="ag-inteiro-grid">${faixa}</div></div>
+    <div class="ag-corpo"><div class="ag-corpo-grid"><div class="ag-horas">${horas}</div>${colunas}</div></div>
+  </div>`;
+  return { titulo, corpo };
+}
+
+// Agenda: lista cronológica dos próximos 30 dias a partir da âncora, só os dias com evento
+function agendaLista(id, ag, lista){
+  const inicio = ag.ancora, fim = somarDias(inicio, AG_DIAS_LISTA-1);
+  const hoje = hojeLocalISO();
+  const titulo = `${inicio.getDate()} de ${mesCurto(inicio)}${inicio.getFullYear()!==fim.getFullYear()?" de "+inicio.getFullYear():""} – ${fim.getDate()} de ${mesCurto(fim)} de ${fim.getFullYear()}`;
+  const dias = [];
+  for(let i=0; i<AG_DIAS_LISTA; i++){
+    const d = somarDias(inicio, i), iso = isoLocal(d);
+    const doDia = lista.filter(e=>eventoNoDia(e, iso)).sort((a,b)=>(a.hora_inicio||"").localeCompare(b.hora_inicio||""));
+    if(!doDia.length) continue;
+    dias.push(`<div class="ag-lista-dia">
+      <div class="ag-lista-data ${iso===hoje?"hoje":""}" title="Ver o dia" onclick="agendaAbrirDia('${id}','${iso}')"><b>${d.getDate()}</b><small>${AG_DOW[d.getDay()]} · ${mesCurto(d)}</small></div>
+      <div>${doDia.map(e=>{
+        // Evento de vários dias: o horário só vale no 1º dia; nos seguintes é "dia inteiro"
+        return `<div class="ag-lista-ev" onclick="openEventoModal(${e.id})">
+          <i class="ag-ponto" style="background:${corEvento(e)};"></i>
+          <span class="ag-hora">${e.data_inicio < iso ? "Dia inteiro" : horarioEvento(e)}</span>
+          <span class="ag-nome"><strong>${escapeHtml(e.nome)}</strong>${localEvento(e)?` <small>· ${escapeHtml(localEvento(e))}</small>`:""}</span>
+          <span class="status-badge ${EVENTO_STATUS_CLASS[e.status]||""}">${escapeHtml(e.status||"-")}</span>
+        </div>`;
+      }).join("")}</div>
+    </div>`);
+  }
+  const corpo = dias.length ? dias.join("") : `<div class="ag-vazio">Nenhum evento entre ${formatarDataBR(isoLocal(inicio))} e ${formatarDataBR(isoLocal(fim))}</div>`;
+  return { titulo, corpo };
 }
 
 function renderEventosDashboard(){
+  renderAgenda("agenda-dash");
   const el = document.getElementById("dash-eventos");
   if(!el) return;
   const hoje = hojeLocalISO();
@@ -5647,7 +5915,7 @@ function renderEventosDashboard(){
 
 // --- Modal de evento ---
 let editingEventoId = null;
-function openEventoModal(id, dataPre){
+function openEventoModal(id, dataPre, horaPre){
   editingEventoId = id || null;
   eventoContatosPendentes = []; eventoLinksPendentes = [];
   fillSelectGrupos(document.getElementById("ev-tipo"), EVENTO_TIPOS_GRUPOS, "Outro");
@@ -5667,7 +5935,7 @@ function openEventoModal(id, dataPre){
   document.getElementById("ev-status").value = e.status||"Descoberto";
   document.getElementById("ev-data-inicio").value = e.data_inicio || dataPre || "";
   document.getElementById("ev-data-fim").value = e.data_fim||"";
-  document.getElementById("ev-hora-inicio").value = e.hora_inicio ? e.hora_inicio.slice(0,5) : "";
+  document.getElementById("ev-hora-inicio").value = e.hora_inicio ? e.hora_inicio.slice(0,5) : (horaPre || "");
   document.getElementById("ev-hora-fim").value = e.hora_fim ? e.hora_fim.slice(0,5) : "";
   document.getElementById("ev-local-nome").value = e.local_nome||"";
   document.getElementById("ev-endereco").value = e.endereco||"";
