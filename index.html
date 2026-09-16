@@ -932,11 +932,11 @@ tr.tr-click{cursor:pointer;}
         <div class="panel">
           <table class="tbl tbl-funil"><thead><tr id="evento-funnel-head"></tr></thead><tbody><tr id="evento-funnel-body"></tr></tbody></table>
         </div>
+        <div class="panel">
+          <div id="agenda-eventos" class="ag"></div>
+          <p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Clique num evento pra abrir o cadastro. Clique num dia ou horário vazio pra criar um evento ali. Os filtros de status, tipo e cidade abaixo valem também aqui.</p>
+        </div>
         <div class="filters">
-          <div class="subnav" style="margin:0;">
-            <button type="button" class="subnav-item active" data-visao="lista" onclick="mostrarVisaoEventos('lista')">Lista</button>
-            <button type="button" class="subnav-item" data-visao="calendario" onclick="mostrarVisaoEventos('calendario')">Calendário</button>
-          </div>
           <select id="filter-evento-status" onchange="renderEventos()"><option value="">Todos os status</option></select>
           <select id="filter-evento-tipo" onchange="renderEventos()"><option value="">Todos os tipos</option></select>
           <select id="filter-evento-cidade" onchange="renderEventos()"><option value="">Todas as cidades</option></select>
@@ -944,15 +944,11 @@ tr.tr-click{cursor:pointer;}
           <input type="text" id="filter-evento-busca" placeholder="Buscar evento, local, organizador..." oninput="renderEventos()">
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);"><input type="checkbox" id="filter-evento-passados" onchange="renderEventos()" style="width:auto;"> Mostrar passados</label>
         </div>
-        <div id="eventos-visao-lista" class="panel">
+        <div class="panel">
           <table class="tbl">
             <thead><tr id="thead-eventos"></tr></thead>
             <tbody id="eventos-body"></tbody>
           </table>
-        </div>
-        <div id="eventos-visao-calendario" class="panel" style="display:none;">
-          <div id="agenda-eventos" class="ag"></div>
-          <p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Clique num evento pra abrir o cadastro. Clique num dia ou horário vazio pra criar um evento ali.</p>
         </div>
       </div>
     </div>
@@ -2959,7 +2955,7 @@ function mostrarSubTab(nome){
   document.querySelectorAll("#tab-transporte [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
   // A agenda visual precisa estar visível pra rolar a grade de horas até a manhã
-  if(nome==="eventos" && eventosVisao==="calendario") renderEventos();
+  if(nome==="eventos") renderEventos();
 }
 
 function mostrarSubTabFinanceiro(nome){
@@ -5558,15 +5554,6 @@ function lembreteEventoHtml(e){
   return `<span class="ev-lembrete ${vencido?"vencido":""}" title="${vencido?"Lembrete vencido: hora de fazer contato":"Lembrete agendado"}">🔔 ${txt}</span>`;
 }
 
-let eventosVisao = "lista";
-
-function mostrarVisaoEventos(v){
-  eventosVisao = v;
-  document.querySelectorAll("#subtab-eventos .subnav-item[data-visao]").forEach(b=>b.classList.toggle("active", b.dataset.visao===v));
-  document.getElementById("eventos-visao-lista").style.display = v==="lista" ? "block" : "none";
-  document.getElementById("eventos-visao-calendario").style.display = v==="calendario" ? "block" : "none";
-  renderEventos();
-}
 // Filtros de status/tipo/cidade valem também na agenda visual; mês e "passados"
 // não (a navegação da agenda já é por período).
 function eventosFiltradosAgenda(){
@@ -5622,11 +5609,8 @@ function renderEventos(){
     return true;
   });
 
-  if(eventosVisao === "calendario"){
-    renderAgenda("agenda-eventos");
-    aplicarRotulos();
-    return;
-  }
+  // Agenda visual (mês/semana/dia/agenda) fica sempre acima da lista
+  renderAgenda("agenda-eventos");
 
   renderCabecalho("thead-eventos", [
     {label:"Evento", campo:"nome"}, {label:"Quando", campo:"data_inicio"}, {label:"Local", campo:"local_nome"},
@@ -5660,7 +5644,7 @@ function renderEventos(){
 // Transporte → Eventos (aba Calendário). Cada instância guarda a visão
 // (mês/semana/dia/agenda) e a data âncora; a visão escolhida fica no localStorage.
 const AGENDA_CONFIG = {
-  "agenda-dash":    { visao:"semana", compacta:true,  fonte: ()=>eventos.filter(e=>e.status!=="Descartado") },
+  "agenda-dash":    { visao:"mes",    compacta:true,  fonte: ()=>eventos.filter(e=>e.status!=="Descartado") },
   "agenda-eventos": { visao:"mes",    compacta:false, fonte: eventosFiltradosAgenda },
 };
 const agendas = {};
