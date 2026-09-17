@@ -1592,6 +1592,17 @@ tr.tr-click{cursor:pointer;}
       <div class="full obrig"><label>Endereço de origem</label><input type="text" id="vg-origem-endereco"></div>
       <div class="full obrig"><label>Endereço de destino</label><input type="text" id="vg-destino-endereco"></div>
       <div class="full"><button type="button" class="btn ghost" style="font-size:12.5px;" onclick="abrirRotaMaps()">📍 Ver rota no Google Maps</button></div>
+
+      <!-- Paradas (garupa): outras passageiras embarcando/desembarcando entre origem e destino.
+           Uma cliente pede e paga; as paradas são só a rota. Gravadas em viagem_paradas ao Salvar. -->
+      <div class="full" id="vg-paradas-wrap" style="border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <label style="margin:0;">🧍 Paradas no caminho <span style="font-weight:400; color:var(--muted);">(garupa: mais de uma passageira)</span></label>
+          <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
+        </div>
+        <div id="vg-paradas-lista" style="margin-top:8px;"></div>
+      </div>
+
       <div class="obrig"><label>Data</label><input type="date" id="vg-data"></div>
       <div class="obrig"><label>Horário previsto de partida</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
       <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"></div>
@@ -2127,6 +2138,7 @@ let motoristaObservacoes = [];
 let clientesTransporte = [];
 let viagens = [];
 let viagemOfertas = [];
+let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
 let avaliacoes = [];
 let pagamentosMotorista = [];
 let pagamentosCliente = [];
@@ -2579,6 +2591,10 @@ async function carregarDadosInterno(){
   eventoInteracoes = aplicarConsulta("evento_interacoes", revi, eventoInteracoes);
   eventoArquivos = aplicarConsulta("evento_arquivos", reva, eventoArquivos);
 
+  // Paradas das viagens (schema_viagem_paradas.sql), separado pelo mesmo motivo
+  const rvpa = await sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem");
+  viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
+
   renderAll();
   marcarAtualizado();
 
@@ -2686,6 +2702,7 @@ const TABELA_ATUALIZA = {
   vagas_candidatas: v => vagasCandidatas = v,
   motorista_observacoes: v => motoristaObservacoes = v,
   viagem_ofertas: v => viagemOfertas = v,
+  viagem_paradas: v => viagemParadas = v,
   eventos: v => eventos = v,
   evento_contatos: v => eventoContatos = v,
   evento_links: v => eventoLinks = v,
@@ -4957,8 +4974,72 @@ function abrirRotaMaps(){
   const origem = document.getElementById("vg-origem-endereco").value.trim();
   const destino = document.getElementById("vg-destino-endereco").value.trim();
   if(!origem || !destino){ alert("Preencha o endereço de origem e de destino antes."); return; }
-  const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}`;
+  // Paradas entram como waypoints na ordem (link direto, sem API; o Maps aceita até 9)
+  const pontos = paradasModal.map(p=>p.endereco.trim()).filter(Boolean).slice(0, 9);
+  const waypoints = pontos.length ? `&waypoints=${encodeURIComponent(pontos.join("|"))}` : "";
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}${waypoints}`;
   window.open(url, "_blank");
+}
+
+// ── Paradas (garupa) dentro do modal de Viagem ──
+// A lista vive em memória enquanto o modal está aberto e é gravada inteira
+// ao Salvar (apaga e reinsere na ordem), o que dispensa sincronizar item a item.
+let paradasModal = [];
+const PARADA_TIPOS = ["Embarque", "Desembarque", "Parada"];
+function carregarParadasModal(viagemId){
+  paradasModal = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem)
+    .map(p=>({ tipo: p.tipo, endereco: p.endereco||"", passageira_nome: p.passageira_nome||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
+  renderParadasModal();
+}
+function renderParadasModal(){
+  const el = document.getElementById("vg-paradas-lista");
+  if(!paradasModal.length){
+    el.innerHTML = `<div style="color:var(--muted); font-size:12px;">Sem paradas: a corrida vai direto da origem ao destino.</div>`;
+    return;
+  }
+  el.innerHTML = paradasModal.map((p,i)=>`
+    <div class="formgrid" style="align-items:end; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">
+      <div style="grid-column:1 / -1; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
+        <strong style="color:var(--text1);">${i+1}ª parada</strong>
+        <span style="flex:1;"></span>
+        <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
+        <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
+        <button type="button" class="icon-btn" title="Remover" onclick="removerParadaViagem(${i})">🗑️</button>
+      </div>
+      <div><label>Tipo</label><select onchange="paradasModal[${i}].tipo=this.value">${PARADA_TIPOS.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
+      <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value"></div>
+      <div class="full"><label>Endereço</label><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" oninput="paradasModal[${i}].endereco=this.value"></div>
+      <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
+      <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
+    </div>`).join("");
+}
+function adicionarParadaViagem(){
+  paradasModal.push({ tipo: "Embarque", endereco: "", passageira_nome: "", horario_previsto: "", observacao: "" });
+  renderParadasModal();
+  const inputs = document.querySelectorAll("#vg-paradas-lista input[type=text]");
+  const ultimoEndereco = [...inputs].filter(i=>i.placeholder.startsWith("Rua")).pop();
+  if(ultimoEndereco) ultimoEndereco.focus();
+}
+function removerParadaViagem(i){ paradasModal.splice(i,1); renderParadasModal(); }
+function moverParadaViagem(i, delta){
+  const j = i + delta;
+  if(j < 0 || j >= paradasModal.length) return;
+  [paradasModal[i], paradasModal[j]] = [paradasModal[j], paradasModal[i]];
+  renderParadasModal();
+}
+async function gravarParadasViagem(viagemId){
+  const validas = paradasModal.filter(p=>p.endereco.trim());
+  const existiam = viagemParadas.some(p=>p.viagem_id===viagemId);
+  if(!validas.length && !existiam) return;
+  const del = await sb.from("viagem_paradas").delete().eq("viagem_id", viagemId);
+  if(del.error){ alert("Erro ao salvar paradas: " + del.error.message); return; }
+  if(validas.length){
+    const ins = await sb.from("viagem_paradas").insert(validas.map((p,i)=>({
+      viagem_id: viagemId, ordem: i+1, tipo: p.tipo, endereco: p.endereco.trim(),
+      passageira_nome: p.passageira_nome.trim() || null, horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
+    })));
+    if(ins.error){ alert("Erro ao salvar paradas: " + ins.error.message); return; }
+  }
 }
 function copiarLinkAcompanhamento(){
   const val = document.getElementById("vg-link").value;
@@ -5148,6 +5229,7 @@ function renderTransporteViagens(){
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
           ${v.preco_cotado?`<div style="color:var(--muted); font-size:11.5px;">${formatarMoedaBR(v.preco_cotado)}</div>`:""}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
+          ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);">🧍 ${n} parada${n===1?"":"s"}</span>` : ""; })()}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
     </div>`;
@@ -5171,6 +5253,7 @@ function openViagemModal(id){
   document.getElementById("vg-viagem-status").value = v.status||"Solicitada";
   document.getElementById("vg-origem-endereco").value = v.origem_endereco||"";
   document.getElementById("vg-destino-endereco").value = v.destino_endereco||"";
+  carregarParadasModal(id);
   document.getElementById("vg-data").value = v.data || "";
   document.getElementById("vg-horario-partida").value = v.horario_partida ? v.horario_partida.slice(0,5) : "";
   document.getElementById("vg-duracao-min").value = v.duracao_prevista_min ?? "";
@@ -5315,6 +5398,7 @@ async function saveViagem(){
     if(error){ alert("Erro ao salvar viagem: " + error.message); return; }
     viagemId = data[0].id;
   }
+  await gravarParadasViagem(viagemId);
 
   const pgcPayload = {
     viagem_id: viagemId,
@@ -5359,7 +5443,7 @@ async function saveViagem(){
 
   showToast("Salvo!");
   closeModal("viagem-modal");
-  await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista");
+  await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas");
 }
 // ===== REENVIO DE WHATSAPP =====
 // As duas mensagens automáticas param sozinhas depois de 3 tentativas (trava
