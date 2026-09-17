@@ -1530,6 +1530,12 @@ tr.tr-click{cursor:pointer;}
         <div class="full"><label>UID do login (Supabase Authentication)</label><input type="text" id="mt-auth-uid" placeholder="ex: 0fe07c05-f040-468b-b351-a464a3065f33"></div>
       </div>
       <div id="mt-acesso-status" style="font-size:12.5px; margin-top:4px;"></div>
+      <div class="formgrid" style="margin-top:10px;">
+        <div class="full"><label>Pasta no Google Drive (motorista + Go Ladies)</label><input type="url" id="mt-pasta-drive" placeholder="https://drive.google.com/drive/folders/..."></div>
+      </div>
+      <p style="color:var(--muted); font-size:12px; margin:4px 0 0;">
+        Crie a pasta no Drive da Go Ladies, compartilhe com o e-mail dela e cole o link. Aparece no painel dela em Perfil e em Carro → Documentos.
+      </p>
     </div>
 
     <div class="modal-actions">
@@ -4616,6 +4622,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-certificada-ate").value = m.certificada_ate||"";
   document.getElementById("mt-origem").value = m.origem||"Site";
   document.getElementById("mt-auth-uid").value = m.auth_user_id||"";
+  document.getElementById("mt-pasta-drive").value = m.pasta_drive_url||"";
   document.getElementById("mt-acesso-status").innerHTML = m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
     : '<span class="tag urg-media">Sem login vinculado ainda</span>';
@@ -4770,6 +4777,7 @@ async function saveMotorista(){
     certificada_ate: document.getElementById("mt-certificada-ate").value || null,
     origem: document.getElementById("mt-origem").value,
     auth_user_id: document.getElementById("mt-auth-uid").value.trim() || null,
+    pasta_drive_url: document.getElementById("mt-pasta-drive").value.trim() || null,
   };
   const isNew = !editingMotoristaId;
   const { data, error } = editingMotoristaId
