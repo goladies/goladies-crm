@@ -11,6 +11,9 @@
 -- (o webhook de insert em viagens → n8n EQUIPE). Preço continua combinado
 -- pelo WhatsApp, como hoje.
 
+-- Observações escritas pela cliente ao pedir (cadeirinha, bagagem, acompanhante...)
+alter table public.viagens add column if not exists observacoes_cliente text;
+
 create or replace function public.pedir_viagem_cliente(
   p_tipo_servico text,
   p_origem text,
@@ -53,7 +56,7 @@ begin
     cliente_id, tipo_servico, canal_recepcao, origem_endereco, destino_endereco,
     data, horario_partida, data_retorno, horario_retorno,
     origem_retorno_endereco, destino_retorno_endereco,
-    motorista_preferida, descricao, status
+    motorista_preferida, observacoes_cliente, status
   )
   values (
     v_cliente_id,
