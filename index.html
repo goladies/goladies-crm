@@ -1345,7 +1345,14 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label>Endereço (URL) *</label><input type="url" id="lk-url" placeholder="https://..."></div>
       <div><label>Categoria</label><select id="lk-categoria"></select></div>
       <div><label>Ordem <span style="font-weight:400; color:var(--muted);">(menor aparece antes)</span></label><input type="number" id="lk-ordem" value="0"></div>
-      <div class="full"><label>Só pra esta motorista <span style="font-weight:400; color:var(--muted);">(vazio = todas veem)</span></label><select id="lk-motorista"><option value="">Todas as motoristas</option></select></div>
+      <div class="full">
+        <label>Quem vê este link</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+          <label class="chip-check"><input type="radio" name="lk-publico" value="todas" checked onchange="alternarPublicoLink()"> Todas as motoristas</label>
+          <label class="chip-check"><input type="radio" name="lk-publico" value="algumas" onchange="alternarPublicoLink()"> Só algumas</label>
+        </div>
+        <div id="lk-motoristas-wrap" style="display:none; flex-wrap:wrap; gap:6px;"></div>
+      </div>
       <div class="full"><label>Descrição curta</label><textarea id="lk-descricao" rows="2" placeholder="Uma linha explicando o que ela vai encontrar"></textarea></div>
       <div class="full"><label class="chip-check"><input type="checkbox" id="lk-ativo" checked> Ativo (aparece no painel)</label></div>
     </div>
@@ -3382,15 +3389,19 @@ function renderLinks(){
   ], "links_motoristas");
   const filtered = aplicarOrdenacao("links_motoristas", linksMotoristas.filter(l=>
     (!catF || l.categoria===catF) &&
-    (!pubF || (pubF==="geral" ? !l.motorista_id : !!l.motorista_id)) &&
+    (!pubF || (pubF==="geral" ? !(l.motoristas_ids||[]).length : !!(l.motoristas_ids||[]).length)) &&
     (ativoF==="" || (ativoF==="1") === !!l.ativo)
   ));
   document.getElementById("links-body").innerHTML = filtered.map(l=>{
-    const m = motoristas.find(x=>x.id===l.motorista_id);
+    const ids = l.motoristas_ids || [];
+    const nomes = ids.map(id=>{ const m = motoristas.find(x=>x.id===id); return m ? (m.nome||"").split(" ")[0] : "?"; });
+    const quemVe = !ids.length
+      ? `<span class="status-badge teal">Todas</span>`
+      : `<span class="status-badge pink" title="${escapeHtml(nomes.join(", "))}">${escapeHtml(nomes.slice(0,2).join(", "))}${nomes.length>2 ? ` +${nomes.length-2}` : ""}</span>`;
     return `<tr class="tr-click" onclick="openLinkModal(${l.id})">
       <td><strong>${escapeHtml(l.titulo)}</strong><br><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px; color:var(--muted);">${escapeHtml(l.url)}</a></td>
       <td>${escapeHtml(l.categoria||"-")}</td>
-      <td>${m ? `<span class="status-badge pink">Só ${escapeHtml(m.nome)}</span>` : `<span class="status-badge teal">Todas</span>`}</td>
+      <td>${quemVe}</td>
       <td>${l.ordem ?? 0}</td>
       <td>${l.ativo ? "✅" : "⏸️"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openLinkModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLink(${l.id})">🗑️</button></td>
@@ -3400,19 +3411,29 @@ function renderLinks(){
 function openLinkModal(id){
   editingLinkId = id || null;
   fillSelect(document.getElementById("lk-categoria"), LINK_CATEGORIAS, "Outro");
-  document.getElementById("lk-motorista").innerHTML = `<option value="">Todas as motoristas</option>` +
-    motoristas.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")).map(m=>`<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join("");
   document.getElementById("link-modal-title").textContent = id ? "Editar link" : "Novo link";
   const l = linksMotoristas.find(x=>x.id===id) || {};
+  const ids = l.motoristas_ids || [];
+  // Um botão marcável por motorista (só as que não estão inativas, mas
+  // mantendo as já marcadas no link pra edição não perder ninguém).
+  document.getElementById("lk-motoristas-wrap").innerHTML = motoristas.slice()
+    .filter(m=>ids.includes(m.id) || !["Inativa","Não aprovada"].includes(m.status))
+    .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
+    .map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${ids.includes(m.id)?"checked":""}> ${escapeHtml(m.nome)}</label>`).join("");
+  document.querySelector(`input[name=lk-publico][value=${ids.length ? "algumas" : "todas"}]`).checked = true;
+  alternarPublicoLink();
   document.getElementById("lk-titulo").value = l.titulo||"";
   document.getElementById("lk-url").value = l.url||"";
   document.getElementById("lk-categoria").value = l.categoria||"Outro";
   document.getElementById("lk-ordem").value = l.ordem ?? 0;
-  document.getElementById("lk-motorista").value = l.motorista_id||"";
   document.getElementById("lk-descricao").value = l.descricao||"";
   document.getElementById("lk-ativo").checked = id ? !!l.ativo : true;
   document.getElementById("btn-excluir-link").style.display = id ? "block" : "none";
   document.getElementById("link-modal").classList.add("open");
+}
+function alternarPublicoLink(){
+  const algumas = document.querySelector("input[name=lk-publico]:checked").value === "algumas";
+  document.getElementById("lk-motoristas-wrap").style.display = algumas ? "flex" : "none";
 }
 async function saveLink(){
   const titulo = document.getElementById("lk-titulo").value.trim();
@@ -3420,12 +3441,15 @@ async function saveLink(){
   if(!titulo){ alert("Título é obrigatório"); return; }
   if(!url){ alert("Endereço (URL) é obrigatório"); return; }
   if(!/^https?:\/\//i.test(url)) url = "https://" + url;
+  const algumas = document.querySelector("input[name=lk-publico]:checked").value === "algumas";
+  const ids = [...document.querySelectorAll("#lk-motoristas-wrap input:checked")].map(cb=>Number(cb.value));
+  if(algumas && !ids.length){ alert("Marque pelo menos uma motorista, ou escolha \"Todas as motoristas\"."); return; }
   const payload = {
     titulo,
     url,
     categoria: document.getElementById("lk-categoria").value,
     ordem: Number(document.getElementById("lk-ordem").value) || 0,
-    motorista_id: document.getElementById("lk-motorista").value || null,
+    motoristas_ids: algumas ? ids : null,
     descricao: document.getElementById("lk-descricao").value.trim() || null,
     ativo: document.getElementById("lk-ativo").checked,
   };
