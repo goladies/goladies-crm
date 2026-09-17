@@ -1623,6 +1623,10 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label>Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Pode pagar depois (pós-pago) <span style="color:var(--muted);">(cliente de confiança: a oferta abre pras motoristas sem esperar o Pix, e o Pix é pedido quando a viagem termina)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
+      <!-- Login do painel da cliente (goladies.com.br/cliente.html): ela cria
+           sozinha, então aqui é só leitura. Se houver outra cliente com o
+           mesmo WhatsApp, aparece o botão de unificar. -->
+      <div class="full" id="ct-acesso-painel" style="font-size:13px; color:var(--muted);"></div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('cliente-transporte-modal')">Sair</button>
@@ -5092,7 +5096,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td><strong>${escapeHtml(r.nome)}</strong>${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td><strong>${escapeHtml(r.nome)}</strong>${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
@@ -5145,7 +5149,39 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-familiares").value = c.familiares||"";
   document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
+  document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) : "";
   document.getElementById("cliente-transporte-modal").classList.add("open");
+}
+// Duplicatas: outra cliente com o mesmo WhatsApp (últimos 8 dígitos). Acontece
+// quando a cliente já existia pelo site/WhatsApp e depois criou login no
+// painel (o painel nunca liga sozinho a um cadastro antigo, por segurança).
+function duplicatasCliente(c){
+  if(!c || !c.whatsapp) return [];
+  return clientesTransporte.filter(o=>o.id!==c.id && mesmoTelefone(o.whatsapp, c.whatsapp));
+}
+function htmlAcessoPainelCliente(c){
+  let html = c.auth_user_id
+    ? `🔐 <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
+    : `🔓 Ainda não criou login no painel da cliente (<a href="https://goladies.com.br/cliente.html" target="_blank" rel="noopener">goladies.com.br/cliente.html</a>).`;
+  const dups = duplicatasCliente(c);
+  if(dups.length){
+    html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);">⚠️ Mesmo WhatsApp de: ` +
+      dups.map(d=>`<b>${escapeHtml(d.nome)}</b> (#${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
+      `.<br><small>Unificar move as viagens pra esta cliente, completa o que estiver vazio e apaga a outra.</small><br>` +
+      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})">🔗 Unificar, mantendo esta (#${c.id}) e apagando #${d.id}</button>`).join(" ") +
+      `</div>`;
+  }
+  return html;
+}
+async function unificarClientes(manter, remover){
+  const m = clientesTransporte.find(x=>x.id===manter), r = clientesTransporte.find(x=>x.id===remover);
+  if(!m || !r) return;
+  if(!confirm(`Unificar "${r.nome}" (#${remover}) em "${m.nome}" (#${manter})?\n\nAs viagens de #${remover} passam pra #${manter}, os campos vazios de #${manter} são completados e #${remover} é apagada. Não dá pra desfazer.`)) return;
+  const { error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
+  if(error){ alert("Não foi possível unificar: " + error.message); return; }
+  showToast("Clientes unificadas!");
+  closeModal("cliente-transporte-modal");
+  await recarregarTabelas("clientes_transporte", "viagens");
 }
 async function saveClienteTransporte(){
   const nome = document.getElementById("ct-nome").value.trim();
