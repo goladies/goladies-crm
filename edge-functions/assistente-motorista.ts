@@ -17,6 +17,7 @@
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const ORIGENS_LIBERADAS = [
+  "https://motora.goladies.com.br",
   "https://www.goladies.com.br",
   "https://goladies.com.br",
   "https://www.ladiesindrive.com.br",

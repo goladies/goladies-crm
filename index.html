@@ -1624,7 +1624,7 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label>Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Pode pagar depois (pós-pago) <span style="color:var(--muted);">(cliente de confiança: a oferta abre pras motoristas sem esperar o Pix, e o Pix é pedido quando a viagem termina)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
-      <!-- Login do painel da cliente (goladies.com.br/cliente.html): ela cria
+      <!-- Login do painel da cliente (app.goladies.com.br): ela cria
            sozinha, então aqui é só leitura. Se houver outra cliente com o
            mesmo WhatsApp, aparece o botão de unificar. -->
       <div class="full" id="ct-acesso-painel" style="font-size:13px; color:var(--muted);"></div>
@@ -2524,7 +2524,7 @@ async function tratarMudancaAutenticacao(session){
       const resultado = await checarNaoEhMotorista();
       if(resultado === "motorista"){
         limparStaffConfirmado();
-        loginErro.textContent = "Este login é de motorista, use o painel dela em goladies.com.br/motorista.html, não o CRM.";
+        loginErro.textContent = "Este login é de motorista, use o painel dela em motora.goladies.com.br, não o CRM.";
         loginErro.style.display = "block";
         await sb.auth.signOut({ scope: "local" });
       }
@@ -2544,7 +2544,7 @@ async function tratarMudancaAutenticacao(session){
       return;
     }
     if(resultado === "motorista"){
-      loginErro.textContent = "Este login é de motorista, use o painel dela em goladies.com.br/motorista.html, não o CRM.";
+      loginErro.textContent = "Este login é de motorista, use o painel dela em motora.goladies.com.br, não o CRM.";
       loginErro.style.display = "block";
       await sb.auth.signOut({ scope: "local" });
       return;
@@ -5167,7 +5167,7 @@ function duplicatasCliente(c){
 function htmlAcessoPainelCliente(c){
   let html = c.auth_user_id
     ? `🔐 <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
-    : `🔓 Ainda não criou login no painel da cliente (<a href="https://goladies.com.br/cliente.html" target="_blank" rel="noopener">goladies.com.br/cliente.html</a>).`;
+    : `🔓 Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
   const mot = motoristaDaCliente(c.id);
   if(mot){
     html += `<div style="margin-top:6px;">🚗 <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
