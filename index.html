@@ -864,7 +864,7 @@ tr.tr-click{cursor:pointer;}
 
     <div id="tab-vagas" style="display:none;">
       <div class="pagehead">
-        <div><h2>Vagas</h2><p>Banco de talentos com curadoria — vagas de empresas parceiras e candidatas indicadas</p></div>
+        <div><h2>Vagas</h2><p>Banco de talentos com curadoria: vagas de empresas parceiras e candidatas indicadas</p></div>
         <button class="btn" onclick="openVagaModal()">+ Nova vaga</button>
       </div>
       <div class="filters">
@@ -1310,7 +1310,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Parceira (o) ligada</label><select id="dv-parceiro"><option value="">-</option></select></div>
       <div><label>Status</label><select id="dv-status"></select></div>
       <div class="full">
-        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel — pode marcar mais de um)</span></label>
+        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel; pode marcar mais de um)</span></label>
         <div id="dv-publico-alvo-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
           <label class="chip-check"><input type="checkbox" value="Motoristas"> Motoristas</label>
           <label class="chip-check"><input type="checkbox" value="Clientes"> Clientes</label>
@@ -1457,7 +1457,7 @@ tr.tr-click{cursor:pointer;}
       <input type="file" id="ia-cnh-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('cnh', this)">
       <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()">📄 Selecionar CNH (foto ou PDF)</button>
       <div id="ia-cnh-confirm" style="display:none; margin-top:10px;">
-        <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong> — é mesmo a CNH dela?</div>
+        <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong>. É mesmo a CNH dela?</div>
         <div style="display:flex; gap:8px;">
           <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')">✅ Confirmar e ler com IA</button>
           <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('cnh')">Trocar arquivo</button>
@@ -1503,7 +1503,7 @@ tr.tr-click{cursor:pointer;}
         <input type="file" id="ia-crlv-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('crlv', this)">
         <button type="button" class="btn secondary small" id="ia-crlv-btn" onclick="document.getElementById('ia-crlv-file').click()">📄 Selecionar CRLV (foto ou PDF)</button>
         <div id="ia-crlv-confirm" style="display:none; margin-top:10px;">
-          <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-crlv-nome-arquivo"></strong> — é mesmo o CRLV do carro dela?</div>
+          <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-crlv-nome-arquivo"></strong>. É mesmo o CRLV do carro dela?</div>
           <div style="display:flex; gap:8px;">
             <button type="button" class="btn small" onclick="confirmarLeituraIA('crlv')">✅ Confirmar e ler com IA</button>
             <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('crlv')">Trocar arquivo</button>
@@ -1731,7 +1731,7 @@ tr.tr-click{cursor:pointer;}
 
     <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💵 Pagamento da cliente à Go Ladies <span style="font-weight:400; color:var(--muted);">(Pix na sua conta; marcar Pago avisa a cliente e abre a oferta pras motoristas)</span></h4>
     <div class="formgrid">
-      <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(realizado — previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
+      <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(realizado; previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
       <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
       <div><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
       <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
@@ -1740,7 +1740,7 @@ tr.tr-click{cursor:pointer;}
 
     <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💰 Pagamento à motorista <span style="font-weight:400; color:var(--muted);">(repasse quinzenal)</span></h4>
     <div class="formgrid">
-      <div><label>Valor repassado <span style="font-weight:400; color:var(--muted);">(realizado — previsto é o Repasse motorista acima)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
+      <div><label>Valor repassado <span style="font-weight:400; color:var(--muted);">(realizado; previsto é o Repasse motorista acima)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
       <div><label>Comissão da plataforma <span style="font-weight:400; color:var(--muted);">(calculada: recebido/cotado − repassado)</span></label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <div><label>Forma de pagamento</label><select id="vg-pg-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
       <div><label>Status do pagamento</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
@@ -2539,7 +2539,7 @@ async function tratarMudancaAutenticacao(session){
       // banco responder rápido dessa vez, ela não precisa digitar a senha
       // de novo.
       logErroCliente("Timeout no rpc motorista_id_atual pós-login (15s)", "login");
-      loginErro.textContent = "Demorou demais pra conectar. Recarregue a página (Ctrl+Shift+R) e tente de novo — não precisa digitar a senha de novo, só recarregar.";
+      loginErro.textContent = "Demorou demais pra conectar. Recarregue a página (Ctrl+Shift+R) e tente de novo; não precisa digitar a senha de novo, só recarregar.";
       loginErro.style.display = "block";
       return;
     }
@@ -2569,7 +2569,7 @@ async function carregarDados(){
   const resultado = await Promise.race([carregarDadosInterno().then(()=>({ timeout: false })), timeoutCarregar]);
   if(resultado.timeout){
     logErroCliente("Timeout no carregarDados (20s)", "carregarDados");
-    alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo — se continuar acontecendo, recarregue a página.");
+    alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo; se continuar acontecendo, recarregue a página.");
   }
 }
 // Aplica o resultado de uma consulta SÓ se ela deu certo. Se deu erro
@@ -2806,7 +2806,7 @@ async function recarregarTabelas(...nomes){
   const busca = Promise.all(nomes.map(nome => sb.from(nome).select("*").order("id").then(r=>({ nome, ...r }))));
   const resultado = await Promise.race([busca.then(rs=>({ timeout: false, rs })), timeout]);
   if(resultado.timeout){
-    if(!recargaSilenciosa) alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo — se continuar acontecendo, recarregue a página.");
+    if(!recargaSilenciosa) alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo; se continuar acontecendo, recarregue a página.");
     return;
   }
   resultado.rs.forEach(r=>{
@@ -3248,7 +3248,7 @@ function renderTentativasPedido(){
   wrap.innerHTML = registros.map(t=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${escapeHtml(t.data_contato||"Sem data")} — ${escapeHtml(t.loja_nome||"-")}</strong>
+        <strong>${escapeHtml(t.data_contato||"Sem data")} · ${escapeHtml(t.loja_nome||"-")}</strong>
         <button class="icon-btn" type="button" onclick="deleteTentativa(${t.id})">🗑️</button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">
@@ -3698,7 +3698,7 @@ function renderVendasLead(){
     const pagas = parcelas.filter(p=>p.status==="Pago").length;
     return `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
-      <span><strong>${v.servico_produto||"-"}</strong> — ${formatarMoedaBR(v.preco_total)} <span style="color:var(--muted);">${v.parcelado?`· ${pagas}/${parcelas.length} parcelas pagas`:`· ${pagas?"Pago":"Pendente"}`}</span></span>
+      <span><strong>${v.servico_produto||"-"}</strong> · ${formatarMoedaBR(v.preco_total)} <span style="color:var(--muted);">${v.parcelado?`· ${pagas}/${parcelas.length} parcelas pagas`:`· ${pagas?"Pago":"Pendente"}`}</span></span>
       <button class="icon-btn" type="button" onclick="deleteVenda(${v.id})">🗑️</button>
     </div>`;
   }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma venda registrada ainda.</p>`;
@@ -3782,7 +3782,7 @@ function renderInteracoesLead(){
   wrap.innerHTML = registros.map(i=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${i.data||"Sem data"} — ${i.assunto||"-"}</strong>
+        <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
         <button class="icon-btn" type="button" onclick="deleteInteracaoLead(${i.id})">🗑️</button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
@@ -4116,7 +4116,7 @@ function renderInteracoesParceiro(){
   wrap.innerHTML = registros.map(i=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${i.data||"Sem data"} — ${i.assunto||"-"}</strong>
+        <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
         <button class="icon-btn" type="button" onclick="deleteInteracaoParceiro(${i.id})">🗑️</button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
@@ -4191,7 +4191,7 @@ function openOrcamentoModal(id){
   toggleOrcamentoParcelado();
   toggleOrcamentoPago();
   const vendaLigada = vendas.find(v=>v.orcamento_id===id);
-  document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas — edite direto em Financeiro se precisar.` : "";
+  document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas; edite direto em Financeiro se precisar.` : "";
   document.getElementById("orcamento-modal").classList.add("open");
 }
 async function saveOrcamento(){
@@ -4793,7 +4793,7 @@ async function salvarDocPrincipal(tipo, motoristaId){
 function renderHistoricoDocumentos(){
   const wrap = document.getElementById("mt-historico-lista");
   if(!editingMotoristaId){
-    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Aparece aqui quando um documento principal (CNH, CRLV, Antecedentes Criminais, Comprovante de Endereço) for substituído por uma versão mais nova — a antiga fica guardada, não é apagada.</p>`;
+    wrap.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Aparece aqui quando um documento principal (CNH, CRLV, Antecedentes Criminais, Comprovante de Endereço) for substituído por uma versão mais nova; a antiga fica guardada, não é apagada.</p>`;
     return;
   }
   const tiposPrincipais = Object.values(DOC_PRINCIPAL_CONFIG);
@@ -5579,7 +5579,7 @@ function openViagemModal(id){
     statusPreco.textContent = "✅ Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "");
   } else if(v.preco_recusado_em){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "✋ Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + " — ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
+    statusPreco.textContent = "✋ Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
   } else if(v.preco_confirmacao_enviada_em){
     statusPreco.style.display = "block";
     statusPreco.textContent = "⏳ Confirmação de preço enviada pra cliente em " + new Date(v.preco_confirmacao_enviada_em).toLocaleString("pt-BR") + ", aguardando resposta.";
@@ -6888,7 +6888,7 @@ function listaContasAPagarUnificada(){
     const nomesMotoristas = viagem ? nomesMotoristasViagem(viagem) : "";
     return {
       origem: "Motorista", id: p.id, viagemId: p.viagem_id,
-      descricao: "Pagamento — " + (nomesMotoristas||"motorista") + (viagem?" (viagem #"+viagem.id+")":""),
+      descricao: "Pagamento: " + (nomesMotoristas||"motorista") + (viagem?" (viagem #"+viagem.id+")":""),
       categoria: "Motorista", valor: p.valor_repassado, vencimento: p.data_prevista_pagamento || null,
       data_pagamento: p.data_pagamento, status: p.status || "Pendente",
     };
