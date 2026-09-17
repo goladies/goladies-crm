@@ -4855,9 +4855,11 @@ function openMotoristaModal(id){
   document.getElementById("mt-origem").value = m.origem||"Site";
   document.getElementById("mt-auth-uid").value = m.auth_user_id||"";
   document.getElementById("mt-pasta-drive").value = m.pasta_drive_url||"";
-  document.getElementById("mt-acesso-status").innerHTML = m.auth_user_id
+  const cliDaMotorista = m.auth_user_id ? clientesTransporte.find(c=>c.auth_user_id===m.auth_user_id) : null;
+  document.getElementById("mt-acesso-status").innerHTML = (m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
-    : '<span class="tag urg-media">Sem login vinculado ainda</span>';
+    : '<span class="tag urg-media">Sem login vinculado ainda</span>')
+    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente">🚗 Também é cliente (#${cliDaMotorista.id})</span>` : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
   document.getElementById("mt-doc-status").value = "Pendente";
@@ -5099,7 +5101,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td><strong>${escapeHtml(r.nome)}</strong>${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td><strong>${escapeHtml(r.nome)}</strong>${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
@@ -5166,6 +5168,10 @@ function htmlAcessoPainelCliente(c){
   let html = c.auth_user_id
     ? `🔐 <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
     : `🔓 Ainda não criou login no painel da cliente (<a href="https://goladies.com.br/cliente.html" target="_blank" rel="noopener">goladies.com.br/cliente.html</a>).`;
+  const mot = motoristaDaCliente(c.id);
+  if(mot){
+    html += `<div style="margin-top:6px;">🚗 <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
+  }
   const dups = duplicatasCliente(c);
   if(dups.length){
     html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);">⚠️ Mesmo WhatsApp de: ` +
@@ -5370,6 +5376,29 @@ function renderMotoristasCheckboxes(selecionados){
   if(foraDoQuadro > 0 && elegiveis.length){
     wrap.innerHTML += `<span style="color:var(--muted); font-size:11.5px; width:100%;">${foraDoQuadro} motorista${foraDoQuadro>1?"s":""} em certificação, inativa ou não aprovada não aparece${foraDoQuadro>1?"m":""} aqui.</span>`;
   }
+  marcarMotoristaDaCliente();
+}
+// Motorista que também é cliente (mesmo login, schema_motorista_tambem_cliente.sql):
+// não pode ser oferecida pra própria viagem. O banco já ignora, aqui só
+// deixa claro no modal.
+function motoristaDaCliente(clienteId){
+  const c = clientesTransporte.find(x=>x.id===Number(clienteId));
+  if(!c || !c.auth_user_id) return null;
+  return motoristas.find(m=>m.auth_user_id && m.auth_user_id===c.auth_user_id) || null;
+}
+function marcarMotoristaDaCliente(){
+  const propria = motoristaDaCliente(document.getElementById("vg-cliente").value);
+  document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]").forEach(cb=>{
+    const label = cb.parentElement;
+    const aviso = label.querySelector(".propria-cliente");
+    if(propria && Number(cb.value)===propria.id){
+      cb.checked = false; cb.disabled = true; label.style.opacity = ".55";
+      if(!aviso) label.insertAdjacentHTML("beforeend", ` <span class="propria-cliente" style="color:var(--muted); font-size:11px;">(é a cliente desta viagem)</span>`);
+    } else {
+      cb.disabled = false; label.style.opacity = "";
+      if(aviso) aviso.remove();
+    }
+  });
 }
 // Espelha no CRM a regra "pagamento_cliente_ok" do banco
 // (schema_pagamento_pix_cliente.sql): viagem sem preço não precisa de
@@ -5390,6 +5419,7 @@ function pagamentoClienteOk(v){
 function atualizarStatusOferta(){
   const el = document.getElementById("vg-oferta-status");
   if(!el) return;
+  marcarMotoristaDaCliente();
   const status = document.getElementById("vg-viagem-status").value;
   const cotado = document.getElementById("vg-preco-cotado").value;
   const confirmado = document.getElementById("vg-preco-confirmado").checked;
