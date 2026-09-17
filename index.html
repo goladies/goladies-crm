@@ -406,6 +406,7 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .kanban-card.urg-atraso{border-left-color:#D62839; background:var(--c-red-bg); animation:pulseAtraso 1.6s infinite;}
 @keyframes pulseAtraso{0%,100%{box-shadow:0 1px 4px rgba(214,40,57,.15);} 50%{box-shadow:0 1px 12px rgba(214,40,57,.5);}}
 .kc-alerta{display:block; font-size:10.5px; font-weight:800; margin-bottom:4px;}
+.kc-btn{display:block; width:100%; margin-top:8px; text-align:center;}
 .kc-pix{display:inline-block; font-size:10.5px; font-weight:800; margin-bottom:4px; padding:2px 7px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber);}
 .kc-alerta.urg-60{color:#F2A900;}
 .kc-alerta.urg-30{color:#E86A1C;}
@@ -2029,8 +2030,8 @@ function badgeCertificacao(m){
 const DOCUMENTOS_OBRIGATORIOS_MOTORISTA = ["CNH","CRLV","Antecedentes Criminais","Comprovante de Endereço"];
 const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento"];
 const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E-mail"];
-const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
-const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
+const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
+const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
 const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=";
 // Tarifas sugeridas pra calcular preço a partir da distância (km).
 // Ponto de partida baseado em pesquisa de mercado (motorista particular/executivo
@@ -5406,6 +5407,10 @@ function atualizarStatusOferta(){
     el.textContent = "🔒 Oferta fechada: a cliente pediu ajuste. Corrija o valor e volte o status pra 'Aguardando cliente confirmar preço' pra reenviar.";
   } else if(status === "Cancelada"){
     el.textContent = "🔒 Viagem cancelada, nenhuma motorista vê essa oferta.";
+  } else if(status === "Aguardando pagamento"){
+    el.textContent = pagoOk
+      ? "💵 Pagamento ok: ao salvar, a viagem sai desta coluna e a oferta abre pras motoristas marcadas."
+      : "💵 Oferta fechada: a cliente aceitou o valor e o pedido de Pix foi pelo WhatsApp. Quando cair, use o botão 'Pix recebido' no cartão ou marque Pago em 'Pagamento da cliente' e salve.";
   } else if(cotado !== "" && !confirmado){
     el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção de cotação pra liberar agora.";
   } else if(!pagoOk){
@@ -5417,6 +5422,17 @@ function atualizarStatusOferta(){
   } else {
     el.textContent = "Marque agora quem pode pegar essa corrida. A oferta abre sozinha pra elas quando a cliente confirmar o valor.";
   }
+}
+async function registrarPixRecebido(id){
+  const v = viagens.find(x=>x.id===id);
+  if(!v) return;
+  if(!confirm(`Confirmar que o Pix de ${formatarMoedaBR(v.preco_cotado)} da viagem #${id} caiu?
+
+A viagem segue pra oferta às motoristas na hora.`)) return;
+  const { error } = await sb.rpc("registrar_pix_recebido", { p_viagem_id: id });
+  if(error){ alert("Não foi possível registrar: " + error.message); return; }
+  showToast("Pix registrado!");
+  await recarregarTabelas("viagens", "pagamentos_cliente");
 }
 function formatarDataBR(dataISO){
   if(!dataISO) return null;
@@ -5465,8 +5481,13 @@ function renderTransporteViagens(){
         let pix = "";
         if(v.preco_cotado && Number(v.preco_cotado) > 0 && !pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago")){
           if(v.status === "Concluída") pix = `<span class="kc-pix">💵 Pagamento pendente</span>`;
-          else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada") pix = `<span class="kc-pix">💵 Aguardando Pix</span>`;
+          else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada" && v.status !== "Aguardando pagamento") pix = `<span class="kc-pix">💵 Aguardando Pix</span>`;
         }
+        // Coluna "Aguardando pagamento": um clique registra o Pix e a viagem
+        // segue sozinha (trigger no banco) pra aceite da motorista.
+        const btnPix = v.status === "Aguardando pagamento"
+          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); registrarPixRecebido(${v.id})">💵 Pix recebido</button>`
+          : "";
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-top">#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</div>
@@ -5476,6 +5497,7 @@ function renderTransporteViagens(){
           ${v.preco_cotado?`<div style="color:var(--muted); font-size:11.5px;">${formatarMoedaBR(v.preco_cotado)}</div>`:""}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);">🧍 ${n} parada${n===1?"":"s"}</span>` : ""; })()}
+          ${btnPix}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
     </div>`;
@@ -5656,13 +5678,23 @@ async function saveViagem(){
     data_pagamento: document.getElementById("vg-lid-data").value || null,
     notas: document.getElementById("vg-lid-notas").value,
   };
-  const temDadoPagamentoCliente = pgcPayload.valor_recebido != null || pgcPayload.forma_pagamento || pgcPayload.data_pagamento || pgcPayload.notas;
+  const temDadoPagamentoCliente = pgcPayload.valor_recebido != null || pgcPayload.forma_pagamento || pgcPayload.data_pagamento || pgcPayload.notas || pgcPayload.status === "Pago";
   const existentePgc = pagamentosCliente.find(p=>p.viagem_id===viagemId);
   if(temDadoPagamentoCliente || existentePgc){
     const { error } = existentePgc
       ? await sb.from("pagamentos_cliente").update(pgcPayload).eq("id", existentePgc.id)
       : await sb.from("pagamentos_cliente").insert(pgcPayload);
     if(error){ alert("Erro ao salvar pagamento da cliente: " + error.message); return; }
+  }
+  // Marcou "liberar sem esperar o Pix" (ou a cliente é pós-paga) com a viagem
+  // na coluna de pagamento: ela segue pra oferta. O caso "Pago" o banco já
+  // resolve sozinho (trigger em pagamentos_cliente).
+  if(payload.status === "Aguardando pagamento"){
+    const clienteSel = clientesTransporte.find(c=>c.id===payload.cliente_id);
+    if(payload.liberar_sem_pagamento || (clienteSel && clienteSel.pos_pago)){
+      const proximo = payload.motorista_ids && payload.motorista_ids.length ? "Aguardando aceite de motorista" : "Solicitada";
+      await sb.from("viagens").update({ status: proximo }).eq("id", viagemId);
+    }
   }
 
   const pgPayload = {
