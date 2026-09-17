@@ -54,19 +54,20 @@ const CATEGORIAS_GASTO = "seguro, ipva, licenciamento, multa, pedagio, estaciona
 const TOOLS: Anthropic.Tool[] = [
   {
     name: "responder",
-    description: "Responder uma pergunta ou dúvida sobre o carro dela: luz no painel, barulho, cheiro, vazamento, o que fazer, quanto custa em média, se pode rodar. Use também quando ela manda foto/quadros de vídeo do carro e pergunta 'o que é isso'. Orientação inicial, nunca laudo: sempre recomende confirmar com oficina de confiança quando houver dúvida ou risco.",
+    description: "Responder uma pergunta dela. Dois tipos: (1) tipo 'diagnostico': dúvida sobre o carro (luz no painel, barulho, cheiro, vazamento, o que fazer, quanto custa em média, se pode rodar; também foto/quadros de vídeo com 'o que é isso'). Orientação inicial, nunca laudo: sempre recomende confirmar com oficina de confiança quando houver dúvida ou risco. (2) tipo 'numeros': pergunta sobre os números dela (quantos km faz por litro, quanto gasta por km, quanto gastou/ganhou/lucrou no mês, % de uso profissional, se vai bater a meta). Responda SÓ com os valores de contexto.resumo_calculado, sem recalcular; se o valor for null, explique o que falta lançar.",
     input_schema: {
       type: "object",
       properties: {
-        titulo: str("Título curto do que foi identificado. Ex: 'Luz de óleo acesa', 'Barulho ao frear'."),
-        o_que_e: str("Explicação simples, sem jargão, de 1 a 3 frases, do que pode ser."),
-        gravidade: str("Exatamente um destes: baixa, moderada, alta. 'alta' = parar o carro / não rodar."),
-        pode_rodar: str("Uma frase: se ela pode continuar rodando e por quanto tempo, ou se deve parar."),
-        o_que_fazer: { type: "array", description: "Passos objetivos, do mais imediato pro menos (2 a 5 itens).", items: { type: "string" } },
-        custo_estimado: str("Faixa de custo em reais pra resolver, em Porto Alegre, se fizer sentido. Ex: 'R$ 250 a R$ 450'. Vazio se não souber."),
-        dica: str("Uma dica prática ou o que perguntar na oficina pra não ser enganada. Vazio se não houver."),
+        tipo: str("Exatamente um destes: diagnostico, numeros."),
+        titulo: str("Título curto. Ex: 'Luz de óleo acesa', 'Barulho ao frear', 'Seu consumo médio'."),
+        o_que_e: str("Diagnóstico: explicação simples, sem jargão, de 1 a 3 frases, do que pode ser. Números: a resposta direta com o valor (ex: 'Seu carro está fazendo 11,4 km/l, medido em 830 km entre 3 tanques cheios.') e uma frase de leitura (se está bom pro carro dela, tendência)."),
+        gravidade: str("Só diagnóstico. Exatamente um destes: baixa, moderada, alta. 'alta' = parar o carro / não rodar. Vazio em números."),
+        pode_rodar: str("Só diagnóstico. Uma frase: se ela pode continuar rodando e por quanto tempo, ou se deve parar. Vazio em números."),
+        o_que_fazer: { type: "array", description: "Diagnóstico: passos objetivos, do mais imediato pro menos (2 a 5 itens). Números: 0 a 3 sugestões práticas pra melhorar o número (ou o que lançar no painel pra ele aparecer). Pode ser vazio.", items: { type: "string" } },
+        custo_estimado: str("Só diagnóstico. Faixa de custo em reais pra resolver, em Porto Alegre, se fizer sentido. Ex: 'R$ 250 a R$ 450'. Vazio se não souber."),
+        dica: str("Uma dica prática. Diagnóstico: o que perguntar na oficina pra não ser enganada. Números: como registrar melhor (ex: sempre marcar tanque cheio e anotar o km). Vazio se não houver."),
       },
-      required: ["titulo", "o_que_e", "gravidade", "o_que_fazer"],
+      required: ["tipo", "titulo", "o_que_e", "o_que_fazer"],
       additionalProperties: false,
     },
   },
@@ -159,7 +160,7 @@ const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "nao_entendi",
-    description: "Use quando não dá pra montar uma ação nem responder com segurança: pedido ambíguo, fora do escopo (só carro, gastos, km e metas), material ilegível, ou pergunta que exige ver o carro ao vivo.",
+    description: "Use quando não dá pra montar uma ação nem responder com segurança: pedido ambíguo, fora do escopo (só carro, consumo, gastos, ganhos, km e metas), material ilegível, ou pergunta que exige ver o carro ao vivo.",
     input_schema: {
       type: "object",
       properties: {
@@ -183,6 +184,7 @@ Regras:
 - Valores em reais: '180 conto', '180 reais', 'R$180,00' → 180. Litros e km: aceite vírgula decimal.
 - Quadros de vídeo vêm como imagens em sequência; o áudio do vídeo NÃO chega até você. Se a pergunta depender do som (barulho), diga isso em o_que_e e peça pra ela descrever o barulho por escrito.
 - Sobre o carro (responder): linguagem simples, sem jargão, tom de amiga que entende de carro. Seja honesta sobre incerteza. Gravidade 'alta' quando há risco de segurança ou de dano grave (óleo, temperatura, freio, direção, bateria com cheiro). Nunca diga que está tudo bem sem ver; diga o que checar. Sempre inclua em o_que_fazer um passo de confirmar em oficina de confiança quando houver dúvida. Custos: faixas de referência pra carro popular em Porto Alegre em 2026.
+- Perguntas sobre os números dela (km por litro, custo por km, gastos/ganhos/lucro do mês, % de uso profissional, meta): use responder com tipo 'numeros' e os valores prontos em contexto.resumo_calculado. Não some nem divida os lançamentos brutos: o painel já calculou. Se consumo_medio_kml for null, diga que ainda faltam abastecimentos com tanque cheio e km e explique como registrar (encher, anotar km; rodar; encher de novo, anotar km). Referência de leitura: carro popular 1.0/1.6 na cidade faz uns 9 a 12 km/l na gasolina e 6 a 8,5 no etanol; abaixo disso vale checar pneus, filtro de ar e velas.
 - Use o contexto (carro dela, km atual, últimos abastecimentos e manutenções) pra preencher o que faltar (ex: combustível padrão do carro, km aproximado) e pra alertar em 'dica' quando algo destoar (ex: km menor que o último registrado).
 - Se o pedido mistura duas coisas (abasteci e paguei pedágio), faça a principal e diga em resumo que a outra fica pra um próximo comando.
 - O campo resumo é o que ela vai ler antes de confirmar: seja específica (valor, data, km).`;
