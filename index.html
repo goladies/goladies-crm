@@ -941,8 +941,7 @@ tr.tr-click{cursor:pointer;}
 
       <div id="subtab-avaliacoes" style="display:none;">
         <div class="pagehead">
-          <div><h2 style="font-size:16px;">Avaliações</h2><p>Notas mútuas entre motoristas e clientes, por viagem</p></div>
-          <button class="btn" onclick="openAvaliacaoModal()">+ Nova avaliação</button>
+          <div><h2 style="font-size:16px;">Avaliações aguardando revisão</h2><p>Só as ocultas aparecem aqui. Depois de liberadas, ficam na ficha da motorista, da cliente e da viagem.</p></div>
         </div>
         <div class="panel">
           <table class="tbl">
@@ -1600,6 +1599,13 @@ tr.tr-click{cursor:pointer;}
       </p>
     </div>
 
+    <!-- Avaliações que as clientes deram pra ela. "Liberar" é o que faz a
+         nota aparecer no painel da motorista (minhas_avaliacoes só lê visivel). -->
+    <div id="mt-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
+      <h4 style="font-size:13px; margin:0 0 8px;">⭐ Avaliações recebidas <span id="mt-avaliacoes-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <div id="mt-avaliacoes-lista"></div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('motorista-modal')">Sair</button>
       <button class="btn" onclick="saveMotorista()">Salvar</button>
@@ -1628,6 +1634,14 @@ tr.tr-click{cursor:pointer;}
            sozinha, então aqui é só leitura. Se houver outra cliente com o
            mesmo WhatsApp, aparece o botão de unificar. -->
       <div class="full" id="ct-acesso-painel" style="font-size:13px; color:var(--muted);"></div>
+    </div>
+    <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
+         motoristas disseram dela; nota_motorista + comentario é o que ela disse. -->
+    <div id="ct-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
+      <h4 style="font-size:13px; margin:0 0 8px;">⭐ Avaliações recebidas das motoristas <span id="ct-avaliacoes-recebidas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <div id="ct-avaliacoes-recebidas"></div>
+      <h4 style="font-size:13px; margin:14px 0 8px;">💬 Avaliações que ela deu <span id="ct-avaliacoes-dadas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <div id="ct-avaliacoes-dadas"></div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('cliente-transporte-modal')">Sair</button>
@@ -1748,6 +1762,12 @@ tr.tr-click{cursor:pointer;}
       <div><label>Data do pagamento <span style="font-weight:400; color:var(--muted);">(realizada)</span></label><input type="date" id="vg-pg-data"></div>
       <div class="full"><label>Comprovante <span style="font-weight:400; color:var(--muted);">(link do PIX/print, aparece pra ela no painel)</span></label><input type="text" id="vg-pg-comprovante" placeholder="https://..."></div>
       <div class="full"><label>Notas (incentivo, reembolso etc.)</label><textarea id="vg-pg-notas" rows="2"></textarea></div>
+    </div>
+
+    <!-- Só leitura + ações próprias: o Salvar da viagem não mexe em avaliacoes. -->
+    <div id="vg-avaliacao-wrap" style="display:none;">
+      <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">⭐ Avaliações desta viagem</h4>
+      <div id="vg-avaliacao-lista"></div>
     </div>
 
     <div class="modal-actions">
@@ -4305,9 +4325,17 @@ function checklistDocumentosMotorista(motoristaId){
 function documentosEmDiaMotorista(motoristaId){
   return checklistDocumentosMotorista(motoristaId).every(item=>item.ok);
 }
+// A viagem "é" da motorista que aceitou (motorista_id_confirmada); viagem
+// antiga sem confirmada cai pra lista de marcadas, pra não perder nota.
+function viagemEhDaMotorista(v, motoristaId){
+  return v.motorista_id_confirmada ? v.motorista_id_confirmada===motoristaId : idsMotoristasViagem(v).includes(motoristaId);
+}
+function avaliacoesDaMotorista(motoristaId){
+  const ids = new Set(viagens.filter(v=>viagemEhDaMotorista(v, motoristaId)).map(v=>v.id));
+  return avaliacoes.filter(a=>ids.has(a.viagem_id));
+}
 function mediaAvaliacaoMotorista(motoristaId){
-  const viagensDoMotorista = viagens.filter(v=>idsMotoristasViagem(v).includes(motoristaId)).map(v=>v.id);
-  const notas = avaliacoes.filter(a=>a.visivel && viagensDoMotorista.includes(a.viagem_id) && a.nota_motorista!=null).map(a=>Number(a.nota_motorista));
+  const notas = avaliacoesDaMotorista(motoristaId).filter(a=>a.visivel && a.nota_motorista!=null).map(a=>Number(a.nota_motorista));
   if(!notas.length) return null;
   return (notas.reduce((s,n)=>s+n,0)/notas.length).toFixed(1);
 }
@@ -4867,6 +4895,7 @@ function openMotoristaModal(id){
   document.getElementById("mo-texto").value = "";
   renderDocumentosMotorista();
   renderObservacoesMotorista();
+  renderAvaliacoesMotorista();
   document.getElementById("motorista-modal").classList.add("open");
 }
 function renderDocumentosMotorista(){
@@ -5155,6 +5184,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
   document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) : "";
+  renderAvaliacoesCliente();
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
 // Duplicatas: outra cliente com o mesmo WhatsApp (últimos 8 dígitos). Acontece
@@ -5630,6 +5660,7 @@ function openViagemModal(id){
   recalcularComissaoCotacao();
   atualizarStatusOferta();
   marcarObrigatoriosViagem();
+  renderAvaliacoesViagem();
 
   document.getElementById("btn-excluir-viagem").style.display = id ? "inline-block" : "none";
   document.getElementById("viagem-modal").classList.add("open");
@@ -5862,27 +5893,131 @@ async function deleteViagem(){
 }
 
 // ===== TRANSPORTE: AVALIAÇÕES =====
+// A avaliação nasce por viagem (nota_motorista = o que a cliente deu pra
+// motorista; nota_cliente = o que a motorista deu pra cliente) e vive na
+// ficha de cada uma. A aba é só a fila de moderação: o que ainda está
+// oculto. Liberar é o que faz a nota aparecer no painel da motorista.
+function motoristaDaViagem(v){
+  if(!v) return null;
+  if(v.motorista_id_confirmada) return motoristas.find(m=>m.id===v.motorista_id_confirmada) || null;
+  const ids = idsMotoristasViagem(v);
+  return ids.length===1 ? (motoristas.find(m=>m.id===ids[0]) || null) : null;
+}
+function avaliacoesPendentes(){
+  return avaliacoes.filter(a=>!a.visivel && (a.nota_motorista!=null || a.nota_cliente!=null));
+}
 function renderTransporteAvaliacoes(){
   renderCabecalho("thead-avaliacoes", [
     {label:"Viagem", campo:null}, {label:"Motorista", campo:null}, {label:"Cliente", campo:null},
     {label:"Nota motorista", campo:"nota_motorista", tipo:"numero"}, {label:"Nota cliente", campo:"nota_cliente", tipo:"numero"},
-    {label:"Visível", campo:"visivel"}, {label:"", campo:null}
+    {label:"Comentário da cliente", campo:null}, {label:"", campo:null}
   ], "avaliacoes");
-  const lista = aplicarOrdenacao("avaliacoes", avaliacoes);
+  const pendentes = avaliacoesPendentes();
+  const botao = document.querySelector('.subnav-item[data-subtab="avaliacoes"]');
+  if(botao) botao.textContent = pendentes.length ? `Avaliações (${pendentes.length})` : "Avaliações";
+  const lista = aplicarOrdenacao("avaliacoes", pendentes);
   document.getElementById("avaliacoes-body").innerHTML = lista.map(a=>{
     const viagem = viagens.find(v=>v.id===a.viagem_id);
-    const nomesMotoristas = viagem ? nomesMotoristasViagem(viagem) : "";
+    const moto = motoristaDaViagem(viagem);
+    const nomesMotoristas = moto ? moto.nome : (viagem ? nomesMotoristasViagem(viagem) : "");
     const cliente = viagem ? clientesTransporte.find(c=>c.id===viagem.cliente_id) : null;
     return `<tr class="tr-click" onclick="openAvaliacaoModal(${a.id})">
       <td>${viagem ? (viagem.data ? formatarDataBR(viagem.data) : "Viagem #"+viagem.id) : "-"}</td>
-      <td>${escapeHtml(nomesMotoristas || "-")}</td>
-      <td>${escapeHtml(cliente?cliente.nome:"-")}</td>
-      <td>${a.nota_motorista ?? "-"}</td>
-      <td>${a.nota_cliente ?? "-"}</td>
-      <td>${a.visivel?'<span class="tag ativo">Visível</span>':'<span class="tag urg-media">Oculta</span>'}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteAvaliacao(${a.id})">🗑️</button></td>
+      <td>${moto ? `<a href="#" onclick="event.stopPropagation(); openMotoristaModal(${moto.id}); return false;">${escapeHtml(moto.nome)}</a>` : escapeHtml(nomesMotoristas || "-")}</td>
+      <td>${cliente ? `<a href="#" onclick="event.stopPropagation(); openClienteTransporteModal(${cliente.id}); return false;">${escapeHtml(cliente.nome)}</a>` : "-"}</td>
+      <td>${a.nota_motorista!=null ? a.nota_motorista+" ★" : "-"}</td>
+      <td>${a.nota_cliente!=null ? a.nota_cliente+" ★" : "-"}</td>
+      <td style="max-width:320px; white-space:normal;">${escapeHtml(a.comentario || "-")}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button> <button class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteAvaliacao(${a.id})">🗑️</button></td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="7">Nenhuma avaliação registrada ainda</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Nenhuma avaliação aguardando revisão. As liberadas estão na ficha de cada motorista, cliente e viagem.</td></tr>`;
+}
+// Lista compacta reaproveitada nas três fichas. "lado" diz qual nota mostrar:
+// "motorista" (nota_motorista + comentário da cliente) ou "cliente" (nota_cliente).
+function htmlListaAvaliacoes(avs, lado){
+  if(!avs.length) return `<p style="color:var(--muted); font-size:12.5px; margin:0;">Nenhuma avaliação ainda.</p>`;
+  const ordenadas = [...avs].sort((a,b)=>{
+    const va = viagens.find(v=>v.id===a.viagem_id), vb = viagens.find(v=>v.id===b.viagem_id);
+    return ((vb&&vb.data)||"").localeCompare((va&&va.data)||"") || (b.id-a.id);
+  });
+  return ordenadas.map(a=>{
+    const viagem = viagens.find(v=>v.id===a.viagem_id);
+    const moto = motoristaDaViagem(viagem);
+    const cliente = viagem ? clientesTransporte.find(c=>c.id===viagem.cliente_id) : null;
+    const quem = lado==="motorista" ? (cliente ? cliente.nome : "cliente não informada") : (moto ? moto.nome : "motorista não informada");
+    const nota = lado==="motorista" ? a.nota_motorista : a.nota_cliente;
+    const data = viagem ? (viagem.data ? formatarDataBR(viagem.data) : "Viagem #"+viagem.id) : "viagem apagada";
+    const comentario = lado==="motorista" && a.comentario ? `<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(a.comentario)}</div>` : "";
+    const badge = a.visivel ? '<span class="tag ativo">Liberada</span>' : '<span class="tag urg-media">Oculta</span>';
+    const btnVis = a.visivel
+      ? `<button type="button" class="act act-edit" title="Some do painel da motorista" onclick="alternarVisivelAvaliacao(${a.id}, false)">🙈 Ocultar</button>`
+      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button>`;
+    return `<div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div style="font-size:13px;"><strong>${nota!=null ? nota+" ★" : "sem nota"}</strong> <span style="color:var(--muted);">· ${escapeHtml(quem)} · <a href="#" onclick="openViagemModal(${a.viagem_id}); return false;">${data}</a></span></div>
+        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️</button></div>
+      </div>
+      ${comentario}
+    </div>`;
+  }).join("");
+}
+function resumoNotas(avs, campo){
+  const notas = avs.map(a=>a[campo]).filter(n=>n!=null && n!=="").map(Number);
+  if(!notas.length) return "";
+  return `(média ${(notas.reduce((s,n)=>s+n,0)/notas.length).toFixed(1)} ★ em ${notas.length})`;
+}
+function renderAvaliacoesMotorista(){
+  const wrap = document.getElementById("mt-avaliacoes-wrap");
+  if(!editingMotoristaId){ wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  const avs = avaliacoesDaMotorista(editingMotoristaId).filter(a=>a.nota_motorista!=null || a.comentario);
+  document.getElementById("mt-avaliacoes-resumo").textContent = resumoNotas(avs.filter(a=>a.visivel), "nota_motorista");
+  document.getElementById("mt-avaliacoes-lista").innerHTML = htmlListaAvaliacoes(avs, "motorista");
+}
+function renderAvaliacoesCliente(){
+  const wrap = document.getElementById("ct-avaliacoes-wrap");
+  if(!editingClienteTransporteId){ wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  const ids = new Set(viagens.filter(v=>v.cliente_id===editingClienteTransporteId).map(v=>v.id));
+  const avs = avaliacoes.filter(a=>ids.has(a.viagem_id));
+  const recebidas = avs.filter(a=>a.nota_cliente!=null);
+  const dadas = avs.filter(a=>a.nota_motorista!=null || a.comentario);
+  document.getElementById("ct-avaliacoes-recebidas-resumo").textContent = resumoNotas(recebidas, "nota_cliente");
+  document.getElementById("ct-avaliacoes-recebidas").innerHTML = htmlListaAvaliacoes(recebidas, "cliente");
+  document.getElementById("ct-avaliacoes-dadas-resumo").textContent = resumoNotas(dadas, "nota_motorista");
+  document.getElementById("ct-avaliacoes-dadas").innerHTML = htmlListaAvaliacoes(dadas, "motorista");
+}
+function renderAvaliacoesViagem(){
+  const wrap = document.getElementById("vg-avaliacao-wrap");
+  const avs = editingViagemId ? avaliacoes.filter(a=>a.viagem_id===editingViagemId) : [];
+  if(!avs.length){ wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  document.getElementById("vg-avaliacao-lista").innerHTML = avs.map(a=>{
+    const badge = a.visivel ? '<span class="tag ativo">Liberada</span>' : '<span class="tag urg-media">Oculta</span>';
+    const btnVis = a.visivel
+      ? `<button type="button" class="act act-edit" onclick="alternarVisivelAvaliacao(${a.id}, false)">🙈 Ocultar</button>`
+      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button>`;
+    return `<div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div style="font-size:13px;">Cliente → motorista: <strong>${a.nota_motorista!=null ? a.nota_motorista+" ★" : "sem nota"}</strong> <span style="color:var(--muted);">·</span> Motorista → cliente: <strong>${a.nota_cliente!=null ? a.nota_cliente+" ★" : "sem nota"}</strong></div>
+        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️</button></div>
+      </div>
+      ${a.comentario ? `<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(a.comentario)}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+// Depois de salvar/liberar/excluir, refaz as seções das fichas que estiverem abertas.
+function atualizarAvaliacoesAbertas(){
+  if(document.getElementById("motorista-modal").classList.contains("open")) renderAvaliacoesMotorista();
+  if(document.getElementById("cliente-transporte-modal").classList.contains("open")) renderAvaliacoesCliente();
+  if(document.getElementById("viagem-modal").classList.contains("open")) renderAvaliacoesViagem();
+}
+async function alternarVisivelAvaliacao(id, visivel){
+  const { error } = await sb.from("avaliacoes").update({ visivel }).eq("id", id);
+  if(error){ alert("Erro ao atualizar: " + error.message); return; }
+  showToast(visivel ? "Liberada: a motorista já vê no painel dela." : "Ocultada.");
+  await recarregarTabelas("avaliacoes");
+  atualizarAvaliacoesAbertas();
 }
 let editingAvaliacaoId = null;
 function openAvaliacaoModal(id){
@@ -5913,12 +6048,14 @@ async function saveAvaliacao(){
   showToast("Salvo!");
   closeModal("avaliacao-modal");
   await recarregarTabelas("avaliacoes");
+  atualizarAvaliacoesAbertas();
 }
 async function deleteAvaliacao(id){
   if(!confirm("Excluir esta avaliação?")) return;
   const { error } = await sb.from("avaliacoes").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("avaliacoes");
+  atualizarAvaliacoesAbertas();
 }
 
 // ===== TRANSPORTE: AGENDA DE EVENTOS =====
