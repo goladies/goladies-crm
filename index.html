@@ -1355,6 +1355,10 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div class="full"><label>Recado pra motorista <span style="font-weight:400; color:var(--muted);">(aparece no cartão do painel: sua dica, por que vale a pena, pra quem serve)</span></label><textarea id="lk-descricao" rows="4" placeholder="Ex.: Achei essa lixeira boa pra quem faz corrida com criança: cabe no console e tem tampa. Custa uns R$ 20."></textarea></div>
       <div class="full"><label class="chip-check"><input type="checkbox" id="lk-ativo" checked> Ativo (aparece no painel)</label></div>
+      <div class="full">
+        <label>Retorno das motoristas <span style="font-weight:400; color:var(--muted);">(estrelas, se comprou e comentário, direto do painel)</span></label>
+        <div id="lk-retorno"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-link" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteLink()">Excluir</button>
@@ -2215,6 +2219,7 @@ let pecasTentativas = [];
 let parceiroLinks = [];
 let divulgacoes = [];
 let linksMotoristas = [];
+let linkAvaliacoes = [];
 let vagas = [];
 let vagasCandidatas = [];
 let eventos = [];
@@ -2657,8 +2662,12 @@ async function carregarDadosInterno(){
   viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
 
   // Links do painel da motorista (schema_links_motoristas.sql), idem
-  const rlk = await sb.from("links_motoristas").select("*").order("id");
+  const [rlk, rla] = await Promise.all([
+    sb.from("links_motoristas").select("*").order("id"),
+    sb.from("link_avaliacoes").select("*").order("id"),
+  ]);
   linksMotoristas = aplicarConsulta("links_motoristas", rlk, linksMotoristas);
+  linkAvaliacoes = aplicarConsulta("link_avaliacoes", rla, linkAvaliacoes);
 
   renderAll();
   marcarAtualizado();
@@ -2681,7 +2690,7 @@ async function carregarDadosInterno(){
 // Só as tabelas que mudam por fora entram na recarga automática: as ~28 do
 // carregamento inicial de minuto em minuto seriam carga demais pro banco no
 // plano gratuito, ainda mais somado ao n8n consultando ele o tempo todo.
-const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes"];
+const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes", "link_avaliacoes"];
 const INTERVALO_AUTO_MS = 60000;
 let atualizandoDados = false;
 let ultimaAtualizacao = null;
@@ -2764,6 +2773,7 @@ const TABELA_ATUALIZA = {
   parceiro_links: v => parceiroLinks = v,
   divulgacoes: v => divulgacoes = v,
   links_motoristas: v => linksMotoristas = v,
+  link_avaliacoes: v => linkAvaliacoes = v,
   vagas: v => vagas = v,
   vagas_candidatas: v => vagasCandidatas = v,
   motorista_observacoes: v => motoristaObservacoes = v,
@@ -3385,7 +3395,7 @@ function renderLinks(){
   const ativoF = document.getElementById("filter-ativo-link").value;
   renderCabecalho("thead-links", [
     {label:"Título", campo:"titulo"}, {label:"Categoria", campo:"categoria"}, {label:"Quem vê", campo:null},
-    {label:"Ordem", campo:"ordem", tipo:"numero"}, {label:"Ativo", campo:"ativo"}, {label:"", campo:null}
+    {label:"Retorno", campo:null}, {label:"Ordem", campo:"ordem", tipo:"numero"}, {label:"Ativo", campo:"ativo"}, {label:"", campo:null}
   ], "links_motoristas");
   const filtered = aplicarOrdenacao("links_motoristas", linksMotoristas.filter(l=>
     (!catF || l.categoria===catF) &&
@@ -3402,11 +3412,47 @@ function renderLinks(){
       <td><strong>${escapeHtml(l.titulo)}</strong><br><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px; color:var(--muted);">${escapeHtml(l.url)}</a></td>
       <td>${escapeHtml(l.categoria||"-")}</td>
       <td>${quemVe}</td>
+      <td style="white-space:nowrap; font-size:12.5px;">${resumoRetornoLink(l.id)}</td>
       <td>${l.ordem ?? 0}</td>
       <td>${l.ativo ? "✅" : "⏸️"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openLinkModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLink(${l.id})">🗑️</button></td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="6">Nenhum link cadastrado</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Nenhum link cadastrado</td></tr>`;
+}
+// Retorno das motoristas num link: média de estrelas, quantas compraram, comentários
+const LINK_COMPROU_ROTULO = { sim: "Comprou", nao: "Não comprou", analisar: "Vai analisar" };
+function resumoRetornoLink(linkId){
+  const avs = linkAvaliacoes.filter(a=>a.link_id===linkId);
+  if(!avs.length) return `<span style="color:var(--muted);">sem retorno</span>`;
+  const comEstrela = avs.filter(a=>a.estrelas);
+  const media = comEstrela.length ? (comEstrela.reduce((s,a)=>s+a.estrelas,0)/comEstrela.length) : null;
+  const partes = [];
+  if(media !== null) partes.push(`⭐ ${media.toFixed(1)} (${comEstrela.length})`);
+  const compraram = avs.filter(a=>a.comprou==="sim").length;
+  if(compraram) partes.push(`🛒 ${compraram}`);
+  const analisando = avs.filter(a=>a.comprou==="analisar").length;
+  if(analisando) partes.push(`🤔 ${analisando}`);
+  const comentarios = avs.filter(a=>a.comentario).length;
+  if(comentarios) partes.push(`💬 ${comentarios}`);
+  return partes.join(" · ") || `${avs.length} resposta(s)`;
+}
+function renderRetornoLinkModal(linkId){
+  const box = document.getElementById("lk-retorno");
+  const avs = linkAvaliacoes.filter(a=>a.link_id===linkId).sort((a,b)=>(b.atualizado_em||"").localeCompare(a.atualizado_em||""));
+  if(!linkId || !avs.length){ box.innerHTML = `<div style="color:var(--muted); font-size:12.5px;">Nenhuma motorista avaliou este link ainda.</div>`; return; }
+  box.innerHTML = avs.map(a=>{
+    const m = motoristas.find(x=>x.id===a.motorista_id);
+    const estrelas = a.estrelas ? "★".repeat(a.estrelas) + "☆".repeat(5-a.estrelas) : "sem estrelas";
+    return `<div style="padding:8px 0; border-bottom:1px solid var(--border);">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <strong>${escapeHtml(m ? m.nome : "Motorista #"+a.motorista_id)}</strong>
+        <span style="color:#F2B705; letter-spacing:1px;" title="${a.estrelas||0} de 5">${estrelas}</span>
+        ${a.comprou ? `<span class="status-badge ${a.comprou==="sim"?"green":a.comprou==="analisar"?"amber":"red"}">${LINK_COMPROU_ROTULO[a.comprou]}</span>` : ""}
+        <span style="color:var(--muted); font-size:12px; margin-left:auto;">${a.atualizado_em ? new Date(a.atualizado_em).toLocaleDateString("pt-BR") : ""}</span>
+      </div>
+      ${a.comentario ? `<div style="margin-top:4px; font-size:13px;">💬 ${escapeHtml(a.comentario)}</div>` : ""}
+    </div>`;
+  }).join("");
 }
 function openLinkModal(id){
   editingLinkId = id || null;
@@ -3428,6 +3474,7 @@ function openLinkModal(id){
   document.getElementById("lk-ordem").value = l.ordem ?? 0;
   document.getElementById("lk-descricao").value = l.descricao||"";
   document.getElementById("lk-ativo").checked = id ? !!l.ativo : true;
+  renderRetornoLinkModal(id);
   document.getElementById("btn-excluir-link").style.display = id ? "block" : "none";
   document.getElementById("link-modal").classList.add("open");
 }
