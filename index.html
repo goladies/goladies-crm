@@ -662,6 +662,7 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="orcamentos" data-titulo="Orçamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v7M9.5 13h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span>Orçamentos</span></div>
       <div class="nav-item" data-tab="pecas" data-titulo="Peças"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Peças</span></div>
       <div class="nav-item" data-tab="divulgacao" data-titulo="Divulgação"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M18 6a8 8 0 0 1 0 12"/></svg><span>Divulgação</span></div>
+      <div class="nav-item" data-tab="links" data-titulo="Links das motoristas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Links</span></div>
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
       <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
@@ -830,6 +831,32 @@ tr.tr-click{cursor:pointer;}
         <table class="tbl">
           <thead><tr id="thead-divulgacoes"></tr></thead>
           <tbody id="divulgacoes-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-links" style="display:none;">
+      <div class="pagehead">
+        <div><h2>Links</h2><p>Links úteis que aparecem na aba Links do painel da motorista (dicas de compra, manutenção, documentos...)</p></div>
+        <button class="btn" onclick="openLinkModal()">+ Novo link</button>
+      </div>
+      <div class="filters">
+        <select id="filter-categoria-link" onchange="renderLinks()"><option value="">Todas as categorias</option></select>
+        <select id="filter-publico-link" onchange="renderLinks()">
+          <option value="">Todos</option>
+          <option value="geral">Só os gerais (todas veem)</option>
+          <option value="exclusivo">Só os exclusivos (uma motorista)</option>
+        </select>
+        <select id="filter-ativo-link" onchange="renderLinks()">
+          <option value="">Ativos e inativos</option>
+          <option value="1" selected>Só ativos</option>
+          <option value="0">Só inativos</option>
+        </select>
+      </div>
+      <div class="panel">
+        <table class="tbl">
+          <thead><tr id="thead-links"></tr></thead>
+          <tbody id="links-body"></tbody>
         </table>
       </div>
     </div>
@@ -1303,6 +1330,29 @@ tr.tr-click{cursor:pointer;}
       <button class="btn ghost" id="btn-excluir-divulgacao" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteDivulgacao()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('divulgacao-modal')">Sair</button>
       <button class="btn" onclick="saveDivulgacao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="link-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="link-modal-title" style="margin:0;">Novo link</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('link-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Título *</label><input type="text" id="lk-titulo" placeholder="Ex.: Como escolher um carro econômico pra trabalhar"></div>
+      <div class="full"><label>Endereço (URL) *</label><input type="url" id="lk-url" placeholder="https://..."></div>
+      <div><label>Categoria</label><select id="lk-categoria"></select></div>
+      <div><label>Ordem <span style="font-weight:400; color:var(--muted);">(menor aparece antes)</span></label><input type="number" id="lk-ordem" value="0"></div>
+      <div class="full"><label>Só pra esta motorista <span style="font-weight:400; color:var(--muted);">(vazio = todas veem)</span></label><select id="lk-motorista"><option value="">Todas as motoristas</option></select></div>
+      <div class="full"><label>Descrição curta</label><textarea id="lk-descricao" rows="2" placeholder="Uma linha explicando o que ela vai encontrar"></textarea></div>
+      <div class="full"><label class="chip-check"><input type="checkbox" id="lk-ativo" checked> Ativo (aparece no painel)</label></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-link" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteLink()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('link-modal')">Sair</button>
+      <button class="btn" onclick="saveLink()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2006,6 +2056,9 @@ const DIVULGACAO_TIPOS = ["Próprio Ladies","Terceiro - divulgação","Terceiro 
 const DIVULGACAO_STATUS = ["Planejado","Divulgado","Inscrições abertas","Em andamento","Concluído","Cancelado"];
 const DIVULGACAO_STATUS_CLASS = {"Planejado":"indigo","Divulgado":"amber","Inscrições abertas":"pink","Em andamento":"teal","Concluído":"green","Cancelado":"red"};
 
+// Links úteis do painel da motorista (schema_links_motoristas.sql)
+const LINK_CATEGORIAS = ["Compra do carro","Manutenção","Documentos e MEI","Seguro","Ferramentas úteis","Comunidade","Outro"];
+
 const VAGA_STATUS = ["Em triagem","Aberta","Em processo","Preenchida","Cancelada"];
 const VAGA_STATUS_CLASS = {"Em triagem":"amber","Aberta":"green","Em processo":"teal","Preenchida":"green","Cancelada":"red"};
 const VAGA_CANDIDATA_STATUS = ["Recebida","Triagem","Indicada","Contratada","Recusada"];
@@ -2154,6 +2207,7 @@ let pecasPedidos = [];
 let pecasTentativas = [];
 let parceiroLinks = [];
 let divulgacoes = [];
+let linksMotoristas = [];
 let vagas = [];
 let vagasCandidatas = [];
 let eventos = [];
@@ -2595,6 +2649,10 @@ async function carregarDadosInterno(){
   const rvpa = await sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem");
   viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
 
+  // Links do painel da motorista (schema_links_motoristas.sql), idem
+  const rlk = await sb.from("links_motoristas").select("*").order("id");
+  linksMotoristas = aplicarConsulta("links_motoristas", rlk, linksMotoristas);
+
   renderAll();
   marcarAtualizado();
 
@@ -2698,6 +2756,7 @@ const TABELA_ATUALIZA = {
   pecas_tentativas: v => pecasTentativas = v,
   parceiro_links: v => parceiroLinks = v,
   divulgacoes: v => divulgacoes = v,
+  links_motoristas: v => linksMotoristas = v,
   vagas: v => vagas = v,
   vagas_candidatas: v => vagasCandidatas = v,
   motorista_observacoes: v => motoristaObservacoes = v,
@@ -2971,7 +3030,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
 
 function mostrarSubTab(nome){
   document.querySelectorAll("#tab-transporte .subnav-item[data-subtab]").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
@@ -3307,6 +3366,84 @@ async function deleteDivulgacao(id){
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("divulgacoes");
   closeModal("divulgacao-modal");
+}
+
+// Links do painel da motorista (gerais ou exclusivos de uma motorista)
+let editingLinkId = null;
+function renderLinks(){
+  const fc = document.getElementById("filter-categoria-link");
+  if(!fc.dataset.filled){ fillSelect(fc, ["",...LINK_CATEGORIAS], ""); fc.querySelector("option").textContent="Todas as categorias"; fc.dataset.filled=1; }
+  const catF = fc.value;
+  const pubF = document.getElementById("filter-publico-link").value;
+  const ativoF = document.getElementById("filter-ativo-link").value;
+  renderCabecalho("thead-links", [
+    {label:"Título", campo:"titulo"}, {label:"Categoria", campo:"categoria"}, {label:"Quem vê", campo:null},
+    {label:"Ordem", campo:"ordem", tipo:"numero"}, {label:"Ativo", campo:"ativo"}, {label:"", campo:null}
+  ], "links_motoristas");
+  const filtered = aplicarOrdenacao("links_motoristas", linksMotoristas.filter(l=>
+    (!catF || l.categoria===catF) &&
+    (!pubF || (pubF==="geral" ? !l.motorista_id : !!l.motorista_id)) &&
+    (ativoF==="" || (ativoF==="1") === !!l.ativo)
+  ));
+  document.getElementById("links-body").innerHTML = filtered.map(l=>{
+    const m = motoristas.find(x=>x.id===l.motorista_id);
+    return `<tr class="tr-click" onclick="openLinkModal(${l.id})">
+      <td><strong>${escapeHtml(l.titulo)}</strong><br><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px; color:var(--muted);">${escapeHtml(l.url)}</a></td>
+      <td>${escapeHtml(l.categoria||"-")}</td>
+      <td>${m ? `<span class="status-badge pink">Só ${escapeHtml(m.nome)}</span>` : `<span class="status-badge teal">Todas</span>`}</td>
+      <td>${l.ordem ?? 0}</td>
+      <td>${l.ativo ? "✅" : "⏸️"}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openLinkModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLink(${l.id})">🗑️</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Nenhum link cadastrado</td></tr>`;
+}
+function openLinkModal(id){
+  editingLinkId = id || null;
+  fillSelect(document.getElementById("lk-categoria"), LINK_CATEGORIAS, "Outro");
+  document.getElementById("lk-motorista").innerHTML = `<option value="">Todas as motoristas</option>` +
+    motoristas.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")).map(m=>`<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join("");
+  document.getElementById("link-modal-title").textContent = id ? "Editar link" : "Novo link";
+  const l = linksMotoristas.find(x=>x.id===id) || {};
+  document.getElementById("lk-titulo").value = l.titulo||"";
+  document.getElementById("lk-url").value = l.url||"";
+  document.getElementById("lk-categoria").value = l.categoria||"Outro";
+  document.getElementById("lk-ordem").value = l.ordem ?? 0;
+  document.getElementById("lk-motorista").value = l.motorista_id||"";
+  document.getElementById("lk-descricao").value = l.descricao||"";
+  document.getElementById("lk-ativo").checked = id ? !!l.ativo : true;
+  document.getElementById("btn-excluir-link").style.display = id ? "block" : "none";
+  document.getElementById("link-modal").classList.add("open");
+}
+async function saveLink(){
+  const titulo = document.getElementById("lk-titulo").value.trim();
+  let url = document.getElementById("lk-url").value.trim();
+  if(!titulo){ alert("Título é obrigatório"); return; }
+  if(!url){ alert("Endereço (URL) é obrigatório"); return; }
+  if(!/^https?:\/\//i.test(url)) url = "https://" + url;
+  const payload = {
+    titulo,
+    url,
+    categoria: document.getElementById("lk-categoria").value,
+    ordem: Number(document.getElementById("lk-ordem").value) || 0,
+    motorista_id: document.getElementById("lk-motorista").value || null,
+    descricao: document.getElementById("lk-descricao").value.trim() || null,
+    ativo: document.getElementById("lk-ativo").checked,
+  };
+  const { error } = editingLinkId
+    ? await sb.from("links_motoristas").update(payload).eq("id", editingLinkId)
+    : await sb.from("links_motoristas").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  showToast("Salvo!");
+  await recarregarTabelas("links_motoristas");
+  closeModal("link-modal");
+}
+async function deleteLink(id){
+  id = id || editingLinkId;
+  if(!confirm("Excluir este link?")) return;
+  const { error } = await sb.from("links_motoristas").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  await recarregarTabelas("links_motoristas");
+  closeModal("link-modal");
 }
 
 // Vagas (banco de talentos com curadoria) e candidatas
