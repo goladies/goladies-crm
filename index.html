@@ -2081,10 +2081,14 @@ const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preç
 const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
 const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=";
 // Tarifas sugeridas pra calcular preço a partir da distância (km).
-// Ponto de partida baseado em pesquisa de mercado (motorista particular/executivo
-// e apps de transporte em POA, ago/2026) — ajustar aqui conforme fechar viagens reais.
-const TARIFA_KM_CLIENTE = 3.00;    // R$ por km cobrado da cliente
-const TAXA_FIXA_CLIENTE = 15.00;   // R$ fixo por corrida, além do km
+// Tabela decidida em 18/09/2026 a partir do estudo de precificação
+// (GoLadies_Estudo_Precificacao_e_Lucro_Motorista_v1.docx): a taxa fixa cobre
+// o deslocamento vazio até a cliente, o km cobre a rodagem; fica no patamar
+// de Uber Black / motorista executiva. Antes era R$15 + R$3/km, que pagava
+// ~70% do que uma motorista com carro de 9 km/l precisa pra R$30/h líquidos.
+const TARIFA_KM_CLIENTE = 4.00;    // R$ por km cobrado da cliente
+const TAXA_FIXA_CLIENTE = 25.00;   // R$ fixo por corrida, além do km
+const PRECO_MINIMO_CLIENTE = 45.00; // corrida curta nunca sai por menos que isso
 const PERCENTUAL_REPASSE_MOTORISTA = 0.75; // % do preço cobrado repassado à motorista
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
@@ -5475,7 +5479,7 @@ function recalcularCotacao(){
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   if(km){
-    const precoCotado = tarifaFixa + valorKm * km;
+    const precoCotado = Math.max(PRECO_MINIMO_CLIENTE, tarifaFixa + valorKm * km);
     const repasseMotorista = precoCotado * PERCENTUAL_REPASSE_MOTORISTA;
     document.getElementById("vg-preco-cotado").value = precoCotado.toFixed(2);
     document.getElementById("vg-preco-motorista").value = repasseMotorista.toFixed(2);
