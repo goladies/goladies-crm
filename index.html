@@ -2088,7 +2088,10 @@ const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=
 // ~70% do que uma motorista com carro de 9 km/l precisa pra R$30/h líquidos.
 const TARIFA_KM_CLIENTE = 4.00;    // R$ por km cobrado da cliente
 const TAXA_FIXA_CLIENTE = 25.00;   // R$ fixo por corrida, além do km
-const PRECO_MINIMO_CLIENTE = 45.00; // corrida curta nunca sai por menos que isso
+// Sem valor mínimo (decisão de 18/09/2026): numa agendada o deslocamento é
+// média e já está na taxa fixa; 1 km sai a R$29 e ainda paga a motorista.
+// Corrida "pra agora", com posição real da motorista, terá tabela própria
+// (fase 2: R$10 embarque + R$2,50/km de deslocamento real + R$4/km).
 const PERCENTUAL_REPASSE_MOTORISTA = 0.75; // % do preço cobrado repassado à motorista
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
@@ -5479,7 +5482,7 @@ function recalcularCotacao(){
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   if(km){
-    const precoCotado = Math.max(PRECO_MINIMO_CLIENTE, tarifaFixa + valorKm * km);
+    const precoCotado = tarifaFixa + valorKm * km;
     const repasseMotorista = precoCotado * PERCENTUAL_REPASSE_MOTORISTA;
     document.getElementById("vg-preco-cotado").value = precoCotado.toFixed(2);
     document.getElementById("vg-preco-motorista").value = repasseMotorista.toFixed(2);
