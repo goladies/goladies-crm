@@ -1714,7 +1714,7 @@ tr.tr-click{cursor:pointer;}
 
       <div class="obrig"><label>Data</label><input type="date" id="vg-data"></div>
       <div class="obrig"><label>Horário previsto de partida</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
-      <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"></div>
+      <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"></div>
       <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
       <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
       <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno"></div>
@@ -1745,6 +1745,9 @@ tr.tr-click{cursor:pointer;}
       <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
+      <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
+           do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
+      <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preco-confirmado" style="width:auto;" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
       <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
@@ -5530,6 +5533,44 @@ function recalcularComissaoCotacao(){
   }
   recalcularComissaoPagamento();
   atualizarStatusOferta();
+  atualizarAlertaMargem();
+}
+// ── Alerta de margem ──
+// Custo de referência de uma motorista com carro de 9 km/l (estudo de
+// precificação, 18/09/2026): R$1,70 por km rodado, 6 km vazios e 20 min de
+// deslocamento por corrida, meta de R$30/h líquidos. É a mesma conta do
+// semáforo em motora.goladies.com.br, com os padrões, já que na cotação
+// ainda não se sabe qual motorista vai aceitar. Verde ≥ meta, amarelo ≥ 70%
+// da meta, vermelho abaixo ou quando nem paga o carro.
+const MARGEM_REF = { custoKm: 1.70, kmVazio: 6, minDesloc: 20, metaHora: 30 };
+function atualizarAlertaMargem(){
+  const box = document.getElementById("vg-margem");
+  if(!box) return;
+  const repasse = Number(document.getElementById("vg-preco-motorista").value) || 0;
+  const km = Number(document.getElementById("vg-distancia-km").value) || 0;
+  const min = Number(document.getElementById("vg-duracao-min").value) || 0;
+  if(!repasse || (!km && !min)){ box.style.display = "none"; return; }
+  const kmTotal = km + MARGEM_REF.kmVazio, minTotal = min + MARGEM_REF.minDesloc;
+  const custo = kmTotal * MARGEM_REF.custoKm, sobra = repasse - custo;
+  // Sem duração prevista não dá pra julgar por hora: fica amarelo até preencher
+  const porHora = min > 0 ? sobra / (minTotal / 60) : null;
+  let nivel, icone;
+  if(sobra <= 0){ nivel = "red"; icone = "🔴"; }
+  else if(porHora === null){ nivel = "amber"; icone = "🟡"; }
+  else if(porHora >= MARGEM_REF.metaHora){ nivel = "green"; icone = "🟢"; }
+  else if(porHora >= MARGEM_REF.metaHora * 0.7){ nivel = "amber"; icone = "🟡"; }
+  else { nivel = "red"; icone = "🔴"; }
+  const fmt = v => formatarMoedaBR(v);
+  let texto = sobra > 0
+    ? `<b>Sobram ${fmt(sobra)} pra motorista</b>${porHora !== null ? ` · <b>${fmt(porHora)}/h</b>` : ""}`
+    : `<b>Não paga nem o carro dela</b> (${fmt(sobra)})`;
+  if(nivel === "amber" && porHora !== null) texto += ` · abaixo dos ${fmt(MARGEM_REF.metaHora)}/h de referência`;
+  if(nivel === "red" && sobra > 0) texto += ` · bem abaixo dos ${fmt(MARGEM_REF.metaHora)}/h de referência`;
+  if(!min) texto += ` · preencha a duração pra ver por hora`;
+  box.innerHTML = `${icone} ${texto}<br><span style="color:var(--muted);">custo estimado ${fmt(custo)}: ${kmTotal.toFixed(0)} km e ${minTotal} min já com ${MARGEM_REF.kmVazio} km / ${MARGEM_REF.minDesloc} min de deslocamento, a ${fmt(MARGEM_REF.custoKm)}/km (carro de 9 km/l). Cada motorista vê o semáforo dela com os próprios números.</span>`;
+  box.style.borderLeftColor = `var(--c-${nivel})`;
+  box.style.background = `var(--c-${nivel}-bg)`;
+  box.style.display = "";
 }
 function recalcularComissaoPagamento(){
   const recebidoStr = document.getElementById("vg-lid-valor").value;
