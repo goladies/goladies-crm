@@ -405,6 +405,13 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .kanban-card.urg-15{border-left-color:#D62839;}
 .kanban-card.urg-atraso{border-left-color:#D62839; background:var(--c-red-bg); animation:pulseAtraso 1.6s infinite;}
 @keyframes pulseAtraso{0%,100%{box-shadow:0 1px 4px rgba(214,40,57,.15);} 50%{box-shadow:0 1px 12px rgba(214,40,57,.5);}}
+/* Foto de perfil (motorista e cliente): círculo com a foto ou as iniciais */
+.foto-perfil{width:72px; height:72px; border-radius:50%; background:var(--pink); color:#fff; font-weight:700; font-size:22px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;}
+.foto-perfil img{width:100%; height:100%; object-fit:cover; display:block;}
+.foto-perfil-wrap{display:flex; align-items:center; gap:14px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:12px;}
+.foto-perfil-wrap small{display:block; color:var(--muted); font-size:12px; margin:2px 0 8px;}
+.avatar-mini{width:28px; height:28px; border-radius:50%; background:var(--pink); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; vertical-align:middle; margin-right:8px; flex:0 0 auto;}
+.avatar-mini img{width:100%; height:100%; object-fit:cover; display:block;}
 .kc-alerta{display:block; font-size:10.5px; font-weight:800; margin-bottom:4px;}
 .kc-btn{display:block; width:100%; margin-top:8px; text-align:center;}
 .kc-pix{display:inline-block; font-size:10.5px; font-weight:800; margin-bottom:4px; padding:2px 7px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber);}
@@ -1471,6 +1478,16 @@ tr.tr-click{cursor:pointer;}
         <div><label>Status</label><select id="dp-cnh-status"><option value="">-</option><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
       </div>
     </div>
+    <div class="foto-perfil-wrap">
+      <div class="foto-perfil" id="mt-foto-preview">GL</div>
+      <div>
+        <label style="margin:0;">Foto de perfil</label>
+        <small>A cliente vê essa foto com nome, carro e placa antes de embarcar. Rosto visível, fundo neutro, sem óculos escuros.</small>
+        <input type="file" id="mt-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('mt', this)">
+        <button type="button" class="act act-edit" onclick="document.getElementById('mt-foto-file').click()">📷 Escolher foto</button>
+        <button type="button" class="act act-del" id="mt-foto-remover" onclick="removerFotoPerfil('mt')" style="display:none;">Remover</button>
+      </div>
+    </div>
     <div class="formgrid">
       <div class="full"><label>Nome *</label><input type="text" id="mt-nome"></div>
       <div><label>WhatsApp</label><input type="text" id="mt-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
@@ -1618,6 +1635,16 @@ tr.tr-click{cursor:pointer;}
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="cliente-transporte-modal-title" style="margin:0;">Nova cliente de viagem</h3>
       <button class="icon-btn" type="button" onclick="closeModal('cliente-transporte-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="foto-perfil-wrap">
+      <div class="foto-perfil" id="ct-foto-preview">GL</div>
+      <div>
+        <label style="margin:0;">Foto de perfil <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
+        <small>Só a motorista da corrida vê, pra reconhecer a cliente no embarque. Ela também pode subir pelo painel dela.</small>
+        <input type="file" id="ct-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('ct', this)">
+        <button type="button" class="act act-edit" onclick="document.getElementById('ct-foto-file').click()">📷 Escolher foto</button>
+        <button type="button" class="act act-del" id="ct-foto-remover" onclick="removerFotoPerfil('ct')" style="display:none;">Remover</button>
+      </div>
     </div>
     <div class="formgrid">
       <div class="full"><label>Nome *</label><input type="text" id="ct-nome"></div>
@@ -4361,7 +4388,7 @@ function renderTransporteMotoristas(){
     const faltam = checklistDocumentosMotorista(m.id).filter(i=>!i.ok).length;
     const media = mediaAvaliacaoMotorista(m.id);
     return `<tr class="tr-click" onclick="openMotoristaModal(${m.id})">
-      <td><strong>${escapeHtml(m.nome)}</strong></td>
+      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong></td>
       <td>${numeroClicavel(m.whatsapp)}</td>
       <td>${escapeHtml(m.regiao||"-")}${m.veiculo?"<br><span style='color:var(--muted); font-size:12px;'>"+escapeHtml(m.veiculo)+"</span>":""}</td>
       <td>${emDia?'<span class="tag urg-baixa">Em dia</span>':`<span class="tag urg-alta">${faltam} pendente${faltam>1?"s":""}</span>`}</td>
@@ -4839,6 +4866,102 @@ function renderHistoricoDocumentos(){
   `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum documento antigo ainda.</p>`;
 }
 
+// ===== FOTO DE PERFIL (motorista e cliente) =====
+// Motorista: bucket público "fotos-motoristas" (a cliente e a página de
+// acompanhamento veem sem login). Cliente: bucket privado "fotos-clientes",
+// aberto por link assinado. O arquivo é recortado em quadrado e reduzido a
+// 512px no navegador antes de subir; o caminho fica em <tabela>.foto_path.
+const FOTO_PERFIL_CONFIG = {
+  mt: { bucket: "fotos-motoristas", publico: true,  tabela: "motoristas" },
+  ct: { bucket: "fotos-clientes",   publico: false, tabela: "clientes_transporte" },
+};
+const fotoPerfilPendente = { mt: null, ct: null };   // File novo, "remover" ou null (sem mudança)
+const fotoClienteUrlCache = {};                       // path → { url, expira }
+
+function urlFotoMotorista(path){
+  return path ? `${SUPABASE_URL}/storage/v1/object/public/fotos-motoristas/${path}` : null;
+}
+async function urlFotoCliente(path){
+  if(!path) return null;
+  const c = fotoClienteUrlCache[path];
+  if(c && c.expira > Date.now()) return c.url;
+  const { data, error } = await sb.storage.from("fotos-clientes").createSignedUrl(path, 3600);
+  if(error || !data) return null;
+  fotoClienteUrlCache[path] = { url: data.signedUrl, expira: Date.now() + 50 * 60 * 1000 };
+  return data.signedUrl;
+}
+function iniciaisNome(nome){
+  const p = (nome || "").trim().split(/\s+/).filter(Boolean);
+  return ((p[0]?.[0] || "G") + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase();
+}
+function htmlAvatarMini(url, nome){
+  return `<span class="avatar-mini">${url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(nome))}</span>`;
+}
+function iniciaisOuGL(nome){ return nome ? iniciaisNome(nome) : "GL"; }
+
+function mostrarPreviewFoto(prefixo, url, nome){
+  const box = document.getElementById(`${prefixo}-foto-preview`);
+  box.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(nome));
+  document.getElementById(`${prefixo}-foto-remover`).style.display = url ? "" : "none";
+}
+// Ao abrir o modal: mostra a foto atual (ou iniciais) e zera a pendência.
+async function carregarPreviewFoto(prefixo, registro){
+  fotoPerfilPendente[prefixo] = null;
+  document.getElementById(`${prefixo}-foto-file`).value = "";
+  const path = registro?.foto_path || null;
+  mostrarPreviewFoto(prefixo, null, registro?.nome);
+  if(!path) return;
+  const url = FOTO_PERFIL_CONFIG[prefixo].publico ? urlFotoMotorista(path) : await urlFotoCliente(path);
+  mostrarPreviewFoto(prefixo, url, registro?.nome);
+}
+// Recorta em quadrado (centro) e reduz a 512px, JPEG.
+async function prepararFotoPerfil(arquivo){
+  let bitmap;
+  try{ bitmap = await createImageBitmap(arquivo, { imageOrientation: "from-image" }); }
+  catch(e){ bitmap = await createImageBitmap(arquivo); }
+  const lado = Math.min(bitmap.width, bitmap.height);
+  const alvo = Math.min(512, lado);
+  const canvas = document.createElement("canvas");
+  canvas.width = alvo; canvas.height = alvo;
+  canvas.getContext("2d").drawImage(bitmap, (bitmap.width - lado) / 2, (bitmap.height - lado) / 2, lado, lado, 0, 0, alvo, alvo);
+  const blob = await new Promise(res=>canvas.toBlob(res, "image/jpeg", 0.85));
+  return new File([blob], "perfil.jpg", { type: "image/jpeg" });
+}
+async function escolherFotoPerfil(prefixo, input){
+  const arquivo = input.files && input.files[0];
+  if(!arquivo) return;
+  if(!arquivo.type.startsWith("image/")){ alert("Escolha uma imagem (JPG, PNG ou WEBP)."); input.value = ""; return; }
+  try{
+    const pronto = await prepararFotoPerfil(arquivo);
+    fotoPerfilPendente[prefixo] = pronto;
+    mostrarPreviewFoto(prefixo, URL.createObjectURL(pronto));
+  }catch(e){ alert("Não consegui ler essa imagem. Tente outra foto."); }
+  input.value = "";
+}
+function removerFotoPerfil(prefixo){
+  fotoPerfilPendente[prefixo] = "remover";
+  mostrarPreviewFoto(prefixo, null, document.getElementById(prefixo === "mt" ? "mt-nome" : "ct-nome").value);
+}
+// Chamado depois do Salvar, com o id já conhecido. Sobe o arquivo novo (nome
+// aleatório, pra não dar pra adivinhar e pra não ficar cache da foto velha),
+// grava o caminho e apaga a foto anterior. Devolve true se mudou algo.
+async function salvarFotoPerfil(prefixo, id, pathAtual){
+  const pend = fotoPerfilPendente[prefixo];
+  if(!pend) return false;
+  const cfg = FOTO_PERFIL_CONFIG[prefixo];
+  let novoPath = null;
+  if(pend !== "remover"){
+    novoPath = `${id}/${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}.jpg`;
+    const { error: ue } = await sb.storage.from(cfg.bucket).upload(novoPath, pend, { contentType: "image/jpeg" });
+    if(ue){ alert("Erro ao subir a foto: " + ue.message); return false; }
+  }
+  const { error } = await sb.from(cfg.tabela).update({ foto_path: novoPath }).eq("id", id);
+  if(error){ alert("Erro ao gravar a foto: " + error.message); return false; }
+  if(pathAtual && pathAtual !== novoPath) await sb.storage.from(cfg.bucket).remove([pathAtual]);
+  fotoPerfilPendente[prefixo] = null;
+  return true;
+}
+
 let editingMotoristaId = null;
 function openMotoristaModal(id){
   editingMotoristaId = id || null;
@@ -4869,6 +4992,7 @@ function openMotoristaModal(id){
   });
   document.getElementById("mt-cnh-validade").value = m.cnh_validade||"";
   document.getElementById("mt-cnh-ear").value = m.cnh_ear || "";
+  carregarPreviewFoto("mt", m);
   cancelarSelecaoIA("cnh"); cancelarSelecaoIA("crlv");
   carregarDocPrincipal("cnh");
   carregarDocPrincipal("crlv");
@@ -5058,6 +5182,7 @@ async function saveMotorista(){
   await salvarDocPrincipal("crlv", editingMotoristaId);
   await salvarDocPrincipal("antecedentes", editingMotoristaId);
   await salvarDocPrincipal("endereco", editingMotoristaId);
+  await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
   await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes");
   if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); }
   else { closeModal("motorista-modal"); }
@@ -5183,6 +5308,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-familiares").value = c.familiares||"";
   document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
+  carregarPreviewFoto("ct", c);
   document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) : "";
   renderAvaliacoesCliente();
   document.getElementById("cliente-transporte-modal").classList.add("open");
@@ -5237,10 +5363,12 @@ async function saveClienteTransporte(){
     pos_pago: document.getElementById("ct-pos-pago").checked,
     notas: document.getElementById("ct-notas").value,
   };
-  const { error } = editingClienteTransporteId
-    ? await sb.from("clientes_transporte").update(payload).eq("id", editingClienteTransporteId)
-    : await sb.from("clientes_transporte").insert(payload);
+  const { data, error } = editingClienteTransporteId
+    ? await sb.from("clientes_transporte").update(payload).eq("id", editingClienteTransporteId).select()
+    : await sb.from("clientes_transporte").insert(payload).select();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
+  const idSalvo = editingClienteTransporteId || (data && data[0] && data[0].id);
+  if(idSalvo) await salvarFotoPerfil("ct", idSalvo, (clientesTransporte.find(x=>x.id===idSalvo)||{}).foto_path);
   showToast("Salvo!");
   closeModal("cliente-transporte-modal");
   await recarregarTabelas("clientes_transporte");
@@ -5535,6 +5663,8 @@ function renderTransporteViagens(){
       ${doColuna.map(v=>{
         const cliente = clientesTransporte.find(c=>c.id===v.cliente_id);
         const nomesMotoristas = nomesMotoristasViagem(v);
+        const motConfirmada = v.motorista_id_confirmada ? motoristas.find(m=>m.id===v.motorista_id_confirmada) : null;
+        const fotoMot = motConfirmada && motConfirmada.foto_path ? `<span class="avatar-mini" style="width:22px; height:22px; margin-right:6px;"><img src="${escapeHtml(urlFotoMotorista(motConfirmada.foto_path))}" alt=""></span>` : "";
         const urg = urgenciaViagem(v);
         // Selo do Pix: pré-paga esperando o Pix cair (oferta fechada) ou
         // viagem concluída sem pagamento lançado.
@@ -5551,7 +5681,7 @@ function renderTransporteViagens(){
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-top">#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</div>
-          <div style="color:var(--muted);">${escapeHtml(nomesMotoristas || "Sem motorista")}</div>
+          <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
           ${v.preco_cotado?`<div style="color:var(--muted); font-size:11.5px;">${formatarMoedaBR(v.preco_cotado)}</div>`:""}
