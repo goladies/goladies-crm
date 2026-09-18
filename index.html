@@ -4395,7 +4395,7 @@ function renderTransporteMotoristas(){
     const faltam = checklistDocumentosMotorista(m.id).filter(i=>!i.ok).length;
     const media = mediaAvaliacaoMotorista(m.id);
     return `<tr class="tr-click" onclick="openMotoristaModal(${m.id})">
-      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong></td>
+      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}</td>
       <td>${numeroClicavel(m.whatsapp)}</td>
       <td>${escapeHtml(m.regiao||"-")}${m.veiculo?"<br><span style='color:var(--muted); font-size:12px;'>"+escapeHtml(m.veiculo)+"</span>":""}</td>
       <td>${emDia?'<span class="tag urg-baixa">Em dia</span>':`<span class="tag urg-alta">${faltam} pendente${faltam>1?"s":""}</span>`}</td>
@@ -5018,7 +5018,8 @@ function openMotoristaModal(id){
   document.getElementById("mt-acesso-status").innerHTML = (m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
-    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente">🚗 Também é cliente (#${cliDaMotorista.id})</span>` : "");
+    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente">🚗 Também é cliente (#${cliDaMotorista.id})</span>` : "")
+    + (id ? htmlPedidoExclusao(m, "motorista") : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
   document.getElementById("mt-doc-status").value = "Pendente";
@@ -5262,7 +5263,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td><strong>${escapeHtml(r.nome)}</strong>${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td><strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
@@ -5327,10 +5328,31 @@ function duplicatasCliente(c){
   if(!c || !c.whatsapp) return [];
   return clientesTransporte.filter(o=>o.id!==c.id && mesmoTelefone(o.whatsapp, c.whatsapp));
 }
+// Pedido de exclusão de conta feito pelo app (exigência do Google Play).
+// A Juliana confere pendências e conclui em até 7 dias: a função do banco
+// anonimiza os dados pessoais, apaga foto/documentos e o login.
+function htmlPedidoExclusao(registro, tipo){
+  if(!registro || !registro.exclusao_solicitada_em) return "";
+  const concluida = /\[concluída em/.test(registro.exclusao_motivo || "");
+  const dias = Math.floor((Date.now() - new Date(registro.exclusao_solicitada_em).getTime()) / 86400000);
+  const motivo = (registro.exclusao_motivo || "").replace(/\s*\[concluída em [^\]]*\]/, "").trim();
+  if(concluida) return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--border); color:var(--muted);">🗑️ Conta excluída (dados anonimizados${registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)?.[1] ? " em " + registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)[1] : ""}).</div>`;
+  return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-red-bg); color:var(--ink);">🗑️ <b>Pediu a exclusão da conta</b> em ${formatarDataBR(registro.exclusao_solicitada_em.slice(0,10))} (há ${dias} dia${dias===1?"":"s"}; o combinado é concluir em até 7).${motivo ? `<br><small>Motivo: ${escapeHtml(motivo)}</small>` : ""}<br><small>Antes de concluir, confira viagem em aberto${tipo==="motorista" ? " e repasse pendente" : " e pagamento pendente"}. Concluir anonimiza nome, contato${tipo==="motorista" ? ", documentos e registros do carro" : ""}, apaga a foto e o login. Não dá pra desfazer.</small><br><button type="button" class="act act-del" style="margin-top:6px;" onclick="concluirExclusao('${tipo}', ${registro.id})">🗑️ Concluir exclusão</button></div>`;
+}
+async function concluirExclusao(tipo, id){
+  const nome = (tipo==="motorista" ? motoristas : clientesTransporte).find(x=>x.id===id)?.nome || "#"+id;
+  if(!confirm(`Concluir a exclusão de "${nome}"?\n\nOs dados pessoais são anonimizados, a foto${tipo==="motorista" ? ", os documentos, os registros do carro" : ""} e o login são apagados. As viagens ficam no histórico sem identificação. Não dá pra desfazer.`)) return;
+  const { error } = await sb.rpc(tipo==="motorista" ? "concluir_exclusao_motorista" : "concluir_exclusao_cliente", { p_id: id });
+  if(error){ alert("Não foi possível concluir: " + error.message); return; }
+  showToast("Conta excluída e dados anonimizados.");
+  closeModal(tipo==="motorista" ? "motorista-modal" : "cliente-transporte-modal");
+  await recarregarTabelas(tipo==="motorista" ? "motoristas" : "clientes_transporte");
+}
 function htmlAcessoPainelCliente(c){
   let html = c.auth_user_id
     ? `🔐 <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
     : `🔓 Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
+  html += htmlPedidoExclusao(c, "cliente");
   const mot = motoristaDaCliente(c.id);
   if(mot){
     html += `<div style="margin-top:6px;">🚗 <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
