@@ -2099,8 +2099,15 @@ const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E
 // "Escolher motoristas" (schema_status_escolher_motoristas.sql): pagamento ok
 // mas nenhuma motorista marcada; ao marcar e salvar, o banco passa sozinho
 // pra "Aguardando aceite de motorista".
-const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Escolher motoristas","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
-const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Escolher motoristas":"amber","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
+// "Cotando preço" (schema_cotando_preco.sql): o pedido pelo app já vem com a
+// rota medida e o preço da tabela; só falta ela conferir e clicar "Enviar
+// pra cliente" no cartão.
+const VIAGEM_STATUS = ["Solicitada","Cotando preço","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Escolher motoristas","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
+const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Cotando preço":"teal","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Escolher motoristas":"amber","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
+// Rótulo diferente do valor gravado no banco (o valor fica, pra não mexer nas
+// funções e nos apps que já o usam).
+const VIAGEM_STATUS_ROTULO = {"Preço recusado pela cliente":"Revisando preço"};
+function rotuloStatusViagem(s){ return VIAGEM_STATUS_ROTULO[s] || s; }
 const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=";
 // Tarifas sugeridas pra calcular preço a partir da distância (km).
 // Tabela decidida em 18/09/2026 a partir do estudo de precificação
@@ -5732,7 +5739,9 @@ function atualizarStatusOferta(){
     || document.getElementById("vg-liberar-sem-pgto").checked
     || !!(clienteSel && clienteSel.pos_pago)
     || document.getElementById("vg-lid-status").value === "Pago";
-  if(status === "Aguardando cliente confirmar preço"){
+  if(status === "Cotando preço"){
+    el.textContent = "🧮 Preço calculado pela tabela com a rota medida no app; a cliente ainda não vê o valor. Confira (ou ajuste) e mude o status pra 'Aguardando cliente confirmar preço', ou use o botão 'Enviar pra cliente' no cartão.";
+  } else if(status === "Aguardando cliente confirmar preço"){
     el.textContent = "🔒 Oferta fechada: esperando a cliente responder o preço no WhatsApp. Quem você marcar aqui só vê a corrida quando ela aceitar.";
   } else if(status === "Preço recusado pela cliente"){
     el.textContent = "🔒 Oferta fechada: a cliente pediu ajuste. Corrija o valor e volte o status pra 'Aguardando cliente confirmar preço' pra reenviar.";
@@ -5757,6 +5766,18 @@ function atualizarStatusOferta(){
   } else {
     el.textContent = "Marque agora quem pode pegar essa corrida. A oferta abre sozinha pra elas quando a cliente confirmar o valor.";
   }
+}
+async function enviarCotacaoCliente(id){
+  const v = viagens.find(x=>x.id===id);
+  if(!v) return;
+  const c = clientesTransporte.find(x=>x.id===v.cliente_id);
+  if(!confirm(`Enviar ${formatarMoedaBR(v.preco_cotado)} pra ${c ? c.nome : "a cliente"} confirmar (viagem #${id})?
+
+Ela recebe o valor no app e no WhatsApp e responde por lá.`)) return;
+  const { error } = await sb.rpc("enviar_cotacao_cliente", { p_viagem_id: id });
+  if(error){ alert("Não foi possível enviar: " + error.message); return; }
+  showToast("Cotação enviada!");
+  await recarregarTabelas("viagens");
 }
 async function registrarPixRecebido(id){
   const v = viagens.find(x=>x.id===id);
@@ -5806,7 +5827,7 @@ function renderTransporteViagens(){
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
     const doColuna = filtradas.filter(v=>v.status===status);
     return `<div class="kanban-col">
-      <h4><span class="status-badge ${VIAGEM_STATUS_CLASS[status]}">${status}</span><span>${doColuna.length}</span></h4>
+      <h4><span class="status-badge ${VIAGEM_STATUS_CLASS[status]}">${rotuloStatusViagem(status)}</span><span>${doColuna.length}</span></h4>
       ${doColuna.map(v=>{
         const cliente = clientesTransporte.find(c=>c.id===v.cliente_id);
         const nomesMotoristas = nomesMotoristasViagem(v);
@@ -5831,16 +5852,31 @@ function renderTransporteViagens(){
         const btnPix = v.status === "Aguardando pagamento"
           ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); registrarPixRecebido(${v.id})">💵 Pix recebido</button>`
           : "";
+        // Coluna "Cotando preço": rota medida no app e preço da tabela; um
+        // clique manda pra cliente. Em "Revisando preço" o mesmo botão reenvia
+        // depois que ela ajustar o valor no modal.
+        const cotando = v.status === "Cotando preço";
+        const revisando = v.status === "Preço recusado pela cliente";
+        const btnEnviar = (cotando || revisando) && v.preco_cotado > 0
+          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); enviarCotacaoCliente(${v.id})">📤 ${revisando ? "Reenviar" : "Enviar"} pra cliente</button>`
+          : "";
+        const detCotacao = cotando
+          ? `<div style="color:var(--muted); font-size:11px;">${v.distancia_km ? Number(v.distancia_km).toLocaleString("pt-BR") + " km" : "sem km"}${v.duracao_prevista_min ? " · ~" + Math.round(v.duracao_prevista_min) + " min" : ""}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · 🌙 +30%" : ""}</div>`
+          : "";
+        const motivoAjuste = revisando && v.preco_recusado_motivo
+          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">✏️ ${escapeHtml(v.preco_recusado_motivo)}</div>`
+          : "";
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-top">#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</div>
           <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
-          ${v.preco_cotado?`<div style="color:var(--muted); font-size:11.5px;">${formatarMoedaBR(v.preco_cotado)}</div>`:""}
+          ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
+          ${detCotacao}${motivoAjuste}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);">🧍 ${n} parada${n===1?"":"s"}</span>` : ""; })()}
-          ${btnPix}
+          ${btnPix}${btnEnviar}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
     </div>`;
@@ -5853,6 +5889,7 @@ function openViagemModal(id){
   fillSelect(document.getElementById("vg-tipo-servico"), TIPO_SERVICO_VIAGEM, "Padrão");
   fillSelect(document.getElementById("vg-canal"), CANAL_RECEPCAO, "Telefone");
   fillSelect(document.getElementById("vg-viagem-status"), VIAGEM_STATUS, "Solicitada");
+  document.querySelectorAll("#vg-viagem-status option").forEach(o=>{ o.textContent = rotuloStatusViagem(o.value); });
   document.getElementById("viagem-modal-title").textContent = id ? `Editar viagem #${id}` : "Nova viagem";
   const v = viagens.find(x=>x.id===id) || {};
   if(v.cliente_id) document.getElementById("vg-cliente").value = v.cliente_id;
