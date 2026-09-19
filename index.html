@@ -1755,6 +1755,8 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preco-confirmado" style="width:auto;" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
       <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
+      <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
+      <div class="full" id="vg-mp-info" style="display:none; font-size:12.5px; color:var(--muted);"></div>
       <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
       <!-- Cancelamento pela cliente (Termo v2, cl. 9.6): 50% com menos de 2 h,
            100% no no-show; repassado à motorista com os mesmos 25%. -->
@@ -5909,6 +5911,22 @@ function openViagemModal(id){
   } else {
     localWrap.style.display = "none";
     localWrap.innerHTML = "";
+  }
+
+  // Situação da cobrança no Mercado Pago
+  const mpInfo = document.getElementById("vg-mp-info");
+  if(v.mp_pago_em){
+    mpInfo.style.display = "block";
+    mpInfo.innerHTML = `💳 <b>Pago pelo Mercado Pago</b> em ${new Date(v.mp_pago_em).toLocaleString("pt-BR")}${v.mp_pagamento_id ? " (" + escapeHtml(v.mp_pagamento_id) + ")" : ""}.`;
+  } else if(v.mp_order_id){
+    mpInfo.style.display = "block";
+    mpInfo.innerHTML = `💳 Cobrança no Mercado Pago criada${v.mp_criado_em ? " em " + new Date(v.mp_criado_em).toLocaleString("pt-BR") : ""}: Pix dinâmico${v.mp_checkout_url ? ` e <a href="${escapeHtml(v.mp_checkout_url)}" target="_blank" rel="noopener">link de cartão</a> (${formatarMoedaBR(v.mp_valor_cartao || 0)})` : ""}. A baixa é automática quando ela pagar.${v.mp_erro ? `<br>⚠️ ${escapeHtml(v.mp_erro)}` : ""}`;
+  } else if(v.mp_erro){
+    mpInfo.style.display = "block";
+    mpInfo.innerHTML = `⚠️ Mercado Pago não gerou a cobrança (${v.mp_tentativas || 0} tentativa(s)): ${escapeHtml(v.mp_erro)}. A cliente recebe o Pix da chave e você confirma na mão.`;
+  } else {
+    mpInfo.style.display = "none";
+    mpInfo.innerHTML = "";
   }
 
   renderReenvios(id, v);
