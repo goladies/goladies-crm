@@ -5877,10 +5877,10 @@ function openViagemModal(id){
   const statusPreco = document.getElementById("vg-status-preco-cliente");
   if(v.preco_confirmado_cliente){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "✅ Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "");
+    statusPreco.textContent = "✅ Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "");
   } else if(v.preco_recusado_em){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "✋ Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
+    statusPreco.textContent = "✋ Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "") + (v.preco_recusado_motivo ? ". Motivo dela: \"" + v.preco_recusado_motivo + "\"" : "") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
   } else if(v.preco_confirmacao_enviada_em){
     statusPreco.style.display = "block";
     statusPreco.textContent = "⏳ Confirmação de preço enviada pra cliente em " + new Date(v.preco_confirmacao_enviada_em).toLocaleString("pt-BR") + ", aguardando resposta.";
