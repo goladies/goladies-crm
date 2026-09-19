@@ -1742,6 +1742,10 @@ tr.tr-click{cursor:pointer;}
       <div class="obrig"><label>Distância (km)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
       <div><label>Tarifa fixa</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
       <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
+      <!-- Adicionais decididos em 18/09/2026: espera combinada (R$1/min além dos
+           10 inclusos, 100% pra motorista) e madrugada/feriado (+30% sobre fixo + km). -->
+      <div><label>Espera combinada <span style="font-weight:400; color:var(--muted);">(min além dos 10 inclusos; R$1/min, 100% pra motorista)</span></label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"></div>
+      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado, +30%</label></div>
       <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
@@ -1752,6 +1756,16 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
       <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
       <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
+      <!-- Cancelamento pela cliente (Termo v2, cl. 9.6): 50% com menos de 2 h,
+           100% no no-show; repassado à motorista com os mesmos 25%. -->
+      <div><label>Cancelamento cobrado da cliente <span style="font-weight:400; color:var(--muted);">(só se cancelou depois de aceita)</span></label>
+        <select id="vg-cancelamento" onchange="atualizarCancelamento()">
+          <option value="">Nenhum</option>
+          <option value="2h">Cancelou com menos de 2 h: 50%</option>
+          <option value="noshow">Não compareceu (15 min sem contato): 100%</option>
+        </select>
+      </div>
+      <div class="full" id="vg-cancelamento-info" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);"></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preparacao" style="width:auto;"> Preparação pré-viagem confirmada</label></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-saida" style="width:auto;"> Saída do veículo confirmada</label></div>
       <div id="vg-liberar-manual-wrap" style="display:none;"><label style="visibility:hidden;">.</label><button type="button" class="btn secondary small" onclick="liberarViagemManualmente()">Liberar viagem manualmente</button></div>
@@ -2096,6 +2110,14 @@ const TAXA_FIXA_CLIENTE = 25.00;   // R$ fixo por corrida, além do km
 // Corrida "pra agora", com posição real da motorista, terá tabela própria
 // (fase 2: R$10 embarque + R$2,50/km de deslocamento real + R$4/km).
 const PERCENTUAL_REPASSE_MOTORISTA = 0.75; // % do preço cobrado repassado à motorista
+// Regras decididas em 18/09/2026 (estudo v2 + Termo de Adesão v2, cl. 9.6 e 9.7).
+const ESPERA_INCLUSA_MIN = 10;      // minutos de espera já dentro do preço
+const VALOR_MIN_ESPERA = 1.00;      // R$ por minuto além dos inclusos; vai 100% pra motorista
+const ADICIONAL_NOTURNO = 0.30;     // +30% com início entre 22h e 6h ou em feriado
+const TAXA_CANCELAMENTO = {         // % do preço cotado que a cliente paga
+  "2h":     { pct: 0.50, rotulo: "Cancelou com menos de 2 h: 50%" },
+  "noshow": { pct: 1.00, rotulo: "Não compareceu (15 min sem contato): 100%" },
+};
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
 // Funil de parceiros — o mesmo que a Juliana já documenta e usa
@@ -5506,13 +5528,58 @@ function recalcularCotacao(){
   const km = Number(document.getElementById("vg-distancia-km").value) || 0;
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
+  const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
+  const noturno = document.getElementById("vg-adicional-noturno").checked;
   if(km){
-    const precoCotado = tarifaFixa + valorKm * km;
-    const repasseMotorista = precoCotado * PERCENTUAL_REPASSE_MOTORISTA;
+    // Madrugada/feriado incide sobre fixo + km e segue o repasse de 75%;
+    // a espera combinada é somada por fora e vai inteira pra motorista.
+    let base = tarifaFixa + valorKm * km;
+    if(noturno) base = base * (1 + ADICIONAL_NOTURNO);
+    const espera = esperaMin * VALOR_MIN_ESPERA;
+    const precoCotado = base + espera;
+    const repasseMotorista = base * PERCENTUAL_REPASSE_MOTORISTA + espera;
     document.getElementById("vg-preco-cotado").value = precoCotado.toFixed(2);
     document.getElementById("vg-preco-motorista").value = repasseMotorista.toFixed(2);
   }
   recalcularComissaoCotacao();
+}
+// Cancelamento pela cliente (Termo v2, cl. 9.6). Não muda o preço cotado nem
+// o status: só mostra quanto cobrar, quanto devolver do Pix e quanto repassar,
+// e pré-preenche o "Valor repassado" se ela ainda não mexeu nele.
+function atualizarCancelamento(){
+  const sel = document.getElementById("vg-cancelamento");
+  const box = document.getElementById("vg-cancelamento-info");
+  if(!sel || !box) return;
+  const regra = TAXA_CANCELAMENTO[sel.value];
+  const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
+  const campoPgValor = document.getElementById("vg-pg-valor");
+  if(!regra || !cotado){
+    box.style.display = "none"; box.innerHTML = "";
+    // Voltou pra "Nenhum": se o repassado ainda era o automático, volta pro repasse cheio
+    const repasseStr = document.getElementById("vg-preco-motorista").value;
+    if(repasseStr !== "" && campoPgValor.value !== "" && campoPgValor.value === campoPgValor.dataset.autoValor && campoPgValor.value !== repasseStr){
+      campoPgValor.value = repasseStr;
+      campoPgValor.dataset.autoValor = repasseStr;
+      recalcularComissaoPagamento();
+    }
+    return;
+  }
+  const taxa = cotado * regra.pct;
+  const repasse = taxa * PERCENTUAL_REPASSE_MOTORISTA;
+  const devolver = cotado - taxa;
+  const fmt = v => formatarMoedaBR(v);
+  const pgc = pagamentosCliente.find(p=>p.viagem_id===editingViagemId);
+  const jaPagou = pgc && pgc.status === "Pago";
+  box.innerHTML = `<b>${escapeHtml(regra.rotulo)}</b>: cobrar <b>${fmt(taxa)}</b> da cliente`
+    + (devolver > 0 ? (jaPagou ? ` (devolver <b>${fmt(devolver)}</b> do Pix)` : ` (se já pagou, devolver ${fmt(devolver)})`) : "")
+    + ` · repassar <b>${fmt(repasse)}</b> pra motorista (75%) · Go Ladies fica com ${fmt(taxa - repasse)}.`
+    + `<br><span style="color:var(--muted);">Lembre de mudar o status pra "Cancelada" e registrar o recebido/repassado embaixo. Fora do prazo de 2 h não se cobra nada.</span>`;
+  box.style.display = "";
+  if(campoPgValor.value === "" || campoPgValor.value === campoPgValor.dataset.autoValor){
+    campoPgValor.value = repasse.toFixed(2);
+    campoPgValor.dataset.autoValor = repasse.toFixed(2);
+    recalcularComissaoPagamento();
+  }
 }
 function recalcularComissaoCotacao(){
   const cotadoStr = document.getElementById("vg-preco-cotado").value;
@@ -5534,6 +5601,7 @@ function recalcularComissaoCotacao(){
   recalcularComissaoPagamento();
   atualizarStatusOferta();
   atualizarAlertaMargem();
+  atualizarCancelamento();
 }
 // ── Alerta de margem ──
 // Custo de referência de uma motorista com carro de 9 km/l (estudo de
@@ -5799,6 +5867,9 @@ function openViagemModal(id){
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
   document.getElementById("vg-tarifa-fixa").value = v.tarifa_fixa ?? TAXA_FIXA_CLIENTE;
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
+  document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
+  document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
+  document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
@@ -5919,6 +5990,18 @@ async function saveViagem(){
     saida_confirmada: document.getElementById("vg-saida").checked,
     grupo_whatsapp_criado: document.getElementById("vg-grupo-whats").checked,
   };
+  // Colunas de schema_adicionais_viagem.sql. Enquanto o SQL não roda, só vão
+  // no payload se ela preencheu algo (aí o erro de coluna avisa que falta rodar);
+  // depois que existem, vão sempre, pra conseguir voltar a zero/nenhum.
+  const adicionais = {
+    espera_extra_min: Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0),
+    adicional_noturno: document.getElementById("vg-adicional-noturno").checked,
+    cancelamento_cobrado: document.getElementById("vg-cancelamento").value || null,
+  };
+  const colunasExistem = viagens.length > 0 && ("espera_extra_min" in viagens[0]);
+  if(colunasExistem || adicionais.espera_extra_min || adicionais.adicional_noturno || adicionais.cancelamento_cobrado){
+    Object.assign(payload, adicionais);
+  }
 
   let viagemId = editingViagemId;
   if(viagemId){
