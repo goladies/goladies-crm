@@ -2096,8 +2096,11 @@ function badgeCertificacao(m){
 const DOCUMENTOS_OBRIGATORIOS_MOTORISTA = ["CNH","CRLV","Antecedentes Criminais","Comprovante de Endereço"];
 const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento"];
 const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E-mail"];
-const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
-const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
+// "Escolher motoristas" (schema_status_escolher_motoristas.sql): pagamento ok
+// mas nenhuma motorista marcada; ao marcar e salvar, o banco passa sozinho
+// pra "Aguardando aceite de motorista".
+const VIAGEM_STATUS = ["Solicitada","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Escolher motoristas","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
+const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Escolher motoristas":"amber","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
 const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=";
 // Tarifas sugeridas pra calcular preço a partir da distância (km).
 // Tabela decidida em 18/09/2026 a partir do estudo de precificação
@@ -5739,6 +5742,10 @@ function atualizarStatusOferta(){
     el.textContent = pagoOk
       ? "💵 Pagamento ok: ao salvar, a viagem sai desta coluna e a oferta abre pras motoristas marcadas."
       : "💵 Oferta fechada: a cliente aceitou o valor e o pedido de Pix foi pelo WhatsApp. Quando cair, use o botão 'Pix recebido' no cartão ou marque Pago em 'Pagamento da cliente' e salve.";
+  } else if(status === "Escolher motoristas"){
+    el.textContent = marcadas
+      ? "✅ Ao salvar, a viagem vai sozinha pra 'Aguardando aceite de motorista' e " + (marcadas > 1 ? "as " + marcadas + " motoristas marcadas recebem" : "a motorista marcada recebe") + " o aviso no WhatsApp em até 1 min."
+      : "💵 Pagamento ok, falta só você: marque acima quem pode pegar essa corrida e salve. A oferta abre na hora pra elas.";
   } else if(cotado !== "" && !confirmado){
     el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção de cotação pra liberar agora.";
   } else if(!pagoOk){
@@ -5812,6 +5819,12 @@ function renderTransporteViagens(){
         if(v.preco_cotado && Number(v.preco_cotado) > 0 && !pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago")){
           if(v.status === "Concluída") pix = `<span class="kc-pix">💵 Pagamento pendente</span>`;
           else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada" && v.status !== "Aguardando pagamento") pix = `<span class="kc-pix">💵 Aguardando Pix</span>`;
+        }
+        // Coluna "Escolher motoristas": diz por que a oferta já pode abrir.
+        if(v.status === "Escolher motoristas" && !pix){
+          const pagou = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
+          const semCobranca = !v.preco_cotado || Number(v.preco_cotado) <= 0;
+          pix = `<span class="kc-pix">${pagou ? "💵 Paga" : semCobranca ? "🎟️ Sem cobrança" : v.liberar_sem_pagamento ? "🔓 Liberada sem Pix" : "🕓 Pós-pago"}</span>`;
         }
         // Coluna "Aguardando pagamento": um clique registra o Pix e a viagem
         // segue sozinha (trigger no banco) pra aceite da motorista.
@@ -6054,7 +6067,7 @@ async function saveViagem(){
   if(payload.status === "Aguardando pagamento"){
     const clienteSel = clientesTransporte.find(c=>c.id===payload.cliente_id);
     if(payload.liberar_sem_pagamento || (clienteSel && clienteSel.pos_pago)){
-      const proximo = payload.motorista_ids && payload.motorista_ids.length ? "Aguardando aceite de motorista" : "Solicitada";
+      const proximo = payload.motorista_ids && payload.motorista_ids.length ? "Aguardando aceite de motorista" : "Escolher motoristas";
       await sb.from("viagens").update({ status: proximo }).eq("id", viagemId);
     }
   }
