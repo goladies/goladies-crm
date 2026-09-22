@@ -920,6 +920,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
+        <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')">💰 Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')">🗺️ Fora da área</button>
       </div>
 
@@ -982,6 +983,47 @@ tr.tr-click{cursor:pointer;}
           <table class="tbl">
             <thead><tr id="thead-avaliacoes"></tr></thead>
             <tbody id="avaliacoes-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-financeiro-transporte" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:16px;">Financeiro do transporte</h2><p>A saúde da operação de viagens: o que entra, o que vai pra motorista, o que sobra, e a que preço as clientes dizem sim. O Financeiro do menu lateral é o consolidado de tudo (transporte, parceiras (os), vendas e despesas).</p></div>
+          <select id="filter-ft-periodo" onchange="renderFinanceiroTransporte()">
+            <option value="30">Últimos 30 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="365">Últimos 12 meses</option>
+            <option value="0">Desde o começo</option>
+          </select>
+        </div>
+        <div class="cards" id="ft-cards"></div>
+
+        <div class="panel">
+          <h3>🎯 Validação de preço</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="ft-amostra"></p>
+          <div class="cards" id="ft-cards-validacao"></div>
+          <h4 style="font-size:13px; margin:18px 0 8px;">Onde o aceite cai, por faixa de preço cotado</h4>
+          <div id="ft-faixas"></div>
+          <h4 style="font-size:13px; margin:22px 0 8px;">Por distância: tabela × o que realmente fechou</h4>
+          <table class="tbl">
+            <thead><tr><th>Distância</th><th>Cotações</th><th>Aceite</th><th>Tabela média</th><th>Fechou em</th><th>R$/km praticado</th></tr></thead>
+            <tbody id="ft-kms"></tbody>
+          </table>
+          <h4 style="font-size:13px; margin:22px 0 8px;">Cotações que não viraram viagem</h4>
+          <p style="color:var(--muted); font-size:12px; margin:-6px 0 10px;">Inclui a recusa silenciosa: cotação enviada há mais de 2 dias que a cliente nunca respondeu. Essa costuma ser a mais comum, e é a que some da memória.</p>
+          <table class="tbl">
+            <thead><tr><th>Data</th><th>Cliente</th><th>Cotado</th><th>O que ela disse</th><th>Situação</th></tr></thead>
+            <tbody id="ft-recusas"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Viagem a viagem</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Da tabela ao que sobrou no bolso. Clique pra abrir a viagem.</p>
+          <table class="tbl">
+            <thead><tr><th>Data</th><th>Cliente</th><th>km</th><th>Tabela</th><th>Desconto</th><th>Cobrado</th><th>Taxa MP</th><th>Motorista</th><th>Sobrou</th><th>Margem</th></tr></thead>
+            <tbody id="ft-viagens"></tbody>
           </table>
         </div>
       </div>
@@ -3314,7 +3356,185 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderDemandasForaArea(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+
+// ===== FINANCEIRO DO TRANSPORTE =====
+// Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
+// transporte: lá é o consolidado (parceiras, vendas, despesas), aqui é a
+// saúde da operação de viagens. Nada disso precisou de SQL novo — sai do que
+// o CRM já grava em viagens e nos dois pagamentos.
+const FT_FAIXAS_PRECO = [
+  { rotulo: "até R$ 40", min: 0, max: 40 },
+  { rotulo: "R$ 40 a 60", min: 40, max: 60 },
+  { rotulo: "R$ 60 a 80", min: 60, max: 80 },
+  { rotulo: "R$ 80 a 120", min: 80, max: 120 },
+  { rotulo: "acima de R$ 120", min: 120, max: Infinity },
+];
+const FT_FAIXAS_KM = [
+  { rotulo: "até 5 km", min: 0, max: 5 },
+  { rotulo: "5 a 10 km", min: 5, max: 10 },
+  { rotulo: "10 a 20 km", min: 10, max: 20 },
+  { rotulo: "mais de 20 km", min: 20, max: Infinity },
+];
+const FT_DIAS_SILENCIO = 2;   // cotação sem resposta depois disso = recusa silenciosa
+function ftPeriodoDias(){
+  const sel = document.getElementById("filter-ft-periodo");
+  return sel ? Number(sel.value) : 90;
+}
+function ftDentroDoPeriodo(dataStr, dias){
+  if(!dias) return true;
+  if(!dataStr) return false;
+  const d = new Date(String(dataStr).slice(0,10) + "T00:00:00");
+  return (Date.now() - d.getTime()) / 86400000 <= dias;
+}
+// Preço que saiu pra cliente antes de qualquer negociação: é o que está sendo
+// testado. Viagem antiga, sem preco_tabela, cai no cotado mesmo.
+function ftPrecoTestado(v){ return Number(v.preco_tabela || v.preco_cotado || 0); }
+function ftDesconto(v){ return Number(v.desconto_valor || 0); }
+// Como essa cotação terminou. "Silenciosa" é a que ninguém responde: ela some
+// da memória, mas é recusa igual.
+function ftDesfecho(v){
+  if(v.status === "Cancelada") return "perdida";
+  if(v.preco_recusado_em && !v.preco_confirmado_cliente) return "pediu ajuste";
+  if(v.preco_confirmado_cliente) return ftDesconto(v) > 0 ? "fechou com desconto" : "aceitou direto";
+  const enviada = v.preco_confirmacao_enviada_em;
+  if(enviada && (Date.now() - new Date(enviada).getTime()) / 86400000 > FT_DIAS_SILENCIO) return "sem resposta";
+  return "aguardando";
+}
+function ftCotacoes(){
+  const dias = ftPeriodoDias();
+  return viagens.filter(v =>
+    Number(v.preco_cotado || 0) > 0 &&
+    v.status !== "Cotando preço" &&
+    ftDentroDoPeriodo(v.data || (v.criado_em || "").slice(0,10), dias)
+  );
+}
+function ftNomeCliente(v){
+  const c = clientesTransporte.find(x => x.id === v.cliente_id);
+  return c ? c.nome : (v.cliente_nome || "-");
+}
+function renderFinanceiroTransporte(){
+  const wrap = document.getElementById("ft-cards");
+  if(!wrap) return;
+  const dias = ftPeriodoDias();
+  const cotacoes = ftCotacoes();
+
+  // ── Dinheiro: ancora no pagamento da cliente, como no dashboard ──
+  const pagos = pagamentosCliente.filter(p => p.status === "Pago" && ftDentroDoPeriodo(p.data_pagamento, dias));
+  const recebido = pagos.reduce((s,p) => s + Number(p.valor_recebido || 0), 0);
+  const taxaMp = pagos.reduce((s,p) => s + Number(p.taxa_mp || 0), 0);
+  const repassado = pagos.reduce((s,p) => {
+    const pg = pagamentosMotorista.find(m => m.viagem_id === p.viagem_id);
+    const v = viagens.find(x => x.id === p.viagem_id);
+    return s + Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+  }, 0);
+  const lucro = recebido - taxaMp - repassado;
+  const margem = recebido ? (lucro / recebido) * 100 : 0;
+  const corLucro = lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
+  wrap.innerHTML = `
+    <div class="card"><div class="num">${formatarMoedaBR(recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(repassado)}</div><div class="label">Repasse às motoristas</div></div>
+    <div class="card"><div class="num" style="color:${corLucro};">${formatarMoedaBR(lucro)}</div><div class="label">Sobrou pra Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%</div></div>
+  `;
+
+  // ── Validação de preço ──
+  const fechadas = cotacoes.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
+  const aceitouDireto = cotacoes.filter(v => ftDesfecho(v) === "aceitou direto").length;
+  const comDesconto = cotacoes.filter(v => ftDesfecho(v) === "fechou com desconto");
+  const descontoMedio = comDesconto.length ? comDesconto.reduce((s,v) => s + ftDesconto(v), 0) / comDesconto.length : 0;
+  const kmFechados = fechadas.reduce((s,v) => s + Number(v.distancia_km || 0), 0);
+  const reaisFechados = fechadas.reduce((s,v) => s + Number(v.preco_cotado || 0), 0);
+  const porKm = kmFechados ? reaisFechados / kmFechados : 0;
+  const taxaAceite = cotacoes.length ? (aceitouDireto / cotacoes.length) * 100 : 0;
+
+  const amostra = document.getElementById("ft-amostra");
+  if(amostra){
+    amostra.textContent = cotacoes.length < 15
+      ? `${cotacoes.length} cotação(ões) no período: amostra pequena demais pra concluir. A leitura começa a valer perto de 15 a 20.`
+      : `${cotacoes.length} cotações no período.`;
+    amostra.style.color = cotacoes.length < 15 ? "var(--c-amber)" : "var(--muted)";
+  }
+  document.getElementById("ft-cards-validacao").innerHTML = `
+    <div class="card"><div class="num">${cotacoes.length}</div><div class="label">Cotações enviadas</div></div>
+    <div class="card"><div class="num">${taxaAceite.toFixed(0)}%</div><div class="label">Aceitas sem negociar</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(descontoMedio)}</div><div class="label">Desconto médio pra fechar</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(porKm)}</div><div class="label">Preço praticado por km</div></div>
+  `;
+
+  // Faixa de preço: o teste é o valor que saiu pra cliente, antes do desconto
+  document.getElementById("ft-faixas").innerHTML = FT_FAIXAS_PRECO.map(f => {
+    const naFaixa = cotacoes.filter(v => { const p = ftPrecoTestado(v); return p >= f.min && p < f.max; });
+    if(!naFaixa.length) return "";
+    const ok = naFaixa.filter(v => ftDesfecho(v) === "aceitou direto").length;
+    const pct = Math.round((ok / naFaixa.length) * 100);
+    const cor = pct >= 60 ? "--c-green" : pct >= 30 ? "--c-amber" : "--c-red";
+    return `<div style="display:flex; align-items:center; gap:10px; padding:5px 0;">
+      <div style="width:120px; font-size:12.5px; color:var(--muted);">${f.rotulo}</div>
+      <div style="flex:1; background:var(--border); border-radius:4px; height:16px;">
+        <div style="width:${Math.max(pct, 2)}%; background:var(${cor}); height:100%; border-radius:4px;"></div>
+      </div>
+      <div style="width:110px; text-align:right; font-size:12.5px; color:var(${cor});">${pct}% de ${naFaixa.length}</div>
+    </div>`;
+  }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma cotação no período ainda.</p>`;
+
+  document.getElementById("ft-kms").innerHTML = FT_FAIXAS_KM.map(f => {
+    const naFaixa = cotacoes.filter(v => { const km = Number(v.distancia_km || 0); return km > 0 && km >= f.min && km < f.max; });
+    if(!naFaixa.length) return "";
+    const ok = naFaixa.filter(v => ftDesfecho(v) === "aceitou direto").length;
+    const fech = naFaixa.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
+    const tabelaMedia = naFaixa.reduce((s,v) => s + ftPrecoTestado(v), 0) / naFaixa.length;
+    const fechouMedia = fech.length ? fech.reduce((s,v) => s + Number(v.preco_cotado || 0), 0) / fech.length : 0;
+    const kmFech = fech.reduce((s,v) => s + Number(v.distancia_km || 0), 0);
+    const gap = tabelaMedia && fechouMedia ? Math.round((1 - fechouMedia / tabelaMedia) * 100) : 0;
+    return `<tr>
+      <td>${f.rotulo}</td>
+      <td style="color:var(--muted);">${naFaixa.length}</td>
+      <td>${Math.round((ok / naFaixa.length) * 100)}%</td>
+      <td style="color:var(--muted);">${formatarMoedaBR(tabelaMedia)}</td>
+      <td>${fech.length ? formatarMoedaBR(fechouMedia) : "-"}${gap > 5 ? ` <span style="color:var(--c-red); font-size:11.5px;">−${gap}%</span>` : ""}</td>
+      <td>${kmFech ? formatarMoedaBR(fech.reduce((s,v) => s + Number(v.preco_cotado || 0), 0) / kmFech) : "-"}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Sem cotações com distância medida no período</td></tr>`;
+
+  const naoFecharam = cotacoes.filter(v => ["pediu ajuste", "sem resposta", "perdida"].includes(ftDesfecho(v)));
+  document.getElementById("ft-recusas").innerHTML = naoFecharam.map(v => {
+    const d = ftDesfecho(v);
+    const cor = d === "sem resposta" ? "--c-amber" : "--c-red";
+    return `<tr class="tr-click" onclick="openViagemModal(${v.id})">
+      <td>${v.data ? formatarDataBR(v.data) : "-"}</td>
+      <td>${escapeHtml(ftNomeCliente(v))}</td>
+      <td>${formatarMoedaBR(ftPrecoTestado(v))}</td>
+      <td>${escapeHtml(v.preco_recusado_motivo || v.motivo_perda || "—")}</td>
+      <td><span class="tag" style="background:var(${cor}-bg); color:var(${cor});">${d}</span></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="5">Nenhuma cotação perdida no período</td></tr>`;
+
+  // ── Viagem a viagem ──
+  const comDinheiro = cotacoes.filter(v => pagamentosCliente.some(p => p.viagem_id === v.id) || ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
+  document.getElementById("ft-viagens").innerHTML = comDinheiro.map(v => {
+    const pgc = pagamentosCliente.find(p => p.viagem_id === v.id) || {};
+    const pgm = pagamentosMotorista.find(p => p.viagem_id === v.id) || {};
+    const cobrado = pgc.valor_recebido != null ? Number(pgc.valor_recebido) : Number(v.preco_cotado || 0);
+    const taxa = Number(pgc.taxa_mp || 0);
+    const motorista = pgm.valor_repassado != null ? Number(pgm.valor_repassado) : Number(v.preco_motorista || 0);
+    const sobrou = cobrado - taxa - motorista;
+    const m = cobrado ? (sobrou / cobrado) * 100 : 0;
+    const desc = ftDesconto(v);
+    return `<tr class="tr-click" onclick="openViagemModal(${v.id})">
+      <td>${v.data ? formatarDataBR(v.data) : "-"}</td>
+      <td>${escapeHtml(ftNomeCliente(v))}</td>
+      <td style="color:var(--muted);">${v.distancia_km ? Number(v.distancia_km).toLocaleString("pt-BR") : "-"}</td>
+      <td style="color:var(--muted);">${v.preco_tabela ? formatarMoedaBR(v.preco_tabela) : "-"}</td>
+      <td>${desc ? `<span style="color:var(--c-red);">−${formatarMoedaBR(desc)}</span>${v.desconto_motivo ? ` <span style="font-size:11px; color:var(--muted);">${escapeHtml(v.desconto_motivo)}</span>` : ""}` : "-"}</td>
+      <td>${formatarMoedaBR(cobrado)}</td>
+      <td style="color:var(--muted);">${taxa ? formatarMoedaBR(taxa) : "-"}</td>
+      <td>${formatarMoedaBR(motorista)}</td>
+      <td style="color:${sobrou >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(sobrou)}</td>
+      <td style="color:var(--muted);">${cobrado ? m.toFixed(0) + "%" : "-"}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="10">Nenhuma viagem fechada no período</td></tr>`;
+}
 
 // Pedidos que bateram na trava de área (schema_area_atendimento.sql). Cada
 // linha é uma mulher que quis a Go Ladies onde ela ainda não existe: é por
