@@ -920,6 +920,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
+        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')">🗺️ Fora da área</button>
       </div>
 
       <div id="subtab-motoristas">
@@ -981,6 +982,19 @@ tr.tr-click{cursor:pointer;}
           <table class="tbl">
             <thead><tr id="thead-avaliacoes"></tr></thead>
             <tbody id="avaliacoes-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-demandas" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:16px;">Pedidos de fora da área</h2><p>Quem tentou pedir viagem onde a Go Ladies ainda não atende. É o seu mapa de expansão: onde tem procura é onde vale abrir praça e recrutar.</p></div>
+        </div>
+        <div class="cards" id="demandas-cards"></div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr><th>Quando</th><th>Nome</th><th>Contato</th><th>De onde</th><th>Para onde</th><th>Canal</th><th>Status</th><th></th></tr></thead>
+            <tbody id="demandas-body"></tbody>
           </table>
         </div>
       </div>
@@ -2353,6 +2367,8 @@ let clientesTransporte = [];
 let viagens = [];
 let viagemOfertas = [];
 let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
+let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
+let demandasForaArea = [];  // quem pediu viagem onde ainda não atendemos
 let avaliacoes = [];
 let pagamentosMotorista = [];
 let pagamentosCliente = [];
@@ -2811,6 +2827,14 @@ async function carregarDadosInterno(){
   const rvpa = await sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem");
   viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
 
+  // Área de atendimento e demanda de fora dela (schema_area_atendimento.sql), idem
+  const [rar, rdfa] = await Promise.all([
+    sb.from("areas_atendimento").select("*").order("id"),
+    sb.from("demandas_fora_area").select("*").order("criado_em", { ascending: false }),
+  ]);
+  areasAtendimento = aplicarConsulta("areas_atendimento", rar, areasAtendimento);
+  demandasForaArea = aplicarConsulta("demandas_fora_area", rdfa, demandasForaArea);
+
   // Links do painel da motorista (schema_links_motoristas.sql), idem
   const [rlk, rla] = await Promise.all([
     sb.from("links_motoristas").select("*").order("id"),
@@ -2934,6 +2958,8 @@ const TABELA_ATUALIZA = {
   evento_links: v => eventoLinks = v,
   evento_interacoes: v => eventoInteracoes = v,
   evento_arquivos: v => eventoArquivos = v,
+  areas_atendimento: v => areasAtendimento = v,
+  demandas_fora_area: v => demandasForaArea = v,
 };
 // Atualiza só as tabelas que uma ação realmente mudou, em vez de recarregar
 // as ~28 tabelas inteiras a cada Salvar/Excluir — reduz a carga no banco
@@ -3288,7 +3314,56 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderDemandasForaArea(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+
+// Pedidos que bateram na trava de área (schema_area_atendimento.sql). Cada
+// linha é uma mulher que quis a Go Ladies onde ela ainda não existe: é por
+// onde se decide a próxima praça e quem recrutar primeiro.
+const DEMANDA_STATUS = ["Nova", "Contatada", "Convertida", "Descartada"];
+function renderDemandasForaArea(){
+  const corpo = document.getElementById("demandas-body");
+  if(!corpo) return;
+  const cards = document.getElementById("demandas-cards");
+  const novas = demandasForaArea.filter(d=>d.status === "Nova").length;
+  // Agrupa pelo fim do endereço de origem (", Cidade - UF") pra mostrar onde
+  // a procura se concentra sem depender de um campo de cidade separado.
+  const porLugar = {};
+  demandasForaArea.forEach(d=>{
+    const partes = String(d.origem_endereco || "").split(",").map(s=>s.trim()).filter(Boolean);
+    const lugar = partes.length > 1 ? partes[partes.length - 1] : (partes[0] || "Sem endereço");
+    porLugar[lugar] = (porLugar[lugar] || 0) + 1;
+  });
+  const top = Object.entries(porLugar).sort((a,b)=>b[1]-a[1]).slice(0, 3);
+  if(cards){
+    cards.innerHTML = `
+      <div class="card"><div class="num">${demandasForaArea.length}</div><div class="label">Pedidos de fora da área</div></div>
+      <div class="card"><div class="num">${novas}</div><div class="label">Ainda sem contato</div></div>
+      ${top.map(([lugar, n])=>`<div class="card"><div class="num">${n}</div><div class="label">${escapeHtml(lugar)}</div></div>`).join("")}
+    `;
+  }
+  corpo.innerHTML = demandasForaArea.map(d=>`
+    <tr>
+      <td>${d.criado_em ? new Date(d.criado_em).toLocaleDateString("pt-BR") : "-"}</td>
+      <td>${escapeHtml(d.nome || "-")}</td>
+      <td>${d.whatsapp ? `<a href="https://wa.me/55${String(d.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(d.whatsapp)}</a>` : escapeHtml(d.email || "-")}</td>
+      <td>${escapeHtml(d.origem_endereco || "-")}</td>
+      <td>${escapeHtml(d.destino_endereco || "-")}</td>
+      <td><span class="tag novo">${escapeHtml(d.canal || "App")}</span></td>
+      <td>
+        <select onchange="mudarStatusDemanda(${d.id}, this.value)" style="font-size:12px; padding:4px 6px;">
+          ${DEMANDA_STATUS.map(s=>`<option ${s===(d.status||"Nova")?"selected":""}>${s}</option>`).join("")}
+        </select>
+      </td>
+      <td class="acoes-cel">${d.observacoes ? escapeHtml(d.observacoes) : ""}</td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="8">Ninguém pediu viagem de fora da área ainda</td></tr>`;
+}
+async function mudarStatusDemanda(id, status){
+  const { error } = await sb.from("demandas_fora_area").update({ status }).eq("id", id);
+  if(error){ alert("Erro ao mudar o status: " + error.message); return; }
+  await recarregarTabelas("demandas_fora_area");
+  showToast("Status atualizado");
+}
 
 function mostrarSubTab(nome){
   document.querySelectorAll("#tab-transporte .subnav-item[data-subtab]").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
