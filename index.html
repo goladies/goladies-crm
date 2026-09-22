@@ -723,6 +723,21 @@ tr.tr-click{cursor:pointer;}
       <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
       <div class="cards" id="dash-cards"></div>
       <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin-top:0;">🚗 Transporte no mês</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="dash-transporte-periodo"></p>
+          </div>
+          <button class="btn secondary small" type="button" onclick="irParaFinanceiro('resumo')">Ver financeiro completo</button>
+        </div>
+        <div class="cards" id="dash-cards-transporte"></div>
+      </div>
+      <div class="panel">
+        <h3>👤 Novas usuárias do app</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quem criou conta sozinha no app da cliente ou no painel da motorista, mais recentes primeiro</p>
+        <table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Contato</th><th>Cadastro</th><th>Situação</th></tr></thead><tbody id="dash-usuarias-app"></tbody></table>
+      </div>
+      <div class="panel">
         <h3>Funil de atendimento</h3>
         <table class="tbl tbl-funil"><thead><tr id="funnel-head"></tr></thead><tbody><tr id="funnel-body"></tr></tbody></table>
       </div>
@@ -1009,6 +1024,9 @@ tr.tr-click{cursor:pointer;}
       </div>
 
       <div id="subtab-receber">
+        <div class="pagehead">
+          <div><p style="margin:0; color:var(--muted); font-size:12.5px;">Parcelas de vendas cadastradas em Leads + o dinheiro das viagens (bruto que a cliente paga, taxa do Mercado Pago e o que sobra líquido). Clicar numa linha de viagem abre a viagem.</p></div>
+        </div>
         <div class="filters">
           <select id="filter-receber-status" onchange="renderContasReceber()"><option value="">Todos os status</option><option>Pendente</option><option>Pago</option></select>
         </div>
@@ -1060,7 +1078,7 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="panel">
           <table class="tbl">
-            <thead><tr><th>Mês</th><th>Faturamento</th><th>Meta</th><th>Despesas</th><th>Lucro</th><th>Meta lucro</th></tr></thead>
+            <thead><tr><th>Mês</th><th>Faturamento</th><th>Meta</th><th>Taxa MP</th><th>Despesas</th><th>Lucro</th><th>Meta lucro</th></tr></thead>
             <tbody id="resumo-body"></tbody>
           </table>
         </div>
@@ -1758,9 +1776,9 @@ tr.tr-click{cursor:pointer;}
            10 inclusos, 100% pra motorista) e madrugada/feriado (+30% sobre fixo + km). -->
       <div><label>Espera combinada <span style="font-weight:400; color:var(--muted);">(min além dos 10 inclusos; R$1/min, 100% pra motorista)</span></label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado, +30%</label></div>
-      <div><label>Preço de tabela <span style="font-weight:400; color:var(--muted);">(sem desconto; preenche sozinho pelo km)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="aplicarDesconto()"></div></div>
-      <div><label>Desconto <span style="font-weight:400; color:var(--muted);">(a motorista sai proporcional, 75% do valor abaixo)</span></label>
-        <select id="vg-desconto-motivo" onchange="aplicarDesconto()">
+      <div><label>Preço de tabela <span style="font-weight:400; color:var(--muted);">(sem desconto; preenche sozinho pelo km)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div></div>
+      <div><label>Motivo do desconto <span style="font-weight:400; color:var(--muted);">(se cobrou menos que a tabela)</span></label>
+        <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
           <option value="">Nenhum</option>
           <option>Primeira viagem</option>
           <option>Fidelidade</option>
@@ -1770,9 +1788,9 @@ tr.tr-click{cursor:pointer;}
           <option>Outro</option>
         </select>
       </div>
-      <div id="vg-desconto-valor-wrap" style="display:none;"><label>Valor do desconto</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" oninput="aplicarDesconto()"></div></div>
-      <div id="vg-desconto-outro-wrap" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo" oninput="aplicarDesconto()"></div>
-      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente, já com desconto se houver)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
+      <div><label>Valor do desconto <span style="font-weight:400; color:var(--muted);">(calculado: tabela − cotado)</span></label><input type="text" id="vg-desconto-valor" readonly style="background:var(--border); cursor:not-allowed;"></div>
+      <div id="vg-desconto-outro-wrap" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
+      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente; digite o valor final e o desconto sai sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
@@ -2985,6 +3003,97 @@ function renderDashboard(){
   });
   renderAniversariosDashboard();
   renderEventosDashboard();
+  renderTransporteDashboard();
+  renderUsuariasApp();
+}
+
+// ===== TRANSPORTE NO DASHBOARD =====
+// Âncora é o pagamento da cliente: entram as viagens PAGAS no mês. O repasse
+// dessas viagens vem junto mesmo que ele caia no mês seguinte (o repasse é
+// quinzenal), senão o lucro do mês ficaria torto pelo descasamento de datas.
+function dentroDoMes(dataStr, mes, ano){
+  if(!dataStr) return false;
+  const d = new Date(String(dataStr).slice(0,10) + "T00:00:00");
+  return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+}
+function financeiroTransporteMes(mes, ano){
+  const pagos = pagamentosCliente.filter(p=>p.status === "Pago" && dentroDoMes(p.data_pagamento, mes, ano));
+  const viagensPagas = pagos.map(p=>viagens.find(v=>v.id === p.viagem_id)).filter(Boolean);
+  const recebido = pagos.reduce((s,p)=>s + Number(p.valor_recebido || 0), 0);
+  const taxaMp = pagos.reduce((s,p)=>s + Number(p.taxa_mp || 0), 0);
+  const repassado = pagos.reduce((s,p)=>{
+    const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+    const viagem = viagens.find(v=>v.id === p.viagem_id);
+    // Ainda não registrado o repasse: usa o previsto da viagem, pra não
+    // inflar o lucro com um custo que já existe e só não foi lançado.
+    return s + Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (viagem ? viagem.preco_motorista : 0)) || 0);
+  }, 0);
+  const descontos = viagensPagas.reduce((s,v)=>s + Number(v.desconto_valor || 0), 0);
+  const concluidas = viagens.filter(v=>v.status === "Concluída" && dentroDoMes(v.concluida_em || v.data, mes, ano)).length;
+  return {
+    recebido, taxaMp, repassado, descontos, concluidas,
+    liquido: recebido - taxaMp,
+    lucro: recebido - taxaMp - repassado,
+    qtdPagas: pagos.length,
+    ticketMedio: pagos.length ? recebido / pagos.length : 0,
+  };
+}
+function renderTransporteDashboard(){
+  const wrap = document.getElementById("dash-cards-transporte");
+  if(!wrap) return;
+  const hoje = new Date();
+  const mes = hoje.getMonth() + 1, ano = hoje.getFullYear();
+  const f = financeiroTransporteMes(mes, ano);
+  const periodo = document.getElementById("dash-transporte-periodo");
+  if(periodo) periodo.textContent = `${nomeMes(mes)} de ${ano} · viagens pagas no mês, com o repasse das mesmas viagens`;
+  const corLucro = f.lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
+  wrap.innerHTML = `
+    <div class="card"><div class="num">${formatarMoedaBR(f.recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(f.repassado)}</div><div class="label">Repasse às motoristas</div></div>
+    <div class="card"><div class="num" style="color:${corLucro};">${formatarMoedaBR(f.lucro)}</div><div class="label">Lucro real Go Ladies</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(f.taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(f.descontos)}</div><div class="label">Descontos concedidos</div></div>
+    <div class="card"><div class="num">${f.concluidas}</div><div class="label">Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}</div></div>
+  `;
+}
+// Cadastro pelo app: a cliente nasce em clientes_transporte com login_criado_em
+// preenchido (função cliente_id_atual); a motorista já existe no funil e ganha
+// auth_user_id quando cria o login dela.
+function renderUsuariasApp(){
+  const corpo = document.getElementById("dash-usuarias-app");
+  if(!corpo) return;
+  const daApp = clientesTransporte
+    .filter(c=>c.login_criado_em || c.origem === "Painel")
+    .map(c=>({
+      nome: c.nome, tipo: "Cliente", tipoClasse: "novo",
+      contato: c.whatsapp || c.email || "-",
+      quando: c.login_criado_em || c.criado_em,
+      situacao: c.login_criado_em ? "Login criado" : "Cadastro pelo app",
+      onclick: `openClienteTransporteModal(${c.id})`,
+    }))
+    .concat(motoristas.filter(m=>m.auth_user_id).map(m=>({
+      nome: m.nome, tipo: "Motorista", tipoClasse: "negociacao",
+      contato: m.whatsapp || m.email || "-",
+      quando: m.criado_em,
+      situacao: m.status || "-",
+      onclick: `openMotoristaModal(${m.id})`,
+    })))
+    .sort((a,b)=>String(b.quando||"").localeCompare(String(a.quando||"")))
+    .slice(0, 10);
+  corpo.innerHTML = daApp.map(u=>`
+    <tr class="tr-click" onclick="${u.onclick}">
+      <td>${escapeHtml(u.nome||"-")}</td>
+      <td><span class="tag ${u.tipoClasse}">${u.tipo}</span></td>
+      <td>${escapeHtml(u.contato)}</td>
+      <td>${u.quando ? new Date(u.quando).toLocaleDateString("pt-BR") : "-"}</td>
+      <td>${escapeHtml(u.situacao)}</td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="5">Ninguém se cadastrou pelo app ainda</td></tr>`;
+}
+function irParaFinanceiro(subtab){
+  const nav = document.querySelector('.nav-item[data-tab="financeiro"]');
+  if(nav) nav.click();
+  if(subtab) mostrarSubTabFinanceiro(subtab);
 }
 
 function proximoAniversario(dataStr){
@@ -4782,7 +4891,7 @@ function confirmarAssistente(){
     if(valorPreenchido(d.distancia_km)){ iaSet("vg-distancia-km", d.distancia_km); if(typeof recalcularCotacao === "function") recalcularCotacao(); }
     iaSet("vg-preco-cotado", d.preco_cotado); iaSet("vg-preco-motorista", d.preco_motorista);
     iaSet("vg-viagem-status", d.status); iaSet("vg-motivo-perda", d.motivo_perda);
-    recalcularComissaoCotacao(); atualizarStatusOferta(); marcarObrigatoriosViagem();
+    atualizarDesconto(); atualizarStatusOferta(); marcarObrigatoriosViagem();
     showToast("Confira os campos em rosa e clique em Salvar");
     return;
   }
@@ -5657,29 +5766,48 @@ function recalcularCotacao(){
     let base = tarifaFixa + valorKm * km;
     if(noturno) base = base * (1 + ADICIONAL_NOTURNO);
     const espera = esperaMin * VALOR_MIN_ESPERA;
-    document.getElementById("vg-preco-tabela").value = (base + espera).toFixed(2);
+    // Refazer a tabela não apaga o desconto que ela já tinha dado: o cotado
+    // acompanha a tabela nova mantendo a mesma diferença.
+    const desconto = descontoAtual();
+    const tabela = base + espera;
+    document.getElementById("vg-preco-tabela").value = tabela.toFixed(2);
+    document.getElementById("vg-preco-cotado").value = Math.max(0, tabela - desconto).toFixed(2);
+    recalcularRepasseMotorista();
   }
-  aplicarDesconto();
+  atualizarDesconto();
 }
-// Desconto manual sobre o preço de tabela: mesma conta do recalcularCotacao
-// (espera fica de fora, 100% pra motorista), só que a base sofre o desconto
-// antes do repasse de 75%. Sem motivo escolhido, cotado/repasse ficam livres
-// pra edição na mão (comportamento de antes do desconto existir).
-function aplicarDesconto(){
-  const motivo = document.getElementById("vg-desconto-motivo").value;
-  document.getElementById("vg-desconto-valor-wrap").style.display = motivo ? "" : "none";
-  document.getElementById("vg-desconto-outro-wrap").style.display = motivo === "Outro" ? "" : "none";
+// Quanto de desconto está dado agora: tabela − cotado. O desconto nunca é
+// digitado (era assim até 22/09/2026 e travava o preço cotado); ela digita o
+// valor que cobrou de verdade e a diferença aparece sozinha.
+function descontoAtual(){
   const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
-  if(!motivo || !tabela){
-    recalcularComissaoCotacao();
-    return;
-  }
-  const desconto = Math.max(0, Number(document.getElementById("vg-desconto-valor").value) || 0);
+  const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
+  if(!tabela || !cotado) return 0;
+  return Math.max(0, Math.round((tabela - cotado) * 100) / 100);
+}
+// A espera combinada fica fora do rateio: vai 100% pra motorista.
+function recalcularRepasseMotorista(){
+  const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
+  if(!cotado) return;
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
   const espera = esperaMin * VALOR_MIN_ESPERA;
-  const baseComDesconto = Math.max(0, (tabela - espera) - desconto);
-  document.getElementById("vg-preco-cotado").value = (baseComDesconto + espera).toFixed(2);
-  document.getElementById("vg-preco-motorista").value = (baseComDesconto * PERCENTUAL_REPASSE_MOTORISTA + espera).toFixed(2);
+  const base = Math.max(0, cotado - espera);
+  document.getElementById("vg-preco-motorista").value = (base * PERCENTUAL_REPASSE_MOTORISTA + espera).toFixed(2);
+}
+function cotadoEditado(){
+  recalcularRepasseMotorista();
+  atualizarDesconto();
+}
+function atualizarDesconto(){
+  const desconto = descontoAtual();
+  const campo = document.getElementById("vg-desconto-valor");
+  const motivo = document.getElementById("vg-desconto-motivo");
+  campo.value = desconto ? formatarMoedaBR(desconto) : "";
+  campo.dataset.valor = desconto || "";
+  document.getElementById("vg-desconto-outro-wrap").style.display = motivo.value === "Outro" ? "" : "none";
+  // Desconto sem motivo escolhido perde o rastro, que é justamente o ponto:
+  // marca o campo em vez de travar o Salvar.
+  motivo.style.borderColor = (desconto && !motivo.value) ? "var(--c-red)" : "";
   recalcularComissaoCotacao();
 }
 // Cancelamento pela cliente (Termo v2, cl. 9.6). Não muda o preço cotado nem
@@ -5728,7 +5856,7 @@ function recalcularComissaoCotacao(){
     campo.value = "";
     campo.dataset.valor = "";
   } else {
-    const comissao = (Number(cotadoStr) || 0) - (Number(repasseStr) || 0);
+    const comissao = Math.round(((Number(cotadoStr) || 0) - (Number(repasseStr) || 0)) * 100) / 100;
     campo.dataset.valor = comissao;
     campo.value = formatarMoedaBR(comissao);
   }
@@ -5788,7 +5916,7 @@ function recalcularTaxaMp(){
   const liquidoStr = document.getElementById("vg-lid-liquido").value;
   const campo = document.getElementById("vg-lid-taxa-mp");
   if(recebidoStr === "" || liquidoStr === ""){ campo.value = ""; return; }
-  campo.value = formatarMoedaBR(Number(recebidoStr) - Number(liquidoStr));
+  campo.value = formatarMoedaBR(Math.round((Number(recebidoStr) - Number(liquidoStr)) * 100) / 100);
 }
 function recalcularComissaoPagamento(){
   const liquidoStr = document.getElementById("vg-lid-liquido").value;
@@ -5803,7 +5931,7 @@ function recalcularComissaoPagamento(){
     campo.dataset.valor = "";
     return;
   }
-  const comissao = (Number(baseStr) || 0) - (Number(repassadoStr) || 0);
+  const comissao = Math.round(((Number(baseStr) || 0) - (Number(repassadoStr) || 0)) * 100) / 100;
   campo.dataset.valor = comissao;
   campo.value = formatarMoedaBR(comissao);
 }
@@ -6066,12 +6194,10 @@ function openViagemModal(id){
   const motivoSalvo = v.desconto_motivo || "";
   const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
   document.getElementById("vg-desconto-motivo").value = motivoConhecido;
-  document.getElementById("vg-desconto-valor").value = v.desconto_valor ?? "";
   document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
-  document.getElementById("vg-desconto-valor-wrap").style.display = motivoConhecido ? "" : "none";
-  document.getElementById("vg-desconto-outro-wrap").style.display = motivoConhecido === "Outro" ? "" : "none";
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
+  atualizarDesconto();
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
   document.getElementById("vg-liberar-sem-pgto").checked = !!v.liberar_sem_pagamento;
   const statusPreco = document.getElementById("vg-status-preco-cliente");
@@ -6223,7 +6349,7 @@ async function saveViagem(){
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
-    desconto_valor: document.getElementById("vg-desconto-motivo").value ? (Number(document.getElementById("vg-desconto-valor").value) || 0) : null,
+    desconto_valor: document.getElementById("vg-desconto-valor").dataset.valor ? Number(document.getElementById("vg-desconto-valor").dataset.valor) : null,
     desconto_motivo: document.getElementById("vg-desconto-motivo").value === "Outro"
       ? (document.getElementById("vg-desconto-outro").value || null)
       : (document.getElementById("vg-desconto-motivo").value || null),
@@ -6258,7 +6384,7 @@ async function saveViagem(){
   // "adicionais" acima, pra não quebrar salvar antes do SQL rodar.
   const taxaMp = {
     valor_liquido: lidLiquidoStr === "" ? null : Number(lidLiquidoStr),
-    taxa_mp: (lidLiquidoStr !== "" && lidRecebidoStr !== "") ? Number(lidRecebidoStr) - Number(lidLiquidoStr) : null,
+    taxa_mp: (lidLiquidoStr !== "" && lidRecebidoStr !== "") ? Math.round((Number(lidRecebidoStr) - Number(lidLiquidoStr)) * 100) / 100 : null,
   };
   const colunasTaxaMpExistem = pagamentosCliente.length > 0 && ("valor_liquido" in pagamentosCliente[0]);
   if(colunasTaxaMpExistem || taxaMp.valor_liquido != null){
@@ -7475,31 +7601,76 @@ function labelVendaParcela(p){
   const lead = venda ? leads.find(l=>l.id===venda.lead_id) : null;
   return { lead, venda };
 }
+// Espelha listaContasAPagarUnificada: parcelas de venda (leads) + o dinheiro
+// das viagens. Sem isso o repasse à motorista entrava como despesa e a
+// receita da viagem não entrava em lugar nenhum (achado em 22/09/2026).
+function listaContasAReceberUnificada(){
+  const parcelas = vendaParcelas.map(p=>{
+    const { lead, venda } = labelVendaParcela(p);
+    return {
+      origem: "Venda", id: p.id, viagemId: null,
+      cliente: lead ? lead.nome : "-",
+      descricao: (venda ? venda.servico_produto : "-") + ` · parcela ${p.numero_parcela||1}/${venda?venda.num_parcelas:1}`,
+      valor: Number(p.valor || 0), taxa_mp: null, liquido: null,
+      forma_pagamento: p.forma_pagamento, data_prevista: p.data_prevista,
+      data_realizada: p.data_realizada, status: p.status || "Pendente",
+    };
+  });
+  const daViagem = viagens
+    .filter(v=>v.status !== "Cancelada" && Number(v.preco_cotado || 0) > 0)
+    .map(v=>{
+      const pg = pagamentosCliente.find(p=>p.viagem_id === v.id) || {};
+      const cliente = clientesTransporte.find(c=>c.id === v.cliente_id);
+      const bruto = pg.valor_recebido != null ? Number(pg.valor_recebido) : Number(v.preco_cotado || 0);
+      const taxa = pg.taxa_mp != null ? Number(pg.taxa_mp) : null;
+      return {
+        origem: "Viagem", id: pg.id || null, viagemId: v.id,
+        cliente: cliente ? cliente.nome : (v.cliente_nome || "-"),
+        descricao: `Viagem #${v.id}` + (v.origem_endereco || v.destino_endereco ? ` · ${[v.origem_endereco, v.destino_endereco].filter(Boolean).join(" → ")}` : ""),
+        valor: bruto, taxa_mp: taxa,
+        liquido: pg.valor_liquido != null ? Number(pg.valor_liquido) : (taxa != null ? bruto - taxa : null),
+        forma_pagamento: pg.forma_pagamento, data_prevista: v.data,
+        data_realizada: pg.data_pagamento, status: pg.status || "Pendente",
+      };
+    });
+  return [...parcelas, ...daViagem];
+}
 function renderContasReceber(){
   const fs = document.getElementById("filter-receber-status");
   if(!fs) return;
   renderCabecalho("thead-receber", [
-    {label:"Cliente", campo:null}, {label:"Serviço", campo:null}, {label:"Parcela", campo:null},
-    {label:"Valor", campo:"valor", tipo:"numero"}, {label:"Forma", campo:"forma_pagamento"},
+    {label:"Origem", campo:"origem"}, {label:"Cliente", campo:"cliente"}, {label:"Descrição", campo:null},
+    {label:"Bruto", campo:"valor", tipo:"numero"}, {label:"Taxa MP", campo:"taxa_mp", tipo:"numero"},
+    {label:"Líquido", campo:"liquido", tipo:"numero"}, {label:"Forma", campo:"forma_pagamento"},
     {label:"Data prevista", campo:"data_prevista"}, {label:"Data realizada", campo:"data_realizada"},
     {label:"Status", campo:"status"}, {label:"", campo:null}
   ], "receber");
   const statusF = fs.value;
-  const lista = aplicarOrdenacao("receber", vendaParcelas.filter(p=>!statusF || p.status===statusF));
-  document.getElementById("receber-body").innerHTML = lista.map(p=>{
-    const { lead, venda } = labelVendaParcela(p);
-    return `<tr class="tr-click" onclick="openParcelaModal(${p.id})">
-      <td>${lead?lead.nome:"-"}</td>
-      <td>${venda?venda.servico_produto:"-"}</td>
-      <td>${p.numero_parcela||1}/${venda?venda.num_parcelas:1}</td>
-      <td>${formatarMoedaBR(p.valor)}</td>
-      <td>${p.forma_pagamento||"-"}</td>
-      <td>${p.data_prevista||"-"}</td>
-      <td>${p.data_realizada||"-"}</td>
-      <td><span class="tag ${p.status==='Pago'?'ativo':'urg-media'}">${p.status}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${p.status!=='Pago'?`<button class="act act-ok" onclick="marcarParcelaPaga(${p.id})">✅ Pago</button>`:''} <button class="act act-edit" onclick="openParcelaModal(${p.id})">✏️ Editar</button></td>
-    </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="9">Nenhuma parcela registrada ainda</td></tr>`;
+  const lista = aplicarOrdenacao("receber", listaContasAReceberUnificada().filter(c=>!statusF || c.status===statusF));
+  const totalBruto = lista.reduce((s,c)=>s+Number(c.valor||0),0);
+  const totalTaxa = lista.reduce((s,c)=>s+Number(c.taxa_mp||0),0);
+  document.getElementById("receber-body").innerHTML = lista.map(c=>`
+    <tr class="tr-click" onclick="${c.origem==='Viagem'?`abrirViagemDoPagamento(${c.viagemId})`:`openParcelaModal(${c.id})`}">
+      <td><span class="tag ${c.origem==='Viagem'?'negociacao':'novo'}">${c.origem}</span></td>
+      <td>${escapeHtml(c.cliente||"-")}</td>
+      <td>${escapeHtml(c.descricao||"-")}</td>
+      <td>${formatarMoedaBR(c.valor)}</td>
+      <td>${c.taxa_mp!=null?formatarMoedaBR(c.taxa_mp):"-"}</td>
+      <td>${c.liquido!=null?formatarMoedaBR(c.liquido):"-"}</td>
+      <td>${escapeHtml(c.forma_pagamento||"-")}</td>
+      <td>${c.data_prevista?fmtDataBR(c.data_prevista):"-"}</td>
+      <td>${c.data_realizada?fmtDataBR(c.data_realizada):"-"}</td>
+      <td><span class="tag ${c.status==='Pago'?'ativo':'urg-media'}">${escapeHtml(c.status)}</span></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Venda' && c.status!=='Pago'?`<button class="act act-ok" onclick="marcarParcelaPaga(${c.id})">✅ Pago</button>`:''}</td>
+    </tr>
+  `).join("") + (lista.length ? `
+    <tr style="font-weight:700;">
+      <td colspan="3">Total (${lista.length})</td>
+      <td>${formatarMoedaBR(totalBruto)}</td>
+      <td>${formatarMoedaBR(totalTaxa)}</td>
+      <td>${formatarMoedaBR(totalBruto - totalTaxa)}</td>
+      <td colspan="5"></td>
+    </tr>` : `<tr><td class="empty" colspan="11">Nada a receber registrado ainda</td></tr>`);
 }
 async function marcarParcelaPaga(id){
   const hoje = new Date().toISOString().slice(0,10);
@@ -7685,19 +7856,27 @@ async function deleteMeta(id){
 
 // ===== FINANCEIRO: RESUMO (Faturamento × Lucro, mensal/anual) =====
 function resumoFinanceiroMes(mes, ano){
-  const faturamento = vendaParcelas
-    .filter(p=>p.data_realizada && new Date(p.data_realizada+"T00:00:00").getFullYear()===ano && new Date(p.data_realizada+"T00:00:00").getMonth()+1===mes)
+  const vendas = vendaParcelas
+    .filter(p=>dentroDoMes(p.data_realizada, mes, ano))
     .reduce((s,p)=>s+Number(p.valor||0),0);
+  // Decisão de 22/09/2026: a viagem entra pelo BRUTO que a cliente pagou e a
+  // taxa do Mercado Pago vira despesa, pra o custo do meio de pagamento ficar
+  // visível. Antes as viagens não entravam no faturamento e só o repasse à
+  // motorista contava, o que fazia o lucro afundar a cada viagem feita.
+  const pagosViagem = pagamentosCliente.filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano));
+  const faturamentoViagens = pagosViagem.reduce((s,p)=>s+Number(p.valor_recebido||0),0);
+  const taxaMp = pagosViagem.reduce((s,p)=>s+Number(p.taxa_mp||0),0);
+  const faturamento = vendas + faturamentoViagens;
   const despesasGerais = contasPagar
-    .filter(c=>c.status==='Pago' && c.data_pagamento && new Date(c.data_pagamento+"T00:00:00").getFullYear()===ano && new Date(c.data_pagamento+"T00:00:00").getMonth()+1===mes)
+    .filter(c=>c.status==='Pago' && dentroDoMes(c.data_pagamento, mes, ano))
     .reduce((s,c)=>s+Number(c.valor||0),0);
   const despesasMotoristas = pagamentosMotorista
-    .filter(p=>p.status==='Pago' && p.data_pagamento && new Date(p.data_pagamento+"T00:00:00").getFullYear()===ano && new Date(p.data_pagamento+"T00:00:00").getMonth()+1===mes)
+    .filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano))
     .reduce((s,p)=>s+Number(p.valor_repassado||0),0);
-  const despesas = despesasGerais + despesasMotoristas;
+  const despesas = despesasGerais + despesasMotoristas + taxaMp;
   const lucro = faturamento - despesas;
   const meta = metasFinanceiras.find(m=>m.mes===mes && m.ano===ano) || {};
-  return { mes, faturamento, despesas, lucro, metaFaturamento: meta.meta_faturamento, metaLucro: meta.meta_lucro };
+  return { mes, faturamento, taxaMp, despesas, lucro, metaFaturamento: meta.meta_faturamento, metaLucro: meta.meta_lucro };
 }
 function renderResumoFinanceiro(){
   const selAno = document.getElementById("filter-resumo-ano");
@@ -7712,12 +7891,14 @@ function renderResumoFinanceiro(){
   const linhas = Array.from({length:12},(_,i)=>resumoFinanceiroMes(i+1, ano));
   const totalFat = linhas.reduce((s,l)=>s+l.faturamento,0);
   const totalDesp = linhas.reduce((s,l)=>s+l.despesas,0);
+  const totalTaxa = linhas.reduce((s,l)=>s+l.taxaMp,0);
   const totalLucro = totalFat - totalDesp;
   document.getElementById("resumo-body").innerHTML = linhas.map(l=>`
     <tr>
       <td>${nomeMes(l.mes)}</td>
       <td>${formatarMoedaBR(l.faturamento)}</td>
       <td>${l.metaFaturamento!=null?formatarMoedaBR(l.metaFaturamento):"-"}</td>
+      <td>${formatarMoedaBR(l.taxaMp)}</td>
       <td>${formatarMoedaBR(l.despesas)}</td>
       <td style="color:${l.lucro>=0?'var(--green)':'var(--red)'};">${formatarMoedaBR(l.lucro)}</td>
       <td>${l.metaLucro!=null?formatarMoedaBR(l.metaLucro):"-"}</td>
@@ -7725,6 +7906,7 @@ function renderResumoFinanceiro(){
   `).join("") + `
     <tr style="font-weight:700;">
       <td>Total ${ano}</td><td>${formatarMoedaBR(totalFat)}</td><td>-</td>
+      <td>${formatarMoedaBR(totalTaxa)}</td>
       <td>${formatarMoedaBR(totalDesp)}</td>
       <td style="color:${totalLucro>=0?'var(--green)':'var(--red)'};">${formatarMoedaBR(totalLucro)}</td><td>-</td>
     </tr>`;
