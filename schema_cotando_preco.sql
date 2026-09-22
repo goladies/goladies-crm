@@ -87,8 +87,15 @@ declare
   v_cliente_id bigint := public.cliente_id_atual();
   v_id bigint;
   v_trechos int := case when p_data_retorno is not null and p_horario_retorno is not null then 2 else 1 end;
-  v_cot record;
   v_tem_km boolean := p_distancia_km is not null and p_distancia_km > 0;
+  -- Variáveis soltas (e não um record): se o app não mandou km, elas ficam
+  -- null e a viagem entra sem preço. Com record dava "v_cot is not assigned
+  -- yet" no insert, mesmo dentro do case (bug visto em 22/09/2026).
+  v_tarifa_fixa numeric;
+  v_valor_km numeric;
+  v_noturno boolean := false;
+  v_preco_cotado numeric;
+  v_preco_motorista numeric;
 begin
   if v_cliente_id is null then
     raise exception 'Login não vinculado a nenhuma cliente.';
@@ -108,7 +115,9 @@ begin
   end if;
 
   if v_tem_km then
-    select * into v_cot from public.calcular_cotacao(round(p_distancia_km, 1), p_horario, v_trechos);
+    select c.tarifa_fixa, c.valor_km, c.adicional_noturno, c.preco_cotado, c.preco_motorista
+      into v_tarifa_fixa, v_valor_km, v_noturno, v_preco_cotado, v_preco_motorista
+      from public.calcular_cotacao(round(p_distancia_km, 1), p_horario, v_trechos) c;
   end if;
 
   insert into public.viagens (
@@ -132,11 +141,11 @@ begin
     nullif(btrim(coalesce(p_observacoes, '')), ''),
     case when v_tem_km then round(p_distancia_km, 1) end,
     case when v_tem_km and p_duracao_min is not null then round(p_duracao_min) end,
-    case when v_tem_km then v_cot.tarifa_fixa end,
-    case when v_tem_km then v_cot.valor_km end,
-    case when v_tem_km then v_cot.adicional_noturno else false end,
-    case when v_tem_km then v_cot.preco_cotado end,
-    case when v_tem_km then v_cot.preco_motorista end,
+    v_tarifa_fixa,
+    v_valor_km,
+    coalesce(v_noturno, false),
+    v_preco_cotado,
+    v_preco_motorista,
     case when v_tem_km then 'Cotando preço' else 'Solicitada' end
   )
   returning id into v_id;
