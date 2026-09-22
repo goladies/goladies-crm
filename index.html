@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://ilhuhbcklvcdrggovmth.supabase.co; connect-src 'self' https://ilhuhbcklvcdrggovmth.supabase.co wss://ilhuhbcklvcdrggovmth.supabase.co https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self'; object-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://ilhuhbcklvcdrggovmth.supabase.co; connect-src 'self' https://ilhuhbcklvcdrggovmth.supabase.co wss://ilhuhbcklvcdrggovmth.supabase.co https://cdn.jsdelivr.net https://places.googleapis.com; base-uri 'self'; form-action 'self'; object-src 'none';">
 <title>CRM Go Ladies</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#141417">
@@ -347,9 +347,21 @@ a.icon-btn{text-decoration:none; display:inline-block;}
    enquanto estiver vazio, vira vermelho pra saltar aos olhos */
 .formgrid .obrig>label{color:var(--rosa-texto); font-weight:600;}
 .formgrid .obrig>label::after{content:" *";}
-.formgrid .obrig>input,.formgrid .obrig>select,.formgrid .obrig .campo-moeda>input,.formgrid .obrig>.obrig-box{border-color:var(--rosa); box-shadow:0 0 0 1px var(--rosa) inset;}
+.formgrid .obrig>input,.formgrid .obrig>select,.formgrid .obrig .campo-moeda>input,.formgrid .obrig .campo-endereco>input,.formgrid .obrig>.obrig-box{border-color:var(--rosa); box-shadow:0 0 0 1px var(--rosa) inset;}
 .formgrid .obrig.vazio>label{color:var(--c-red);}
-.formgrid .obrig.vazio>input,.formgrid .obrig.vazio>select,.formgrid .obrig.vazio .campo-moeda>input,.formgrid .obrig.vazio>.obrig-box{border-color:var(--c-red); box-shadow:0 0 0 1px var(--c-red) inset; background:var(--c-red-bg);}
+.formgrid .obrig.vazio>input,.formgrid .obrig.vazio>select,.formgrid .obrig.vazio .campo-moeda>input,.formgrid .obrig.vazio .campo-endereco>input,.formgrid .obrig.vazio>.obrig-box{border-color:var(--c-red); box-shadow:0 0 0 1px var(--c-red) inset; background:var(--c-red-bg);}
+/* Busca de endereço (Google Places): mesmo padrão do site/cliente.html */
+.campo-endereco{position:relative;}
+.sugestoes-endereco{
+  display:none; position:absolute; left:0; right:0; top:100%; z-index:30;
+  background:var(--bg-card); border:1px solid var(--rosa); border-top:none;
+  border-radius:0 0 10px 10px; max-height:220px; overflow-y:auto;
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+.sugestoes-endereco.aberta{display:block;}
+.sugestoes-endereco div{padding:10px 12px; font-size:12.5px; cursor:pointer; border-bottom:1px solid var(--border); color:var(--text1);}
+.sugestoes-endereco div:last-child{border-bottom:none;}
+.sugestoes-endereco div:hover{background:var(--bg-hover);}
 .legenda-obrig{font-size:12px; color:var(--text3); margin:6px 0 12px;}
 .legenda-obrig b{color:var(--rosa-texto);}
 .legenda-obrig i{color:var(--c-red); font-style:normal; font-weight:600;}
@@ -1278,7 +1290,7 @@ tr.tr-click{cursor:pointer;}
       <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Endereços</h4>
       <div id="p-enderecos-lista"></div>
       <div class="formgrid" style="margin-top:8px;">
-        <div class="full"><label>Endereço</label><input type="text" id="pe-endereco" placeholder="Rua, número, bairro, cidade"></div>
+        <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" id="pe-endereco" placeholder="Rua, número, bairro, cidade" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
         <div class="full"><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional, ex: "Loja Centro")</span></label><input type="text" id="pe-descricao"></div>
         <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addEnderecoParceiro()">+ Adicionar endereço</button></div>
       </div>
@@ -1698,8 +1710,8 @@ tr.tr-click{cursor:pointer;}
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
       <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
       <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="atualizarStatusOferta()"></select></div>
-      <div class="full obrig"><label>Endereço de origem</label><input type="text" id="vg-origem-endereco"></div>
-      <div class="full obrig"><label>Endereço de destino</label><input type="text" id="vg-destino-endereco"></div>
+      <div class="full obrig"><label>Endereço de origem</label><div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
+      <div class="full obrig"><label>Endereço de destino</label><div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full"><button type="button" class="btn ghost" style="font-size:12.5px;" onclick="abrirRotaMaps()">📍 Ver rota no Google Maps</button></div>
 
       <!-- Paradas (garupa): outras passageiras embarcando/desembarcando entre origem e destino.
@@ -1718,8 +1730,8 @@ tr.tr-click{cursor:pointer;}
       <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
       <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
       <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno"></div>
-      <div class="full"><label>Endereço de origem do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo destino de ida)</span></label><input type="text" id="vg-origem-retorno"></div>
-      <div class="full"><label>Endereço de destino do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo origem de ida)</span></label><input type="text" id="vg-destino-retorno"></div>
+      <div class="full"><label>Endereço de origem do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo destino de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
+      <div class="full"><label>Endereço de destino do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo origem de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full">
         <label>Dias da semana <span style="font-weight:400; color:var(--muted);">(pra cliente fixa, ex: segunda a sexta, mesmo horário)</span></label>
         <div style="display:flex; flex-wrap:wrap; gap:6px;" id="vg-dias-semana-wrap">
@@ -1746,7 +1758,21 @@ tr.tr-click{cursor:pointer;}
            10 inclusos, 100% pra motorista) e madrugada/feriado (+30% sobre fixo + km). -->
       <div><label>Espera combinada <span style="font-weight:400; color:var(--muted);">(min além dos 10 inclusos; R$1/min, 100% pra motorista)</span></label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado, +30%</label></div>
-      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
+      <div><label>Preço de tabela <span style="font-weight:400; color:var(--muted);">(sem desconto; preenche sozinho pelo km)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="aplicarDesconto()"></div></div>
+      <div><label>Desconto <span style="font-weight:400; color:var(--muted);">(a motorista sai proporcional, 75% do valor abaixo)</span></label>
+        <select id="vg-desconto-motivo" onchange="aplicarDesconto()">
+          <option value="">Nenhum</option>
+          <option>Primeira viagem</option>
+          <option>Fidelidade</option>
+          <option>Correção de erro</option>
+          <option>Cortesia</option>
+          <option>Indicação</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div id="vg-desconto-valor-wrap" style="display:none;"><label>Valor do desconto</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" oninput="aplicarDesconto()"></div></div>
+      <div id="vg-desconto-outro-wrap" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo" oninput="aplicarDesconto()"></div>
+      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente, já com desconto se houver)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
@@ -1791,7 +1817,9 @@ tr.tr-click{cursor:pointer;}
 
     <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💵 Pagamento da cliente à Go Ladies <span style="font-weight:400; color:var(--muted);">(Pix na sua conta; marcar Pago avisa a cliente e abre a oferta pras motoristas)</span></h4>
     <div class="formgrid">
-      <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(realizado; previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
+      <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(bruto; realizado, previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div></div>
+      <div><label>Valor líquido <span style="font-weight:400; color:var(--muted);">(o que caiu na conta; Pix Mercado Pago preenche sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div></div>
+      <div><label>Taxa Mercado Pago <span style="font-weight:400; color:var(--muted);">(calculada: recebido − líquido)</span></label><input type="text" id="vg-lid-taxa-mp" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
       <div><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
       <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
@@ -1801,7 +1829,7 @@ tr.tr-click{cursor:pointer;}
     <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💰 Pagamento à motorista <span style="font-weight:400; color:var(--muted);">(repasse quinzenal)</span></h4>
     <div class="formgrid">
       <div><label>Valor repassado <span style="font-weight:400; color:var(--muted);">(realizado; previsto é o Repasse motorista acima)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
-      <div><label>Comissão da plataforma <span style="font-weight:400; color:var(--muted);">(calculada: recebido/cotado − repassado)</span></label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"></div>
+      <div><label>Lucro real Go Ladies <span style="font-weight:400; color:var(--muted);">(calculado: líquido/recebido/cotado − repassado)</span></label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"></div>
       <div><label>Forma de pagamento</label><select id="vg-pg-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
       <div><label>Status do pagamento</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
       <div><label>Data prevista</label><input type="date" id="vg-pg-data-prevista"></div>
@@ -1887,7 +1915,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Horário de início</label><input type="time" id="ev-hora-inicio"></div>
       <div><label>Horário de fim</label><input type="time" id="ev-hora-fim"></div>
       <div class="full"><label>Nome do local</label><input type="text" id="ev-local-nome" placeholder="Ex: Centro de Eventos FIERGS, Arena do Grêmio"></div>
-      <div class="full"><label>Endereço</label><input type="text" id="ev-endereco" placeholder="Rua, número, bairro"></div>
+      <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" id="ev-endereco" placeholder="Rua, número, bairro" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div><label>Cidade</label><input type="text" id="ev-cidade" placeholder="Porto Alegre"></div>
       <div><label>Estado</label><select id="ev-estado"></select></div>
       <div><label>Organizador (a)</label><input type="text" id="ev-organizador" placeholder="Empresa ou pessoa que organiza"></div>
@@ -2130,6 +2158,11 @@ const TAXA_CANCELAMENTO = {         // % do preço cotado que a cliente paga
   "2h":     { pct: 0.50, rotulo: "Cancelou com menos de 2 h: 50%" },
   "noshow": { pct: 1.00, rotulo: "Não compareceu (15 min sem contato): 100%" },
 };
+// Desconto manual sobre o preço de tabela (22/09/2026): motivo fica salvo
+// pra dar pra somar depois quanto cada motivo custou. O repasse da motorista
+// continua sempre 75% do preço já com desconto (ela participa do desconto
+// na mesma proporção da comissão).
+const DESCONTO_MOTIVOS = ["Primeira viagem", "Fidelidade", "Correção de erro", "Cortesia", "Indicação", "Outro"];
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
 // Funil de parceiros — o mesmo que a Juliana já documenta e usa
@@ -5446,6 +5479,81 @@ async function deleteClienteTransporte(id){
   await recarregarTabelas("clientes_transporte", "viagens");
 }
 
+// ===== BUSCA DE ENDEREÇO (Google Places, mesmo padrão do site) =====
+const GOOGLE_PLACES_API_KEY = "AIzaSyCfew1La2uYMkXv6U1NUdi1k5biN56Ct3I";
+
+function gerarSessionTokenEndereco(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "sess-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+}
+
+function configurarBuscaEndereco(input){
+  const wrap = input.closest(".campo-endereco");
+  const lista = wrap.querySelector(".sugestoes-endereco");
+  let timer = null;
+  let sessionToken = gerarSessionTokenEndereco();
+
+  input.addEventListener("input", ()=>{
+    clearTimeout(timer);
+    const termo = input.value.trim();
+    if(termo.length < 3){ lista.classList.remove("aberta"); lista.innerHTML = ""; return; }
+    timer = setTimeout(()=>buscarEnderecoGoogle(termo, lista, input, sessionToken), 400);
+  });
+  input.addEventListener("blur", ()=>{
+    setTimeout(()=>lista.classList.remove("aberta"), 150);
+    if(!input.value.trim()) sessionToken = gerarSessionTokenEndereco();
+  });
+
+  wrap._proximaSessaoEndereco = ()=>{ sessionToken = gerarSessionTokenEndereco(); };
+}
+
+async function buscarEnderecoGoogle(termo, lista, input, sessionToken){
+  try{
+    const resp = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY },
+      body: JSON.stringify({
+        input: termo,
+        sessionToken: sessionToken,
+        includedRegionCodes: ["br"],
+        languageCode: "pt-BR",
+        locationBias: { circle: { center: { latitude: -30.03, longitude: -51.05 }, radius: 40000 } }
+      })
+    });
+    const dados = await resp.json();
+    if(input.value.trim() !== termo) return; // já digitou outra coisa
+    lista.innerHTML = "";
+    const sugestoes = (dados.suggestions || []).filter(s=>s.placePrediction);
+    if(!sugestoes.length){ lista.classList.remove("aberta"); return; }
+    sugestoes.forEach(s=>{
+      const pred = s.placePrediction;
+      const item = document.createElement("div");
+      item.textContent = pred.text.text;
+      item.addEventListener("mousedown", e=>{ e.preventDefault(); selecionarEnderecoGoogle(pred, input, lista, sessionToken); });
+      lista.appendChild(item);
+    });
+    lista.classList.add("aberta");
+  }catch(err){ console.error("Não foi possível buscar endereços:", err); }
+}
+
+async function selecionarEnderecoGoogle(pred, input, lista, sessionToken){
+  input.value = pred.text.text;
+  lista.classList.remove("aberta");
+  lista.innerHTML = "";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  const wrap = input.closest(".campo-endereco");
+  try{
+    const resp = await fetch(`https://places.googleapis.com/v1/places/${pred.placeId}?sessionToken=${sessionToken}`, {
+      headers: { "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY, "X-Goog-FieldMask": "formattedAddress" }
+    });
+    const dados = await resp.json();
+    if(dados.formattedAddress){ input.value = dados.formattedAddress; input.dispatchEvent(new Event("input", { bubbles: true })); }
+  }catch(err){ console.error("Não foi possível obter detalhes do endereço:", err); }
+  finally{ if(wrap && wrap._proximaSessaoEndereco) wrap._proximaSessaoEndereco(); }
+}
+
+document.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+
 // ===== TRANSPORTE: VIAGENS (KANBAN) =====
 function abrirRotaMaps(){
   const origem = document.getElementById("vg-origem-endereco").value.trim();
@@ -5485,10 +5593,11 @@ function renderParadasModal(){
       </div>
       <div><label>Tipo</label><select onchange="paradasModal[${i}].tipo=this.value">${PARADA_TIPOS.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
       <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value"></div>
-      <div class="full"><label>Endereço</label><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" oninput="paradasModal[${i}].endereco=this.value"></div>
+      <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
       <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
       <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
     </div>`).join("");
+  el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
 }
 function adicionarParadaViagem(){
   paradasModal.push({ tipo: "Embarque", endereco: "", passageira_nome: "", horario_previsto: "", observacao: "" });
@@ -5548,11 +5657,29 @@ function recalcularCotacao(){
     let base = tarifaFixa + valorKm * km;
     if(noturno) base = base * (1 + ADICIONAL_NOTURNO);
     const espera = esperaMin * VALOR_MIN_ESPERA;
-    const precoCotado = base + espera;
-    const repasseMotorista = base * PERCENTUAL_REPASSE_MOTORISTA + espera;
-    document.getElementById("vg-preco-cotado").value = precoCotado.toFixed(2);
-    document.getElementById("vg-preco-motorista").value = repasseMotorista.toFixed(2);
+    document.getElementById("vg-preco-tabela").value = (base + espera).toFixed(2);
   }
+  aplicarDesconto();
+}
+// Desconto manual sobre o preço de tabela: mesma conta do recalcularCotacao
+// (espera fica de fora, 100% pra motorista), só que a base sofre o desconto
+// antes do repasse de 75%. Sem motivo escolhido, cotado/repasse ficam livres
+// pra edição na mão (comportamento de antes do desconto existir).
+function aplicarDesconto(){
+  const motivo = document.getElementById("vg-desconto-motivo").value;
+  document.getElementById("vg-desconto-valor-wrap").style.display = motivo ? "" : "none";
+  document.getElementById("vg-desconto-outro-wrap").style.display = motivo === "Outro" ? "" : "none";
+  const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
+  if(!motivo || !tabela){
+    recalcularComissaoCotacao();
+    return;
+  }
+  const desconto = Math.max(0, Number(document.getElementById("vg-desconto-valor").value) || 0);
+  const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
+  const espera = esperaMin * VALOR_MIN_ESPERA;
+  const baseComDesconto = Math.max(0, (tabela - espera) - desconto);
+  document.getElementById("vg-preco-cotado").value = (baseComDesconto + espera).toFixed(2);
+  document.getElementById("vg-preco-motorista").value = (baseComDesconto * PERCENTUAL_REPASSE_MOTORISTA + espera).toFixed(2);
   recalcularComissaoCotacao();
 }
 // Cancelamento pela cliente (Termo v2, cl. 9.6). Não muda o preço cotado nem
@@ -5652,10 +5779,23 @@ function atualizarAlertaMargem(){
   box.style.background = `var(--c-${nivel}-bg)`;
   box.style.display = "";
 }
+// Taxa do Mercado Pago: recebido (bruto, o que a cliente pagou) − líquido (o
+// que efetivamente caiu na conta). Pix Mercado Pago preenche o líquido
+// sozinho (webhook); dinheiro/transferência não tem taxa, então fica igual
+// ao recebido se ela não mexer.
+function recalcularTaxaMp(){
+  const recebidoStr = document.getElementById("vg-lid-valor").value;
+  const liquidoStr = document.getElementById("vg-lid-liquido").value;
+  const campo = document.getElementById("vg-lid-taxa-mp");
+  if(recebidoStr === "" || liquidoStr === ""){ campo.value = ""; return; }
+  campo.value = formatarMoedaBR(Number(recebidoStr) - Number(liquidoStr));
+}
 function recalcularComissaoPagamento(){
+  const liquidoStr = document.getElementById("vg-lid-liquido").value;
   const recebidoStr = document.getElementById("vg-lid-valor").value;
   const cotadoStr = document.getElementById("vg-preco-cotado").value;
-  const baseStr = recebidoStr !== "" ? recebidoStr : cotadoStr;
+  // Prioridade: líquido (o que realmente sobrou depois da taxa MP) > recebido > cotado (previsto).
+  const baseStr = liquidoStr !== "" ? liquidoStr : (recebidoStr !== "" ? recebidoStr : cotadoStr);
   const repassadoStr = document.getElementById("vg-pg-valor").value;
   const campo = document.getElementById("vg-pg-comissao");
   if(baseStr === "" && repassadoStr === ""){
@@ -5922,6 +6062,14 @@ function openViagemModal(id){
   document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
+  document.getElementById("vg-preco-tabela").value = v.preco_tabela ?? "";
+  const motivoSalvo = v.desconto_motivo || "";
+  const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
+  document.getElementById("vg-desconto-motivo").value = motivoConhecido;
+  document.getElementById("vg-desconto-valor").value = v.desconto_valor ?? "";
+  document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
+  document.getElementById("vg-desconto-valor-wrap").style.display = motivoConhecido ? "" : "none";
+  document.getElementById("vg-desconto-outro-wrap").style.display = motivoConhecido === "Outro" ? "" : "none";
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
@@ -5983,10 +6131,12 @@ function openViagemModal(id){
 
   const pgc = pagamentosCliente.find(p=>p.viagem_id===id) || {};
   document.getElementById("vg-lid-valor").value = pgc.valor_recebido ?? "";
+  document.getElementById("vg-lid-liquido").value = pgc.valor_liquido ?? "";
   document.getElementById("vg-lid-forma").value = pgc.forma_pagamento || "";
   document.getElementById("vg-lid-status").value = pgc.status || "Pendente";
   document.getElementById("vg-lid-data").value = pgc.data_pagamento || "";
   document.getElementById("vg-lid-notas").value = pgc.notas || "";
+  recalcularTaxaMp();
 
   const pg = pagamentosMotorista.find(p=>p.viagem_id===id) || {};
   document.getElementById("vg-pg-valor").value = pg.valor_repassado ?? "";
@@ -6070,6 +6220,18 @@ async function saveViagem(){
   if(colunasExistem || adicionais.espera_extra_min || adicionais.adicional_noturno || adicionais.cancelamento_cobrado){
     Object.assign(payload, adicionais);
   }
+  // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
+  const desconto = {
+    preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
+    desconto_valor: document.getElementById("vg-desconto-motivo").value ? (Number(document.getElementById("vg-desconto-valor").value) || 0) : null,
+    desconto_motivo: document.getElementById("vg-desconto-motivo").value === "Outro"
+      ? (document.getElementById("vg-desconto-outro").value || null)
+      : (document.getElementById("vg-desconto-motivo").value || null),
+  };
+  const colunasDescontoExistem = viagens.length > 0 && ("preco_tabela" in viagens[0]);
+  if(colunasDescontoExistem || desconto.preco_tabela != null || desconto.desconto_valor != null || desconto.desconto_motivo){
+    Object.assign(payload, desconto);
+  }
 
   let viagemId = editingViagemId;
   if(viagemId){
@@ -6082,14 +6244,26 @@ async function saveViagem(){
   }
   await gravarParadasViagem(viagemId);
 
+  const lidLiquidoStr = document.getElementById("vg-lid-liquido").value;
+  const lidRecebidoStr = document.getElementById("vg-lid-valor").value;
   const pgcPayload = {
     viagem_id: viagemId,
-    valor_recebido: document.getElementById("vg-lid-valor").value === "" ? null : Number(document.getElementById("vg-lid-valor").value),
+    valor_recebido: lidRecebidoStr === "" ? null : Number(lidRecebidoStr),
     forma_pagamento: document.getElementById("vg-lid-forma").value || null,
     status: document.getElementById("vg-lid-status").value,
     data_pagamento: document.getElementById("vg-lid-data").value || null,
     notas: document.getElementById("vg-lid-notas").value,
   };
+  // Colunas de schema_taxa_mp_cliente.sql (22/09/2026): mesmo cuidado do
+  // "adicionais" acima, pra não quebrar salvar antes do SQL rodar.
+  const taxaMp = {
+    valor_liquido: lidLiquidoStr === "" ? null : Number(lidLiquidoStr),
+    taxa_mp: (lidLiquidoStr !== "" && lidRecebidoStr !== "") ? Number(lidRecebidoStr) - Number(lidLiquidoStr) : null,
+  };
+  const colunasTaxaMpExistem = pagamentosCliente.length > 0 && ("valor_liquido" in pagamentosCliente[0]);
+  if(colunasTaxaMpExistem || taxaMp.valor_liquido != null){
+    Object.assign(pgcPayload, taxaMp);
+  }
   const temDadoPagamentoCliente = pgcPayload.valor_recebido != null || pgcPayload.forma_pagamento || pgcPayload.data_pagamento || pgcPayload.notas || pgcPayload.status === "Pago";
   const existentePgc = pagamentosCliente.find(p=>p.viagem_id===viagemId);
   if(temDadoPagamentoCliente || existentePgc){
