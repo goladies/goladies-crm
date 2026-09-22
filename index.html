@@ -1793,6 +1793,7 @@ tr.tr-click{cursor:pointer;}
       <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente; digite o valor final e o desconto sai sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
       <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
+      <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);">🔒 <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cotado.</div>
       <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
            do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
       <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
@@ -5754,12 +5755,24 @@ function recalcularHorarioChegada(){
   campo.value = novoValor;
   campo.dataset.autoValor = novoValor;
 }
+// Viagem já paga não tem preço recalculado sozinho: corrigir o km, a tarifa
+// ou a madrugada de uma viagem antiga reescrevia o valor que a cliente
+// realmente pagou (22/09/2026). Os campos seguem editáveis na mão.
+function viagemJaPaga(){
+  if(!editingViagemId) return false;
+  const pg = pagamentosCliente.find(p=>p.viagem_id === editingViagemId);
+  return !!(pg && pg.status === "Pago");
+}
 function recalcularCotacao(){
   const km = Number(document.getElementById("vg-distancia-km").value) || 0;
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
   const noturno = document.getElementById("vg-adicional-noturno").checked;
+  if(viagemJaPaga()){
+    atualizarDesconto();
+    return;
+  }
   if(km){
     // Madrugada/feriado incide sobre fixo + km e segue o repasse de 75%;
     // a espera combinada é somada por fora e vai inteira pra motorista.
@@ -6263,6 +6276,7 @@ function openViagemModal(id){
   document.getElementById("vg-lid-data").value = pgc.data_pagamento || "";
   document.getElementById("vg-lid-notas").value = pgc.notas || "";
   recalcularTaxaMp();
+  document.getElementById("vg-preco-travado").style.display = viagemJaPaga() ? "" : "none";
 
   const pg = pagamentosMotorista.find(p=>p.viagem_id===id) || {};
   document.getElementById("vg-pg-valor").value = pg.valor_repassado ?? "";
