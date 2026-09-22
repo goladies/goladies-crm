@@ -626,6 +626,55 @@ tr.tr-click{cursor:pointer;}
   .cards{grid-template-columns:1fr 1fr;}
   .formgrid{grid-template-columns:1fr;}
 }
+
+/* ---------- SIMULADOR DE PREÇO (Financeiro do transporte) ---------- */
+#ft-sim .sim-cols{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:start;}
+#ft-sim .sim-bloco{background:var(--bg-card2); border:1px solid var(--border); border-radius:12px; padding:13px 14px;}
+#ft-sim .sim-bloco h4{margin:0 0 3px; font-size:12.5px; letter-spacing:.02em; text-transform:uppercase; color:var(--text3);}
+#ft-sim .sim-bloco .sim-ajuda{margin:0 0 10px; font-size:11.5px; color:var(--text3); line-height:1.45;}
+#ft-sim .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+#ft-sim .sim-grid .full{grid-column:1/-1;}
+#ft-sim label{display:block; font-size:11.5px; color:var(--text3); margin-bottom:3px;}
+#ft-sim input[type=number],#ft-sim input[type=text],#ft-sim select{width:100%; padding:6px 9px; font-size:12.5px;}
+#ft-sim .sim-check{display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text2); margin-top:8px; cursor:pointer; line-height:1.4;}
+#ft-sim .sim-check input{margin:1px 0 0; flex:0 0 auto;}
+#ft-sim .sim-fixo{display:grid; grid-template-columns:auto 1fr 74px; align-items:center; gap:7px; margin-top:6px;}
+#ft-sim .sim-fixo label{margin:0; font-size:12px; color:var(--text2); cursor:pointer;}
+#ft-sim .sim-fixo input[type=number]{padding:4px 7px; font-size:12px;}
+#ft-sim .sim-nota{font-size:11px; color:var(--text3); margin:9px 0 0; line-height:1.45;}
+#ft-sim .sim-resumo-km{margin-top:11px; padding-top:10px; border-top:1px dashed var(--border2); font-size:12.5px; color:var(--text2);}
+#ft-sim .sim-resumo-km b{color:var(--text1); font-size:14px;}
+
+/* Saída: cascata do dinheiro */
+#ft-sim .sim-saida{display:grid; grid-template-columns:1.15fr 1fr; gap:16px; margin-top:16px; align-items:start;}
+#ft-sim .sim-linha{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:6px 0; font-size:13px; border-bottom:1px solid var(--border);}
+#ft-sim .sim-linha:last-child{border-bottom:none;}
+#ft-sim .sim-linha .rot{color:var(--text2);}
+#ft-sim .sim-linha .rot small{display:block; color:var(--text3); font-size:11px; margin-top:1px;}
+#ft-sim .sim-linha .val{font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600;}
+#ft-sim .sim-linha.saldo{border-top:2px solid var(--border2); border-bottom:none; margin-top:2px; padding-top:9px;}
+#ft-sim .sim-linha.saldo .rot{color:var(--text1); font-weight:600;}
+#ft-sim .sim-linha.saldo .val{font-size:15px;}
+#ft-sim .sim-linha.neg .val{color:var(--c-red);}
+#ft-sim .sim-semaforo{border-left:3px solid var(--border2); border-radius:9px; padding:11px 13px; font-size:13px; line-height:1.5;}
+#ft-sim .sim-semaforo .sim-hora{font-size:20px; font-weight:700; display:block; margin-bottom:1px;}
+#ft-sim .sim-semaforo small{color:var(--muted); font-size:11.5px; display:block; margin-top:6px; line-height:1.45;}
+#ft-sim .sim-pisos{margin-top:12px;}
+#ft-sim .sim-piso{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+#ft-sim .sim-piso:last-child{border-bottom:none;}
+#ft-sim .sim-piso .rot{color:var(--text2);}
+#ft-sim .sim-piso .rot small{display:block; color:var(--text3); font-size:11px; margin-top:1px;}
+#ft-sim .sim-piso .val{font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap;}
+#ft-sim .sim-aviso{margin-top:12px; padding:10px 12px; border-radius:9px; font-size:12px; line-height:1.5;
+  background:var(--bg-card2); border:1px solid var(--border); color:var(--text2);}
+#ft-sim .sim-aviso b{color:var(--text1);}
+@media (max-width:1100px){
+  #ft-sim .sim-cols{grid-template-columns:1fr 1fr;}
+  #ft-sim .sim-saida{grid-template-columns:1fr;}
+}
+@media (max-width:700px){
+  #ft-sim .sim-cols{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -998,6 +1047,76 @@ tr.tr-click{cursor:pointer;}
           </select>
         </div>
         <div class="cards" id="ft-cards"></div>
+
+        <div class="panel" id="ft-sim">
+          <h3>🧮 Simulador de preço</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 14px;">Antes de dar um preço ou aceitar um desconto: quanto sobra pra motorista por hora, quanto fica pra Go Ladies e até onde dá pra descontar sem trabalhar de graça. É rascunho, nada aqui é salvo nem mexe em viagem nenhuma.</p>
+
+          <div class="sim-cols">
+            <div class="sim-bloco">
+              <h4>A viagem</h4>
+              <p class="sim-ajuda">Km vazio é o que você roda sem ninguém no carro: ir buscar a cliente e voltar pra casa no fim. Ponha o tempo de embarque junto com o vazio.</p>
+              <div class="sim-grid">
+                <div><label>Km com a cliente</label><input type="number" id="sim-km-cliente" step="0.1" min="0" value="10" oninput="simular()"></div>
+                <div><label>Minutos com a cliente</label><input type="number" id="sim-min-cliente" step="1" min="0" value="20" oninput="simular()"></div>
+                <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
+                <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
+                <div class="full"><label>Espera combinada, além dos 10 min inclusos (min)</label><input type="number" id="sim-espera" step="1" min="0" value="0" oninput="simular()"></div>
+              </div>
+              <label class="sim-check"><input type="checkbox" id="sim-idavolta" onchange="simular()"> <span>Ida e volta (cobra o trecho duas vezes)</span></label>
+              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simular()"> <span>Madrugada (22h às 6h) ou feriado: +30%</span></label>
+              <label class="sim-check"><input type="checkbox" id="sim-premium" onchange="simular()"> <span>Acompanhamento premium: +R$20 por trecho, 100% da motorista</span></label>
+            </div>
+
+            <div class="sim-bloco">
+              <h4>Preço e pagamento</h4>
+              <p class="sim-ajuda">O cobrado começa igual à tabela. Mexa nele pra testar desconto.</p>
+              <div class="sim-grid">
+                <div><label>Preço de tabela</label><input type="text" id="sim-tabela" readonly tabindex="-1" style="background:var(--bg-card); color:var(--text3);"></div>
+                <div><label>Preço cobrado</label><input type="number" id="sim-cobrado" step="0.01" min="0" oninput="simularCobradoManual()"></div>
+                <div class="full"><button type="button" class="icon-btn" onclick="simularVoltarTabela()" style="font-size:11.5px;">↺ voltar pro preço de tabela</button></div>
+                <div class="full"><label>Quem dirige</label><select id="sim-quem" onchange="simular()"><option value="eu">Eu (Juliana)</option><option value="outra">Outra motorista</option></select></div>
+                <div><label>Repasse à motorista (%)</label><input type="number" id="sim-repasse" step="1" min="0" max="100" value="75" oninput="simular()"></div>
+                <div><label>Meta da motorista (R$/h)</label><input type="number" id="sim-meta-hora" step="1" min="0" value="30" oninput="simular()"></div>
+                <div class="full"><label>Forma de pagamento</label><select id="sim-forma" onchange="simularFormaPagamento()"><option value="0.99">Pix pelo Mercado Pago</option><option value="4.98">Cartão pelo Mercado Pago</option><option value="0">Dinheiro, Pix da chave fixa ou transferência</option></select></div>
+                <div class="full"><label>Taxa cobrada sobre o valor (%)</label><input type="number" id="sim-taxa-pct" step="0.01" min="0" value="0.99" oninput="simular()"></div>
+              </div>
+              <p class="sim-nota">A taxa do cartão muda com o prazo de recebimento que você contratou. Confira no seu painel do Mercado Pago e ajuste aqui.</p>
+            </div>
+
+            <div class="sim-bloco">
+              <h4>Custo do carro</h4>
+              <p class="sim-ajuda">A base cheia inclui os fixos do mês rateados pelos km; a marginal é só o que você gasta a mais por rodar esta viagem.</p>
+              <div class="sim-grid">
+                <div class="full"><label>Base de custo</label><select id="sim-base" onchange="simular()"><option value="cheia">Cheia (com os fixos do mês)</option><option value="marginal">Marginal (só o que esta viagem gasta a mais)</option></select></div>
+                <div><label>Gasolina (R$/litro)</label><input type="number" id="sim-gasolina" step="0.01" min="0" value="6.30" oninput="simular()"></div>
+                <div><label>Consumo (km/litro)</label><input type="number" id="sim-consumo" step="0.1" min="0.1" value="9" oninput="simular()"></div>
+                <div><label>Manutenção (R$/km)</label><input type="number" id="sim-manutencao" step="0.01" min="0" value="0.22" oninput="simular()"></div>
+                <div><label>Depreciação (R$/km)</label><input type="number" id="sim-depreciacao" step="0.01" min="0" value="0.18" oninput="simular()"></div>
+              </div>
+              <label class="sim-check"><input type="checkbox" id="sim-usa-depreciacao" checked onchange="simular()"> <span>Contar a depreciação. O carro é emprestado do seu marido, então o desgaste não sai do seu caixa, mas é dinheiro da família do mesmo jeito. Desmarque pra ver só o que sai do bolso hoje.</span></label>
+              <div id="sim-fixos" style="margin-top:12px;"></div>
+              <div class="sim-grid" style="margin-top:9px;">
+                <div class="full"><label>Km profissionais por mês (pra ratear os fixos)</label><input type="number" id="sim-km-mes" step="10" min="1" value="1200" oninput="simular()"></div>
+              </div>
+              <div class="sim-resumo-km" id="sim-resumo-km"></div>
+            </div>
+          </div>
+
+          <div class="sim-saida">
+            <div>
+              <h4 style="font-size:12.5px; letter-spacing:.02em; text-transform:uppercase; color:var(--text3); margin:0 0 6px;">Onde o dinheiro vai parar</h4>
+              <div id="sim-cascata"></div>
+            </div>
+            <div>
+              <h4 style="font-size:12.5px; letter-spacing:.02em; text-transform:uppercase; color:var(--text3); margin:0 0 6px;">A motorista ganha bem?</h4>
+              <div id="sim-semaforo" class="sim-semaforo"></div>
+              <h4 style="font-size:12.5px; letter-spacing:.02em; text-transform:uppercase; color:var(--text3); margin:16px 0 2px;">Até onde dá pra descontar</h4>
+              <div class="sim-pisos" id="sim-pisos"></div>
+              <div id="sim-aviso"></div>
+            </div>
+          </div>
+        </div>
 
         <div class="panel">
           <h3>🎯 Validação de preço</h3>
@@ -3413,9 +3532,199 @@ function ftNomeCliente(v){
   const c = clientesTransporte.find(x => x.id === v.cliente_id);
   return c ? c.nome : (v.cliente_nome || "-");
 }
+// ===== SIMULADOR DE PREÇO =====
+// Rascunho pra decidir preço e desconto antes de cotar. Não grava nada e não
+// encosta em viagem nenhuma. As contas seguem as mesmas regras do resto do
+// CRM: tabela do topo do arquivo (TAXA_FIXA_CLIENTE + TARIFA_KM_CLIENTE),
+// repasse de 75%, taxa do Mercado Pago saindo inteira da comissão (igual
+// financeiroTransporteMes) e semáforo com a mesma regra do MARGEM_REF.
+//
+// Custo do carro: Estudo de Precificação v2 (18/09/2026), seção 3. Lá o
+// R$1,70/km sai de combustível + manutenção + depreciação + R$716/mês de
+// fixos rateados por 1.200 km. Aqui os fixos são editáveis porque mudam com a
+// fase: em 22/09/2026 ela ainda não paga seguro e o MEI sai pelo Instituto
+// Gema, o que derruba o custo pra R$1,42/km.
+const SIM_FIXOS = [
+  { id:"seguro",         rotulo:"Seguro",         valor:250, ativo:false, nota:"ainda não contratado" },
+  { id:"internet",       rotulo:"Internet",       valor:60,  ativo:true },
+  { id:"lavagem",        rotulo:"Lavagem",        valor:120, ativo:true },
+  { id:"kit",            rotulo:"Kit de bordo",   valor:50,  ativo:true },
+  { id:"mei",            rotulo:"MEI",            valor:86,  ativo:false, nota:"pago pelo Instituto Gema" },
+  { id:"reserva",        rotulo:"Reserva",        valor:100, ativo:true },
+  { id:"estacionamento", rotulo:"Estacionamento", valor:50,  ativo:true },
+];
+// Proposta do documento de Cobrança por Serviço (22/09/2026), ainda não é
+// tabela oficial: por isso vive aqui e não junto das constantes do topo.
+const SIM_ADICIONAL_PREMIUM = 20.00;
+
+function simNum(id){ const el = document.getElementById(id); return el ? (Number(el.value) || 0) : 0; }
+function simCheck(id){ const el = document.getElementById(id); return !!(el && el.checked); }
+function simPct(v, casas){ return `${v.toFixed(casas == null ? 1 : casas).replace(".", ",")}%`; }
+
+function simRenderFixos(){
+  const wrap = document.getElementById("sim-fixos");
+  if(!wrap || wrap.dataset.pronto) return;
+  wrap.innerHTML = `<div style="font-size:11.5px; color:var(--text3);">Fixos do mês (desmarque o que você não paga)</div>` +
+    SIM_FIXOS.map(f => `
+      <div class="sim-fixo">
+        <input type="checkbox" id="sim-fixo-${f.id}" ${f.ativo ? "checked" : ""} onchange="simular()">
+        <label for="sim-fixo-${f.id}">${f.rotulo}${f.nota ? ` <span style="color:var(--text3);">(${f.nota})</span>` : ""}</label>
+        <input type="number" id="sim-fixo-v-${f.id}" step="1" min="0" value="${f.valor}" oninput="simular()">
+      </div>`).join("");
+  wrap.dataset.pronto = "1";
+}
+
+// A cliente paga o trecho duas vezes na ida e volta; o km vazio ela digita
+// inteiro, porque depende de onde a motorista mora e não dá pra deduzir.
+function simViagem(){
+  const trechos = simCheck("sim-idavolta") ? 2 : 1;
+  const kmCliente = simNum("sim-km-cliente") * trechos;
+  const minCliente = simNum("sim-min-cliente") * trechos;
+  const esperaMin = simNum("sim-espera");
+  return {
+    trechos, kmCliente, minCliente, esperaMin,
+    kmVazio: simNum("sim-km-vazio"),
+    minVazio: simNum("sim-min-vazio"),
+    kmTotal: kmCliente + simNum("sim-km-vazio"),
+    minTotal: minCliente + simNum("sim-min-vazio") + esperaMin,
+  };
+}
+// Espera e premium são 100% da motorista (Termo cl. 9.7), então ficam
+// separados do preço que entra na divisão 75/25.
+function simPrecoTabela(v){
+  let base = (TAXA_FIXA_CLIENTE + TARIFA_KM_CLIENTE * simNum("sim-km-cliente")) * v.trechos;
+  if(simCheck("sim-noturno")) base *= (1 + ADICIONAL_NOTURNO);
+  const espera = v.esperaMin * VALOR_MIN_ESPERA;
+  const premium = simCheck("sim-premium") ? SIM_ADICIONAL_PREMIUM * v.trechos : 0;
+  return { base, espera, premium, adicionais100: espera + premium, total: base + espera + premium };
+}
+function simCustoKm(){
+  const consumo = simNum("sim-consumo");
+  const combustivel = consumo > 0 ? simNum("sim-gasolina") / consumo : 0;
+  const manutencao = simNum("sim-manutencao");
+  const depreciacao = simCheck("sim-usa-depreciacao") ? simNum("sim-depreciacao") : 0;
+  const marginal = combustivel + manutencao + depreciacao;
+  const fixosMes = SIM_FIXOS.reduce((s,f) => s + (simCheck(`sim-fixo-${f.id}`) ? simNum(`sim-fixo-v-${f.id}`) : 0), 0);
+  const kmMes = Math.max(1, simNum("sim-km-mes"));
+  const rateio = fixosMes / kmMes;
+  const base = document.getElementById("sim-base").value;
+  return { combustivel, manutencao, depreciacao, marginal, fixosMes, kmMes, rateio,
+           cheia: marginal + rateio, porKm: base === "marginal" ? marginal : marginal + rateio, base };
+}
+
+function simularFormaPagamento(){
+  document.getElementById("sim-taxa-pct").value = document.getElementById("sim-forma").value;
+  simular();
+}
+// Enquanto ela não digitar um preço, o cobrado acompanha a tabela sozinho.
+function simularCobradoManual(){ document.getElementById("sim-cobrado").dataset.manual = "1"; simular(); }
+function simularVoltarTabela(){ delete document.getElementById("sim-cobrado").dataset.manual; simular(); }
+
+function simular(){
+  const cascata = document.getElementById("sim-cascata");
+  if(!cascata) return;
+  const v = simViagem(), p = simPrecoTabela(v), custo = simCustoKm();
+  const fmt = n => formatarMoedaBR(n);
+
+  document.getElementById("sim-tabela").value = fmt(p.total);
+  const elCobrado = document.getElementById("sim-cobrado");
+  if(!elCobrado.dataset.manual) elCobrado.value = p.total.toFixed(2);
+  const cobrado = Number(elCobrado.value) || 0;
+
+  const taxaPct = simNum("sim-taxa-pct");
+  const taxaMp = cobrado * taxaPct / 100;
+  const pctRepasse = simNum("sim-repasse") / 100;
+  const adic = Math.min(p.adicionais100, cobrado);
+  const repasse = adic + pctRepasse * (cobrado - adic);
+  const comissao = cobrado - taxaMp - repasse;
+  const custoCarro = v.kmTotal * custo.porKm;
+  const sobra = repasse - custoCarro;
+  const horas = v.minTotal / 60;
+  const porHora = horas > 0 ? sobra / horas : null;
+  const desconto = p.total - cobrado;
+  const meta = simNum("sim-meta-hora");
+  const euDirijo = document.getElementById("sim-quem").value === "eu";
+  const totalCasa = cobrado - taxaMp - custoCarro;
+
+  // ── Custo por km, aberto ──
+  const partes = [`combustível ${fmt(custo.combustivel)}`, `manutenção ${fmt(custo.manutencao)}`];
+  if(custo.depreciacao) partes.push(`depreciação ${fmt(custo.depreciacao)}`);
+  if(custo.base === "cheia") partes.push(`fixos ${fmt(custo.rateio)}`);
+  const kmCobrados30 = viagens
+    .filter(x => x.status === "Concluída" && ftDentroDoPeriodo(x.concluida_em || x.data, 30))
+    .reduce((s,x) => s + Number(x.distancia_km || 0), 0);
+  document.getElementById("sim-resumo-km").innerHTML =
+    `Custo do carro: <b>${fmt(custo.porKm)}/km</b><br>
+     <span style="color:var(--text3); font-size:11.5px;">${partes.join(" + ")}${custo.base === "cheia" ? ` · fixos ativos ${fmt(custo.fixosMes)}/mês ÷ ${custo.kmMes.toLocaleString("pt-BR")} km` : " · sem os fixos do mês"}</span>` +
+    (kmCobrados30 > 0
+      ? `<br><span style="color:var(--text3); font-size:11.5px;">Nos últimos 30 dias as viagens concluídas somaram ${kmCobrados30.toFixed(0)} km cobrados. O km profissional de verdade é esse mais o vazio de cada corrida.</span>`
+      : "");
+
+  // ── Cascata ──
+  const linha = (rot, sub, val, cls) =>
+    `<div class="sim-linha ${cls || ""}"><div class="rot">${rot}${sub ? `<small>${sub}</small>` : ""}</div><div class="val">${val}</div></div>`;
+  let html = linha("Preço de tabela", p.adicionais100 ? `corrida ${fmt(p.base)} + adicionais ${fmt(p.adicionais100)}` : null, fmt(p.total));
+  if(Math.abs(desconto) >= 0.01){
+    const pctDesc = p.total > 0 ? (desconto / p.total) * 100 : 0;
+    html += linha(desconto > 0 ? "Desconto" : "Acréscimo", desconto > 0 ? `${simPct(Math.abs(pctDesc))} abaixo da tabela` : `${simPct(Math.abs(pctDesc))} acima da tabela`,
+                  `${desconto > 0 ? "−" : "+"} ${fmt(Math.abs(desconto))}`);
+  }
+  html += linha("Preço cobrado da cliente", null, fmt(cobrado), "saldo");
+  html += linha("Taxa do Mercado Pago", taxaPct ? `${simPct(taxaPct, 2)} do valor` : "sem taxa", `− ${fmt(taxaMp)}`);
+  html += linha("Repasse à motorista",
+                p.adicionais100 ? `${simPct(pctRepasse * 100)} da corrida + ${fmt(adic)} de espera e premium, 100% dela` : `${simPct(pctRepasse * 100)} do preço cobrado`,
+                `− ${fmt(repasse)}`);
+  html += linha("Comissão da Go Ladies", "o que a empresa tem pra pagar imposto, infra e o seu tempo", fmt(comissao), "saldo" + (comissao < 0 ? " neg" : ""));
+  html += linha("Custo do carro", `${v.kmTotal.toFixed(1).replace(".", ",")} km × ${fmt(custo.porKm)} · sai do repasse da motorista`, `− ${fmt(custoCarro)}`);
+  html += linha("Sobra pra motorista", `depois de pagar o carro, em ${v.minTotal} min comprometidos`, fmt(sobra), "saldo" + (sobra < 0 ? " neg" : ""));
+  if(euDirijo) html += linha("Total que fica na sua casa", "repasse + comissão, já sem a taxa e sem o carro", fmt(totalCasa), "saldo" + (totalCasa < 0 ? " neg" : ""));
+  cascata.innerHTML = html;
+
+  // ── Semáforo: mesma regra do alerta de margem do modal de viagem ──
+  let nivel;
+  if(sobra <= 0) nivel = "red";
+  else if(porHora === null) nivel = "amber";
+  else if(porHora >= meta) nivel = "green";
+  else if(porHora >= meta * 0.7) nivel = "amber";
+  else nivel = "red";
+  const icone = { green:"🟢", amber:"🟡", red:"🔴" }[nivel];
+  const sem = document.getElementById("sim-semaforo");
+  sem.innerHTML = sobra <= 0
+    ? `${icone} <b>Não paga nem o carro dela</b><span class="sim-hora" style="color:var(--c-red);">${fmt(sobra)}</span>
+       <small>O repasse de ${fmt(repasse)} não cobre os ${fmt(custoCarro)} de carro. Nesse preço a motorista põe dinheiro do bolso pra trabalhar.</small>`
+    : `${icone} <span class="sim-hora">${fmt(porHora)}/h</span>
+       <b>${fmt(sobra)}</b> de sobra em ${v.minTotal} min comprometidos
+       <small>Tempo comprometido conta deslocamento, espera e volta, não só o tempo com a cliente no carro. Meta de ${fmt(meta)}/h líquidos, depois do carro.
+       ${nivel === "amber" ? `Está abaixo da meta, mas ainda paga o carro.` : nivel === "red" ? `Bem abaixo da meta: preço baixo demais pra esta distância.` : `Acima da meta.`}</small>`;
+  sem.style.borderLeftColor = `var(--c-${nivel})`;
+  sem.style.background = `var(--c-${nivel}-bg)`;
+
+  // ── Pisos: isola o preço em sobra = adic + pct × (P − adic) − custoCarro ──
+  const precoParaSobra = alvo => pctRepasse > 0 ? p.adicionais100 + (alvo + custoCarro - p.adicionais100) / pctRepasse : null;
+  const precoMeta = precoParaSobra(meta * horas);
+  const precoEquilibrio = precoParaSobra(0);
+  const descontoAte = preco => p.total > 0 && preco != null ? `${simPct(Math.max(0, (p.total - preco) / p.total * 100))} de desconto` : "";
+  const piso = (rot, sub, val) => `<div class="sim-piso"><div class="rot">${rot}${sub ? `<small>${sub}</small>` : ""}</div><div class="val">${val}</div></div>`;
+  document.getElementById("sim-pisos").innerHTML =
+    piso(`Preço que bate ${fmt(meta)}/h`, descontoAte(precoMeta), precoMeta != null ? fmt(precoMeta) : "-") +
+    piso("Preço que só paga o carro", `${descontoAte(precoEquilibrio)} · a motorista trabalha de graça`, precoEquilibrio != null ? fmt(precoEquilibrio) : "-") +
+    // Espera e premium são da motorista: descontar em cima deles tira dinheiro
+    // dela, não da comissão, então os pisos contam com eles intactos.
+    (p.adicionais100 ? `<p class="sim-nota">Os dois preços já contam com os ${fmt(p.adicionais100)} de espera e premium inteiros. Esse pedaço é 100% da motorista, então o desconto sai só da corrida.</p>` : "");
+
+  // ── Aviso que muda com o cenário ──
+  const avisos = [];
+  if(euDirijo) avisos.push(`<b>Você dirigindo, os 75/25 são contabilidade, não bolso.</b> O dinheiro que fica na sua casa é ${fmt(totalCasa)} com ou sem comissão; a divisão só diz em qual pilha ele entra. Vale manter a comissão na conta mesmo assim: é ela que faz o semáforo avisar quando o preço está abaixo da sua tabela. Se apagar a comissão pra "melhorar" o R$/h, some o alerta e o preço baixo vira hábito.`);
+  else avisos.push(`<b>Com outra motorista, o repasse sai da conta de verdade.</b> Da viagem sobram ${fmt(comissao)} pra Go Ladies, e o custo do carro é dela, não seu. O semáforo aqui é o dela: se ficar vermelho, ela vai recusar a oferta ou aceitar e não repetir.`);
+  if(custo.base === "marginal") avisos.push(`<b>Base marginal.</b> Responde "vale a pena pegar esta corrida?", não "a tabela está certa?". Serve pra decidir uma corrida avulsa com o carro já parado; não serve pra montar preço, porque assim os fixos nunca se pagam.`);
+  document.getElementById("sim-aviso").innerHTML = avisos.map(a => `<div class="sim-aviso">${a}</div>`).join("");
+}
+
 function renderFinanceiroTransporte(){
   const wrap = document.getElementById("ft-cards");
   if(!wrap) return;
+  simRenderFixos();
+  simular();
   const dias = ftPeriodoDias();
   const cotacoes = ftCotacoes();
 
