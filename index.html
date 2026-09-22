@@ -5048,6 +5048,27 @@ function aplicarDadosIACNH(d){
   if(d.tem_ear === true) document.getElementById("mt-cnh-ear").value = "Já tenho EAR";
   else if(d.tem_ear === false) document.getElementById("mt-cnh-ear").value = "Não tenho EAR";
 }
+// "NISSAN VERSA 16UNIQUECVT" vira "Nissan Versa": nome de rua, não nome de
+// Detran. Mesma regra do site (cliente.html e acompanhar.html), que limpa na
+// exibição os cadastros antigos. Corta na primeira palavra que seja sufixo
+// técnico (CVT, FLEX, 16V), tenha ponto (1.0MT) ou misture número e letra em
+// palavra longa (16UNIQUECVT); modelo curto com número passa inteiro (HB20,
+// 208, C4).
+const SUFIXO_TECNICO_VEICULO = /^(CVT|MT|AT|AUT|AUTOM|MEC|FLEX|TB|TURBO|GNV|H[IÍ]BRIDO|16V|8V|4P|2P|4X4|4X2)$/i;
+function nomeCarro(texto){
+  const palavras = String(texto||"").replace(/[\/|]+/g," ").trim().split(/\s+/).filter(Boolean);
+  const usadas = [];
+  for(let i=0; i<palavras.length && usadas.length<3; i++){
+    const p = palavras[i];
+    if(usadas.length && (p.includes(".") || SUFIXO_TECNICO_VEICULO.test(p) || (/\d/.test(p) && p.length>=6))) break;
+    if(usadas.length && p.toUpperCase() === usadas[usadas.length-1].toUpperCase()) continue;
+    usadas.push(p);
+  }
+  return usadas.map(p => /\d/.test(p)
+    ? p.toUpperCase()
+    : p.toLowerCase().replace(/(^|[\s/-])([a-zà-ú])/g, (m,sep,letra) => sep + letra.toUpperCase())
+  ).join(" ");
+}
 function aplicarDadosIACRLV(d){
   if(d.placa) document.getElementById("mt-placa").value = d.placa;
   if(d.marca) document.getElementById("mt-marca").value = d.marca;
@@ -5060,7 +5081,11 @@ function aplicarDadosIACRLV(d){
   if(d.chassi) document.getElementById("mt-chassi").value = d.chassi;
   if(d.proprietario_nome) document.getElementById("mt-proprietario").value = d.proprietario_nome;
   if(d.marca || d.modelo){
-    document.getElementById("mt-veiculo").value = [d.marca, d.modelo].filter(Boolean).join(" ");
+    // Campo "Veículo" é o que a cliente lê no app e no WhatsApp pra achar o
+    // carro na calçada, então entra limpo: "Nissan Versa", não
+    // "NISSAN VERSA 16UNIQUECVT". A versão técnica completa do Detran fica
+    // guardada nos campos Marca e Modelo, que o CRLV e o seguro precisam.
+    document.getElementById("mt-veiculo").value = nomeCarro([d.marca, d.modelo].filter(Boolean).join(" "));
   }
 }
 
