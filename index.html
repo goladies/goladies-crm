@@ -334,9 +334,10 @@ a.icon-btn{text-decoration:none; display:inline-block;}
   align-items:center; justify-content:center; z-index:150; backdrop-filter:blur(2px);
 }
 .modal-backdrop.open{display:flex;}
-.modal{background:var(--bg-card); border:1px solid var(--border2); border-radius:16px; padding:22px; width:540px; max-width:92vw; max-height:88vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.modal{background:var(--bg-card); border:1px solid var(--border2); border-radius:16px; padding:22px; width:540px; max-width:92vw; max-height:88vh; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; box-shadow:0 24px 60px rgba(0,0,0,.4);}
 .modal h3{margin-top:0;}
-.formgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.formgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
+.formgrid>*{min-width:0;}
 .formgrid .full{grid-column:1/-1;}
 .formgrid label{font-size:12px; color:var(--text3); display:block; margin-bottom:4px;}
 .campo-moeda{position:relative;}
@@ -624,7 +625,7 @@ tr.tr-click{cursor:pointer;}
 }
 @media (max-width:480px){
   .cards{grid-template-columns:1fr 1fr;}
-  .formgrid{grid-template-columns:1fr;}
+  .formgrid{grid-template-columns:minmax(0,1fr);}
 }
 
 /* ---------- SIMULADOR DE PREÇO (Financeiro do transporte) ---------- */
@@ -1963,7 +1964,7 @@ tr.tr-click{cursor:pointer;}
           <option>Outro</option>
         </select>
       </div>
-      <div><label>Valor do desconto <span style="font-weight:400; color:var(--muted);">(calculado: tabela − cotado)</span></label><input type="text" id="vg-desconto-valor" readonly style="background:var(--border); cursor:not-allowed;"></div>
+      <div><label>Valor do desconto <span style="font-weight:400; color:var(--muted);">(digite aqui ou no cotado, um acerta o outro)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" oninput="descontoEditado()"></div></div>
       <div id="vg-desconto-outro-wrap" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
       <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente; digite o valor final e o desconto sai sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div></div>
       <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
@@ -6392,35 +6393,47 @@ function viagemJaPaga(){
   const pg = pagamentosCliente.find(p=>p.viagem_id === editingViagemId);
   return !!(pg && pg.status === "Pago");
 }
-function recalcularCotacao(){
+// Preço de tabela pelo km e adicionais do modal (null sem km).
+function calcularTabela(){
   const km = Number(document.getElementById("vg-distancia-km").value) || 0;
+  if(!km) return null;
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
-  const noturno = document.getElementById("vg-adicional-noturno").checked;
+  // Madrugada/feriado incide sobre fixo + km e segue o repasse de 75%;
+  // a espera combinada é somada por fora e vai inteira pra motorista.
+  let base = tarifaFixa + valorKm * km;
+  if(document.getElementById("vg-adicional-noturno").checked) base = base * (1 + ADICIONAL_NOTURNO);
+  return base + esperaMin * VALOR_MIN_ESPERA;
+}
+// Viagem criada antes da coluna preco_tabela (ou cotada pelo app) abre com a
+// tabela vazia, e aí o desconto nunca aparecia (viagem #38, 23/09/2026).
+// Preenche só a tabela, sem mexer no cotado.
+function preencherTabelaSeVazia(){
+  const campo = document.getElementById("vg-preco-tabela");
+  if(campo.value !== "") return;
+  const tabela = calcularTabela();
+  if(tabela != null) campo.value = tabela.toFixed(2);
+}
+function recalcularCotacao(){
   if(viagemJaPaga()){
     atualizarDesconto();
     return;
   }
-  if(km){
-    // Madrugada/feriado incide sobre fixo + km e segue o repasse de 75%;
-    // a espera combinada é somada por fora e vai inteira pra motorista.
-    let base = tarifaFixa + valorKm * km;
-    if(noturno) base = base * (1 + ADICIONAL_NOTURNO);
-    const espera = esperaMin * VALOR_MIN_ESPERA;
+  const tabela = calcularTabela();
+  if(tabela != null){
     // Refazer a tabela não apaga o desconto que ela já tinha dado: o cotado
     // acompanha a tabela nova mantendo a mesma diferença.
     const desconto = descontoAtual();
-    const tabela = base + espera;
     document.getElementById("vg-preco-tabela").value = tabela.toFixed(2);
     document.getElementById("vg-preco-cotado").value = Math.max(0, tabela - desconto).toFixed(2);
     recalcularRepasseMotorista();
   }
   atualizarDesconto();
 }
-// Quanto de desconto está dado agora: tabela − cotado. O desconto nunca é
-// digitado (era assim até 22/09/2026 e travava o preço cotado); ela digita o
-// valor que cobrou de verdade e a diferença aparece sozinha.
+// Quanto de desconto está dado agora: tabela − cotado. Dá pra digitar o
+// cotado (o desconto sai sozinho) ou o desconto (o cotado sai sozinho); o
+// cotado continua sendo a fonte da verdade.
 function descontoAtual(){
   const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
   const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
@@ -6440,11 +6453,21 @@ function cotadoEditado(){
   recalcularRepasseMotorista();
   atualizarDesconto();
 }
+function descontoEditado(){
+  preencherTabelaSeVazia();
+  const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
+  if(!tabela) return;
+  const desconto = Math.min(tabela, Math.max(0, Number(document.getElementById("vg-desconto-valor").value) || 0));
+  document.getElementById("vg-preco-cotado").value = (tabela - desconto).toFixed(2);
+  recalcularRepasseMotorista();
+  atualizarDesconto();
+}
 function atualizarDesconto(){
   const desconto = descontoAtual();
   const campo = document.getElementById("vg-desconto-valor");
   const motivo = document.getElementById("vg-desconto-motivo");
-  campo.value = desconto ? formatarMoedaBR(desconto) : "";
+  // Não reescreve o campo enquanto ela digita nele.
+  if(document.activeElement !== campo) campo.value = desconto ? desconto.toFixed(2) : "";
   campo.dataset.valor = desconto || "";
   document.getElementById("vg-desconto-outro-wrap").style.display = motivo.value === "Outro" ? "" : "none";
   // Desconto sem motivo escolhido perde o rastro, que é justamente o ponto:
@@ -6839,6 +6862,8 @@ function openViagemModal(id){
   document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
+  // Viagem paga fica como está, pra não inventar desconto em cobrança antiga.
+  if(!viagemJaPaga()) preencherTabelaSeVazia();
   atualizarDesconto();
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
   document.getElementById("vg-liberar-sem-pgto").checked = !!v.liberar_sem_pagamento;
