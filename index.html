@@ -1891,7 +1891,8 @@ tr.tr-click{cursor:pointer;}
     </div>
     <p class="legenda-obrig"><b>* Em rosa</b> = obrigatório pra viagem rodar; <i>vermelho</i> = ainda está vazio.</p>
     <div class="formgrid">
-      <div class="full obrig"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta()"></select></div>
+      <div class="full obrig"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
+        <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
       <div class="full obrig">
         <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
         <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
@@ -5485,6 +5486,7 @@ function confirmarAssistente(){
     mostrarSubTab("viagens");
     openViagemModal(acao === "editar_viagem" ? d.viagem_id : null);
     iaSet("vg-cliente", d.cliente_id);
+    atualizarFotoClienteViagem();
     if((d.motorista_ids||[]).length){
       document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]").forEach(cb=>{
         if(d.motorista_ids.includes(Number(cb.value))){ cb.checked = true; cb.parentElement.classList.add("ia-alterado"); }
@@ -5715,6 +5717,45 @@ function htmlAvatarMini(url, nome){
   return `<span class="avatar-mini">${url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(nome))}</span>`;
 }
 function iniciaisOuGL(nome){ return nome ? iniciaisNome(nome) : "GL"; }
+
+// Avatar da cliente (bucket privado): se o link assinado já está no cache
+// entra direto; senão sai com as iniciais e preencherFotosClientes() troca
+// pela foto quando o link chega. estilo = CSS extra do <span>.
+function htmlAvatarCliente(c, estilo){
+  const path = c?.foto_path;
+  const cache = path ? fotoClienteUrlCache[path] : null;
+  const url = cache && cache.expira > Date.now() ? cache.url : null;
+  const attr = path && !url ? ` data-foto-cliente="${escapeHtml(path)}"` : "";
+  return `<span class="avatar-mini"${attr}${estilo ? ` style="${estilo}"` : ""}>${url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(c?.nome))}</span>`;
+}
+async function preencherFotosClientes(raiz){
+  const spans = (raiz || document).querySelectorAll("[data-foto-cliente]");
+  for(const el of spans){
+    const path = el.getAttribute("data-foto-cliente");
+    el.removeAttribute("data-foto-cliente");
+    const url = await urlFotoCliente(path);
+    if(url) el.innerHTML = `<img src="${escapeHtml(url)}" alt="">`;
+  }
+}
+// Caixa no modal da viagem: foto grande da cliente escolhida, pra conferir
+// quem vai entrar no carro. Clique na foto abre em tamanho real.
+async function atualizarFotoClienteViagem(){
+  const box = document.getElementById("vg-cliente-foto");
+  const id = Number(document.getElementById("vg-cliente").value) || null;
+  const c = id ? clientesTransporte.find(x=>x.id===id) : null;
+  if(!c){ box.style.display = "none"; box.innerHTML = ""; return; }
+  box.style.display = "flex";
+  const aviso = c.foto_path ? "" : `<div style="font-size:12px; color:var(--c-red);">Sem foto de perfil. Peça pra ela adicionar no app antes da viagem.</div>`;
+  const montar = url => `
+    ${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" title="Abrir foto"><span class="avatar-mini" style="width:72px; height:72px; font-size:22px; margin:0;"><img src="${escapeHtml(url)}" alt="Foto de ${escapeHtml(c.nome)}"></span></a>`
+          : `<span class="avatar-mini" style="width:72px; height:72px; font-size:22px; margin:0;">${escapeHtml(iniciaisOuGL(c.nome))}</span>`}
+    <div><strong>${escapeHtml(c.nome)}</strong>${c.whatsapp ? `<div style="font-size:12px; color:var(--muted);">${escapeHtml(c.whatsapp)}</div>` : ""}${aviso}</div>`;
+  box.innerHTML = montar(null);
+  if(!c.foto_path) return;
+  const url = await urlFotoCliente(c.foto_path);
+  // Se ela trocou de cliente enquanto o link carregava, não sobrescreve.
+  if(url && Number(document.getElementById("vg-cliente").value) === c.id) box.innerHTML = montar(url);
+}
 
 function mostrarPreviewFoto(prefixo, url, nome){
   const box = document.getElementById(`${prefixo}-foto-preview`);
@@ -6073,7 +6114,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td><strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
@@ -6085,6 +6126,7 @@ function renderTransporteClientes(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(r.whatsapp, r.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${r.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${r.id})">🗑️</button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="10">${temPeriodo ? "Nenhuma cliente viajou nesse período" : "Nenhuma cliente de viagem cadastrada ainda"}</td></tr>`;
+  preencherFotosClientes(document.getElementById("clientes-transporte-body"));
 }
 function limparPeriodoClientes(){
   document.getElementById("filter-cliente-de").value = "";
@@ -6801,7 +6843,7 @@ function renderTransporteViagens(){
           : "";
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
-          <div class="kc-top">#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</div>
+          <div class="kc-top" style="display:flex; align-items:center;">${cliente ? htmlAvatarCliente(cliente, "width:22px; height:22px; margin-right:6px; font-size:9px;") : ""}<span>#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</span></div>
           <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
@@ -6814,6 +6856,7 @@ function renderTransporteViagens(){
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
     </div>`;
   }).join("");
+  preencherFotosClientes(document.getElementById("kanban-viagens"));
 }
 let editingViagemId = null;
 function openViagemModal(id){
@@ -6826,6 +6869,7 @@ function openViagemModal(id){
   document.getElementById("viagem-modal-title").textContent = id ? `Editar viagem #${id}` : "Nova viagem";
   const v = viagens.find(x=>x.id===id) || {};
   if(v.cliente_id) document.getElementById("vg-cliente").value = v.cliente_id;
+  atualizarFotoClienteViagem();
   renderMotoristasCheckboxes(idsMotoristasViagem(v));
   document.getElementById("vg-tipo-servico").value = v.tipo_servico||"Padrão";
   document.getElementById("vg-evento-descricao").value = v.evento_descricao||"";
