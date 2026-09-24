@@ -1903,7 +1903,7 @@ tr.tr-click{cursor:pointer;}
       <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
       <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
-      <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="atualizarStatusOferta()"></select></div>
+      <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
       <div class="full obrig"><label>Endereço de origem</label><div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full obrig"><label>Endereço de destino</label><div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full"><button type="button" class="btn ghost" style="font-size:12.5px;" onclick="abrirRotaMaps()">📍 Ver rota no Google Maps</button></div>
@@ -6962,7 +6962,21 @@ function marcarObrigatoriosViagem(){
 }
 document.getElementById("viagem-modal").addEventListener("input", marcarObrigatoriosViagem);
 document.getElementById("viagem-modal").addEventListener("change", marcarObrigatoriosViagem);
+// "Aguardando pagamento" quer dizer que a cliente aceitou o valor. Sem a
+// confirmação marcada o n8n não cria o Pix nem manda o WhatsApp, e a viagem
+// fica parada na coluna (viagem #38, 23/09/2026: preço revisado a pedido
+// dela e status mudado na mão).
+function marcarConfirmadoSeAguardandoPagamento(){
+  if(document.getElementById("vg-viagem-status").value === "Aguardando pagamento"){
+    document.getElementById("vg-preco-confirmado").checked = true;
+  }
+}
+function statusViagemMudou(){
+  marcarConfirmadoSeAguardandoPagamento();
+  atualizarStatusOferta();
+}
 async function saveViagem(){
+  marcarConfirmadoSeAguardandoPagamento();
   const payload = {
     cliente_id: Number(document.getElementById("vg-cliente").value) || null,
     motorista_ids: (()=>{ const ids = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value)); return ids.length ? ids : null; })(),
