@@ -972,6 +972,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')">💰 Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')">🗺️ Fora da área</button>
+        <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')">📲 Acessos ao app</button>
       </div>
 
       <div id="subtab-motoristas" style="display:none;">
@@ -1185,6 +1186,29 @@ tr.tr-click{cursor:pointer;}
           <table class="tbl">
             <thead><tr id="thead-eventos"></tr></thead>
             <tbody id="eventos-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-acessos-app" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:16px;">Acessos ao app</h2><p>Toda tentativa de cadastro e login no app da cliente e no da motorista, deu certo ou não. Quem errou ou não terminou é candidata a remarketing.</p></div>
+          <button class="btn secondary" onclick="exportarAcessosAppCsv()">⬇️ Exportar CSV</button>
+        </div>
+        <div class="cards" id="acessos-app-cards"></div>
+        <div class="filters">
+          <select id="filter-acesso-app" onchange="renderAcessosApp()">
+            <option value="">Cliente e motorista</option>
+            <option value="cliente">Só app da cliente</option>
+            <option value="motorista">Só app da motorista</option>
+          </select>
+          <select id="filter-acesso-tipo" onchange="renderAcessosApp()"><option value="">Todos os eventos</option></select>
+          <input type="text" id="filter-acesso-busca" placeholder="Buscar nome, WhatsApp ou e-mail..." oninput="renderAcessosApp()">
+        </div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr><th>Quando</th><th>App</th><th>Evento</th><th>Nome</th><th>Contato</th><th>Motivo</th></tr></thead>
+            <tbody id="acessos-app-body"></tbody>
           </table>
         </div>
       </div>
@@ -2532,6 +2556,7 @@ let viagemOfertas = [];
 let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
 let demandasForaArea = [];  // quem pediu viagem onde ainda não atendemos
+let eventosAcessoApp = [];  // toda tentativa de cadastro/login no app, sucesso ou erro, schema_eventos_acesso_app.sql
 let avaliacoes = [];
 let pagamentosMotorista = [];
 let pagamentosCliente = [];
@@ -2998,6 +3023,10 @@ async function carregarDadosInterno(){
   areasAtendimento = aplicarConsulta("areas_atendimento", rar, areasAtendimento);
   demandasForaArea = aplicarConsulta("demandas_fora_area", rdfa, demandasForaArea);
 
+  // Acessos ao app (schema_eventos_acesso_app.sql), idem
+  const reva2 = await sb.from("eventos_acesso_app").select("*").order("criado_em", { ascending: false }).limit(2000);
+  eventosAcessoApp = aplicarConsulta("eventos_acesso_app", reva2, eventosAcessoApp);
+
   // Links do painel da motorista (schema_links_motoristas.sql), idem
   const [rlk, rla] = await Promise.all([
     sb.from("links_motoristas").select("*").order("id"),
@@ -3027,7 +3056,7 @@ async function carregarDadosInterno(){
 // Só as tabelas que mudam por fora entram na recarga automática: as ~28 do
 // carregamento inicial de minuto em minuto seriam carga demais pro banco no
 // plano gratuito, ainda mais somado ao n8n consultando ele o tempo todo.
-const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes", "link_avaliacoes"];
+const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes", "link_avaliacoes", "eventos_acesso_app"];
 const INTERVALO_AUTO_MS = 60000;
 let atualizandoDados = false;
 let ultimaAtualizacao = null;
@@ -3123,6 +3152,7 @@ const TABELA_ATUALIZA = {
   evento_arquivos: v => eventoArquivos = v,
   areas_atendimento: v => areasAtendimento = v,
   demandas_fora_area: v => demandasForaArea = v,
+  eventos_acesso_app: v => eventosAcessoApp = v,
 };
 // Atualiza só as tabelas que uma ação realmente mudou, em vez de recarregar
 // as ~28 tabelas inteiras a cada Salvar/Excluir — reduz a carga no banco
@@ -3477,7 +3507,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -3894,6 +3924,84 @@ async function mudarStatusDemanda(id, status){
   if(error){ alert("Erro ao mudar o status: " + error.message); return; }
   await recarregarTabelas("demandas_fora_area");
   showToast("Status atualizado");
+}
+
+const ROTULO_TIPO_ACESSO = {
+  cadastro_iniciado: "Cadastro iniciado",
+  cadastro_concluido: "Cadastro concluído",
+  cadastro_erro: "Erro no cadastro",
+  login_ok: "Login OK",
+  login_erro: "Erro no login",
+  recuperar_senha: "Pediu recuperar senha",
+  senha_redefinida: "Senha redefinida"
+};
+const COR_TIPO_ACESSO = {
+  cadastro_iniciado: "amber",
+  cadastro_concluido: "green",
+  cadastro_erro: "red",
+  login_ok: "green",
+  login_erro: "red",
+  recuperar_senha: "amber",
+  senha_redefinida: "green"
+};
+function renderAcessosApp(){
+  const corpo = document.getElementById("acessos-app-body");
+  if(!corpo) return;
+  const ft = document.getElementById("filter-acesso-tipo");
+  if(!ft.dataset.filled){
+    ft.innerHTML = `<option value="">Todos os eventos</option>` + Object.keys(ROTULO_TIPO_ACESSO).map(t=>`<option value="${t}">${ROTULO_TIPO_ACESSO[t]}</option>`).join("");
+    ft.dataset.filled = 1;
+  }
+  const appF = document.getElementById("filter-acesso-app").value;
+  const tipoF = ft.value;
+  const buscaF = document.getElementById("filter-acesso-busca").value.trim().toLowerCase();
+  const filtrados = eventosAcessoApp.filter(e=>
+    (!appF || e.app===appF) &&
+    (!tipoF || e.tipo===tipoF) &&
+    (!buscaF || [e.nome, e.whatsapp, e.email].some(v=>String(v||"").toLowerCase().includes(buscaF)))
+  );
+
+  const concluidos = eventosAcessoApp.filter(e=>e.tipo==="cadastro_concluido").length;
+  const errosCadastro = eventosAcessoApp.filter(e=>e.tipo==="cadastro_erro").length;
+  const errosLogin = eventosAcessoApp.filter(e=>e.tipo==="login_erro").length;
+  document.getElementById("acessos-app-cards").innerHTML = `
+    <div class="card"><div class="num">${eventosAcessoApp.length}</div><div class="label">Eventos registrados</div></div>
+    <div class="card"><div class="num">${concluidos}</div><div class="label">Cadastros concluídos</div></div>
+    <div class="card"><div class="num">${errosCadastro}</div><div class="label">Erros no cadastro</div></div>
+    <div class="card"><div class="num">${errosLogin}</div><div class="label">Erros no login</div></div>
+  `;
+
+  corpo.innerHTML = filtrados.map(e=>`
+    <tr>
+      <td>${e.criado_em ? new Date(e.criado_em).toLocaleString("pt-BR") : "-"}</td>
+      <td>${e.app==="motorista" ? "🚗 Motorista" : "👤 Cliente"}</td>
+      <td><span class="status-badge ${COR_TIPO_ACESSO[e.tipo]||"gray"}">${ROTULO_TIPO_ACESSO[e.tipo]||e.tipo}</span></td>
+      <td>${escapeHtml(e.nome || "-")}</td>
+      <td>${e.whatsapp ? `<a href="https://wa.me/55${String(e.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(e.whatsapp)}</a>` : escapeHtml(e.email || "-")}</td>
+      <td>${escapeHtml(e.motivo || "")}</td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="6">Nenhum acesso registrado ainda</td></tr>`;
+}
+// Exporta tudo (sem os filtros da tela) pra montar público de remarketing:
+// quem errou ou não terminou o cadastro é candidata a receber um WhatsApp.
+function exportarAcessosAppCsv(){
+  const cols = [
+    ["Quando", e=>e.criado_em ? new Date(e.criado_em).toLocaleString("pt-BR") : ""],
+    ["App", e=>e.app],
+    ["Evento", e=>ROTULO_TIPO_ACESSO[e.tipo]||e.tipo],
+    ["Nome", e=>e.nome],
+    ["WhatsApp", e=>e.whatsapp],
+    ["E-mail", e=>e.email],
+    ["Motivo", e=>e.motivo]
+  ];
+  const cel = v => { const s = (v??"").toString(); return /[";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const linhas = [cols.map(c=>c[0]).join(";"), ...eventosAcessoApp.map(e=>cols.map(c=>cel(c[1](e))).join(";"))];
+  const blob = new Blob(["﻿" + linhas.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `acessos-app-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function mostrarSubTab(nome){
