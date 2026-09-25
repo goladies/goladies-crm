@@ -965,16 +965,16 @@ tr.tr-click{cursor:pointer;}
     <div id="tab-transporte" style="display:none;">
       <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, clientes de viagem, viagens e avaliações</p></div></div>
       <div class="subnav">
-        <button type="button" class="subnav-item active" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')">Motoristas</button>
+        <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
         <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')">Clientes</button>
-        <button type="button" class="subnav-item" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
+        <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')">Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')">💰 Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')">🗺️ Fora da área</button>
       </div>
 
-      <div id="subtab-motoristas">
+      <div id="subtab-motoristas" style="display:none;">
         <div class="pagehead">
           <div><h2 style="font-size:16px;">Motoristas</h2><p>Captação, cadastro e status das motoristas parceiras</p></div>
           <button class="btn" onclick="openMotoristaModal()">+ Nova motorista</button>
@@ -1014,7 +1014,7 @@ tr.tr-click{cursor:pointer;}
         </div>
       </div>
 
-      <div id="subtab-viagens" style="display:none;">
+      <div id="subtab-viagens">
         <div class="pagehead">
           <div><h2 style="font-size:16px;">Viagens</h2><p>Do pedido até a conclusão e o pagamento à motorista</p></div>
           <button class="btn" onclick="openViagemModal()">+ Nova viagem</button>
