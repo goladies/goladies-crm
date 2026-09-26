@@ -2426,7 +2426,10 @@ const VAGA_STATUS_CLASS = {"Em triagem":"amber","Aberta":"green","Em processo":"
 const VAGA_CANDIDATA_STATUS = ["Recebida","Triagem","Indicada","Contratada","Recusada"];
 
 // ===== ORDENAÇÃO DE TABELAS (clicar no cabeçalho da coluna) =====
-let sortState = {};
+// Clientes de viagem começa ordenada da mais recente pra mais antiga (id
+// maior primeiro); as outras tabelas seguem sem ordenação padrão, como
+// sempre foi. Continua reagindo ao clique no cabeçalho igual antes.
+let sortState = { clientesTransporte: { campo: "id", dir: -1, tipo: "numero" } };
 function aplicarOrdenacao(chave, lista){
   const st = sortState[chave];
   if(!st) return lista;
