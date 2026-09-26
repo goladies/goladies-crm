@@ -6949,6 +6949,12 @@ function renderTransporteViagens(){
         const motivoAjuste = revisando && v.preco_recusado_motivo
           ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">✏️ ${escapeHtml(v.preco_recusado_motivo)}</div>`
           : "";
+        // Motivo do cancelamento (cliente pelo app ou pelo link de
+        // acompanhamento sem login): mesmo texto que já aparece no campo
+        // "Motivo (se não fechou)" do modal, só que visível de relance aqui.
+        const motivoCancelamento = v.status === "Cancelada" && v.motivo_perda
+          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">🚫 ${escapeHtml(v.motivo_perda)}</div>`
+          : "";
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-top" style="display:flex; align-items:center;">${cliente ? htmlAvatarCliente(cliente, "width:22px; height:22px; margin-right:6px; font-size:9px;") : ""}<span>#${v.id} · ${escapeHtml(cliente?cliente.nome:"Cliente não definido")}</span></div>
@@ -6956,7 +6962,7 @@ function renderTransporteViagens(){
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
-          ${detCotacao}${motivoAjuste}
+          ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);">🧍 ${n} parada${n===1?"":"s"}</span>` : ""; })()}
           ${btnPix}${btnEnviar}
