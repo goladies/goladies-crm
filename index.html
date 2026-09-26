@@ -1921,6 +1921,10 @@ tr.tr-click{cursor:pointer;}
         <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
         <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
         <div id="vg-oferta-status" style="margin-top:6px; font-size:12.5px; color:var(--muted);"></div>
+        <div id="vg-confirmar-motorista-wrap" style="display:none; margin-top:6px;">
+          <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()">✅ Confirmar motorista marcada nesta viagem</button>
+          <span style="font-size:12px; color:var(--muted); margin-left:6px;">Use quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite no painel dela.</span>
+        </div>
       </div>
       <div><label>Tipo de serviço</label><select id="vg-tipo-servico"></select></div>
       <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Só se Tipo de serviço = Evento"></div>
@@ -6902,6 +6906,36 @@ function atualizarStatusOferta(){
   } else {
     el.textContent = "Marque agora quem pode pegar essa corrida. A oferta abre sozinha pra elas quando a cliente confirmar o valor.";
   }
+  atualizarBotaoConfirmarMotorista();
+}
+// Viagem criada e dirigida direto pelo CRM (sem passar pelo aceite no painel
+// dela) nunca ganha motorista_id_confirmada, porque só aceitar_viagem_motorista()
+// seta essa coluna. Isso faz a viagem sumir de "Minhas viagens" concluídas no
+// painel da motorista e de contagens que dependem da confirmada (não da
+// oferecida). O botão só aparece com a viagem já salva e exatamente uma
+// motorista marcada, e não some depois de confirmada — só o texto avisa.
+function atualizarBotaoConfirmarMotorista(){
+  const wrap = document.getElementById("vg-confirmar-motorista-wrap");
+  if(!wrap) return;
+  const marcadas = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value));
+  const v = editingViagemId ? viagens.find(x=>x.id===editingViagemId) : null;
+  wrap.style.display = (v && marcadas.length === 1) ? "block" : "none";
+  const btn = wrap.querySelector("button");
+  if(btn) btn.textContent = (v && v.motorista_id_confirmada === marcadas[0])
+    ? "✅ Motorista já confirmada nesta viagem"
+    : "✅ Confirmar motorista marcada nesta viagem";
+}
+async function confirmarMotoristaManualmente(){
+  const marcadas = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value));
+  if(marcadas.length !== 1){ alert("Marque só uma motorista (a que dirigiu de fato) antes de confirmar."); return; }
+  if(!editingViagemId){ alert("Salve a viagem primeiro, depois abra ela de novo pra confirmar a motorista."); return; }
+  const motorista = motoristas.find(m=>m.id===marcadas[0]);
+  if(!confirm(`Confirmar "${motorista ? motorista.nome : "#"+marcadas[0]}" como a motorista desta viagem (#${editingViagemId})?\n\nUse só quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite dela no painel.`)) return;
+  const { error } = await sb.from("viagens").update({ motorista_id_confirmada: marcadas[0], motorista_ids: marcadas }).eq("id", editingViagemId);
+  if(error){ alert("Erro ao confirmar a motorista: " + error.message); return; }
+  showToast("Motorista confirmada!");
+  await recarregarTabelas("viagens");
+  openViagemModal(editingViagemId);
 }
 async function enviarCotacaoCliente(id){
   const v = viagens.find(x=>x.id===id);
