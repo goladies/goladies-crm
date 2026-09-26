@@ -6946,7 +6946,8 @@ function atualizarBotaoConfirmarMotorista(){
   const v = editingViagemId ? viagens.find(x=>x.id===editingViagemId) : null;
   wrap.style.display = (v && marcadas.length === 1) ? "block" : "none";
   const btn = wrap.querySelector("button");
-  if(btn) btn.textContent = (v && v.motorista_id_confirmada === marcadas[0])
+  const ofertaAceita = v && viagemOfertas.some(o=>o.viagem_id===v.id && o.motorista_id===marcadas[0] && o.desfecho==="Aceita");
+  if(btn) btn.textContent = (v && v.motorista_id_confirmada === marcadas[0] && ofertaAceita)
     ? "✅ Motorista já confirmada nesta viagem"
     : "✅ Confirmar motorista marcada nesta viagem";
 }
@@ -6954,12 +6955,30 @@ async function confirmarMotoristaManualmente(){
   const marcadas = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value));
   if(marcadas.length !== 1){ alert("Marque só uma motorista (a que dirigiu de fato) antes de confirmar."); return; }
   if(!editingViagemId){ alert("Salve a viagem primeiro, depois abra ela de novo pra confirmar a motorista."); return; }
-  const motorista = motoristas.find(m=>m.id===marcadas[0]);
-  if(!confirm(`Confirmar "${motorista ? motorista.nome : "#"+marcadas[0]}" como a motorista desta viagem (#${editingViagemId})?\n\nUse só quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite dela no painel.`)) return;
-  const { error } = await sb.from("viagens").update({ motorista_id_confirmada: marcadas[0], motorista_ids: marcadas }).eq("id", editingViagemId);
+  const motoristaId = marcadas[0];
+  const motorista = motoristas.find(m=>m.id===motoristaId);
+  if(!confirm(`Confirmar "${motorista ? motorista.nome : "#"+motoristaId}" como a motorista desta viagem (#${editingViagemId})?\n\nUse só quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite dela no painel.`)) return;
+
+  const { error } = await sb.from("viagens").update({ motorista_id_confirmada: motoristaId, motorista_ids: marcadas }).eq("id", editingViagemId);
   if(error){ alert("Erro ao confirmar a motorista: " + error.message); return; }
+
+  // O painel da motorista lê de viagem_ofertas (historico_ofertas_motorista),
+  // não de viagens.motorista_id_confirmada direto — sem isto a viagem
+  // continuava invisível pra ela mesmo com o passo acima feito (viagem 41,
+  // 26/09/2026). Replica à mão o que aceitar_viagem_motorista() faz: marca
+  // esta oferta como Aceita e qualquer outra pendente da mesma viagem como
+  // Perdida (mesmo texto pro caso de não existir linha ainda, que é o normal
+  // numa viagem criada direto no CRM).
+  const agora = new Date().toISOString();
+  const ofertaExistente = viagemOfertas.find(o=>o.viagem_id===editingViagemId && o.motorista_id===motoristaId);
+  const { error: erroOferta } = ofertaExistente
+    ? await sb.from("viagem_ofertas").update({ desfecho: "Aceita", respondida_em: agora }).eq("id", ofertaExistente.id)
+    : await sb.from("viagem_ofertas").insert({ viagem_id: editingViagemId, motorista_id: motoristaId, desfecho: "Aceita", ofertada_em: agora, respondida_em: agora });
+  if(erroOferta){ alert("A motorista foi confirmada, mas não consegui atualizar o histórico de ofertas: " + erroOferta.message); return; }
+  await sb.from("viagem_ofertas").update({ desfecho: "Perdida", respondida_em: agora }).eq("viagem_id", editingViagemId).eq("desfecho", "Pendente").neq("motorista_id", motoristaId);
+
   showToast("Motorista confirmada!");
-  await recarregarTabelas("viagens");
+  await recarregarTabelas("viagens", "viagem_ofertas");
   openViagemModal(editingViagemId);
 }
 async function enviarCotacaoCliente(id){
