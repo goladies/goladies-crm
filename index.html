@@ -366,36 +366,62 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .legenda-obrig{font-size:12px; color:var(--text3); margin:6px 0 12px;}
 .legenda-obrig b{color:var(--rosa-texto);}
 .legenda-obrig i{color:var(--c-red); font-style:normal; font-weight:600;}
-/* Modal de Viagem em seções (26/09/2026): antes era uma grade única de ~50
-   campos, sem divisão entre ida, volta, preço e motorista. */
-#viagem-modal .modal{width:760px; padding-top:0; padding-bottom:0;}
-.vg-topo{position:sticky; top:0; z-index:40; background:var(--bg-card); padding:18px 0 10px; border-bottom:1px solid var(--border);}
+/* Modal de Viagem, Modelo B "faixa colorida" (26/09/2026). Mesma estrutura
+   nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
+   tem faixa de título tingida e borda na cor dela (--sec-cor no style da
+   seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
+#viagem-modal{--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+  --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
+  --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
+[data-tema="claro"] #viagem-modal{--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+  --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
+  --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
+#viagem-modal .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+.vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:13px; color:var(--text2);}
-.vg-resumo b{color:var(--text); font-size:14px;}
+.vg-resumo b{color:var(--text1); font-size:14px;}
 .vg-resumo .vg-resumo-preco{color:var(--c-green); font-weight:700; font-size:14px;}
-/* Cada seção tem a sua cor (--sec-cor, definida no style da seção): título
-   colorido numa faixa tingida + borda à esquerda. O fundo alterna claro/escuro
-   (vg-sec-alt) pra uma seção não emendar na outra. */
-.vg-sec{--sec-cor:var(--text3); --sec-bg:var(--bg-hover); background:var(--bg-card2); border:1px solid var(--border2); border-left:4px solid var(--sec-cor); border-radius:12px; padding:0 14px 16px; margin-top:16px; overflow:hidden;}
-.vg-sec.vg-sec-alt{background:var(--bg-app);}
-.vg-sec-tit{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0 -14px 14px; padding:10px 14px; background:var(--sec-bg); border-bottom:1px solid var(--border); font-size:14.5px; font-weight:700; color:var(--sec-cor);}
+.vg-resumo .vg-resumo-falta{color:var(--vg-ambar); font-weight:600; cursor:pointer;}
+.vg-sec{--sec-cor:var(--vg-cinza); background:var(--vg-corpo); border:1px solid var(--border); border-left:4px solid var(--sec-cor); border-radius:0 12px 12px 0; padding:0 14px 16px; margin-top:14px; overflow:hidden;}
+.vg-sec-tit{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0 -14px 12px; padding:10px 14px; background:color-mix(in srgb, var(--sec-cor) var(--vg-tinta), transparent); border-bottom:1px solid var(--border); font-size:14.5px; font-weight:700; color:var(--sec-cor);}
+.vg-sec-tit>span:first-child{display:flex; align-items:center; gap:8px;}
 .vg-sec-tit .vg-sec-sub{font-size:12px; font-weight:400; color:var(--text3);}
+.vg-sec-tit .vg-pend{font-size:11.5px; font-weight:600; color:var(--vg-ambar);}
 .vg-sec.vg-sec-fechada{padding-bottom:0;}
 .vg-sec.vg-sec-fechada .vg-sec-tit{margin-bottom:0; border-bottom:none;}
-.vg-sec-tit .vg-check{color:var(--text);}
+.vg-sec-tit .vg-check{color:var(--text1); font-weight:600;}
 .formgrid .dica{display:block; font-size:11.5px; color:var(--text3); margin-top:4px; line-height:1.35;}
 .formgrid .destaque>label{font-size:13px;}
 .formgrid .destaque>input,.formgrid .destaque>select,.formgrid .destaque .campo-moeda>input,.formgrid .destaque .campo-endereco>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
-.vg-check{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text); font-weight:400; margin:0;}
-.vg-check input{width:auto !important;}
+.vg-check{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text1); font-weight:400; margin:0;}
+.vg-check input{width:auto !important; accent-color:var(--rosa);}
 .vg-trajeto{border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;}
 details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
 details.vg-sec:not([open]){padding-bottom:0;}
 details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
-details.vg-sec>summary::after{content:"▸"; color:var(--text3);}
-details.vg-sec[open]>summary::after{content:"▾";}
-#viagem-modal .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--bg-card); padding:12px 0 18px; border-top:1px solid var(--border);}
+details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
+details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
+#viagem-modal .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+/* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
+   título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
+   pedido do app chega sem duração/km e é salvo aos poucos. */
+#viagem-modal .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+#viagem-modal .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+#viagem-modal .formgrid .obrig>input,#viagem-modal .formgrid .obrig>select,#viagem-modal .formgrid .obrig .campo-moeda>input,#viagem-modal .formgrid .obrig .campo-endereco>input,#viagem-modal .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+#viagem-modal .formgrid .obrig.vazio>label{color:var(--text1);}
+#viagem-modal .formgrid .obrig.vazio>input,#viagem-modal .formgrid .obrig.vazio>select,#viagem-modal .formgrid .obrig.vazio .campo-moeda>input,#viagem-modal .formgrid .obrig.vazio .campo-endereco>input,#viagem-modal .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+#viagem-modal .legenda-obrig b{color:var(--rosa-texto);}
+#viagem-modal .legenda-obrig i{color:var(--vg-ambar);}
+/* Sugerido: o sistema preenche e dá pra trocar (caixa tracejada).
+   Automático: só conta, não se digita (sem caixa, com cadeado). */
+.vg-tag{display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:600; padding:1px 7px; border-radius:10px; color:var(--text3); margin-left:4px; vertical-align:1px;}
+.vg-tag.sug{border:1px dashed var(--border2);}
+.vg-tag.aut{background:var(--bg-hover); border:1px solid var(--border);}
+.formgrid .sugerido>input,.formgrid .sugerido .campo-moeda>input{border-style:dashed !important;}
+.formgrid .automatico>input,.formgrid .automatico .campo-moeda>input,.formgrid .automatico input[readonly]{background:transparent !important; border-color:transparent !important; box-shadow:none !important; padding-left:0 !important; cursor:default !important; font-weight:600; color:var(--text1);}
+.formgrid .automatico .campo-moeda .prefixo{left:0;}
+.formgrid .automatico .campo-moeda>input{padding-left:22px !important;}
 .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
 .chartwrap{height:230px;}
 .badge-seal{background:var(--rosa-bg); color:var(--rosa-texto); border:1px solid var(--rosa-borda); padding:1px 8px; border-radius:20px; font-size:11px; font-weight:600;}
@@ -707,6 +733,7 @@ tr.tr-click{cursor:pointer;}
   #ft-sim .sim-cols{grid-template-columns:1fr;}
 }
 </style>
+<script src="icones.js"></script>
 </head>
 <body>
 
@@ -1948,11 +1975,11 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div class="vg-resumo" id="vg-resumo"></div>
     </div>
-    <p class="legenda-obrig"><b>* Em rosa</b> = obrigatório pra viagem rodar; <i>vermelho</i> = ainda está vazio.</p>
+    <p class="legenda-obrig"><b>*</b> obrigatório pra viagem rodar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span> o sistema preenche, dá pra trocar · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> só conta, não se digita</p>
 
     <!-- ── 1. Pedido ── -->
-    <section class="vg-sec" style="--sec-cor:var(--c-pink); --sec-bg:var(--c-pink-bg);">
-      <div class="vg-sec-tit"><span>👤 1. Pedido</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg>1. Pedido</span><span class="vg-pend"></span></div>
       <div class="formgrid">
         <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
@@ -1969,8 +1996,8 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 2. Ida ── -->
-    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-blue); --sec-bg:var(--c-blue-bg);">
-      <div class="vg-sec-tit"><span>➡️ 2. Ida</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-arrow-right"/></svg>2. Ida</span><span class="vg-pend"></span></div>
       <div class="formgrid">
         <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
              mesma caixa e na ordem real da corrida. Origem e destino são os
@@ -1978,9 +2005,9 @@ tr.tr-click{cursor:pointer;}
              só as paradas do meio vão pra viagem_paradas. -->
         <div class="full vg-trajeto" id="vg-trajeto-wrap">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-            <label style="margin:0;">🧭 Trajeto <span style="font-weight:400; color:var(--muted);">(na ordem da corrida)</span></label>
+            <label style="margin:0; display:flex; align-items:center; gap:6px;"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg>Trajeto <span style="font-weight:400; color:var(--muted);">(na ordem da corrida)</span></label>
             <div style="display:flex; gap:8px;">
-              <button type="button" class="btn ghost small" onclick="abrirRotaMaps()">📍 Ver rota</button>
+              <button type="button" class="btn ghost small" onclick="abrirRotaMaps()"><svg class="ic" aria-hidden="true"><use href="#i-map-pin"/></svg> Ver rota</button>
               <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
             </div>
           </div>
@@ -2003,7 +2030,7 @@ tr.tr-click{cursor:pointer;}
         <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
-        <div><label>Chegada prevista no destino</label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
+        <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
         <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Se for só ida, é o km da corrida inteira.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na ida</label></div>
       </div>
@@ -2011,16 +2038,16 @@ tr.tr-click{cursor:pointer;}
 
     <!-- ── 3. Volta: fechada até marcar "Tem volta". Desmarcar apaga os dados
          da volta (alternarVoltaViagem), senão ficariam escondidos e salvos. ── -->
-    <section class="vg-sec" style="--sec-cor:var(--c-indigo); --sec-bg:var(--c-indigo-bg);" id="vg-volta-sec">
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);" id="vg-volta-sec">
       <div class="vg-sec-tit">
-        <span>↩️ 3. Volta</span>
+        <span><svg class="ic g" aria-hidden="true"><use href="#i-arrow-back-up"/></svg>3. Volta</span>
         <label class="vg-check" style="font-weight:600;"><input type="checkbox" id="vg-tem-volta" onchange="alternarVoltaViagem()"> Tem volta</label>
       </div>
       <div class="formgrid" id="vg-volta-campos">
         <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno"></div>
         <div class="destaque"><label>Horário do embarque na volta</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"><span class="dica">Do embarque da volta até o destino final.</span></div>
-        <div><label>Chegada prevista na volta</label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
+        <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na volta</label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
@@ -2029,15 +2056,15 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 4. Preço ── -->
-    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-green); --sec-bg:var(--c-green-bg);">
-      <div class="vg-sec-tit"><span>💰 4. Preço</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-tag"/></svg>4. Preço</span><span class="vg-pend"></span></div>
       <div class="formgrid">
-        <div><label>Tarifa fixa por trecho</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
-        <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
+        <div class="sugerido"><label>Tarifa fixa por trecho <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
+        <div class="sugerido"><label>Valor por km <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
         <!-- Espera combinada decidida em 18/09/2026: R$1/min além dos 10
              inclusos, 100% pra motorista. -->
         <div><label>Espera combinada (min)</label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"><span class="dica">Além dos 10 inclusos; R$ 1/min, 100% pra motorista.</span></div>
-        <div><label>Preço de tabela</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div><span class="dica">Sem desconto; preenche sozinho pelo km.</span></div>
+        <div class="sugerido"><label>Preço de tabela <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div><span class="dica">Sem desconto; preenche sozinho pelo km.</span></div>
         <div><label>Motivo do desconto</label>
           <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
             <option value="">Nenhum</option>
@@ -2050,11 +2077,11 @@ tr.tr-click{cursor:pointer;}
           </select>
           <span class="dica">Se cobrou menos que a tabela.</span>
         </div>
-        <div><label>Valor do desconto</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" oninput="descontoEditado()"></div><span class="dica">Digite aqui ou no preço cobrado; um acerta o outro.</span></div>
+        <div class="automatico"><label>Desconto dado <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" readonly tabindex="-1"></div><span class="dica">Calculado: tabela − cobrado.</span></div>
         <div id="vg-desconto-outro-wrap" class="full" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
-        <div class="obrig destaque"><label>Preço cobrado da cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div><span class="dica">Digite o valor final; o desconto sai sozinho.</span></div>
-        <div class="obrig destaque"><label>Repasse à motorista (75%)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div><span class="dica">É a oferta que ela vê antes de aceitar.</span></div>
-        <div><label>Comissão Go Ladies</label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculada: cobrado − repasse.</span></div>
+        <div class="obrig destaque"><label>Preço cobrado da cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div><span class="dica">Digite o valor final; o desconto é calculado.</span></div>
+        <div class="obrig destaque sugerido"><label>Repasse à motorista (75%) <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div><span class="dica">É a oferta que ela vê antes de aceitar.</span></div>
+        <div class="automatico"><label>Comissão Go Ladies <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-comissao-ladies" readonly tabindex="-1"><span class="dica">Calculada: cobrado − repasse.</span></div>
         <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);">🔒 <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cobrado.</div>
         <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
              do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
@@ -2066,8 +2093,8 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 5. Motorista e execução ── -->
-    <section class="vg-sec" style="--sec-cor:var(--c-purple); --sec-bg:var(--c-purple-bg);">
-      <div class="vg-sec-tit"><span>🚗 5. Motorista e execução</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-car"/></svg>5. Motorista e execução</span><span class="vg-pend"></span></div>
       <div class="formgrid">
         <div class="full obrig">
           <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
@@ -2082,10 +2109,10 @@ tr.tr-click{cursor:pointer;}
         <div><label class="vg-check"><input type="checkbox" id="vg-preparacao"> Preparação pré-viagem confirmada</label></div>
         <div><label class="vg-check"><input type="checkbox" id="vg-saida"> Saída do veículo confirmada</label></div>
         <div id="vg-liberar-manual-wrap" class="full" style="display:none;"><button type="button" class="btn secondary small" onclick="liberarViagemManualmente()">Liberar viagem manualmente</button></div>
-        <div><label>Código de início</label><input type="text" id="vg-codigo-inicio" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Gerado quando a motorista confirma.</span></div>
-        <div><label>Link de acompanhamento</label>
+        <div class="automatico"><label>Código de início <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-codigo-inicio" readonly tabindex="-1"><span class="dica">Gerado quando a motorista confirma.</span></div>
+        <div class="automatico"><label>Link de acompanhamento <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label>
           <div style="display:flex; gap:6px;">
-            <input type="text" id="vg-link" readonly style="background:var(--border); cursor:not-allowed; flex:1;">
+            <input type="text" id="vg-link" readonly tabindex="-1" style="flex:1;">
             <button type="button" class="btn ghost small" onclick="copiarLinkAcompanhamento()">Copiar</button>
           </div>
           <span class="dica">Gerado sozinho; aparece depois de salvar.</span>
@@ -2108,29 +2135,29 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 6. Pagamento da cliente ── -->
-    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-teal); --sec-bg:var(--c-teal-bg);">
-      <div class="vg-sec-tit"><span>💵 6. Pagamento da cliente à Go Ladies</span><span class="vg-sec-sub">Marcar Pago avisa a cliente e abre a oferta pras motoristas</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-credit-card"/></svg>6. Pagamento da cliente</span><span class="vg-sec-sub">Marcar Pago avisa a cliente e abre a oferta pras motoristas</span></div>
       <div class="formgrid">
         <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
         <div class="full" id="vg-mp-info" style="display:none; font-size:12.5px; color:var(--muted);"></div>
         <div class="destaque"><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
         <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
         <div><label>Valor recebido (bruto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O realizado; o previsto é o Preço cobrado.</span></div>
-        <div><label>Valor líquido</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O que caiu na conta; Pix Mercado Pago preenche sozinho.</span></div>
-        <div><label>Taxa Mercado Pago</label><input type="text" id="vg-lid-taxa-mp" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculada: recebido − líquido.</span></div>
+        <div class="sugerido"><label>Valor líquido <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O que caiu na conta; Pix Mercado Pago preenche sozinho.</span></div>
+        <div class="automatico"><label>Taxa Mercado Pago <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-lid-taxa-mp" readonly tabindex="-1"><span class="dica">Calculada: recebido − líquido.</span></div>
         <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
         <div class="full"><label>Notas</label><textarea id="vg-lid-notas" rows="2"></textarea></div>
       </div>
     </section>
 
     <!-- ── 7. Repasse à motorista ── -->
-    <section class="vg-sec" style="--sec-cor:var(--c-amber); --sec-bg:var(--c-amber-bg);">
-      <div class="vg-sec-tit"><span>💸 7. Repasse à motorista</span><span class="vg-sec-sub">Quinzenal</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-arrows-exchange"/></svg>7. Repasse à motorista</span><span class="vg-sec-sub">Quinzenal</span></div>
       <div class="formgrid">
         <div class="destaque"><label>Status do repasse</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
         <div><label>Forma de pagamento</label><select id="vg-pg-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
         <div><label>Valor repassado</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div><span class="dica">O realizado; o previsto é o Repasse à motorista.</span></div>
-        <div><label>Lucro real Go Ladies</label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculado: líquido (ou recebido, ou cobrado) − repassado.</span></div>
+        <div class="automatico"><label>Lucro real Go Ladies <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-pg-comissao" readonly tabindex="-1"><span class="dica">Calculado: líquido (ou recebido, ou cobrado) − repassado.</span></div>
         <div><label>Data prevista do repasse</label><input type="date" id="vg-pg-data-prevista"></div>
         <div><label>Data do repasse (realizada)</label><input type="date" id="vg-pg-data"></div>
         <div class="full"><label>Comprovante</label><input type="text" id="vg-pg-comprovante" placeholder="https://..."><span class="dica">Link do Pix ou print; aparece pra ela no painel.</span></div>
@@ -2139,15 +2166,15 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- Só leitura + ações próprias: o Salvar da viagem não mexe em avaliacoes. -->
-    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-pink); --sec-bg:var(--c-pink-bg); display:none;" id="vg-avaliacao-wrap">
-      <div class="vg-sec-tit"><span>⭐ 8. Avaliações desta viagem</span></div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa); display:none;" id="vg-avaliacao-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg>8. Avaliações desta viagem</span></div>
       <div id="vg-avaliacao-lista"></div>
     </section>
 
     <!-- ── Outros: raramente usados, ficam recolhidos. Abre sozinho quando
          algum deles tem valor (abrirOutrosViagemSePreciso). ── -->
-    <details class="vg-sec" style="--sec-cor:var(--c-gray); --sec-bg:var(--c-gray-bg);" id="vg-outros">
-      <summary class="vg-sec-tit"><span>⚙️ Outros <span class="vg-sec-sub">(cliente fixa, grupo de WhatsApp, perda, cancelamento)</span></span></summary>
+    <details class="vg-sec" style="--sec-cor:var(--vg-cinza);" id="vg-outros">
+      <summary class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-dots"/></svg>Outros <span class="vg-sec-sub">(cliente fixa, grupo de WhatsApp, perda, cancelamento)</span></span></summary>
       <div class="formgrid" style="margin-top:12px;">
         <div class="full">
           <label>Dias da semana <span style="font-weight:400; color:var(--muted);">(pra cliente fixa, ex: segunda a sexta, mesmo horário)</span></label>
@@ -6770,21 +6797,13 @@ function cotadoEditado(){
   recalcularRepasseMotorista();
   atualizarDesconto();
 }
-function descontoEditado(){
-  preencherTabelaSeVazia();
-  const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
-  if(!tabela) return;
-  const desconto = Math.min(tabela, Math.max(0, Number(document.getElementById("vg-desconto-valor").value) || 0));
-  document.getElementById("vg-preco-cotado").value = (tabela - desconto).toFixed(2);
-  recalcularRepasseMotorista();
-  atualizarDesconto();
-}
+// Desconto é só conta (tabela − cobrado) desde 26/09/2026: o campo virou
+// automático, quem se digita é o Preço cobrado.
 function atualizarDesconto(){
   const desconto = descontoAtual();
   const campo = document.getElementById("vg-desconto-valor");
   const motivo = document.getElementById("vg-desconto-motivo");
-  // Não reescreve o campo enquanto ela digita nele.
-  if(document.activeElement !== campo) campo.value = desconto ? desconto.toFixed(2) : "";
+  campo.value = desconto ? desconto.toFixed(2) : "";
   campo.dataset.valor = desconto || "";
   document.getElementById("vg-desconto-outro-wrap").style.display = motivo.value === "Outro" ? "" : "none";
   // Desconto sem motivo escolhido perde o rastro, que é justamente o ponto:
@@ -7348,6 +7367,23 @@ function marcarObrigatoriosViagem(){
     else { const c = div.querySelector("input,select"); vazio = !c || c.value === ""; }
     div.classList.toggle("vazio", vazio);
   });
+  // "falta N" na faixa de cada seção e no resumo do topo
+  let total = 0;
+  document.querySelectorAll("#viagem-modal .vg-sec").forEach(sec=>{
+    const n = sec.querySelectorAll(".obrig.vazio").length;
+    total += n;
+    const alvo = sec.querySelector(".vg-pend");
+    if(alvo) alvo.textContent = n ? `falta ${n}` : "";
+  });
+  obrigatoriosFaltandoViagem = total;
+}
+let obrigatoriosFaltandoViagem = 0;
+function irParaPrimeiroObrigatorioVazio(){
+  const div = document.querySelector("#viagem-modal .obrig.vazio");
+  if(!div) return;
+  div.scrollIntoView({ behavior:"smooth", block:"center" });
+  const campo = div.querySelector("input,select");
+  if(campo) setTimeout(()=>campo.focus({ preventScroll:true }), 350);
 }
 document.getElementById("viagem-modal").addEventListener("input", marcarObrigatoriosViagem);
 document.getElementById("viagem-modal").addEventListener("change", marcarObrigatoriosViagem);
@@ -7360,10 +7396,11 @@ function atualizarResumoViagem(){
   const selCliente = document.getElementById("vg-cliente");
   const nome = val("vg-cliente") ? selCliente.options[selCliente.selectedIndex].textContent : "Cliente não definida";
   const partes = [`<b>${escapeHtml(nome)}</b>`];
-  partes.push(val("vg-data") ? `📅 ${formatarDataBR(val("vg-data"))}${val("vg-horario-partida") ? " às " + val("vg-horario-partida") : ""}` : "📅 sem data");
-  partes.push(document.getElementById("vg-tem-volta").checked ? "↔️ ida e volta" : "➡️ só ida");
+  partes.push(ic("calendar") + " " + (val("vg-data") ? `${formatarDataBR(val("vg-data"))}${val("vg-horario-partida") ? " às " + val("vg-horario-partida") : ""}` : "sem data"));
+  partes.push(document.getElementById("vg-tem-volta").checked ? ic("arrows-left-right") + " ida e volta" : ic("arrow-right") + " só ida");
   if(val("vg-preco-cotado")) partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(val("vg-preco-cotado")))}</span>`);
   partes.push(`<span class="tag">${escapeHtml(rotuloStatusViagem(val("vg-viagem-status")))}</span>`);
+  if(obrigatoriosFaltandoViagem) partes.push(`<span class="vg-resumo-falta" onclick="irParaPrimeiroObrigatorioVazio()" title="Ir pro primeiro campo vazio">${ic("alert-circle")} falta ${obrigatoriosFaltandoViagem} obrigatório${obrigatoriosFaltandoViagem === 1 ? "" : "s"}</span>`);
   el.innerHTML = partes.join("<span style=\"color:var(--border2);\">·</span>");
 }
 // Descrição do evento só aparece pra Tipo = Evento (ou se já tiver texto).
