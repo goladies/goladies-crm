@@ -1929,18 +1929,30 @@ tr.tr-click{cursor:pointer;}
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
       <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
       <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
-      <div class="full obrig"><label>Endereço de origem</label><div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
-      <div class="full obrig"><label>Endereço de destino</label><div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
-      <div class="full"><button type="button" class="btn ghost" style="font-size:12.5px;" onclick="abrirRotaMaps()">📍 Ver rota no Google Maps</button></div>
-
-      <!-- Paradas (garupa): outras passageiras embarcando/desembarcando entre origem e destino.
-           Uma cliente pede e paga; as paradas são só a rota. Gravadas em viagem_paradas ao Salvar. -->
-      <div class="full" id="vg-paradas-wrap" style="border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;">
+      <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
+           mesma caixa e na ordem real da corrida — antes origem/destino
+           ficavam soltos ali em cima e as paradas repetiam o mesmo tipo de
+           campo de endereço numa caixa separada mais embaixo, parecendo
+           duplicado. Origem e destino continuam sendo os mesmos campos de
+           sempre (mesmo id, gravados em viagens.origem_endereco/destino_endereco);
+           só as paradas do meio vão pra viagem_paradas. -->
+      <div class="full" id="vg-trajeto-wrap" style="border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-          <label style="margin:0;">🧍 Paradas no caminho <span style="font-weight:400; color:var(--muted);">(garupa: mais de uma passageira)</span></label>
-          <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
+          <label style="margin:0;">🧭 Trajeto <span style="font-weight:400; color:var(--muted);">(embarque, paradas de garupa e destino, na ordem da corrida)</span></label>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn ghost small" onclick="abrirRotaMaps()">📍 Ver rota</button>
+            <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
+          </div>
+        </div>
+        <div class="obrig" style="margin-top:10px;">
+          <label>1. Embarque (origem)</label>
+          <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
         </div>
         <div id="vg-paradas-lista" style="margin-top:8px;"></div>
+        <div class="obrig" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+          <label><span id="vg-destino-num">2</span>. Destino</label>
+          <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+        </div>
       </div>
 
       <div class="obrig"><label>Data</label><input type="date" id="vg-data"></div>
@@ -6471,14 +6483,17 @@ function carregarParadasModal(viagemId){
 }
 function renderParadasModal(){
   const el = document.getElementById("vg-paradas-lista");
+  // Numeração contínua com o embarque (que é sempre "1"): a 1ª parada é "2",
+  // e o destino (atualizado aqui embaixo) fecha a lista.
+  document.getElementById("vg-destino-num").textContent = paradasModal.length + 2;
   if(!paradasModal.length){
-    el.innerHTML = `<div style="color:var(--muted); font-size:12px;">Sem paradas: a corrida vai direto da origem ao destino.</div>`;
+    el.innerHTML = `<div style="color:var(--muted); font-size:12px; padding:6px 0;">Sem paradas: a corrida vai direto do embarque ao destino.</div>`;
     return;
   }
   el.innerHTML = paradasModal.map((p,i)=>`
     <div class="formgrid" style="align-items:end; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">
       <div style="grid-column:1 / -1; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
-        <strong style="color:var(--text1);">${i+1}ª parada</strong>
+        <strong style="color:var(--text1);">${i+2}. Parada</strong>
         <span style="flex:1;"></span>
         <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
         <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
