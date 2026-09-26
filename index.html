@@ -752,25 +752,25 @@ tr.tr-click{cursor:pointer;}
       <label>Senha</label>
       <div class="campo-senha">
         <input type="password" id="login-senha" autocomplete="current-password" required>
-        <button type="button" id="toggle-senha" aria-label="Mostrar senha">👁️</button>
+        <button type="button" id="toggle-senha" aria-label="Mostrar senha"><svg class=ic aria-hidden=true><use href=#i-eye /></svg></button>
       </div>
     </div>
     <button type="submit" class="btn" style="width:100%;">Entrar</button>
     <div id="login-carregando">Entrando...</div>
     <p id="login-ajuda">Suporte: <a href="mailto:contato@goladies.com.br">contato@goladies.com.br</a></p>
   </form>
-  <div id="login-tema">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">☀️ Claro</button></div>
+  <div id="login-tema">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()"><svg class=ic aria-hidden=true><use href=#i-sun /></svg> Claro</button></div>
 </div>
 
 <div class="app">
   <div class="topbar">
-    <button type="button" id="btn-menu" aria-label="Abrir menu">☰</button>
+    <button type="button" id="btn-menu" aria-label="Abrir menu"><svg class=ic aria-hidden=true><use href=#i-menu-2 /></svg></button>
     <span class="topbar-brand"><img class="logo-branco" src="images/logo-branco.png" alt="Go Ladies"><img class="logo-rosa" src="images/logo-rosa.png" alt="Go Ladies"></span>
     <span style="display:flex; gap:6px;">
-      <button type="button" class="js-btn-tema-icone" onclick="toggleTema()" aria-label="Trocar tema">☀️</button>
-      <button type="button" onclick="openMeusDadosModal()" aria-label="Meus dados">👤</button>
-      <button type="button" id="btn-atualizar-mobile" aria-label="Atualizar dados">🔄</button>
-      <button type="button" id="btn-logout-mobile" class="js-logout" aria-label="Sair">🚪</button>
+      <button type="button" class="js-btn-tema-icone" onclick="toggleTema()" aria-label="Trocar tema"><svg class=ic aria-hidden=true><use href=#i-sun /></svg></button>
+      <button type="button" onclick="openMeusDadosModal()" aria-label="Meus dados"><svg class=ic aria-hidden=true><use href=#i-user /></svg></button>
+      <button type="button" id="btn-atualizar-mobile" aria-label="Atualizar dados"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg></button>
+      <button type="button" id="btn-logout-mobile" class="js-logout" aria-label="Sair"><svg class=ic aria-hidden=true><use href=#i-logout /></svg></button>
     </span>
   </div>
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -797,8 +797,8 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="config" data-titulo="Dados do painel"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></svg><span>Dados</span></div>
     </div>
     <div class="sidebar-footer">
-      <div class="nav-item nav-atualizar" id="btn-atualizar" title="Buscar de novo os dados no servidor">🔄 Atualizar<span id="lbl-atualizado"></span></div>
-      <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()">☀️ Claro</button></div>
+      <div class="nav-item nav-atualizar" id="btn-atualizar" title="Buscar de novo os dados no servidor"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar<span id="lbl-atualizado"></span></div>
+      <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()"><svg class=ic aria-hidden=true><use href=#i-sun /></svg> Claro</button></div>
       <div class="user-pill" onclick="openMeusDadosModal()" title="Meus dados">
         <div class="user-avatar js-user-avatar">GL</div>
         <div class="user-name js-user-name">Go Ladies</div>
@@ -816,7 +816,7 @@ tr.tr-click{cursor:pointer;}
       <div class="coracao"><svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21.4 3.3 12.9A5.6 5.6 0 0 1 11.2 5l.8.8.8-.8a5.6 5.6 0 0 1 7.9 7.9z"/></svg><b id="bv-coracao-num">0</b></div>
       <small>Leads novos</small>
     </a>
-    <button type="button" class="btn-assistente" onclick="openAssistenteModal()" title="Assistente IA: fale, escreva ou mande uma foto e ela prepara o cadastro">✨ <span>Assistente IA</span></button>
+    <button type="button" class="btn-assistente" onclick="openAssistenteModal()" title="Assistente IA: fale, escreva ou mande uma foto e ela prepara o cadastro"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> <span>Assistente IA</span></button>
     <div class="search-global">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="busca-global" placeholder="Buscar nome, telefone, e-mail..." autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)">
@@ -832,7 +832,7 @@ tr.tr-click{cursor:pointer;}
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
           <div>
-            <h3 style="margin-top:0;">🚗 Transporte no mês</h3>
+            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Transporte no mês</h3>
             <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="dash-transporte-periodo"></p>
           </div>
           <button class="btn secondary small" type="button" onclick="irParaFinanceiro('resumo')">Ver financeiro completo</button>
@@ -840,7 +840,7 @@ tr.tr-click{cursor:pointer;}
         <div class="cards" id="dash-cards-transporte"></div>
       </div>
       <div class="panel">
-        <h3>👤 Novas usuárias do app</h3>
+        <h3><svg class=ic aria-hidden=true><use href=#i-user /></svg> Novas usuárias do app</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quem criou conta sozinha no app da cliente ou no painel da motorista, mais recentes primeiro</p>
         <table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Contato</th><th>Cadastro</th><th>Situação</th></tr></thead><tbody id="dash-usuarias-app"></tbody></table>
       </div>
@@ -852,21 +852,21 @@ tr.tr-click{cursor:pointer;}
         <h3>Acessos e rastreamento do site</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Atalhos pra abrir as ferramentas direto (os números de acesso em si ainda não aparecem aqui dentro; ver nota em Config).</p>
         <div class="analytics-atalhos">
-          <a href="https://analytics.google.com/" target="_blank">📊 Google Analytics (GA4)</a>
-          <a href="https://tagmanager.google.com/" target="_blank">🏷️ Google Tag Manager</a>
-          <a href="https://business.facebook.com/events_manager2/list/pixel/1547418116918632" target="_blank">📣 Meta Events Manager</a>
-          <a href="https://clarity.microsoft.com/projects/view/xjd308la6r/dashboard" target="_blank">🖱️ Microsoft Clarity</a>
+          <a href="https://analytics.google.com/" target="_blank"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Google Analytics (GA4)</a>
+          <a href="https://tagmanager.google.com/" target="_blank"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Google Tag Manager</a>
+          <a href="https://business.facebook.com/events_manager2/list/pixel/1547418116918632" target="_blank"><svg class=ic aria-hidden=true><use href=#i-speakerphone /></svg> Meta Events Manager</a>
+          <a href="https://clarity.microsoft.com/projects/view/xjd308la6r/dashboard" target="_blank"><svg class=ic aria-hidden=true><use href=#i-click /></svg> Microsoft Clarity</a>
         </div>
       </div>
       <div class="panel">
-        <h3>🎂 Aniversários próximos</h3>
+        <h3><svg class=ic aria-hidden=true><use href=#i-cake /></svg> Aniversários próximos</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">De hoje até o fim do mês que vem</p>
         <table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Data</th></tr></thead><tbody id="dash-aniversarios"></tbody></table>
       </div>
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
           <div>
-            <h3 style="margin-top:0;">📅 Próximos eventos</h3>
+            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Próximos eventos</h3>
             <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Próximos 30 dias, mais os lembretes de contato que já venceram</p>
           </div>
           <button class="btn secondary small" type="button" onclick="irParaEventos()">Ver agenda completa</button>
@@ -1026,10 +1026,10 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')">Clientes</button>
         <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')">Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
-        <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')">📅 Eventos</button>
-        <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')">💰 Financeiro do transporte</button>
-        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')">🗺️ Fora da área</button>
-        <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')">📲 Acessos ao app</button>
+        <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
+        <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
+        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Fora da área</button>
+        <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos ao app</button>
       </div>
 
       <div id="subtab-motoristas" style="display:none;">
@@ -1108,7 +1108,7 @@ tr.tr-click{cursor:pointer;}
         <div class="cards" id="ft-cards"></div>
 
         <div class="panel" id="ft-sim">
-          <h3>🧮 Simulador de preço</h3>
+          <h3><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador de preço</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 14px;">Antes de dar um preço ou aceitar um desconto: quanto sobra pra motorista por hora, quanto fica pra Go Ladies e até onde dá pra descontar sem trabalhar de graça. É rascunho, nada aqui é salvo nem mexe em viagem nenhuma.</p>
 
           <div class="sim-cols">
@@ -1178,7 +1178,7 @@ tr.tr-click{cursor:pointer;}
         </div>
 
         <div class="panel">
-          <h3>🎯 Validação de preço</h3>
+          <h3><svg class=ic aria-hidden=true><use href=#i-target /></svg> Validação de preço</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="ft-amostra"></p>
           <div class="cards" id="ft-cards-validacao"></div>
           <h4 style="font-size:13px; margin:18px 0 8px;">Onde o aceite cai, por faixa de preço cotado</h4>
@@ -1720,7 +1720,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Data</label><input type="date" id="o-data"></div>
     </div>
 
-    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💰 Pagamento <span style="font-weight:400; color:var(--muted);">(se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho)</span></h4>
+    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Pagamento <span style="font-weight:400; color:var(--muted);">(se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho)</span></h4>
     <div class="formgrid">
       <div><label>Forma de pagamento</label><select id="o-forma-pagamento"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Financiamento</option><option>Outro</option></select></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="o-parcelado" style="width:auto;" onchange="toggleOrcamentoParcelado()"> É parcelado?</label></div>
@@ -1745,14 +1745,14 @@ tr.tr-click{cursor:pointer;}
       <button class="icon-btn" type="button" onclick="closeModal('motorista-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <div id="ia-cnh-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
-      <div style="font-size:13px; font-weight:600; color:var(--pink); margin-bottom:6px;">🤖 Preencher automaticamente com a CNH</div>
+      <div style="font-size:13px; font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com a CNH</div>
       <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF da CNH e a IA preenche os campos abaixo.</div>
       <input type="file" id="ia-cnh-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('cnh', this)">
-      <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()">📄 Selecionar CNH (foto ou PDF)</button>
+      <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CNH (foto ou PDF)</button>
       <div id="ia-cnh-confirm" style="display:none; margin-top:10px;">
         <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong>. É mesmo a CNH dela?</div>
         <div style="display:flex; gap:8px;">
-          <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')">✅ Confirmar e ler com IA</button>
+          <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
           <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('cnh')">Trocar arquivo</button>
         </div>
       </div>
@@ -1771,7 +1771,7 @@ tr.tr-click{cursor:pointer;}
         <label style="margin:0;">Foto de perfil</label>
         <small>A cliente vê essa foto com nome, carro e placa antes de embarcar. Rosto visível, fundo neutro, sem óculos escuros. Ela também pode trocar em Perfil no painel dela (motora.goladies.com.br).</small>
         <input type="file" id="mt-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('mt', this)">
-        <button type="button" class="act act-edit" onclick="document.getElementById('mt-foto-file').click()">📷 Escolher foto</button>
+        <button type="button" class="act act-edit" onclick="document.getElementById('mt-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
         <button type="button" class="act act-del" id="mt-foto-remover" onclick="removerFotoPerfil('mt')" style="display:none;">Remover</button>
       </div>
     </div>
@@ -1801,14 +1801,14 @@ tr.tr-click{cursor:pointer;}
     <div style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
       <h4 style="font-size:13px; margin:0 0 10px;">Veículo (CRLV)</h4>
       <div class="full" id="ia-crlv-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
-        <div style="font-size:13px; font-weight:600; color:var(--pink); margin-bottom:6px;">🤖 Preencher automaticamente com o CRLV</div>
+        <div style="font-size:13px; font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com o CRLV</div>
         <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF do CRLV (documento do carro) e a IA preenche os campos abaixo. Se ela trocar de carro, é só ler o CRLV novo de novo.</div>
         <input type="file" id="ia-crlv-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('crlv', this)">
-        <button type="button" class="btn secondary small" id="ia-crlv-btn" onclick="document.getElementById('ia-crlv-file').click()">📄 Selecionar CRLV (foto ou PDF)</button>
+        <button type="button" class="btn secondary small" id="ia-crlv-btn" onclick="document.getElementById('ia-crlv-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CRLV (foto ou PDF)</button>
         <div id="ia-crlv-confirm" style="display:none; margin-top:10px;">
           <div style="font-size:12px; margin-bottom:6px;">Arquivo selecionado: <strong id="ia-crlv-nome-arquivo"></strong>. É mesmo o CRLV do carro dela?</div>
           <div style="display:flex; gap:8px;">
-            <button type="button" class="btn small" onclick="confirmarLeituraIA('crlv')">✅ Confirmar e ler com IA</button>
+            <button type="button" class="btn small" onclick="confirmarLeituraIA('crlv')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
             <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('crlv')">Trocar arquivo</button>
           </div>
         </div>
@@ -1840,7 +1840,7 @@ tr.tr-click{cursor:pointer;}
       <h4 style="font-size:13px; margin:0 0 10px;">Antecedentes Criminais</h4>
       <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
         <input type="file" id="dp-antecedentes-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('antecedentes', this)">
-        <button type="button" class="btn secondary small" id="dp-antecedentes-btn" onclick="document.getElementById('dp-antecedentes-file').click()">📄 Anexar arquivo</button>
+        <button type="button" class="btn secondary small" id="dp-antecedentes-btn" onclick="document.getElementById('dp-antecedentes-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Anexar arquivo</button>
         <span id="dp-antecedentes-arquivo-atual" style="font-size:12px; margin-left:6px;"></span>
         <div class="formgrid" style="margin-top:10px;">
           <div><label>Data da consulta</label><input type="date" id="dp-antecedentes-data"></div>
@@ -1851,7 +1851,7 @@ tr.tr-click{cursor:pointer;}
       <h4 style="font-size:13px; margin:0 0 10px;">Comprovante de Endereço</h4>
       <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
         <input type="file" id="dp-endereco-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('endereco', this)">
-        <button type="button" class="btn secondary small" id="dp-endereco-btn" onclick="document.getElementById('dp-endereco-file').click()">📄 Anexar arquivo</button>
+        <button type="button" class="btn secondary small" id="dp-endereco-btn" onclick="document.getElementById('dp-endereco-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Anexar arquivo</button>
         <span id="dp-endereco-arquivo-atual" style="font-size:12px; margin-left:6px;"></span>
         <div class="formgrid" style="margin-top:10px;">
           <div><label>Data do documento</label><input type="date" id="dp-endereco-data"></div>
@@ -1906,7 +1906,7 @@ tr.tr-click{cursor:pointer;}
     <!-- Avaliações que as clientes deram pra ela. "Liberar" é o que faz a
          nota aparecer no painel da motorista (minhas_avaliacoes só lê visivel). -->
     <div id="mt-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:13px; margin:0 0 8px;">⭐ Avaliações recebidas <span id="mt-avaliacoes-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <h4 style="font-size:13px; margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações recebidas <span id="mt-avaliacoes-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
       <div id="mt-avaliacoes-lista"></div>
     </div>
 
@@ -1929,7 +1929,7 @@ tr.tr-click{cursor:pointer;}
         <label style="margin:0;">Foto de perfil <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
         <small>Só a motorista da corrida vê, pra reconhecer a cliente no embarque. Ela também pode subir em Perfil no painel dela (app.goladies.com.br).</small>
         <input type="file" id="ct-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('ct', this)">
-        <button type="button" class="act act-edit" onclick="document.getElementById('ct-foto-file').click()">📷 Escolher foto</button>
+        <button type="button" class="act act-edit" onclick="document.getElementById('ct-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
         <button type="button" class="act act-del" id="ct-foto-remover" onclick="removerFotoPerfil('ct')" style="display:none;">Remover</button>
       </div>
     </div>
@@ -1952,9 +1952,9 @@ tr.tr-click{cursor:pointer;}
     <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
          motoristas disseram dela; nota_motorista + comentario é o que ela disse. -->
     <div id="ct-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:13px; margin:0 0 8px;">⭐ Avaliações recebidas das motoristas <span id="ct-avaliacoes-recebidas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <h4 style="font-size:13px; margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações recebidas das motoristas <span id="ct-avaliacoes-recebidas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
       <div id="ct-avaliacoes-recebidas"></div>
-      <h4 style="font-size:13px; margin:14px 0 8px;">💬 Avaliações que ela deu <span id="ct-avaliacoes-dadas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <h4 style="font-size:13px; margin:14px 0 8px;"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Avaliações que ela deu <span id="ct-avaliacoes-dadas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
       <div id="ct-avaliacoes-dadas"></div>
     </div>
     <div class="modal-actions">
@@ -1989,7 +1989,7 @@ tr.tr-click{cursor:pointer;}
         <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
              vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
              pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
-        <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
+        <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
         <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:8px;"><label class="vg-check"><input type="checkbox" id="vg-motorista-preferida"> Cliente quer a motorista preferida dela</label></div>
       </div>
@@ -2082,7 +2082,7 @@ tr.tr-click{cursor:pointer;}
         <div class="obrig destaque"><label>Preço cobrado da cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div><span class="dica">Digite o valor final; o desconto é calculado.</span></div>
         <div class="obrig destaque sugerido"><label>Repasse à motorista (75%) <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div><span class="dica">É a oferta que ela vê antes de aceitar.</span></div>
         <div class="automatico"><label>Comissão Go Ladies <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-comissao-ladies" readonly tabindex="-1"><span class="dica">Calculada: cobrado − repasse.</span></div>
-        <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);">🔒 <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cobrado.</div>
+        <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);"><svg class=ic aria-hidden=true><use href=#i-lock /></svg> <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cobrado.</div>
         <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
              do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
         <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
@@ -2101,7 +2101,7 @@ tr.tr-click{cursor:pointer;}
           <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
           <div id="vg-oferta-status" style="margin-top:6px; font-size:12.5px; color:var(--muted);"></div>
           <div id="vg-confirmar-motorista-wrap" style="display:none; margin-top:6px;">
-            <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()">✅ Confirmar motorista marcada nesta viagem</button>
+            <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar motorista marcada nesta viagem</button>
             <span style="font-size:12px; color:var(--muted); margin-left:6px;">Use quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite no painel dela.</span>
           </div>
         </div>
@@ -2119,15 +2119,15 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="full" id="vg-reenvio-wrap" style="display:none;">
           <div id="vg-reenvio-codigo" style="display:none; margin-bottom:8px;">
-            <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()">📨 Reenviar código pra cliente</button>
+            <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Reenviar código pra cliente</button>
             <span id="vg-reenvio-codigo-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
           </div>
           <div id="vg-reenvio-oferta" style="display:none; margin-bottom:8px;">
-            <button type="button" class="btn secondary small" onclick="reenviarAvisoOfertas()">📨 Reenviar aviso pras motoristas</button>
+            <button type="button" class="btn secondary small" onclick="reenviarAvisoOfertas()"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Reenviar aviso pras motoristas</button>
             <span id="vg-reenvio-oferta-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
           </div>
           <div id="vg-reenvio-pix" style="display:none;">
-            <button type="button" class="btn secondary small" onclick="reenviarPixCliente()">📨 Reenviar pedido de Pix pra cliente</button>
+            <button type="button" class="btn secondary small" onclick="reenviarPixCliente()"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Reenviar pedido de Pix pra cliente</button>
             <span id="vg-reenvio-pix-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
           </div>
         </div>
@@ -2235,22 +2235,22 @@ tr.tr-click{cursor:pointer;}
 <div class="modal-backdrop" id="assistente-modal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0;">✨ Assistente IA</h3>
+      <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Assistente IA</h3>
       <button class="icon-btn" type="button" onclick="closeAssistenteModal()" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <p style="color:var(--text3); font-size:12.5px; margin:6px 0 12px;">Fale, escreva ou mande uma foto, print ou PDF. Eu interpreto, você confere e só então o cadastro é salvo.</p>
     <div class="ia-entrada">
       <textarea id="ia-texto" placeholder="Ex: cadastra uma viagem da Fernanda amanhã às 14h do Menino Deus até o aeroporto por 60 reais&#10;Ex: muda o preço da viagem da Carla de sexta pra 75&#10;Ex: (só a foto do flyer) → cadastra o evento"></textarea>
       <div class="ia-acoes">
-        <button type="button" class="btn secondary small" id="ia-btn-mic" onclick="alternarVozIA()">🎤 Falar</button>
-        <button type="button" class="btn secondary small" onclick="document.getElementById('ia-arquivo').click()">📷 Foto / PDF</button>
+        <button type="button" class="btn secondary small" id="ia-btn-mic" onclick="alternarVozIA()"><svg class=ic aria-hidden=true><use href=#i-microphone /></svg> Falar</button>
+        <button type="button" class="btn secondary small" onclick="document.getElementById('ia-arquivo').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Foto / PDF</button>
         <input type="file" id="ia-arquivo" accept="image/*,application/pdf" style="display:none;" onchange="selecionarArquivoAssistente(this)">
-        <button type="button" class="btn small" id="ia-btn-enviar" onclick="interpretarAssistente()" style="margin-left:auto;">✨ Interpretar</button>
+        <button type="button" class="btn small" id="ia-btn-enviar" onclick="interpretarAssistente()" style="margin-left:auto;"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Interpretar</button>
       </div>
       <div class="ia-arquivo" id="ia-arquivo-box" style="display:none;">
         <img id="ia-arquivo-prev" alt="" style="display:none;">
         <span id="ia-arquivo-nome" style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;"></span>
-        <button class="icon-btn" type="button" onclick="limparArquivoAssistente()" aria-label="Remover arquivo">🗑️</button>
+        <button class="icon-btn" type="button" onclick="limparArquivoAssistente()" aria-label="Remover arquivo"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div class="ia-status" id="ia-status"></div>
       <div class="ia-exemplos" id="ia-exemplos">Dica: no celular, "Foto / PDF" abre a câmera ou a galeria. Também dá pra colar um print (Ctrl+V) aqui dentro. Por enquanto entendo <b>Eventos</b> e <b>Viagens</b> (criar e alterar).</div>
@@ -2281,16 +2281,16 @@ tr.tr-click{cursor:pointer;}
       <div><label>Público estimado</label><input type="number" id="ev-publico" min="0" placeholder="Ex: 5000"></div>
       <div><label>Onde você viu</label><select id="ev-origem"></select></div>
       <div><label>Parceira (o) ligada <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><select id="ev-parceiro"><option value="">-</option></select></div>
-      <div><label>🔔 Lembrar de fazer contato em</label><input type="date" id="ev-lembrar-em"></div>
+      <div><label><svg class=ic aria-hidden=true><use href=#i-bell /></svg> Lembrar de fazer contato em</label><input type="date" id="ev-lembrar-em"></div>
       <div><label style="visibility:hidden;">.</label><div id="ev-lembrete-info" style="font-size:12px; color:var(--muted);"></div></div>
       <div class="full" id="ev-motivo-perda-wrap"><label>Motivo (se não fechou)</label><input type="text" id="ev-motivo-perda" placeholder="Ex: já tinham transporte, preço, sem retorno"></div>
       <div class="full"><label>Observações</label><textarea id="ev-observacoes" rows="2"></textarea></div>
     </div>
 
     <div id="ev-acoes-wrap" style="display:none; margin-top:14px; gap:8px; flex-wrap:wrap;">
-      <button class="btn secondary small" type="button" onclick="criarViagemDoEvento()">🚗 Criar viagem a partir deste evento</button>
-      <a class="btn secondary small" id="ev-link-gcal" href="#" target="_blank" rel="noopener" style="text-decoration:none;">📆 Adicionar ao Google Agenda</a>
-      <a class="btn secondary small" id="ev-link-maps" href="#" target="_blank" rel="noopener" style="text-decoration:none;">📍 Ver no Google Maps</a>
+      <button class="btn secondary small" type="button" onclick="criarViagemDoEvento()"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Criar viagem a partir deste evento</button>
+      <a class="btn secondary small" id="ev-link-gcal" href="#" target="_blank" rel="noopener" style="text-decoration:none;"><svg class=ic aria-hidden=true><use href=#i-calendar-event /></svg> Adicionar ao Google Agenda</a>
+      <a class="btn secondary small" id="ev-link-maps" href="#" target="_blank" rel="noopener" style="text-decoration:none;"><svg class=ic aria-hidden=true><use href=#i-map-pin /></svg> Ver no Google Maps</a>
     </div>
 
     <div id="ev-contatos-wrap" style="margin-top:18px;">
@@ -2648,13 +2648,13 @@ function linkWhats(numero, mensagem){
 function botaoWhats(numero, nome){
   const link = linkWhats(numero, nome ? `Olá, ${nome.split(' ')[0]}! Aqui é a Jú, da Go Ladies.` : null);
   if(!link) return '';
-  return `<a class="icon-btn" href="${link}" target="_blank" title="Chamar no WhatsApp" onclick="event.stopPropagation()">💬</a>`;
+  return `<a class="icon-btn" href="${link}" target="_blank" title="Chamar no WhatsApp" onclick="event.stopPropagation()"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg></a>`;
 }
 // Versão com rótulo, usada na coluna de ações das tabelas (padrão Top Garage).
 function botaoWhatsAcao(numero, nome){
   const link = linkWhats(numero, nome ? `Olá, ${nome.split(' ')[0]}! Aqui é a Jú, da Go Ladies.` : null);
   if(!link) return '';
-  return `<a class="act act-whats" href="${link}" target="_blank" title="Chamar no WhatsApp" onclick="event.stopPropagation()">💬 WhatsApp</a>`;
+  return `<a class="act act-whats" href="${link}" target="_blank" title="Chamar no WhatsApp" onclick="event.stopPropagation()"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> WhatsApp</a>`;
 }
 
 // ===== LOCALIZAÇÃO DA MOTORISTA =====
@@ -2682,7 +2682,7 @@ function linkMapaMotorista(m, separador){
   const fresca = min !== null && min <= LOCAL_FRESCA_MIN;
   const cor = fresca ? "var(--green)" : "var(--amber)";
   const aviso = fresca ? "" : " (posição antiga)";
-  return `<a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" onclick="event.stopPropagation()" title="Abrir no Google Maps${aviso}">📍 Ver no mapa</a>`
+  return `<a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" onclick="event.stopPropagation()" title="Abrir no Google Maps${aviso}"><svg class=ic aria-hidden=true><use href=#i-map-pin /></svg> Ver no mapa</a>`
     + `${separador || "<br>"}<span style="color:${cor}; font-size:12px;">${textoIdadeLocalizacao(min)}</span>`;
 }
 
@@ -2772,8 +2772,8 @@ function aplicarTema(tema){
   else document.documentElement.removeAttribute("data-tema");
   try{ localStorage.setItem("gl-tema", claro ? "claro" : "escuro"); }catch(e){}
   // O botão mostra pra onde ele leva, não o tema atual (decisão dela, 11/09/2026)
-  document.querySelectorAll(".js-btn-tema").forEach(b=>b.textContent = claro ? "🌙 Escuro" : "☀️ Claro");
-  document.querySelectorAll(".js-btn-tema-icone").forEach(b=>b.textContent = claro ? "🌙" : "☀️");
+  document.querySelectorAll(".js-btn-tema").forEach(b=>b.innerHTML = claro ? "<svg class=ic aria-hidden=true><use href=#i-moon /></svg> Escuro" : "<svg class=ic aria-hidden=true><use href=#i-sun /></svg> Claro");
+  document.querySelectorAll(".js-btn-tema-icone").forEach(b=>b.innerHTML = claro ? "<svg class=ic aria-hidden=true><use href=#i-moon /></svg>" : "<svg class=ic aria-hidden=true><use href=#i-sun /></svg>");
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute("content", claro ? "#FFFFFF" : "#141417");
   configurarCoresGrafico();
@@ -2926,7 +2926,7 @@ document.getElementById("toggle-senha").addEventListener("click", ()=>{
   const btn = document.getElementById("toggle-senha");
   const mostrando = inp.type === "text";
   inp.type = mostrando ? "password" : "text";
-  btn.textContent = mostrando ? "👁️" : "🙈";
+  btn.innerHTML = mostrando ? "<svg class=ic aria-hidden=true><use href=#i-eye /></svg>" : "<svg class=ic aria-hidden=true><use href=#i-eye-off /></svg>";
   btn.setAttribute("aria-label", mostrando ? "Mostrar senha" : "Ocultar senha");
 });
 
@@ -3510,7 +3510,7 @@ function renderLeads(){
       <td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td>
       <td>${escapeHtml(l.origem||"-")}</td>
       <td>${l.data||"-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhum lead encontrado</td></tr>`;
   aplicarRotulos();
@@ -3530,7 +3530,7 @@ function renderClientes(){
       <td>${escapeHtml(l.cidade||"-")}</td>
       <td>${qtdServicos}</td>
       <td><span class="status-badge ${ETAPA_CLASS[l.etapa]}">${escapeHtml(l.etapa)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="6">Nenhum cliente convertido ainda</td></tr>`;
 }
@@ -3565,7 +3565,7 @@ function renderParceiros(){
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
       <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
       <td>${ultimoContato||"-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="openParceiroModal(${p.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="openParceiroModal(${p.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="8">Nenhuma parceira (o) cadastrada ainda</td></tr>`;
 }
@@ -3588,7 +3588,7 @@ function renderOrcamentos(){
       <td>${o.valor_final!=null?formatarMoedaBR(o.valor_final):"-"}</td>
       <td><span class="tag ${o.status==='Aceito'?'ganho':o.status==='Recusado'?'perdido':'orc-env'}">${o.status}</span></td>
       <td>${o.data||"-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openOrcamentoModal(${o.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteOrcamento(${o.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openOrcamentoModal(${o.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteOrcamento(${o.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="8">Nenhum orçamento registrado</td></tr>`;
 }
@@ -3611,7 +3611,7 @@ function renderPecas(){
       <td>${p.origem||"-"}</td>
       <td>${qtd}</td>
       <td><span class="status-badge ${STATUS_PECA_CLASS[p.status]||''}">${p.status}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openPedidoModal(${p.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deletePedido(${p.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openPedidoModal(${p.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deletePedido(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Nenhum pedido de peça registrado</td></tr>`;
 }
@@ -3865,7 +3865,7 @@ function simular(){
   else if(porHora >= meta) nivel = "green";
   else if(porHora >= meta * 0.7) nivel = "amber";
   else nivel = "red";
-  const icone = { green:"🟢", amber:"🟡", red:"🔴" }[nivel];
+  const icone = { green:"<svg class=ic style=color:var(--c-green,#1FAA72) aria-hidden=true><use href=#i-ponto /></svg>", amber:"<svg class=ic style=color:var(--c-amber,#E0A93B) aria-hidden=true><use href=#i-ponto /></svg>", red:"<svg class=ic style=color:var(--c-red,#E5484D) aria-hidden=true><use href=#i-ponto /></svg>" }[nivel];
   const sem = document.getElementById("sim-semaforo");
   sem.innerHTML = sobra <= 0
     ? `${icone} <b>Não paga nem o carro dela</b><span class="sim-hora" style="color:var(--c-red);">${fmt(sobra)}</span>
@@ -4120,7 +4120,7 @@ function renderAcessosApp(){
   corpo.innerHTML = filtrados.map(e=>`
     <tr>
       <td>${e.criado_em ? new Date(e.criado_em).toLocaleString("pt-BR") : "-"}</td>
-      <td>${e.app==="motorista" ? "🚗 Motorista" : "👤 Cliente"}</td>
+      <td>${e.app==="motorista" ? "<svg class=ic aria-hidden=true><use href=#i-car /></svg> Motorista" : "<svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente"}</td>
       <td><span class="status-badge ${COR_TIPO_ACESSO[e.tipo]||"gray"}">${ROTULO_TIPO_ACESSO[e.tipo]||e.tipo}</span></td>
       <td>${escapeHtml(e.nome || "-")}</td>
       <td>${e.whatsapp ? `<a href="https://wa.me/55${String(e.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(e.whatsapp)}</a>` : escapeHtml(e.email || "-")}</td>
@@ -4343,7 +4343,7 @@ function renderTentativasPedido(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${escapeHtml(t.data_contato||"Sem data")} · ${escapeHtml(t.loja_nome||"-")}</strong>
-        <button class="icon-btn" type="button" onclick="deleteTentativa(${t.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteTentativa(${t.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">
         Estoque: ${escapeHtml(t.tem_estoque||"-")} · Valor: ${t.valor!=null?formatarMoedaBR(t.valor):"-"} · Prazo: ${escapeHtml(t.prazo||"-")} · Comissão: ${escapeHtml(t.topou_comissao||"-")}${t.garantia?" · Garantia: "+escapeHtml(t.garantia):""}
@@ -4418,7 +4418,7 @@ function renderDivulgacoes(){
       <td>${escapeHtml(parceiro?parceiro.nome:"-")}</td>
       <td>${d.data_inicio||"-"}</td>
       <td><span class="status-badge ${DIVULGACAO_STATUS_CLASS[d.status]||''}">${escapeHtml(d.status)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openDivulgacaoModal(${d.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteDivulgacao(${d.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openDivulgacaoModal(${d.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteDivulgacao(${d.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Nenhuma divulgação cadastrada</td></tr>`;
 }
@@ -4515,8 +4515,8 @@ function renderLinks(){
       <td>${quemVe}</td>
       <td style="white-space:nowrap; font-size:12.5px;">${resumoRetornoLink(l.id)}</td>
       <td>${l.ordem ?? 0}</td>
-      <td>${l.ativo ? "✅" : "⏸️"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openLinkModal(${l.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLink(${l.id})">🗑️</button></td>
+      <td>${l.ativo ? "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg>" : "<svg class=ic aria-hidden=true><use href=#i-player-pause /></svg>"}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openLinkModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLink(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Nenhum link cadastrado</td></tr>`;
 }
@@ -4528,13 +4528,13 @@ function resumoRetornoLink(linkId){
   const comEstrela = avs.filter(a=>a.estrelas);
   const media = comEstrela.length ? (comEstrela.reduce((s,a)=>s+a.estrelas,0)/comEstrela.length) : null;
   const partes = [];
-  if(media !== null) partes.push(`⭐ ${media.toFixed(1)} (${comEstrela.length})`);
+  if(media !== null) partes.push(`<svg class=ic aria-hidden=true><use href=#i-star /></svg> ${media.toFixed(1)} (${comEstrela.length})`);
   const compraram = avs.filter(a=>a.comprou==="sim").length;
-  if(compraram) partes.push(`🛒 ${compraram}`);
+  if(compraram) partes.push(`<svg class=ic aria-hidden=true><use href=#i-shopping-cart /></svg> ${compraram}`);
   const analisando = avs.filter(a=>a.comprou==="analisar").length;
-  if(analisando) partes.push(`🤔 ${analisando}`);
+  if(analisando) partes.push(`<svg class=ic aria-hidden=true><use href=#i-help-circle /></svg> ${analisando}`);
   const comentarios = avs.filter(a=>a.comentario).length;
-  if(comentarios) partes.push(`💬 ${comentarios}`);
+  if(comentarios) partes.push(`<svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> ${comentarios}`);
   return partes.join(" · ") || `${avs.length} resposta(s)`;
 }
 function renderRetornoLinkModal(linkId){
@@ -4551,7 +4551,7 @@ function renderRetornoLinkModal(linkId){
         ${a.comprou ? `<span class="status-badge ${a.comprou==="sim"?"green":a.comprou==="analisar"?"amber":"red"}">${LINK_COMPROU_ROTULO[a.comprou]}</span>` : ""}
         <span style="color:var(--muted); font-size:12px; margin-left:auto;">${a.atualizado_em ? new Date(a.atualizado_em).toLocaleDateString("pt-BR") : ""}</span>
       </div>
-      ${a.comentario ? `<div style="margin-top:4px; font-size:13px;">💬 ${escapeHtml(a.comentario)}</div>` : ""}
+      ${a.comentario ? `<div style="margin-top:4px; font-size:13px;"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> ${escapeHtml(a.comentario)}</div>` : ""}
     </div>`;
   }).join("");
 }
@@ -4638,7 +4638,7 @@ function renderVagas(){
       <td>${escapeHtml(v.local||"-")}</td>
       <td>${qtd}</td>
       <td><span class="status-badge ${VAGA_STATUS_CLASS[v.status]||''}">${escapeHtml(v.status)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openVagaModal(${v.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteVaga(${v.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openVagaModal(${v.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteVaga(${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="6">Nenhuma vaga cadastrada</td></tr>`;
 }
@@ -4724,7 +4724,7 @@ function renderCandidatasVaga(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${escapeHtml(c.nome)}</strong>
-        <button class="icon-btn" type="button" onclick="deleteCandidataVaga(${c.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteCandidataVaga(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">
         WhatsApp: ${escapeHtml(c.whatsapp||"-")} · Status: ${escapeHtml(c.status||"-")}${c.curriculo_link?" · Currículo: "+escapeHtml(c.curriculo_link):""}
@@ -4793,7 +4793,7 @@ function renderVendasLead(){
     return `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <span><strong>${v.servico_produto||"-"}</strong> · ${formatarMoedaBR(v.preco_total)} <span style="color:var(--muted);">${v.parcelado?`· ${pagas}/${parcelas.length} parcelas pagas`:`· ${pagas?"Pago":"Pendente"}`}</span></span>
-      <button class="icon-btn" type="button" onclick="deleteVenda(${v.id})">🗑️</button>
+      <button class="icon-btn" type="button" onclick="deleteVenda(${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
     </div>`;
   }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma venda registrada ainda.</p>`;
 }
@@ -4877,7 +4877,7 @@ function renderInteracoesLead(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
-        <button class="icon-btn" type="button" onclick="deleteInteracaoLead(${i.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteInteracaoLead(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
     </div>
@@ -5027,12 +5027,12 @@ function renderContatosParceiro(){
       <span>${acoes}</span>
     </div>`;
   if(!editingParceiroId){
-    wrap.innerHTML = parceiroContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteParceiro(${i})">🗑️</button>`)).join("")
+    wrap.innerHTML = parceiroContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteParceiro(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
       + avisoPendentes(parceiroContatosPendentes, "contato", "contatos");
     return;
   }
   const contatos = parceiroContatos.filter(c=>c.parceiro_id===editingParceiroId);
-  wrap.innerHTML = contatos.map(c=>linha(c, `${selectPromoverContato("parceiro", c.id)} ${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = contatos.map(c=>linha(c, `${selectPromoverContato("parceiro", c.id)} ${c.tipo==="Celular"?botaoWhats(c.numero, null):""} <button class="icon-btn" type="button" onclick="deleteContatoParceiro(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
 function lerContatoParceiroForm(){
@@ -5089,12 +5089,12 @@ function renderLinksParceiro(){
       ${acao}
     </div>`;
   if(!editingParceiroId){
-    wrap.innerHTML = parceiroLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteParceiro(${i})">🗑️</button>`)).join("")
+    wrap.innerHTML = parceiroLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteParceiro(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
       + avisoPendentes(parceiroLinksPendentes, "link", "links");
     return;
   }
   const registros = parceiroLinks.filter(l=>l.parceiro_id===editingParceiroId);
-  wrap.innerHTML = registros.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkParceiro(${l.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = registros.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkParceiro(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
 }
 function lerLinkParceiroForm(){
@@ -5147,12 +5147,12 @@ function renderEnderecosParceiro(){
       ${acao}
     </div>`;
   if(!editingParceiroId){
-    wrap.innerHTML = parceiroEnderecosPendentes.map((e,i)=>linha(e, `<button class="icon-btn" type="button" onclick="removerEnderecoPendenteParceiro(${i})">🗑️</button>`)).join("")
+    wrap.innerHTML = parceiroEnderecosPendentes.map((e,i)=>linha(e, `<button class="icon-btn" type="button" onclick="removerEnderecoPendenteParceiro(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
       + avisoPendentes(parceiroEnderecosPendentes, "endereço", "endereços");
     return;
   }
   const enderecos = parceiroEnderecos.filter(e=>e.parceiro_id===editingParceiroId);
-  wrap.innerHTML = enderecos.map(e=>linha(e, `<button class="icon-btn" type="button" onclick="deleteEnderecoParceiro(${e.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = enderecos.map(e=>linha(e, `<button class="icon-btn" type="button" onclick="deleteEnderecoParceiro(${e.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum endereço registrado ainda.</p>`;
 }
 function lerEnderecoParceiroForm(){
@@ -5211,10 +5211,10 @@ function renderInteracoesParceiro(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
-        <button class="icon-btn" type="button" onclick="deleteInteracaoParceiro(${i.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteInteracaoParceiro(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
-      ${i.link_drive?`<div style="margin-top:2px;"><a href="${normalizarLink(i.link_drive)}" target="_blank" rel="noopener">📁 Ver documentos</a></div>`:""}
+      ${i.link_drive?`<div style="margin-top:2px;"><a href="${normalizarLink(i.link_drive)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Ver documentos</a></div>`:""}
     </div>
   `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma conversa registrada ainda.</p>`;
 }
@@ -5435,7 +5435,7 @@ function renderTransporteMotoristas(){
     const faltam = checklistDocumentosMotorista(m.id).filter(i=>!i.ok).length;
     const media = mediaAvaliacaoMotorista(m.id);
     return `<tr class="tr-click" onclick="openMotoristaModal(${m.id})">
-      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}</td>
+      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}</td>
       <td>${numeroClicavel(m.whatsapp)}</td>
       <td>${escapeHtml(m.regiao||"-")}${m.veiculo?"<br><span style='color:var(--muted); font-size:12px;'>"+escapeHtml(m.veiculo)+"</span>":""}</td>
       <td>${emDia?'<span class="tag urg-baixa">Em dia</span>':`<span class="tag urg-alta">${faltam} pendente${faltam>1?"s":""}</span>`}</td>
@@ -5443,7 +5443,7 @@ function renderTransporteMotoristas(){
       <td>${badgeCertificacao(m) || "<span style='color:var(--muted);'>-</span>"}</td>
       <td>${media?media+" ★":"-"}</td>
       <td>${linkMapaMotorista(m) || "<span style='color:var(--muted);'>-</span>"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(m.whatsapp, m.nome)} <button class="act act-edit" onclick="openMotoristaModal(${m.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMotorista(${m.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(m.whatsapp, m.nome)} <button class="act act-edit" onclick="openMotoristaModal(${m.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMotorista(${m.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="9">Nenhuma motorista cadastrada ainda</td></tr>`;
 }
@@ -5470,9 +5470,9 @@ function closeAssistenteModal(){
   pararVozIA();
   closeModal("assistente-modal");
 }
-function statusAssistente(msg, cor){
+function statusAssistente(msg, cor, icone){
   const el = document.getElementById("ia-status");
-  el.textContent = msg || "";
+  el.innerHTML = (icone ? ic(icone) + " " : "") + escapeHtml(msg || "");
   el.style.color = cor ? `var(--${cor})` : "var(--text3)";
 }
 
@@ -5510,15 +5510,15 @@ function alternarVozIA(){
   try{ iaReconhecimento.start(); }catch(err){ statusAssistente("Não consegui ligar o microfone.", "c-red"); return; }
   iaGravando = true;
   const btn = document.getElementById("ia-btn-mic");
-  btn.textContent = "⏹ Parar"; btn.classList.add("gravando");
-  statusAssistente("🎙️ Ouvindo... fale o pedido e clique em Parar.", "rosa-texto");
+  btn.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-player-stop /></svg> Parar"; btn.classList.add("gravando");
+  statusAssistente("Ouvindo... fale o pedido e clique em Parar.", "rosa-texto", "microphone");
 }
 function pararVozIA(){
   if(iaReconhecimento){ try{ iaReconhecimento.stop(); }catch(e){} iaReconhecimento = null; }
   if(iaGravando){
     iaGravando = false;
     const btn = document.getElementById("ia-btn-mic");
-    btn.textContent = "🎤 Falar"; btn.classList.remove("gravando");
+    btn.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-microphone /></svg> Falar"; btn.classList.remove("gravando");
     statusAssistente("Confira o texto e clique em Interpretar.");
   }
 }
@@ -5613,7 +5613,7 @@ async function interpretarAssistente(){
   btn.disabled = true; btn.style.opacity = ".6";
   document.getElementById("ia-resultado").innerHTML = "";
   iaAssistAcao = null;
-  statusAssistente("⏳ Interpretando com IA...", "c-amber");
+  statusAssistente("Interpretando com IA...", "c-amber", "hourglass");
   try{
     const { data: { session } } = await sb.auth.getSession();
     if(!session) throw new Error("Não autenticada");
@@ -5632,7 +5632,7 @@ async function interpretarAssistente(){
     statusAssistente("");
     renderResultadoAssistente(result.acao, result.dados);
   }catch(e){
-    statusAssistente("❌ " + (e.message || "Erro ao interpretar. Tente de novo."), "c-red");
+    statusAssistente(e.message || "Erro ao interpretar. Tente de novo.", "c-red", "circle-x");
     console.error(e);
   }finally{
     btn.disabled = false; btn.style.opacity = "1";
@@ -5662,13 +5662,13 @@ function fmtValorIA(chave, v){
 function renderResultadoAssistente(acao, d){
   const box = document.getElementById("ia-resultado");
   if(acao === "nao_entendi"){
-    box.innerHTML = `<div class="ia-card"><h4>🤔 Preciso de mais detalhes</h4>
+    box.innerHTML = `<div class="ia-card"><h4><svg class=ic aria-hidden=true><use href=#i-help-circle /></svg> Preciso de mais detalhes</h4>
       <div class="ia-resumo">${escapeHtml(d.mensagem||"")}</div>
       ${(d.perguntas||[]).length ? `<ul>${d.perguntas.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>` : ""}
       <div class="ia-aviso">Complete o texto acima e clique em Interpretar de novo.</div></div>`;
     return;
   }
-  const titulos = { criar_evento:"📅 Novo evento", editar_evento:"📅 Alterar evento", criar_viagem:"🚗 Nova viagem", editar_viagem:"🚗 Alterar viagem" };
+  const titulos = { criar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Novo evento", editar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Alterar evento", criar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Nova viagem", editar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Alterar viagem" };
   const alvo = acao === "editar_evento" ? (eventos.find(e=>e.id===d.evento_id)||{}).nome
              : acao === "editar_viagem" ? (()=>{ const v = viagens.find(x=>x.id===d.viagem_id); return v ? `#${v.id} · ${(clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome||"sem cliente"} · ${fmtDataBR(v.data)||""}` : null; })()
              : null;
@@ -5682,10 +5682,10 @@ function renderResultadoAssistente(acao, d){
   box.innerHTML = `<div class="ia-card"><h4>${titulos[acao]||acao}${alvo ? ` <span style="color:var(--text2); font-weight:400;">· ${escapeHtml(alvo)}</span>` : ""}</h4>
     <div class="ia-resumo">${escapeHtml(d.resumo||"")}</div>
     ${itens ? `<ul>${itens}</ul>` : `<div class="ia-aviso">Nenhum campo identificado.</div>`}
-    ${avisos.map(a=>`<div class="ia-aviso">⚠️ ${a}</div>`).join("")}
+    ${avisos.map(a=>`<div class="ia-aviso"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> ${a}</div>`).join("")}
     <div class="modal-actions" style="margin-top:12px;">
       <button class="btn ghost small" type="button" onclick="document.getElementById('ia-resultado').innerHTML=''; iaAssistAcao=null;">Cancelar</button>
-      <button class="btn small" type="button" onclick="confirmarAssistente()">✅ Confirmar e conferir</button>
+      <button class="btn small" type="button" onclick="confirmarAssistente()"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e conferir</button>
     </div>
     <div style="font-size:11.5px; color:var(--text3); margin-top:6px;">Ao confirmar, o cadastro abre preenchido (campos em rosa vieram da IA). Nada é salvo até você clicar em Salvar lá.</div>
   </div>`;
@@ -5785,7 +5785,7 @@ async function confirmarLeituraIA(tipo){
   const status = document.getElementById(`ia-${tipo}-status`);
   const btn = document.getElementById(`ia-${tipo}-btn`);
   status.style.display = "block"; status.style.color = "var(--amber)";
-  status.textContent = "⏳ Lendo documento com IA...";
+  status.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Lendo documento com IA...";
   btn.disabled = true; btn.style.opacity = ".6";
   try{
     const { data: { session } } = await sb.auth.getSession();
@@ -5800,17 +5800,17 @@ async function confirmarLeituraIA(tipo){
     if(!resp.ok || result.error) throw new Error(result.error || "Erro na leitura");
     IA_DOC_CONFIG[tipo].aplicarDados(result.dados);
     status.style.color = "var(--green)";
-    status.textContent = "✅ Dados preenchidos! O documento é salvo junto quando você clicar em \"Salvar\".";
+    status.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Dados preenchidos! O documento é salvo junto quando você clicar em \"Salvar\".";
     docPrincipalArquivoPendente[tipo] = arquivo;
     document.getElementById(`dp-${tipo}-data`).value = new Date().toISOString().slice(0,10);
     document.getElementById(`dp-${tipo}-status`).value = "Lido por IA";
   }catch(e){
     status.style.color = "var(--red)";
-    status.textContent = "❌ " + (e.message || "Erro ao ler. Preencha manualmente.");
+    status.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-x /></svg> " + escapeHtml(e.message || "Erro ao ler. Preencha manualmente.");
     console.error(e);
   }finally{
     btn.disabled = false; btn.style.opacity = "1";
-    btn.textContent = tipo==="cnh" ? "📄 Trocar CNH" : "📄 Trocar CRLV";
+    btn.innerHTML = tipo==="cnh" ? "<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Trocar CNH" : "<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Trocar CRLV";
     document.getElementById(`ia-${tipo}-file`).value = "";
     iaArquivoSelecionado[tipo] = null;
   }
@@ -5896,7 +5896,7 @@ function carregarDocPrincipal(tipo){
   const fileInput = document.getElementById(`dp-${tipo}-file`);
   if(fileInput) fileInput.value = "";
   document.getElementById(`dp-${tipo}-arquivo-atual`).innerHTML = doc?.url
-    ? `<a href="#" onclick="abrirDocumentoMotorista('${doc.url}');return false;">📎 ver arquivo</a>`
+    ? `<a href="#" onclick="abrirDocumentoMotorista('${doc.url}');return false;"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ver arquivo</a>`
     : "";
 }
 async function salvarDocPrincipal(tipo, motoristaId){
@@ -5934,8 +5934,8 @@ function renderHistoricoDocumentos(){
   antigos.sort((a,b)=>b.id-a.id);
   wrap.innerHTML = antigos.map(d=>`
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
-      <span>${d.tipo_documento}${d.validade?" · "+d.validade:""} <span class="tag ${d.status_verificacao==='Verificado'?'ativo':d.status_verificacao==='Vencido'?'perdido':d.status_verificacao==='Lido por IA'?'negociacao':'urg-media'}">${d.status_verificacao||"-"}</span>${d.url?` <a href="#" onclick="abrirDocumentoMotorista('${d.url}');return false;" style="font-size:11.5px;">📎 ver arquivo</a>`:""}</span>
-      <button class="icon-btn" type="button" onclick="deleteDocumentoMotorista(${d.id})">🗑️</button>
+      <span>${d.tipo_documento}${d.validade?" · "+d.validade:""} <span class="tag ${d.status_verificacao==='Verificado'?'ativo':d.status_verificacao==='Vencido'?'perdido':d.status_verificacao==='Lido por IA'?'negociacao':'urg-media'}">${d.status_verificacao||"-"}</span>${d.url?` <a href="#" onclick="abrirDocumentoMotorista('${d.url}');return false;" style="font-size:11.5px;"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ver arquivo</a>`:""}</span>
+      <button class="icon-btn" type="button" onclick="deleteDocumentoMotorista(${d.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
     </div>
   `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum documento antigo ainda.</p>`;
 }
@@ -6111,8 +6111,8 @@ function openMotoristaModal(id){
   carregarDocPrincipal("crlv");
   document.getElementById("ia-cnh-status").style.display = "none";
   document.getElementById("ia-crlv-status").style.display = "none";
-  document.getElementById("ia-cnh-btn").textContent = "📄 Selecionar CNH (foto ou PDF)";
-  document.getElementById("ia-crlv-btn").textContent = "📄 Selecionar CRLV (foto ou PDF)";
+  document.getElementById("ia-cnh-btn").innerHTML = "<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CNH (foto ou PDF)";
+  document.getElementById("ia-crlv-btn").innerHTML = "<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CRLV (foto ou PDF)";
   carregarDocPrincipal("antecedentes");
   carregarDocPrincipal("endereco");
   document.getElementById("mt-status").value = m.status||MOTORISTA_STATUS_PADRAO;
@@ -6124,7 +6124,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-acesso-status").innerHTML = (m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
-    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente">🚗 Também é cliente (#${cliDaMotorista.id})</span>` : "")
+    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente (#${cliDaMotorista.id})</span>` : "")
     + (id ? htmlPedidoExclusao(m, "motorista") : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
@@ -6150,8 +6150,8 @@ function renderDocumentosMotorista(){
   const docs = documentosMotorista.filter(d=>d.motorista_id===editingMotoristaId && !docsPrincipaisTipos.includes(d.tipo_documento));
   wrap.innerHTML = docs.map(d=>`
     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
-      <span>${d.tipo_documento}${d.validade?" · até "+d.validade:""} <span class="tag ${d.status_verificacao==='Verificado'?'ativo':d.status_verificacao==='Vencido'?'perdido':d.status_verificacao==='Lido por IA'?'negociacao':'urg-media'}">${d.status_verificacao}</span>${d.url?` <a href="#" onclick="abrirDocumentoMotorista('${d.url}');return false;" style="font-size:11.5px;">📎 ver arquivo</a>`:""}</span>
-      <button class="icon-btn" type="button" onclick="deleteDocumentoMotorista(${d.id})">🗑️</button>
+      <span>${d.tipo_documento}${d.validade?" · até "+d.validade:""} <span class="tag ${d.status_verificacao==='Verificado'?'ativo':d.status_verificacao==='Vencido'?'perdido':d.status_verificacao==='Lido por IA'?'negociacao':'urg-media'}">${d.status_verificacao}</span>${d.url?` <a href="#" onclick="abrirDocumentoMotorista('${d.url}');return false;" style="font-size:11.5px;"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ver arquivo</a>`:""}</span>
+      <button class="icon-btn" type="button" onclick="deleteDocumentoMotorista(${d.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
     </div>
   `).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhum documento registrado ainda.</p>`;
 }
@@ -6209,7 +6209,7 @@ function renderObservacoesMotorista(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${o.data||"Sem data"}</strong>
-        <button class="icon-btn" type="button" onclick="deleteObservacaoMotorista(${o.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteObservacaoMotorista(${o.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">${escapeHtml(o.observacao||"")}</div>
     </div>
@@ -6369,16 +6369,16 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir">🗑️ pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente">🔐</span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)">🚗</span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar.">⚠️</span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
-      <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)">⭐</span>`:""}</td>
+      <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)"><svg class=ic aria-hidden=true><use href=#i-star /></svg></span>`:""}</td>
       <td>${r.ultima_viagem ? formatarDataBR(r.ultima_viagem) : "-"}</td>
       <td style="white-space:nowrap;">${r.pago ? formatarMoedaBR(r.pago) : "-"}</td>
       <td style="white-space:nowrap;">${r.pendente ? `<span class="status-badge red">${formatarMoedaBR(r.pendente)}</span>` : "-"}</td>
       <td>${r.nota!=null ? `${r.nota.toFixed(1)} <small style="color:var(--muted);">(${r.qtd_avaliacoes})</small>` : "-"}</td>
       <td>${r.motorista_top ? `${escapeHtml(r.motorista_top.split(" ")[0])} <small style="color:var(--muted);">(${r.motorista_top_qtd}x)</small>` : "-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(r.whatsapp, r.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${r.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${r.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(r.whatsapp, r.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${r.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${r.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="10">${temPeriodo ? "Nenhuma cliente viajou nesse período" : "Nenhuma cliente de viagem cadastrada ainda"}</td></tr>`;
   preencherFotosClientes(document.getElementById("clientes-transporte-body"));
@@ -6443,8 +6443,8 @@ function htmlPedidoExclusao(registro, tipo){
   const concluida = /\[concluída em/.test(registro.exclusao_motivo || "");
   const dias = Math.floor((Date.now() - new Date(registro.exclusao_solicitada_em).getTime()) / 86400000);
   const motivo = (registro.exclusao_motivo || "").replace(/\s*\[concluída em [^\]]*\]/, "").trim();
-  if(concluida) return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--border); color:var(--muted);">🗑️ Conta excluída (dados anonimizados${registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)?.[1] ? " em " + registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)[1] : ""}).</div>`;
-  return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-red-bg); color:var(--ink);">🗑️ <b>Pediu a exclusão da conta</b> em ${formatarDataBR(registro.exclusao_solicitada_em.slice(0,10))} (há ${dias} dia${dias===1?"":"s"}; o combinado é concluir em até 7).${motivo ? `<br><small>Motivo: ${escapeHtml(motivo)}</small>` : ""}<br><small>Antes de concluir, confira viagem em aberto${tipo==="motorista" ? " e repasse pendente" : " e pagamento pendente"}. Concluir anonimiza nome, contato${tipo==="motorista" ? ", documentos e registros do carro" : ""}, apaga a foto e o login. Não dá pra desfazer.</small><br><button type="button" class="act act-del" style="margin-top:6px;" onclick="concluirExclusao('${tipo}', ${registro.id})">🗑️ Concluir exclusão</button></div>`;
+  if(concluida) return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--border); color:var(--muted);"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> Conta excluída (dados anonimizados${registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)?.[1] ? " em " + registro.exclusao_motivo.match(/\[concluída em ([^\]]*)\]/)[1] : ""}).</div>`;
+  return `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-red-bg); color:var(--ink);"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> <b>Pediu a exclusão da conta</b> em ${formatarDataBR(registro.exclusao_solicitada_em.slice(0,10))} (há ${dias} dia${dias===1?"":"s"}; o combinado é concluir em até 7).${motivo ? `<br><small>Motivo: ${escapeHtml(motivo)}</small>` : ""}<br><small>Antes de concluir, confira viagem em aberto${tipo==="motorista" ? " e repasse pendente" : " e pagamento pendente"}. Concluir anonimiza nome, contato${tipo==="motorista" ? ", documentos e registros do carro" : ""}, apaga a foto e o login. Não dá pra desfazer.</small><br><button type="button" class="act act-del" style="margin-top:6px;" onclick="concluirExclusao('${tipo}', ${registro.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> Concluir exclusão</button></div>`;
 }
 async function concluirExclusao(tipo, id){
   const nome = (tipo==="motorista" ? motoristas : clientesTransporte).find(x=>x.id===id)?.nome || "#"+id;
@@ -6457,19 +6457,19 @@ async function concluirExclusao(tipo, id){
 }
 function htmlAcessoPainelCliente(c){
   let html = c.auth_user_id
-    ? `🔐 <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
-    : `🔓 Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
+    ? `<svg class=ic aria-hidden=true><use href=#i-lock /></svg> <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
+    : `<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
   html += htmlPedidoExclusao(c, "cliente");
   const mot = motoristaDaCliente(c.id);
   if(mot){
-    html += `<div style="margin-top:6px;">🚗 <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
+    html += `<div style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
   }
   const dups = duplicatasCliente(c);
   if(dups.length){
-    html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);">⚠️ Mesmo WhatsApp de: ` +
+    html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp de: ` +
       dups.map(d=>`<b>${escapeHtml(d.nome)}</b> (#${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
       `.<br><small>Unificar move as viagens pra esta cliente, completa o que estiver vazio e apaga a outra.</small><br>` +
-      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})">🔗 Unificar, mantendo esta (#${c.id}) e apagando #${d.id}</button>`).join(" ") +
+      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (#${c.id}) e apagando #${d.id}</button>`).join(" ") +
       `</div>`;
   }
   return html;
@@ -6656,7 +6656,7 @@ function renderParadasModal(){
         <span style="flex:1;"></span>
         <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
         <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
-        <button type="button" class="icon-btn" title="Remover" onclick="removerParadaViagem(${i})">🗑️</button>
+        <button type="button" class="icon-btn" title="Remover" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div><label>Tipo</label><select onchange="paradasModal[${i}].tipo=this.value">${PARADA_TIPOS.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
       <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value"></div>
@@ -6891,11 +6891,11 @@ function atualizarAlertaMargem(){
   // Sem duração prevista não dá pra julgar por hora: fica amarelo até preencher
   const porHora = min > 0 ? sobra / (minTotal / 60) : null;
   let nivel, icone;
-  if(sobra <= 0){ nivel = "red"; icone = "🔴"; }
-  else if(porHora === null){ nivel = "amber"; icone = "🟡"; }
-  else if(porHora >= MARGEM_REF.metaHora){ nivel = "green"; icone = "🟢"; }
-  else if(porHora >= MARGEM_REF.metaHora * 0.7){ nivel = "amber"; icone = "🟡"; }
-  else { nivel = "red"; icone = "🔴"; }
+  if(sobra <= 0){ nivel = "red"; icone = "<svg class=ic style=color:var(--c-red,#E5484D) aria-hidden=true><use href=#i-ponto /></svg>"; }
+  else if(porHora === null){ nivel = "amber"; icone = "<svg class=ic style=color:var(--c-amber,#E0A93B) aria-hidden=true><use href=#i-ponto /></svg>"; }
+  else if(porHora >= MARGEM_REF.metaHora){ nivel = "green"; icone = "<svg class=ic style=color:var(--c-green,#1FAA72) aria-hidden=true><use href=#i-ponto /></svg>"; }
+  else if(porHora >= MARGEM_REF.metaHora * 0.7){ nivel = "amber"; icone = "<svg class=ic style=color:var(--c-amber,#E0A93B) aria-hidden=true><use href=#i-ponto /></svg>"; }
+  else { nivel = "red"; icone = "<svg class=ic style=color:var(--c-red,#E5484D) aria-hidden=true><use href=#i-ponto /></svg>"; }
   const fmt = v => formatarMoedaBR(v);
   let texto = sobra > 0
     ? `<b>Sobram ${fmt(sobra)} pra motorista</b>${porHora !== null ? ` · <b>${fmt(porHora)}/h</b>` : ""}`
@@ -7009,29 +7009,29 @@ function atualizarStatusOferta(){
     || !!(clienteSel && clienteSel.pos_pago)
     || document.getElementById("vg-lid-status").value === "Pago";
   if(status === "Cotando preço"){
-    el.textContent = "🧮 Preço calculado pela tabela com a rota medida no app; a cliente ainda não vê o valor. Confira (ou ajuste) e mude o status pra 'Aguardando cliente confirmar preço', ou use o botão 'Enviar pra cliente' no cartão.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Preço calculado pela tabela com a rota medida no app; a cliente ainda não vê o valor. Confira (ou ajuste) e mude o status pra 'Aguardando cliente confirmar preço', ou use o botão 'Enviar pra cliente' no cartão.";
   } else if(status === "Aguardando cliente confirmar preço"){
-    el.textContent = "🔒 Oferta fechada: esperando a cliente responder o preço no WhatsApp. Quem você marcar aqui só vê a corrida quando ela aceitar.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-lock /></svg> Oferta fechada: esperando a cliente responder o preço no WhatsApp. Quem você marcar aqui só vê a corrida quando ela aceitar.";
   } else if(status === "Preço recusado pela cliente"){
-    el.textContent = "🔒 Oferta fechada: a cliente pediu ajuste. Corrija o valor e volte o status pra 'Aguardando cliente confirmar preço' pra reenviar.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-lock /></svg> Oferta fechada: a cliente pediu ajuste. Corrija o valor e volte o status pra 'Aguardando cliente confirmar preço' pra reenviar.";
   } else if(status === "Cancelada"){
-    el.textContent = "🔒 Viagem cancelada, nenhuma motorista vê essa oferta.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-lock /></svg> Viagem cancelada, nenhuma motorista vê essa oferta.";
   } else if(status === "Aguardando pagamento"){
-    el.textContent = pagoOk
-      ? "💵 Pagamento ok: ao salvar, a viagem sai desta coluna e a oferta abre pras motoristas marcadas."
-      : "💵 Oferta fechada: a cliente aceitou o valor e o pedido de Pix foi pelo WhatsApp. Quando cair, use o botão 'Pix recebido' no cartão ou marque Pago em 'Pagamento da cliente' e salve.";
+    el.innerHTML = pagoOk
+      ? "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Pagamento ok: ao salvar, a viagem sai desta coluna e a oferta abre pras motoristas marcadas."
+      : "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Oferta fechada: a cliente aceitou o valor e o pedido de Pix foi pelo WhatsApp. Quando cair, use o botão 'Pix recebido' no cartão ou marque Pago em 'Pagamento da cliente' e salve.";
   } else if(status === "Escolher motoristas"){
-    el.textContent = marcadas
-      ? "✅ Ao salvar, a viagem vai sozinha pra 'Aguardando aceite de motorista' e " + (marcadas > 1 ? "as " + marcadas + " motoristas marcadas recebem" : "a motorista marcada recebe") + " o aviso no WhatsApp em até 1 min."
-      : "💵 Pagamento ok, falta só você: marque acima quem pode pegar essa corrida e salve. A oferta abre na hora pra elas.";
+    el.innerHTML = marcadas
+      ? "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Ao salvar, a viagem vai sozinha pra 'Aguardando aceite de motorista' e " + (marcadas > 1 ? "as " + marcadas + " motoristas marcadas recebem" : "a motorista marcada recebe") + " o aviso no WhatsApp em até 1 min."
+      : "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Pagamento ok, falta só você: marque acima quem pode pegar essa corrida e salve. A oferta abre na hora pra elas.";
   } else if(cotado !== "" && !confirmado){
-    el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção 4. Preço pra liberar agora.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-lock /></svg> Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção 4. Preço pra liberar agora.";
   } else if(!pagoOk){
-    el.textContent = "💵 Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, marque 'Liberar oferta sem esperar o Pix'.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, marque 'Liberar oferta sem esperar o Pix'.";
   } else if(status === "Aguardando aceite de motorista"){
-    el.textContent = "⏳ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas já foram avisadas e" : "a motorista marcada já foi avisada e") + " a corrida está esperando alguém clicar em Aceitar. Quando isso acontecer o status vira 'Confirmada' sozinho.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas já foram avisadas e" : "a motorista marcada já foi avisada e") + " a corrida está esperando alguém clicar em Aceitar. Quando isso acontecer o status vira 'Confirmada' sozinho.";
   } else if(marcadas){
-    el.textContent = "✅ Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas marcadas veem" : "a motorista marcada vê") + " essa corrida no painel e recebe aviso no WhatsApp em até 1 min.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas marcadas veem" : "a motorista marcada vê") + " essa corrida no painel e recebe aviso no WhatsApp em até 1 min.";
   } else {
     el.textContent = "Marque agora quem pode pegar essa corrida. A oferta abre sozinha pra elas quando a cliente confirmar o valor.";
   }
@@ -7051,9 +7051,9 @@ function atualizarBotaoConfirmarMotorista(){
   wrap.style.display = (v && marcadas.length === 1) ? "block" : "none";
   const btn = wrap.querySelector("button");
   const ofertaAceita = v && viagemOfertas.some(o=>o.viagem_id===v.id && o.motorista_id===marcadas[0] && o.desfecho==="Aceita");
-  if(btn) btn.textContent = (v && v.motorista_id_confirmada === marcadas[0] && ofertaAceita)
-    ? "✅ Motorista já confirmada nesta viagem"
-    : "✅ Confirmar motorista marcada nesta viagem";
+  if(btn) btn.innerHTML = (v && v.motorista_id_confirmada === marcadas[0] && ofertaAceita)
+    ? "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Motorista já confirmada nesta viagem"
+    : "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar motorista marcada nesta viagem";
 }
 async function confirmarMotoristaManualmente(){
   const marcadas = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value));
@@ -7124,13 +7124,13 @@ function urgenciaViagem(v){
   if(v.status==='Em andamento' || v.status==='Concluída' || v.status==='Cancelada' || v.saida_confirmada) return null;
   const partida = new Date(v.data + "T" + v.horario_partida);
   const diffMin = (partida - new Date()) / 60000;
-  if(diffMin < 0) return {classe:"urg-atraso", texto:"⚠️ Atrasada, sem confirmação"};
+  if(diffMin < 0) return {classe:"urg-atraso", texto:"<svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Atrasada, sem confirmação"};
   // Minutos reais em todas as faixas; só a cor muda por faixa (antes 31 min virava "~1h").
   const min = Math.max(0,Math.round(diffMin));
   const txt = (min === 1 ? "Falta 1 min" : "Faltam " + min + " min");
-  if(diffMin <= 15) return {classe:"urg-15", texto:"🔴 " + txt};
-  if(diffMin <= 30) return {classe:"urg-30", texto:"🟠 " + txt};
-  if(diffMin <= 60) return {classe:"urg-60", texto:"🟡 " + txt};
+  if(diffMin <= 15) return {classe:"urg-15", texto:"<svg class=ic style=color:var(--c-red,#E5484D) aria-hidden=true><use href=#i-ponto /></svg> " + txt};
+  if(diffMin <= 30) return {classe:"urg-30", texto:"<svg class=ic style=color:#F08A24 aria-hidden=true><use href=#i-ponto /></svg> " + txt};
+  if(diffMin <= 60) return {classe:"urg-60", texto:"<svg class=ic style=color:var(--c-amber,#E0A93B) aria-hidden=true><use href=#i-ponto /></svg> " + txt};
   return null;
 }
 if(!window._intervaloUrgenciaKanban){
@@ -7156,19 +7156,19 @@ function renderTransporteViagens(){
         // viagem concluída sem pagamento lançado.
         let pix = "";
         if(v.preco_cotado && Number(v.preco_cotado) > 0 && !pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago")){
-          if(v.status === "Concluída") pix = `<span class="kc-pix">💵 Pagamento pendente</span>`;
-          else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada" && v.status !== "Aguardando pagamento") pix = `<span class="kc-pix">💵 Aguardando Pix</span>`;
+          if(v.status === "Concluída") pix = `<span class="kc-pix"><svg class=ic aria-hidden=true><use href=#i-cash /></svg> Pagamento pendente</span>`;
+          else if(v.preco_confirmado_cliente && !pagamentoClienteOk(v) && v.status !== "Cancelada" && v.status !== "Aguardando pagamento") pix = `<span class="kc-pix"><svg class=ic aria-hidden=true><use href=#i-cash /></svg> Aguardando Pix</span>`;
         }
         // Coluna "Escolher motoristas": diz por que a oferta já pode abrir.
         if(v.status === "Escolher motoristas" && !pix){
           const pagou = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
           const semCobranca = !v.preco_cotado || Number(v.preco_cotado) <= 0;
-          pix = `<span class="kc-pix">${pagou ? "💵 Paga" : semCobranca ? "🎟️ Sem cobrança" : v.liberar_sem_pagamento ? "🔓 Liberada sem Pix" : "🕓 Pós-pago"}</span>`;
+          pix = `<span class="kc-pix">${pagou ? "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Paga" : semCobranca ? "<svg class=ic aria-hidden=true><use href=#i-ticket /></svg> Sem cobrança" : v.liberar_sem_pagamento ? "<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberada sem Pix" : "<svg class=ic aria-hidden=true><use href=#i-clock /></svg> Pós-pago"}</span>`;
         }
         // Coluna "Aguardando pagamento": um clique registra o Pix e a viagem
         // segue sozinha (trigger no banco) pra aceite da motorista.
         const btnPix = v.status === "Aguardando pagamento"
-          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); registrarPixRecebido(${v.id})">💵 Pix recebido</button>`
+          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); registrarPixRecebido(${v.id})"><svg class=ic aria-hidden=true><use href=#i-cash /></svg> Pix recebido</button>`
           : "";
         // Coluna "Cotando preço": rota medida no app e preço da tabela; um
         // clique manda pra cliente. Em "Revisando preço" o mesmo botão reenvia
@@ -7176,22 +7176,22 @@ function renderTransporteViagens(){
         const cotando = v.status === "Cotando preço";
         const revisando = v.status === "Preço recusado pela cliente";
         const btnEnviar = (cotando || revisando) && v.preco_cotado > 0
-          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); enviarCotacaoCliente(${v.id})">📤 ${revisando ? "Reenviar" : "Enviar"} pra cliente</button>`
+          ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); enviarCotacaoCliente(${v.id})"><svg class=ic aria-hidden=true><use href=#i-send /></svg> ${revisando ? "Reenviar" : "Enviar"} pra cliente</button>`
           : "";
         const trechoTxt = (km, min) => [km ? Number(km).toLocaleString("pt-BR") + " km" : "", min ? "~" + Math.round(min) + " min" : ""].filter(Boolean).join(" · ");
         // Viagem com km da volta medido mostra cada trecho numa linha; as
         // antigas (km de ida e volta somados) seguem no formato de antes.
         const detCotacao = !cotando ? "" : v.distancia_km_retorno
-          ? `<div style="color:var(--muted); font-size:11px;">ida ${trechoTxt(v.distancia_km, v.duracao_prevista_min)}${v.adicional_noturno ? " · 🌙 +30%" : ""}<br>volta ${trechoTxt(v.distancia_km_retorno, v.duracao_prevista_retorno_min)}${v.adicional_noturno_retorno ? " · 🌙 +30%" : ""}</div>`
-          : `<div style="color:var(--muted); font-size:11px;">${trechoTxt(v.distancia_km, v.duracao_prevista_min) || "sem km"}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · 🌙 +30%" : ""}</div>`;
+          ? `<div style="color:var(--muted); font-size:11px;">ida ${trechoTxt(v.distancia_km, v.duracao_prevista_min)}${v.adicional_noturno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}<br>volta ${trechoTxt(v.distancia_km_retorno, v.duracao_prevista_retorno_min)}${v.adicional_noturno_retorno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}</div>`
+          : `<div style="color:var(--muted); font-size:11px;">${trechoTxt(v.distancia_km, v.duracao_prevista_min) || "sem km"}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}</div>`;
         const motivoAjuste = revisando && v.preco_recusado_motivo
-          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">✏️ ${escapeHtml(v.preco_recusado_motivo)}</div>`
+          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> ${escapeHtml(v.preco_recusado_motivo)}</div>`
           : "";
         // Motivo do cancelamento (cliente pelo app ou pelo link de
         // acompanhamento sem login): mesmo texto que já aparece no campo
         // "Motivo (se não fechou)" do modal, só que visível de relance aqui.
         const motivoCancelamento = v.status === "Cancelada" && v.motivo_perda
-          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">🚫 ${escapeHtml(v.motivo_perda)}</div>`
+          ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);"><svg class=ic aria-hidden=true><use href=#i-ban /></svg> ${escapeHtml(v.motivo_perda)}</div>`
           : "";
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
@@ -7202,7 +7202,7 @@ function renderTransporteViagens(){
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
-          ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);">🧍 ${n} parada${n===1?"":"s"}</span>` : ""; })()}
+          ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${n} parada${n===1?"":"s"}</span>` : ""; })()}
           ${btnPix}${btnEnviar}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
@@ -7274,13 +7274,13 @@ function openViagemModal(id){
   const statusPreco = document.getElementById("vg-status-preco-cliente");
   if(v.preco_confirmado_cliente){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "✅ Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "");
+    statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "");
   } else if(v.preco_recusado_em){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "✋ Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "") + (v.preco_recusado_motivo ? ". Motivo dela: \"" + v.preco_recusado_motivo + "\"" : "") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
+    statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hand-stop /></svg> Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "") + (v.preco_recusado_motivo ? ". Motivo dela: \"" + escapeHtml(v.preco_recusado_motivo) + "\"" : "") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
   } else if(v.preco_confirmacao_enviada_em){
     statusPreco.style.display = "block";
-    statusPreco.textContent = "⏳ Confirmação de preço enviada pra cliente em " + new Date(v.preco_confirmacao_enviada_em).toLocaleString("pt-BR") + ", aguardando resposta.";
+    statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Confirmação de preço enviada pra cliente em " + new Date(v.preco_confirmacao_enviada_em).toLocaleString("pt-BR") + ", aguardando resposta.";
   } else {
     statusPreco.style.display = "none";
     statusPreco.textContent = "";
@@ -7302,7 +7302,7 @@ function openViagemModal(id){
     localWrap.innerHTML = `<strong>${escapeHtml(motoViagem.nome)}</strong>: ${mapa}`;
   } else if(motoViagem){
     localWrap.style.display = "block";
-    localWrap.innerHTML = `📍 ${escapeHtml(motoViagem.nome)} ainda não enviou localização (o painel dela precisa estar aberto com "Disponível" ligado).`;
+    localWrap.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-map-pin /></svg> ${escapeHtml(motoViagem.nome)} ainda não enviou localização (o painel dela precisa estar aberto com "Disponível" ligado).`;
   } else {
     localWrap.style.display = "none";
     localWrap.innerHTML = "";
@@ -7312,13 +7312,13 @@ function openViagemModal(id){
   const mpInfo = document.getElementById("vg-mp-info");
   if(v.mp_pago_em){
     mpInfo.style.display = "block";
-    mpInfo.innerHTML = `💳 <b>Pago pelo Mercado Pago</b> em ${new Date(v.mp_pago_em).toLocaleString("pt-BR")}${v.mp_pagamento_id ? " (" + escapeHtml(v.mp_pagamento_id) + ")" : ""}.`;
+    mpInfo.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-credit-card /></svg> <b>Pago pelo Mercado Pago</b> em ${new Date(v.mp_pago_em).toLocaleString("pt-BR")}${v.mp_pagamento_id ? " (" + escapeHtml(v.mp_pagamento_id) + ")" : ""}.`;
   } else if(v.mp_order_id){
     mpInfo.style.display = "block";
-    mpInfo.innerHTML = `💳 Cobrança no Mercado Pago criada${v.mp_criado_em ? " em " + new Date(v.mp_criado_em).toLocaleString("pt-BR") : ""}: Pix dinâmico${v.mp_checkout_url ? ` e <a href="${escapeHtml(v.mp_checkout_url)}" target="_blank" rel="noopener">link de cartão</a> (${formatarMoedaBR(v.mp_valor_cartao || 0)})` : ""}. A baixa é automática quando ela pagar.${v.mp_erro ? `<br>⚠️ ${escapeHtml(v.mp_erro)}` : ""}`;
+    mpInfo.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-credit-card /></svg> Cobrança no Mercado Pago criada${v.mp_criado_em ? " em " + new Date(v.mp_criado_em).toLocaleString("pt-BR") : ""}: Pix dinâmico${v.mp_checkout_url ? ` e <a href="${escapeHtml(v.mp_checkout_url)}" target="_blank" rel="noopener">link de cartão</a> (${formatarMoedaBR(v.mp_valor_cartao || 0)})` : ""}. A baixa é automática quando ela pagar.${v.mp_erro ? `<br><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> ${escapeHtml(v.mp_erro)}` : ""}`;
   } else if(v.mp_erro){
     mpInfo.style.display = "block";
-    mpInfo.innerHTML = `⚠️ Mercado Pago não gerou a cobrança (${v.mp_tentativas || 0} tentativa(s)): ${escapeHtml(v.mp_erro)}. A cliente recebe o Pix da chave e você confirma na mão.`;
+    mpInfo.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mercado Pago não gerou a cobrança (${v.mp_tentativas || 0} tentativa(s)): ${escapeHtml(v.mp_erro)}. A cliente recebe o Pix da chave e você confirma na mão.`;
   } else {
     mpInfo.style.display = "none";
     mpInfo.innerHTML = "";
@@ -7742,7 +7742,7 @@ function renderTransporteAvaliacoes(){
       <td>${a.nota_motorista!=null ? a.nota_motorista+" ★" : "-"}</td>
       <td>${a.nota_cliente!=null ? a.nota_cliente+" ★" : "-"}</td>
       <td style="max-width:320px; white-space:normal;">${escapeHtml(a.comentario || "-")}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button> <button class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteAvaliacao(${a.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Liberar</button> <button class="act act-edit" onclick="openAvaliacaoModal(${a.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteAvaliacao(${a.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Nenhuma avaliação aguardando revisão. As liberadas estão na ficha de cada motorista, cliente e viagem.</td></tr>`;
 }
@@ -7764,12 +7764,12 @@ function htmlListaAvaliacoes(avs, lado){
     const comentario = lado==="motorista" && a.comentario ? `<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(a.comentario)}</div>` : "";
     const badge = a.visivel ? '<span class="tag ativo">Liberada</span>' : '<span class="tag urg-media">Oculta</span>';
     const btnVis = a.visivel
-      ? `<button type="button" class="act act-edit" title="Some do painel da motorista" onclick="alternarVisivelAvaliacao(${a.id}, false)">🙈 Ocultar</button>`
-      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button>`;
+      ? `<button type="button" class="act act-edit" title="Some do painel da motorista" onclick="alternarVisivelAvaliacao(${a.id}, false)"><svg class=ic aria-hidden=true><use href=#i-eye-off /></svg> Ocultar</button>`
+      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Liberar</button>`;
     return `<div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
         <div style="font-size:13px;"><strong>${nota!=null ? nota+" ★" : "sem nota"}</strong> <span style="color:var(--muted);">· ${escapeHtml(quem)} · <a href="#" onclick="openViagemModal(${a.viagem_id}); return false;">${data}</a></span></div>
-        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️</button></div>
+        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></div>
       </div>
       ${comentario}
     </div>`;
@@ -7809,12 +7809,12 @@ function renderAvaliacoesViagem(){
   document.getElementById("vg-avaliacao-lista").innerHTML = avs.map(a=>{
     const badge = a.visivel ? '<span class="tag ativo">Liberada</span>' : '<span class="tag urg-media">Oculta</span>';
     const btnVis = a.visivel
-      ? `<button type="button" class="act act-edit" onclick="alternarVisivelAvaliacao(${a.id}, false)">🙈 Ocultar</button>`
-      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)">✅ Liberar</button>`;
+      ? `<button type="button" class="act act-edit" onclick="alternarVisivelAvaliacao(${a.id}, false)"><svg class=ic aria-hidden=true><use href=#i-eye-off /></svg> Ocultar</button>`
+      : `<button type="button" class="act act-edit" title="A motorista passa a ver a nota no painel dela" onclick="alternarVisivelAvaliacao(${a.id}, true)"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Liberar</button>`;
     return `<div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
         <div style="font-size:13px;">Cliente → motorista: <strong>${a.nota_motorista!=null ? a.nota_motorista+" ★" : "sem nota"}</strong> <span style="color:var(--muted);">·</span> Motorista → cliente: <strong>${a.nota_cliente!=null ? a.nota_cliente+" ★" : "sem nota"}</strong></div>
-        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})">✏️</button></div>
+        <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></div>
       </div>
       ${a.comentario ? `<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(a.comentario)}</div>` : ""}
     </div>`;
@@ -7902,9 +7902,9 @@ function primeiroContatoEvento(e){
 function lembreteEventoHtml(e){
   if(!e.lembrar_em) return "-";
   const txt = formatarDataBR(e.lembrar_em).slice(0,5);
-  if(e.lembrete_enviado_em) return `<span class="ev-lembrete" style="color:var(--green);" title="WhatsApp de lembrete já enviado">✅ ${txt}</span>`;
+  if(e.lembrete_enviado_em) return `<span class="ev-lembrete" style="color:var(--green);" title="WhatsApp de lembrete já enviado"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> ${txt}</span>`;
   const vencido = e.lembrar_em <= hojeLocalISO() && !["Fechado","Descartado"].includes(e.status);
-  return `<span class="ev-lembrete ${vencido?"vencido":""}" title="${vencido?"Lembrete vencido: hora de fazer contato":"Lembrete agendado"}">🔔 ${txt}</span>`;
+  return `<span class="ev-lembrete ${vencido?"vencido":""}" title="${vencido?"Lembrete vencido: hora de fazer contato":"Lembrete agendado"}"><svg class=ic aria-hidden=true><use href=#i-bell /></svg> ${txt}</span>`;
 }
 
 // Filtros de status/tipo/cidade valem também na agenda visual; mês e "passados"
@@ -7977,14 +7977,14 @@ function renderEventos(){
     const contato = primeiroContatoEvento(e);
     const passou = eventoPassou(e);
     return `<tr class="tr-click" onclick="openEventoModal(${e.id})" style="${passou?"opacity:.6;":""}">
-      <td><strong>${escapeHtml(e.nome)}</strong>${e.tipo?` <span class="tag novo">${escapeHtml(e.tipo)}</span>`:""}${eventoArquivos.some(a=>a.evento_id===e.id)?' <span title="Tem foto/print anexado">📎</span>':""}</td>
+      <td><strong>${escapeHtml(e.nome)}</strong>${e.tipo?` <span class="tag novo">${escapeHtml(e.tipo)}</span>`:""}${eventoArquivos.some(a=>a.evento_id===e.id)?' <span title="Tem foto/print anexado"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg></span>':""}</td>
       <td style="white-space:nowrap;">${quandoEvento(e)}</td>
       <td>${escapeHtml(e.local_nome||"-")}</td>
       <td>${escapeHtml(e.cidade||"-")}${e.estado?"/"+escapeHtml(e.estado):""}</td>
       <td>${escapeHtml(e.organizador||"-")}${contato&&contato.telefone?" "+botaoWhats(contato.telefone, contato.nome):""}</td>
       <td><span class="status-badge ${EVENTO_STATUS_CLASS[e.status]||""}">${escapeHtml(e.status||"-")}</span></td>
       <td>${lembreteEventoHtml(e)}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openEventoModal(${e.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteEvento(${e.id})">🗑️</button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openEventoModal(${e.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteEvento(${e.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="8">${eventos.length ? "Nenhum evento com esses filtros" : "Nenhum evento cadastrado ainda. Viu um evento no Instagram, num grupo ou na rua? Cadastra aqui pra não esquecer de oferecer o transporte."}</td></tr>`;
   // Filtros e troca de visão chamam esta função direto (fora do renderAll),
@@ -8286,7 +8286,7 @@ function openEventoModal(id, dataPre, horaPre){
   document.getElementById("ev-motivo-perda").value = e.motivo_perda||"";
   document.getElementById("ev-observacoes").value = e.observacoes||"";
   const info = document.getElementById("ev-lembrete-info");
-  if(e.lembrete_enviado_em) info.textContent = "✅ Lembrete enviado no WhatsApp em " + new Date(e.lembrete_enviado_em).toLocaleString("pt-BR") + ". Pra lembrar de novo, troque a data.";
+  if(e.lembrete_enviado_em) info.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Lembrete enviado no WhatsApp em " + new Date(e.lembrete_enviado_em).toLocaleString("pt-BR") + ". Pra lembrar de novo, troque a data.";
   else if(e.lembrar_em) info.textContent = "Aparece em destaque no Dashboard nesse dia e, com o n8n ligado, chega um WhatsApp de manhã.";
   else info.textContent = "Escolha um dia pra ser lembrada de ligar/mandar mensagem pro organizador.";
   // Campos de "adicionar rápido" sempre limpos ao abrir (ver v13)
@@ -8521,12 +8521,12 @@ function renderContatosEvento(){
       <span style="white-space:nowrap;">${acoes}</span>
     </div>`;
   if(!editingEventoId){
-    wrap.innerHTML = eventoContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteEvento(${i})">🗑️</button>`)).join("")
+    wrap.innerHTML = eventoContatosPendentes.map((c,i)=>linha(c, `<button class="icon-btn" type="button" onclick="removerContatoPendenteEvento(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
       + `<p style="color:var(--muted); font-size:12.5px;">${eventoContatosPendentes.length ? "Esses contatos serão gravados quando você clicar em \"Salvar\"." : "Pode adicionar os contatos aqui: eles são gravados junto quando você clicar em \"Salvar\"."}</p>`;
     return;
   }
   const lista = eventoContatos.filter(c=>c.evento_id===editingEventoId);
-  wrap.innerHTML = lista.map(c=>linha(c, `${selectPromoverContato("evento", c.id)} ${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = lista.map(c=>linha(c, `${selectPromoverContato("evento", c.id)} ${botaoWhats(c.telefone, c.nome)} <button class="icon-btn" type="button" onclick="deleteContatoEvento(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum contato registrado ainda.</p>`;
 }
 function lerContatoEventoForm(){
@@ -8585,12 +8585,12 @@ function renderLinksEvento(){
       ${acao}
     </div>`;
   if(!editingEventoId){
-    wrap.innerHTML = eventoLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteEvento(${i})">🗑️</button>`)).join("")
+    wrap.innerHTML = eventoLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteEvento(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
       + `<p style="color:var(--muted); font-size:12.5px;">${eventoLinksPendentes.length ? "Esses links serão gravados quando você clicar em \"Salvar\"." : "Pode colar os links aqui: eles são gravados junto quando você clicar em \"Salvar\"."}</p>`;
     return;
   }
   const lista = eventoLinks.filter(l=>l.evento_id===editingEventoId);
-  wrap.innerHTML = lista.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkEvento(${l.id})">🗑️</button>`)).join("")
+  wrap.innerHTML = lista.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkEvento(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
     || `<p style="color:var(--muted); font-size:12.5px;">Nenhum link cadastrado ainda.</p>`;
 }
 function lerLinkEventoForm(){
@@ -8648,7 +8648,7 @@ function renderArquivosEvento(){
     const ehImagem = (a.tipo_mime||"").startsWith("image/");
     const thumb = ehImagem
       ? `<img id="ev-thumb-${a.id}" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">`
-      : `<div class="ev-pdf">📄</div>`;
+      : `<div class="ev-pdf"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg></div>`;
     return `<div class="ev-arquivo">
       <a href="#" onclick="abrirArquivoEvento('${escapeHtml(a.path)}'); return false;" title="Abrir">${thumb}</a>
       <div style="flex:1; min-width:0;">
@@ -8656,7 +8656,7 @@ function renderArquivosEvento(){
         ${a.descricao?`<div style="color:var(--muted);">${escapeHtml(a.descricao)}</div>`:""}
         <div style="color:var(--muted); font-size:11px;">${a.criado_em ? new Date(a.criado_em).toLocaleDateString("pt-BR") : ""}</div>
       </div>
-      <button class="icon-btn" type="button" onclick="deleteArquivoEvento(${a.id})">🗑️</button>
+      <button class="icon-btn" type="button" onclick="deleteArquivoEvento(${a.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
     </div>`;
   }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma foto ou arquivo ainda.</p>`;
   // Miniaturas das imagens: o bucket é privado, então cada uma precisa de um
@@ -8727,7 +8727,7 @@ function renderInteracoesEvento(){
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${i.data ? formatarDataBR(i.data) : "Sem data"} · ${escapeHtml(i.assunto||"-")}</strong>
-        <button class="icon-btn" type="button" onclick="deleteInteracaoEvento(${i.id})">🗑️</button>
+        <button class="icon-btn" type="button" onclick="deleteInteracaoEvento(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${escapeHtml(i.proximos_passos)}</div>`:""}
     </div>
@@ -8824,7 +8824,7 @@ function renderContasReceber(){
       <td>${c.data_prevista?fmtDataBR(c.data_prevista):"-"}</td>
       <td>${c.data_realizada?fmtDataBR(c.data_realizada):"-"}</td>
       <td><span class="tag ${c.status==='Pago'?'ativo':'urg-media'}">${escapeHtml(c.status)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Venda' && c.status!=='Pago'?`<button class="act act-ok" onclick="marcarParcelaPaga(${c.id})">✅ Pago</button>`:''}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Venda' && c.status!=='Pago'?`<button class="act act-ok" onclick="marcarParcelaPaga(${c.id})"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Pago</button>`:''}</td>
     </tr>
   `).join("") + (lista.length ? `
     <tr style="font-weight:700;">
@@ -8905,7 +8905,7 @@ function renderContasPagar(){
       <td>${c.vencimento||"-"}</td>
       <td>${c.data_pagamento||"-"}</td>
       <td><span class="tag ${c.status==='Pago'?'ativo':'urg-media'}">${escapeHtml(c.status)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Despesa'?`<button class="act act-edit" onclick="openContaPagarModal(${c.id})">✏️ Editar</button>`:''}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Despesa'?`<button class="act act-edit" onclick="openContaPagarModal(${c.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button>`:''}</td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhuma conta a pagar registrada ainda</td></tr>`;
 }
@@ -8979,7 +8979,7 @@ function renderMetas(){
       <td>${nomeMes(m.mes)}/${m.ano}</td>
       <td>${formatarMoedaBR(m.meta_faturamento)}</td>
       <td>${formatarMoedaBR(m.meta_lucro)}</td>
-      <td><button class="act act-edit" onclick="editarMeta(${m.id})">✏️ Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMeta(${m.id})">🗑️</button></td>
+      <td><button class="act act-edit" onclick="editarMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="4">Nenhuma meta cadastrada ainda</td></tr>`;
 }
