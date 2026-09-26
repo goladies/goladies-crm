@@ -373,10 +373,16 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:13px; color:var(--text2);}
 .vg-resumo b{color:var(--text); font-size:14px;}
 .vg-resumo .vg-resumo-preco{color:var(--c-green); font-weight:700; font-size:14px;}
-.vg-sec{border:1px solid var(--border2); border-radius:12px; padding:14px 14px 16px; margin-top:14px;}
-.vg-sec-tit{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0 0 12px; font-size:14px; font-weight:700; color:var(--text);}
+/* Cada seção tem a sua cor (--sec-cor, definida no style da seção): título
+   colorido numa faixa tingida + borda à esquerda. O fundo alterna claro/escuro
+   (vg-sec-alt) pra uma seção não emendar na outra. */
+.vg-sec{--sec-cor:var(--text3); --sec-bg:var(--bg-hover); background:var(--bg-card2); border:1px solid var(--border2); border-left:4px solid var(--sec-cor); border-radius:12px; padding:0 14px 16px; margin-top:16px; overflow:hidden;}
+.vg-sec.vg-sec-alt{background:var(--bg-app);}
+.vg-sec-tit{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0 -14px 14px; padding:10px 14px; background:var(--sec-bg); border-bottom:1px solid var(--border); font-size:14.5px; font-weight:700; color:var(--sec-cor);}
 .vg-sec-tit .vg-sec-sub{font-size:12px; font-weight:400; color:var(--text3);}
-.vg-sec.vg-sec-fechada .vg-sec-tit{margin-bottom:0;}
+.vg-sec.vg-sec-fechada{padding-bottom:0;}
+.vg-sec.vg-sec-fechada .vg-sec-tit{margin-bottom:0; border-bottom:none;}
+.vg-sec-tit .vg-check{color:var(--text);}
 .formgrid .dica{display:block; font-size:11.5px; color:var(--text3); margin-top:4px; line-height:1.35;}
 .formgrid .destaque>label{font-size:13px;}
 .formgrid .destaque>input,.formgrid .destaque>select,.formgrid .destaque .campo-moeda>input,.formgrid .destaque .campo-endereco>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
@@ -384,6 +390,8 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .vg-check input{width:auto !important;}
 .vg-trajeto{border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;}
 details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
+details.vg-sec:not([open]){padding-bottom:0;}
+details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:"▸"; color:var(--text3);}
 details.vg-sec[open]>summary::after{content:"▾";}
@@ -1943,7 +1951,7 @@ tr.tr-click{cursor:pointer;}
     <p class="legenda-obrig"><b>* Em rosa</b> = obrigatório pra viagem rodar; <i>vermelho</i> = ainda está vazio.</p>
 
     <!-- ── 1. Pedido ── -->
-    <section class="vg-sec">
+    <section class="vg-sec" style="--sec-cor:var(--c-pink); --sec-bg:var(--c-pink-bg);">
       <div class="vg-sec-tit"><span>👤 1. Pedido</span></div>
       <div class="formgrid">
         <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
@@ -1961,7 +1969,7 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 2. Ida ── -->
-    <section class="vg-sec">
+    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-blue); --sec-bg:var(--c-blue-bg);">
       <div class="vg-sec-tit"><span>➡️ 2. Ida</span></div>
       <div class="formgrid">
         <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
@@ -2003,7 +2011,7 @@ tr.tr-click{cursor:pointer;}
 
     <!-- ── 3. Volta: fechada até marcar "Tem volta". Desmarcar apaga os dados
          da volta (alternarVoltaViagem), senão ficariam escondidos e salvos. ── -->
-    <section class="vg-sec" id="vg-volta-sec">
+    <section class="vg-sec" style="--sec-cor:var(--c-indigo); --sec-bg:var(--c-indigo-bg);" id="vg-volta-sec">
       <div class="vg-sec-tit">
         <span>↩️ 3. Volta</span>
         <label class="vg-check" style="font-weight:600;"><input type="checkbox" id="vg-tem-volta" onchange="alternarVoltaViagem()"> Tem volta</label>
@@ -2021,7 +2029,7 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 4. Preço ── -->
-    <section class="vg-sec">
+    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-green); --sec-bg:var(--c-green-bg);">
       <div class="vg-sec-tit"><span>💰 4. Preço</span></div>
       <div class="formgrid">
         <div><label>Tarifa fixa por trecho</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
@@ -2058,7 +2066,7 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 5. Motorista e execução ── -->
-    <section class="vg-sec">
+    <section class="vg-sec" style="--sec-cor:var(--c-purple); --sec-bg:var(--c-purple-bg);">
       <div class="vg-sec-tit"><span>🚗 5. Motorista e execução</span></div>
       <div class="formgrid">
         <div class="full obrig">
@@ -2100,7 +2108,7 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 6. Pagamento da cliente ── -->
-    <section class="vg-sec">
+    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-teal); --sec-bg:var(--c-teal-bg);">
       <div class="vg-sec-tit"><span>💵 6. Pagamento da cliente à Go Ladies</span><span class="vg-sec-sub">Marcar Pago avisa a cliente e abre a oferta pras motoristas</span></div>
       <div class="formgrid">
         <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
@@ -2116,7 +2124,7 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- ── 7. Repasse à motorista ── -->
-    <section class="vg-sec">
+    <section class="vg-sec" style="--sec-cor:var(--c-amber); --sec-bg:var(--c-amber-bg);">
       <div class="vg-sec-tit"><span>💸 7. Repasse à motorista</span><span class="vg-sec-sub">Quinzenal</span></div>
       <div class="formgrid">
         <div class="destaque"><label>Status do repasse</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
@@ -2131,14 +2139,14 @@ tr.tr-click{cursor:pointer;}
     </section>
 
     <!-- Só leitura + ações próprias: o Salvar da viagem não mexe em avaliacoes. -->
-    <section class="vg-sec" id="vg-avaliacao-wrap" style="display:none;">
+    <section class="vg-sec vg-sec-alt" style="--sec-cor:var(--c-pink); --sec-bg:var(--c-pink-bg); display:none;" id="vg-avaliacao-wrap">
       <div class="vg-sec-tit"><span>⭐ 8. Avaliações desta viagem</span></div>
       <div id="vg-avaliacao-lista"></div>
     </section>
 
     <!-- ── Outros: raramente usados, ficam recolhidos. Abre sozinho quando
          algum deles tem valor (abrirOutrosViagemSePreciso). ── -->
-    <details class="vg-sec" id="vg-outros">
+    <details class="vg-sec" style="--sec-cor:var(--c-gray); --sec-bg:var(--c-gray-bg);" id="vg-outros">
       <summary class="vg-sec-tit"><span>⚙️ Outros <span class="vg-sec-sub">(cliente fixa, grupo de WhatsApp, perda, cancelamento)</span></span></summary>
       <div class="formgrid" style="margin-top:12px;">
         <div class="full">
