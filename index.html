@@ -1924,8 +1924,10 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div><label>Tipo de serviço</label><select id="vg-tipo-servico"></select></div>
       <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Só se Tipo de serviço = Evento"></div>
-      <!-- O que a cliente escreveu ao pedir pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
-      <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
+      <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
+           vg-destino-obs no Trajeto, embaixo): recado geral da cliente ao pedir
+           pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
+      <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
       <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
       <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
@@ -1944,14 +1946,20 @@ tr.tr-click{cursor:pointer;}
             <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
           </div>
         </div>
-        <div class="obrig" style="margin-top:10px;">
-          <label>1. Embarque (origem)</label>
-          <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+        <div style="margin-top:10px;">
+          <div class="obrig">
+            <label>1. Embarque (origem)</label>
+            <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+          </div>
+          <input type="text" id="vg-origem-obs" placeholder="Observação do embarque (opcional)" style="margin-top:6px;">
         </div>
         <div id="vg-paradas-lista" style="margin-top:8px;"></div>
-        <div class="obrig" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
-          <label><span id="vg-destino-num">2</span>. Destino</label>
-          <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+        <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+          <div class="obrig">
+            <label><span id="vg-destino-num">2</span>. Destino</label>
+            <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+          </div>
+          <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
         </div>
       </div>
 
@@ -6476,6 +6484,33 @@ function abrirRotaMaps(){
 // ao Salvar (apaga e reinsere na ordem), o que dispensa sincronizar item a item.
 let paradasModal = [];
 const PARADA_TIPOS = ["Embarque", "Desembarque", "Parada"];
+// A cliente pede pelo app/site com um trajeto único (embarque, paradas,
+// destino), mas o banco grava tudo junto em observacoes_cliente, prefixado
+// "Embarque: "/"Destino: " (ver montarObservacoes() no site). O modal separa
+// de volta pra mostrar cada observação junto do ponto dela; o que sobra
+// (recado geral, sem prefixo) fica guardado aqui e volta pro texto ao
+// salvar, sem se perder.
+let obsGeralClienteAtual = "";
+function partesObservacaoCliente(texto){
+  const linhas = String(texto||"").split("\n");
+  let embarque = "", destino = "";
+  const geral = [];
+  linhas.forEach(l=>{
+    if(!embarque && /^Embarque: /.test(l)) embarque = l.replace(/^Embarque: /, "");
+    else if(!destino && /^Destino: /.test(l)) destino = l.replace(/^Destino: /, "");
+    else if(l.trim()) geral.push(l);
+  });
+  return { embarque, destino, geral: geral.join("\n") };
+}
+function montarObservacaoCliente(){
+  const partes = [];
+  const embarque = document.getElementById("vg-origem-obs").value.trim();
+  const destino = document.getElementById("vg-destino-obs").value.trim();
+  if(embarque) partes.push("Embarque: " + embarque);
+  if(destino) partes.push("Destino: " + destino);
+  if(obsGeralClienteAtual) partes.push(obsGeralClienteAtual);
+  return partes.join("\n") || null;
+}
 function carregarParadasModal(viagemId){
   paradasModal = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem)
     .map(p=>({ tipo: p.tipo, endereco: p.endereco||"", passageira_nome: p.passageira_nome||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
@@ -7005,8 +7040,12 @@ function openViagemModal(id){
   renderMotoristasCheckboxes(idsMotoristasViagem(v));
   document.getElementById("vg-tipo-servico").value = v.tipo_servico||"Padrão";
   document.getElementById("vg-evento-descricao").value = v.evento_descricao||"";
-  document.getElementById("vg-obs-cliente").textContent = v.observacoes_cliente||"";
-  document.getElementById("vg-obs-cliente-wrap").style.display = v.observacoes_cliente ? "block" : "none";
+  const partesObs = partesObservacaoCliente(v.observacoes_cliente);
+  document.getElementById("vg-origem-obs").value = partesObs.embarque;
+  document.getElementById("vg-destino-obs").value = partesObs.destino;
+  obsGeralClienteAtual = partesObs.geral;
+  document.getElementById("vg-obs-cliente").textContent = partesObs.geral;
+  document.getElementById("vg-obs-cliente-wrap").style.display = partesObs.geral ? "block" : "none";
   document.getElementById("vg-motorista-preferida").checked = !!v.motorista_preferida;
   document.getElementById("vg-canal").value = v.canal_recepcao||"Telefone";
   document.getElementById("vg-viagem-status").value = v.status||"Solicitada";
@@ -7188,6 +7227,7 @@ async function saveViagem(){
       return (atual && atual.preco_confirmado_em) ? atual.preco_confirmado_em : new Date().toISOString();
     })(),
     motivo_perda: document.getElementById("vg-motivo-perda").value,
+    observacoes_cliente: montarObservacaoCliente(),
     preparacao_confirmada: document.getElementById("vg-preparacao").checked,
     saida_confirmada: document.getElementById("vg-saida").checked,
     grupo_whatsapp_criado: document.getElementById("vg-grupo-whats").checked,
