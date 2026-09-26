@@ -1973,7 +1973,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
       <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
       <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
-      <div><label>Duração prevista da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno()"></div>
+      <div><label>Duração prevista da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"></div>
       <div><label>Horário previsto de chegada na volta <span style="font-weight:400; color:var(--muted);">(calculado: volta + duração)</span></label><input type="time" id="vg-horario-chegada-retorno"></div>
       <div class="full"><label>Endereço de origem do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo destino de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full"><label>Endereço de destino do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo origem de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
@@ -1996,13 +1996,15 @@ tr.tr-click{cursor:pointer;}
         </div>
       </div>
       <div><label>Código de início <span style="font-weight:400; color:var(--muted);">(gerado quando a motorista confirma)</span></label><input type="text" id="vg-codigo-inicio" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div class="obrig"><label>Distância (km)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
-      <div><label>Tarifa fixa</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
+      <div class="obrig"><label>Distância da ida (km) <span style="font-weight:400; color:var(--muted);">(ou da corrida, se for só ida)</span></label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
+      <div><label>Distância da volta (km) <span style="font-weight:400; color:var(--muted);">(só ida e volta; vazio = volta não cobrada à parte)</span></label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"></div>
+      <div><label>Tarifa fixa por trecho</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
       <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
       <!-- Adicionais decididos em 18/09/2026: espera combinada (R$1/min além dos
            10 inclusos, 100% pra motorista) e madrugada/feriado (+30% sobre fixo + km). -->
       <div><label>Espera combinada <span style="font-weight:400; color:var(--muted);">(min além dos 10 inclusos; R$1/min, 100% pra motorista)</span></label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado, +30%</label></div>
+      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Ida de madrugada (22h às 6h) ou feriado, +30%</label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400; margin-top:4px;"><input type="checkbox" id="vg-adicional-noturno-retorno" style="width:auto;" onchange="recalcularCotacao()"> Volta de madrugada ou feriado, +30%</label></div>
       <div><label>Preço de tabela <span style="font-weight:400; color:var(--muted);">(sem desconto; preenche sozinho pelo km)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div></div>
       <div><label>Motivo do desconto <span style="font-weight:400; color:var(--muted);">(se cobrou menos que a tabela)</span></label>
         <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
@@ -3593,6 +3595,10 @@ function ftNomeCliente(v){
   const c = clientesTransporte.find(x => x.id === v.cliente_id);
   return c ? c.nome : (v.cliente_nome || "-");
 }
+// Km da corrida inteira: desde 26/09/2026 a volta tem km próprio
+// (distancia_km_retorno); nas antigas o distancia_km já era a soma.
+function kmTotalViagem(v){ return Number(v.distancia_km || 0) + Number(v.distancia_km_retorno || 0); }
+
 // ===== SIMULADOR DE PREÇO =====
 // Rascunho pra decidir preço e desconto antes de cotar. Não grava nada e não
 // encosta em viagem nenhuma. As contas seguem as mesmas regras do resto do
@@ -3713,7 +3719,7 @@ function simular(){
   if(custo.base === "cheia") partes.push(`fixos ${fmt(custo.rateio)}`);
   const kmCobrados30 = viagens
     .filter(x => x.status === "Concluída" && ftDentroDoPeriodo(x.concluida_em || x.data, 30))
-    .reduce((s,x) => s + Number(x.distancia_km || 0), 0);
+    .reduce((s,x) => s + kmTotalViagem(x), 0);
   document.getElementById("sim-resumo-km").innerHTML =
     `Custo do carro: <b>${fmt(custo.porKm)}/km</b><br>
      <span style="color:var(--text3); font-size:11.5px;">${partes.join(" + ")}${custo.base === "cheia" ? ` · fixos ativos ${fmt(custo.fixosMes)}/mês ÷ ${custo.kmMes.toLocaleString("pt-BR")} km` : " · sem os fixos do mês"}</span>` +
@@ -3813,7 +3819,7 @@ function renderFinanceiroTransporte(){
   const aceitouDireto = cotacoes.filter(v => ftDesfecho(v) === "aceitou direto").length;
   const comDesconto = cotacoes.filter(v => ftDesfecho(v) === "fechou com desconto");
   const descontoMedio = comDesconto.length ? comDesconto.reduce((s,v) => s + ftDesconto(v), 0) / comDesconto.length : 0;
-  const kmFechados = fechadas.reduce((s,v) => s + Number(v.distancia_km || 0), 0);
+  const kmFechados = fechadas.reduce((s,v) => s + kmTotalViagem(v), 0);
   const reaisFechados = fechadas.reduce((s,v) => s + Number(v.preco_cotado || 0), 0);
   const porKm = kmFechados ? reaisFechados / kmFechados : 0;
   const taxaAceite = cotacoes.length ? (aceitouDireto / cotacoes.length) * 100 : 0;
@@ -3849,13 +3855,13 @@ function renderFinanceiroTransporte(){
   }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma cotação no período ainda.</p>`;
 
   document.getElementById("ft-kms").innerHTML = FT_FAIXAS_KM.map(f => {
-    const naFaixa = cotacoes.filter(v => { const km = Number(v.distancia_km || 0); return km > 0 && km >= f.min && km < f.max; });
+    const naFaixa = cotacoes.filter(v => { const km = kmTotalViagem(v); return km > 0 && km >= f.min && km < f.max; });
     if(!naFaixa.length) return "";
     const ok = naFaixa.filter(v => ftDesfecho(v) === "aceitou direto").length;
     const fech = naFaixa.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
     const tabelaMedia = naFaixa.reduce((s,v) => s + ftPrecoTestado(v), 0) / naFaixa.length;
     const fechouMedia = fech.length ? fech.reduce((s,v) => s + Number(v.preco_cotado || 0), 0) / fech.length : 0;
-    const kmFech = fech.reduce((s,v) => s + Number(v.distancia_km || 0), 0);
+    const kmFech = fech.reduce((s,v) => s + kmTotalViagem(v), 0);
     const gap = tabelaMedia && fechouMedia ? Math.round((1 - fechouMedia / tabelaMedia) * 100) : 0;
     return `<tr>
       <td>${f.rotulo}</td>
@@ -3894,7 +3900,7 @@ function renderFinanceiroTransporte(){
     return `<tr class="tr-click" onclick="openViagemModal(${v.id})">
       <td>${v.data ? formatarDataBR(v.data) : "-"}</td>
       <td>${escapeHtml(ftNomeCliente(v))}</td>
-      <td style="color:var(--muted);">${v.distancia_km ? Number(v.distancia_km).toLocaleString("pt-BR") : "-"}</td>
+      <td style="color:var(--muted);">${kmTotalViagem(v) ? kmTotalViagem(v).toLocaleString("pt-BR") : "-"}</td>
       <td style="color:var(--muted);">${v.preco_tabela ? formatarMoedaBR(v.preco_tabela) : "-"}</td>
       <td>${desc ? `<span style="color:var(--c-red);">−${formatarMoedaBR(desc)}</span>${v.desconto_motivo ? ` <span style="font-size:11px; color:var(--muted);">${escapeHtml(v.desconto_motivo)}</span>` : ""}` : "-"}</td>
       <td>${formatarMoedaBR(cobrado)}</td>
@@ -6622,10 +6628,14 @@ function calcularTabela(){
   const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
-  // Madrugada/feriado incide sobre fixo + km e segue o repasse de 75%;
-  // a espera combinada é somada por fora e vai inteira pra motorista.
-  let base = tarifaFixa + valorKm * km;
-  if(document.getElementById("vg-adicional-noturno").checked) base = base * (1 + ADICIONAL_NOTURNO);
+  // Cada trecho (ida e, se tiver km, volta) paga fixo + km e tem a sua
+  // madrugada/feriado, que segue o repasse de 75%; a espera combinada é
+  // somada por fora e vai inteira pra motorista. Mesma conta do
+  // pedir_viagem_cliente (schema_distancia_ida_volta.sql).
+  const trecho = (kmTrecho, noturno) => (tarifaFixa + valorKm * kmTrecho) * (noturno ? 1 + ADICIONAL_NOTURNO : 1);
+  const kmVolta = Number(document.getElementById("vg-distancia-retorno-km").value) || 0;
+  let base = trecho(km, document.getElementById("vg-adicional-noturno").checked);
+  if(kmVolta) base += trecho(kmVolta, document.getElementById("vg-adicional-noturno-retorno").checked);
   return base + esperaMin * VALOR_MIN_ESPERA;
 }
 // Viagem criada antes da coluna preco_tabela (ou cotada pelo app) abre com a
@@ -6769,8 +6779,8 @@ function atualizarAlertaMargem(){
   const box = document.getElementById("vg-margem");
   if(!box) return;
   const repasse = Number(document.getElementById("vg-preco-motorista").value) || 0;
-  const km = Number(document.getElementById("vg-distancia-km").value) || 0;
-  const min = Number(document.getElementById("vg-duracao-min").value) || 0;
+  const km = (Number(document.getElementById("vg-distancia-km").value) || 0) + (Number(document.getElementById("vg-distancia-retorno-km").value) || 0);
+  const min = (Number(document.getElementById("vg-duracao-min").value) || 0) + (Number(document.getElementById("vg-duracao-retorno-min").value) || 0);
   if(!repasse || (!km && !min)){ box.style.display = "none"; return; }
   const kmTotal = km + MARGEM_REF.kmVazio, minTotal = min + MARGEM_REF.minDesloc;
   const custo = kmTotal * MARGEM_REF.custoKm, sobra = repasse - custo;
@@ -7045,9 +7055,12 @@ function renderTransporteViagens(){
         const btnEnviar = (cotando || revisando) && v.preco_cotado > 0
           ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); enviarCotacaoCliente(${v.id})">📤 ${revisando ? "Reenviar" : "Enviar"} pra cliente</button>`
           : "";
-        const detCotacao = cotando
-          ? `<div style="color:var(--muted); font-size:11px;">${v.distancia_km ? Number(v.distancia_km).toLocaleString("pt-BR") + " km" : "sem km"}${v.duracao_prevista_min ? " · ~" + Math.round(v.duracao_prevista_min) + " min" : ""}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · 🌙 +30%" : ""}</div>`
-          : "";
+        const trechoTxt = (km, min) => [km ? Number(km).toLocaleString("pt-BR") + " km" : "", min ? "~" + Math.round(min) + " min" : ""].filter(Boolean).join(" · ");
+        // Viagem com km da volta medido mostra cada trecho numa linha; as
+        // antigas (km de ida e volta somados) seguem no formato de antes.
+        const detCotacao = !cotando ? "" : v.distancia_km_retorno
+          ? `<div style="color:var(--muted); font-size:11px;">ida ${trechoTxt(v.distancia_km, v.duracao_prevista_min)}${v.adicional_noturno ? " · 🌙 +30%" : ""}<br>volta ${trechoTxt(v.distancia_km_retorno, v.duracao_prevista_retorno_min)}${v.adicional_noturno_retorno ? " · 🌙 +30%" : ""}</div>`
+          : `<div style="color:var(--muted); font-size:11px;">${trechoTxt(v.distancia_km, v.duracao_prevista_min) || "sem km"}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · 🌙 +30%" : ""}</div>`;
         const motivoAjuste = revisando && v.preco_recusado_motivo
           ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);">✏️ ${escapeHtml(v.preco_recusado_motivo)}</div>`
           : "";
@@ -7116,6 +7129,8 @@ function openViagemModal(id){
   document.getElementById("vg-link").value = v.tracking_token ? (LINK_ACOMPANHAMENTO_BASE + v.tracking_token) : "";
   document.getElementById("vg-codigo-inicio").value = v.codigo_inicio || "(ainda não gerado)";
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
+  document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
+  document.getElementById("vg-adicional-noturno-retorno").checked = !!v.adicional_noturno_retorno;
   document.getElementById("vg-tarifa-fixa").value = v.tarifa_fixa ?? TAXA_FIXA_CLIENTE;
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
   document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
@@ -7296,6 +7311,15 @@ async function saveViagem(){
   const colunasExistem = viagens.length > 0 && ("espera_extra_min" in viagens[0]);
   if(colunasExistem || adicionais.espera_extra_min || adicionais.adicional_noturno || adicionais.cancelamento_cobrado){
     Object.assign(payload, adicionais);
+  }
+  // Colunas de schema_distancia_ida_volta.sql (26/09/2026): mesmo cuidado.
+  const volta = {
+    distancia_km_retorno: document.getElementById("vg-distancia-retorno-km").value === "" ? null : Number(document.getElementById("vg-distancia-retorno-km").value),
+    adicional_noturno_retorno: document.getElementById("vg-adicional-noturno-retorno").checked,
+  };
+  const colunasVoltaExistem = viagens.length > 0 && ("distancia_km_retorno" in viagens[0]);
+  if(colunasVoltaExistem || volta.distancia_km_retorno != null || volta.adicional_noturno_retorno){
+    Object.assign(payload, volta);
   }
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
