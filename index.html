@@ -1972,7 +1972,9 @@ tr.tr-click{cursor:pointer;}
       <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"></div>
       <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
       <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
-      <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno"></div>
+      <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
+      <div><label>Duração prevista da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno()"></div>
+      <div><label>Horário previsto de chegada na volta <span style="font-weight:400; color:var(--muted);">(calculado: volta + duração)</span></label><input type="time" id="vg-horario-chegada-retorno"></div>
       <div class="full"><label>Endereço de origem do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo destino de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full"><label>Endereço de destino do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo origem de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
       <div class="full">
@@ -6592,6 +6594,19 @@ function recalcularHorarioChegada(){
   campo.value = novoValor;
   campo.dataset.autoValor = novoValor;
 }
+function recalcularHorarioChegadaRetorno(){
+  const partida = document.getElementById("vg-horario-retorno").value;
+  const duracaoStr = document.getElementById("vg-duracao-retorno-min").value;
+  const campo = document.getElementById("vg-horario-chegada-retorno");
+  if(!partida || duracaoStr === "") return;
+  if(!(campo.value === "" || campo.value === campo.dataset.autoValor)) return;
+  const duracao = Number(duracaoStr) || 0;
+  const [h, m] = partida.split(":").map(Number);
+  const totalMin = ((h * 60 + m + duracao) % 1440 + 1440) % 1440;
+  const novoValor = String(Math.floor(totalMin / 60)).padStart(2, "0") + ":" + String(totalMin % 60).padStart(2, "0");
+  campo.value = novoValor;
+  campo.dataset.autoValor = novoValor;
+}
 // Viagem já paga não tem preço recalculado sozinho: corrigir o km, a tarifa
 // ou a madrugada de uma viagem antiga reescrevia o valor que a cliente
 // realmente pagou (22/09/2026). Os campos seguem editáveis na mão.
@@ -7092,6 +7107,8 @@ function openViagemModal(id){
   document.getElementById("vg-horario-chegada").value = v.horario_chegada ? v.horario_chegada.slice(0,5) : "";
   document.getElementById("vg-data-retorno").value = v.data_retorno || "";
   document.getElementById("vg-horario-retorno").value = v.horario_retorno ? v.horario_retorno.slice(0,5) : "";
+  document.getElementById("vg-duracao-retorno-min").value = v.duracao_prevista_retorno_min ?? "";
+  document.getElementById("vg-horario-chegada-retorno").value = v.horario_chegada_retorno ? v.horario_chegada_retorno.slice(0,5) : "";
   document.getElementById("vg-origem-retorno").value = v.origem_retorno_endereco || "";
   document.getElementById("vg-destino-retorno").value = v.destino_retorno_endereco || "";
   const diasMarcados = (v.dias_semana||"").split(",").map(d=>d.trim()).filter(Boolean);
@@ -7242,6 +7259,8 @@ async function saveViagem(){
     horario_chegada: document.getElementById("vg-horario-chegada").value || null,
     data_retorno: document.getElementById("vg-data-retorno").value || null,
     horario_retorno: document.getElementById("vg-horario-retorno").value || null,
+    duracao_prevista_retorno_min: document.getElementById("vg-duracao-retorno-min").value === "" ? null : Number(document.getElementById("vg-duracao-retorno-min").value),
+    horario_chegada_retorno: document.getElementById("vg-horario-chegada-retorno").value || null,
     origem_retorno_endereco: document.getElementById("vg-origem-retorno").value || null,
     destino_retorno_endereco: document.getElementById("vg-destino-retorno").value || null,
     dias_semana: [...document.querySelectorAll("#vg-dias-semana-wrap input[type=checkbox]:checked")].map(cb=>cb.value).join(", "),
