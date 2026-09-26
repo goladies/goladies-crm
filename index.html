@@ -366,6 +366,28 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .legenda-obrig{font-size:12px; color:var(--text3); margin:6px 0 12px;}
 .legenda-obrig b{color:var(--rosa-texto);}
 .legenda-obrig i{color:var(--c-red); font-style:normal; font-weight:600;}
+/* Modal de Viagem em seções (26/09/2026): antes era uma grade única de ~50
+   campos, sem divisão entre ida, volta, preço e motorista. */
+#viagem-modal .modal{width:760px; padding-top:0; padding-bottom:0;}
+.vg-topo{position:sticky; top:0; z-index:40; background:var(--bg-card); padding:18px 0 10px; border-bottom:1px solid var(--border);}
+.vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:13px; color:var(--text2);}
+.vg-resumo b{color:var(--text); font-size:14px;}
+.vg-resumo .vg-resumo-preco{color:var(--c-green); font-weight:700; font-size:14px;}
+.vg-sec{border:1px solid var(--border2); border-radius:12px; padding:14px 14px 16px; margin-top:14px;}
+.vg-sec-tit{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0 0 12px; font-size:14px; font-weight:700; color:var(--text);}
+.vg-sec-tit .vg-sec-sub{font-size:12px; font-weight:400; color:var(--text3);}
+.vg-sec.vg-sec-fechada .vg-sec-tit{margin-bottom:0;}
+.formgrid .dica{display:block; font-size:11.5px; color:var(--text3); margin-top:4px; line-height:1.35;}
+.formgrid .destaque>label{font-size:13px;}
+.formgrid .destaque>input,.formgrid .destaque>select,.formgrid .destaque .campo-moeda>input,.formgrid .destaque .campo-endereco>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
+.vg-check{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text); font-weight:400; margin:0;}
+.vg-check input{width:auto !important;}
+.vg-trajeto{border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;}
+details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
+details.vg-sec>summary::-webkit-details-marker{display:none;}
+details.vg-sec>summary::after{content:"▸"; color:var(--text3);}
+details.vg-sec[open]>summary::after{content:"▾";}
+#viagem-modal .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--bg-card); padding:12px 0 18px; border-top:1px solid var(--border);}
 .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
 .chartwrap{height:230px;}
 .badge-seal{background:var(--rosa-bg); color:var(--rosa-texto); border:1px solid var(--rosa-borda); padding:1px 8px; border-radius:20px; font-size:11px; font-weight:600;}
@@ -1909,188 +1931,242 @@ tr.tr-click{cursor:pointer;}
 
 <div class="modal-backdrop" id="viagem-modal">
   <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="viagem-modal-title" style="margin:0;">Nova viagem</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('viagem-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    <!-- Topo fixo: título + resumo da viagem, pra saber o que está editando
+         sem rolar até em cima. atualizarResumoViagem() preenche. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="viagem-modal-title" style="margin:0;">Nova viagem</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('viagem-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="vg-resumo"></div>
     </div>
     <p class="legenda-obrig"><b>* Em rosa</b> = obrigatório pra viagem rodar; <i>vermelho</i> = ainda está vazio.</p>
-    <div class="formgrid">
-      <div class="full obrig"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
-        <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
-      <div class="full obrig">
-        <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
-        <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
-        <div id="vg-oferta-status" style="margin-top:6px; font-size:12.5px; color:var(--muted);"></div>
-        <div id="vg-confirmar-motorista-wrap" style="display:none; margin-top:6px;">
-          <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()">✅ Confirmar motorista marcada nesta viagem</button>
-          <span style="font-size:12px; color:var(--muted); margin-left:6px;">Use quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite no painel dela.</span>
-        </div>
+
+    <!-- ── 1. Pedido ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>👤 1. Pedido</span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
+          <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
+        <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
+        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento()"></select></div>
+        <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Ex.: aniversário, formatura, show"></div>
+        <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
+             vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
+             pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
+        <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
+        <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:8px;"><label class="vg-check"><input type="checkbox" id="vg-motorista-preferida"> Cliente quer a motorista preferida dela</label></div>
       </div>
-      <div><label>Tipo de serviço</label><select id="vg-tipo-servico"></select></div>
-      <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Só se Tipo de serviço = Evento"></div>
-      <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
-           vg-destino-obs no Trajeto, embaixo): recado geral da cliente ao pedir
-           pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
-      <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b>💬 Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-motorista-preferida" style="width:auto;"> Motorista preferida da cliente</label></div>
-      <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
-      <div class="obrig"><label>Status</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
-      <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
-           mesma caixa e na ordem real da corrida — antes origem/destino
-           ficavam soltos ali em cima e as paradas repetiam o mesmo tipo de
-           campo de endereço numa caixa separada mais embaixo, parecendo
-           duplicado. Origem e destino continuam sendo os mesmos campos de
-           sempre (mesmo id, gravados em viagens.origem_endereco/destino_endereco);
-           só as paradas do meio vão pra viagem_paradas. -->
-      <div class="full" id="vg-trajeto-wrap" style="border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-          <label style="margin:0;">🧭 Trajeto <span style="font-weight:400; color:var(--muted);">(embarque, paradas de garupa e destino, na ordem da corrida)</span></label>
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="btn ghost small" onclick="abrirRotaMaps()">📍 Ver rota</button>
-            <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
+    </section>
+
+    <!-- ── 2. Ida ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>➡️ 2. Ida</span></div>
+      <div class="formgrid">
+        <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
+             mesma caixa e na ordem real da corrida. Origem e destino são os
+             mesmos campos de sempre (viagens.origem_endereco/destino_endereco);
+             só as paradas do meio vão pra viagem_paradas. -->
+        <div class="full vg-trajeto" id="vg-trajeto-wrap">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label style="margin:0;">🧭 Trajeto <span style="font-weight:400; color:var(--muted);">(na ordem da corrida)</span></label>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="btn ghost small" onclick="abrirRotaMaps()">📍 Ver rota</button>
+              <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <div class="obrig destaque">
+              <label>1. Embarque (origem)</label>
+              <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+            </div>
+            <input type="text" id="vg-origem-obs" placeholder="Observação do embarque (opcional)" style="margin-top:6px;">
+          </div>
+          <div id="vg-paradas-lista" style="margin-top:8px;"></div>
+          <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+            <div class="obrig destaque">
+              <label><span id="vg-destino-num">2</span>. Destino</label>
+              <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+            </div>
+            <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
           </div>
         </div>
-        <div style="margin-top:10px;">
-          <div class="obrig">
-            <label>1. Embarque (origem)</label>
-            <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data"></div>
+        <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
+        <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
+        <div><label>Chegada prevista no destino</label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
+        <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Se for só ida, é o km da corrida inteira.</span></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na ida</label></div>
+      </div>
+    </section>
+
+    <!-- ── 3. Volta: fechada até marcar "Tem volta". Desmarcar apaga os dados
+         da volta (alternarVoltaViagem), senão ficariam escondidos e salvos. ── -->
+    <section class="vg-sec" id="vg-volta-sec">
+      <div class="vg-sec-tit">
+        <span>↩️ 3. Volta</span>
+        <label class="vg-check" style="font-weight:600;"><input type="checkbox" id="vg-tem-volta" onchange="alternarVoltaViagem()"> Tem volta</label>
+      </div>
+      <div class="formgrid" id="vg-volta-campos">
+        <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno"></div>
+        <div class="destaque"><label>Horário do embarque na volta</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
+        <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"><span class="dica">Do embarque da volta até o destino final.</span></div>
+        <div><label>Chegada prevista na volta</label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
+        <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na volta</label></div>
+        <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
+        <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
+      </div>
+    </section>
+
+    <!-- ── 4. Preço ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>💰 4. Preço</span></div>
+      <div class="formgrid">
+        <div><label>Tarifa fixa por trecho</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
+        <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
+        <!-- Espera combinada decidida em 18/09/2026: R$1/min além dos 10
+             inclusos, 100% pra motorista. -->
+        <div><label>Espera combinada (min)</label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"><span class="dica">Além dos 10 inclusos; R$ 1/min, 100% pra motorista.</span></div>
+        <div><label>Preço de tabela</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div><span class="dica">Sem desconto; preenche sozinho pelo km.</span></div>
+        <div><label>Motivo do desconto</label>
+          <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
+            <option value="">Nenhum</option>
+            <option>Primeira viagem</option>
+            <option>Fidelidade</option>
+            <option>Correção de erro</option>
+            <option>Cortesia</option>
+            <option>Indicação</option>
+            <option>Outro</option>
+          </select>
+          <span class="dica">Se cobrou menos que a tabela.</span>
+        </div>
+        <div><label>Valor do desconto</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" oninput="descontoEditado()"></div><span class="dica">Digite aqui ou no preço cobrado; um acerta o outro.</span></div>
+        <div id="vg-desconto-outro-wrap" class="full" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
+        <div class="obrig destaque"><label>Preço cobrado da cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div><span class="dica">Digite o valor final; o desconto sai sozinho.</span></div>
+        <div class="obrig destaque"><label>Repasse à motorista (75%)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div><span class="dica">É a oferta que ela vê antes de aceitar.</span></div>
+        <div><label>Comissão Go Ladies</label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculada: cobrado − repasse.</span></div>
+        <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);">🔒 <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cobrado.</div>
+        <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
+             do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
+        <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-preco-confirmado" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-liberar-sem-pgto" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
+        <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
+      </div>
+    </section>
+
+    <!-- ── 5. Motorista e execução ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>🚗 5. Motorista e execução</span></div>
+      <div class="formgrid">
+        <div class="full obrig">
+          <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
+          <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
+          <div id="vg-oferta-status" style="margin-top:6px; font-size:12.5px; color:var(--muted);"></div>
+          <div id="vg-confirmar-motorista-wrap" style="display:none; margin-top:6px;">
+            <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()">✅ Confirmar motorista marcada nesta viagem</button>
+            <span style="font-size:12px; color:var(--muted); margin-left:6px;">Use quando a viagem foi criada e dirigida direto pelo CRM, sem passar pelo aceite no painel dela.</span>
           </div>
-          <input type="text" id="vg-origem-obs" placeholder="Observação do embarque (opcional)" style="margin-top:6px;">
         </div>
-        <div id="vg-paradas-lista" style="margin-top:8px;"></div>
-        <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
-          <div class="obrig">
-            <label><span id="vg-destino-num">2</span>. Destino</label>
-            <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
+        <div class="full" id="vg-local-motorista" style="display:none; font-size:12.5px; color:var(--muted);"></div>
+        <div><label class="vg-check"><input type="checkbox" id="vg-preparacao"> Preparação pré-viagem confirmada</label></div>
+        <div><label class="vg-check"><input type="checkbox" id="vg-saida"> Saída do veículo confirmada</label></div>
+        <div id="vg-liberar-manual-wrap" class="full" style="display:none;"><button type="button" class="btn secondary small" onclick="liberarViagemManualmente()">Liberar viagem manualmente</button></div>
+        <div><label>Código de início</label><input type="text" id="vg-codigo-inicio" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Gerado quando a motorista confirma.</span></div>
+        <div><label>Link de acompanhamento</label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="vg-link" readonly style="background:var(--border); cursor:not-allowed; flex:1;">
+            <button type="button" class="btn ghost small" onclick="copiarLinkAcompanhamento()">Copiar</button>
           </div>
-          <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
+          <span class="dica">Gerado sozinho; aparece depois de salvar.</span>
+        </div>
+        <div class="full" id="vg-reenvio-wrap" style="display:none;">
+          <div id="vg-reenvio-codigo" style="display:none; margin-bottom:8px;">
+            <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()">📨 Reenviar código pra cliente</button>
+            <span id="vg-reenvio-codigo-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+          </div>
+          <div id="vg-reenvio-oferta" style="display:none; margin-bottom:8px;">
+            <button type="button" class="btn secondary small" onclick="reenviarAvisoOfertas()">📨 Reenviar aviso pras motoristas</button>
+            <span id="vg-reenvio-oferta-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+          </div>
+          <div id="vg-reenvio-pix" style="display:none;">
+            <button type="button" class="btn secondary small" onclick="reenviarPixCliente()">📨 Reenviar pedido de Pix pra cliente</button>
+            <span id="vg-reenvio-pix-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
+          </div>
         </div>
       </div>
+    </section>
 
-      <div class="obrig"><label>Data</label><input type="date" id="vg-data"></div>
-      <div class="obrig"><label>Horário previsto de partida</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
-      <div class="obrig"><label>Duração prevista (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"></div>
-      <div><label>Horário previsto de chegada <span style="font-weight:400; color:var(--muted);">(calculado: partida + duração)</span></label><input type="time" id="vg-horario-chegada"></div>
-      <div><label>Data do retorno <span style="font-weight:400; color:var(--muted);">(ida e volta)</span></label><input type="date" id="vg-data-retorno"></div>
-      <div><label>Horário do retorno</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
-      <div><label>Duração prevista da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"></div>
-      <div><label>Horário previsto de chegada na volta <span style="font-weight:400; color:var(--muted);">(calculado: volta + duração)</span></label><input type="time" id="vg-horario-chegada-retorno"></div>
-      <div class="full"><label>Endereço de origem do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo destino de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
-      <div class="full"><label>Endereço de destino do retorno <span style="font-weight:400; color:var(--muted);">(se vazio, é o mesmo origem de ida)</span></label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
-      <div class="full">
-        <label>Dias da semana <span style="font-weight:400; color:var(--muted);">(pra cliente fixa, ex: segunda a sexta, mesmo horário)</span></label>
-        <div style="display:flex; flex-wrap:wrap; gap:6px;" id="vg-dias-semana-wrap">
-          <label class="chip-check"><input type="checkbox" value="Segunda"> Segunda</label>
-          <label class="chip-check"><input type="checkbox" value="Terça"> Terça</label>
-          <label class="chip-check"><input type="checkbox" value="Quarta"> Quarta</label>
-          <label class="chip-check"><input type="checkbox" value="Quinta"> Quinta</label>
-          <label class="chip-check"><input type="checkbox" value="Sexta"> Sexta</label>
-          <label class="chip-check"><input type="checkbox" value="Sábado"> Sábado</label>
-          <label class="chip-check"><input type="checkbox" value="Domingo"> Domingo</label>
-        </div>
+    <!-- ── 6. Pagamento da cliente ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>💵 6. Pagamento da cliente à Go Ladies</span><span class="vg-sec-sub">Marcar Pago avisa a cliente e abre a oferta pras motoristas</span></div>
+      <div class="formgrid">
+        <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
+        <div class="full" id="vg-mp-info" style="display:none; font-size:12.5px; color:var(--muted);"></div>
+        <div class="destaque"><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
+        <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
+        <div><label>Valor recebido (bruto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O realizado; o previsto é o Preço cobrado.</span></div>
+        <div><label>Valor líquido</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O que caiu na conta; Pix Mercado Pago preenche sozinho.</span></div>
+        <div><label>Taxa Mercado Pago</label><input type="text" id="vg-lid-taxa-mp" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculada: recebido − líquido.</span></div>
+        <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
+        <div class="full"><label>Notas</label><textarea id="vg-lid-notas" rows="2"></textarea></div>
       </div>
-      <div><label>Link de acompanhamento <span style="font-weight:400; color:var(--muted);">(gerado sozinho, aparece depois de salvar)</span></label>
-        <div style="display:flex; gap:6px;">
-          <input type="text" id="vg-link" readonly style="background:var(--border); cursor:not-allowed; flex:1;">
-          <button type="button" class="btn ghost small" onclick="copiarLinkAcompanhamento()">Copiar</button>
-        </div>
-      </div>
-      <div><label>Código de início <span style="font-weight:400; color:var(--muted);">(gerado quando a motorista confirma)</span></label><input type="text" id="vg-codigo-inicio" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div class="obrig"><label>Distância da ida (km) <span style="font-weight:400; color:var(--muted);">(ou da corrida, se for só ida)</span></label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"></div>
-      <div><label>Distância da volta (km) <span style="font-weight:400; color:var(--muted);">(só ida e volta; vazio = volta não cobrada à parte)</span></label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"></div>
-      <div><label>Tarifa fixa por trecho</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
-      <div><label>Valor por km</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
-      <!-- Adicionais decididos em 18/09/2026: espera combinada (R$1/min além dos
-           10 inclusos, 100% pra motorista) e madrugada/feriado (+30% sobre fixo + km). -->
-      <div><label>Espera combinada <span style="font-weight:400; color:var(--muted);">(min além dos 10 inclusos; R$1/min, 100% pra motorista)</span></label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-adicional-noturno" style="width:auto;" onchange="recalcularCotacao()"> Ida de madrugada (22h às 6h) ou feriado, +30%</label>
-        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400; margin-top:4px;"><input type="checkbox" id="vg-adicional-noturno-retorno" style="width:auto;" onchange="recalcularCotacao()"> Volta de madrugada ou feriado, +30%</label></div>
-      <div><label>Preço de tabela <span style="font-weight:400; color:var(--muted);">(sem desconto; preenche sozinho pelo km)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div></div>
-      <div><label>Motivo do desconto <span style="font-weight:400; color:var(--muted);">(se cobrou menos que a tabela)</span></label>
-        <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
-          <option value="">Nenhum</option>
-          <option>Primeira viagem</option>
-          <option>Fidelidade</option>
-          <option>Correção de erro</option>
-          <option>Cortesia</option>
-          <option>Indicação</option>
-          <option>Outro</option>
-        </select>
-      </div>
-      <div><label>Valor do desconto <span style="font-weight:400; color:var(--muted);">(digite aqui ou no cotado, um acerta o outro)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" oninput="descontoEditado()"></div></div>
-      <div id="vg-desconto-outro-wrap" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
-      <div class="obrig"><label>Preço cotado <span style="font-weight:400; color:var(--muted);">(cobrado da cliente; digite o valor final e o desconto sai sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div></div>
-      <div class="obrig"><label>Repasse motorista <span style="font-weight:400; color:var(--muted);">(oferta, aparece pra ela antes de aceitar)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div></div>
-      <div><label>Comissão Go Ladies <span style="font-weight:400; color:var(--muted);">(calculada: cotado − repasse)</span></label><input type="text" id="vg-comissao-ladies" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div class="full" id="vg-preco-travado" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);">🔒 <b>Viagem já paga</b>: mexer em km, tarifa ou madrugada não recalcula mais o preço, pra não reescrever o valor que a cliente pagou. Pra corrigir mesmo assim, digite direto no Preço cotado.</div>
-      <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
-           do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
-      <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
-      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preco-confirmado" style="width:auto;" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
-      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-liberar-sem-pgto" style="width:auto;" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
-      <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
-      <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
-      <div class="full" id="vg-mp-info" style="display:none; font-size:12.5px; color:var(--muted);"></div>
-      <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
-      <!-- Cancelamento pela cliente (Termo v2, cl. 9.6): 50% com menos de 2 h,
-           100% no no-show; repassado à motorista com os mesmos 25%. -->
-      <div><label>Cancelamento cobrado da cliente <span style="font-weight:400; color:var(--muted);">(só se cancelou depois de aceita)</span></label>
-        <select id="vg-cancelamento" onchange="atualizarCancelamento()">
-          <option value="">Nenhum</option>
-          <option value="2h">Cancelou com menos de 2 h: 50%</option>
-          <option value="noshow">Não compareceu (15 min sem contato): 100%</option>
-        </select>
-      </div>
-      <div class="full" id="vg-cancelamento-info" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);"></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-preparacao" style="width:auto;"> Preparação pré-viagem confirmada</label></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-saida" style="width:auto;"> Saída do veículo confirmada</label></div>
-      <div id="vg-liberar-manual-wrap" style="display:none;"><label style="visibility:hidden;">.</label><button type="button" class="btn secondary small" onclick="liberarViagemManualmente()">Liberar viagem manualmente</button></div>
-      <div class="full" id="vg-local-motorista" style="display:none; font-size:12.5px; color:var(--muted);"></div>
-      <div class="full" id="vg-reenvio-wrap" style="display:none;">
-        <div id="vg-reenvio-codigo" style="display:none; margin-bottom:8px;">
-          <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()">📨 Reenviar código pra cliente</button>
-          <span id="vg-reenvio-codigo-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
-        </div>
-        <div id="vg-reenvio-oferta" style="display:none; margin-bottom:8px;">
-          <button type="button" class="btn secondary small" onclick="reenviarAvisoOfertas()">📨 Reenviar aviso pras motoristas</button>
-          <span id="vg-reenvio-oferta-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
-        </div>
-        <div id="vg-reenvio-pix" style="display:none;">
-          <button type="button" class="btn secondary small" onclick="reenviarPixCliente()">📨 Reenviar pedido de Pix pra cliente</button>
-          <span id="vg-reenvio-pix-info" style="font-size:12px; color:var(--muted); margin-left:8px;"></span>
-        </div>
-      </div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="vg-grupo-whats" style="width:auto;"> Grupo de WhatsApp criado</label></div>
-    </div>
+    </section>
 
-    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💵 Pagamento da cliente à Go Ladies <span style="font-weight:400; color:var(--muted);">(Pix na sua conta; marcar Pago avisa a cliente e abre a oferta pras motoristas)</span></h4>
-    <div class="formgrid">
-      <div><label>Valor recebido <span style="font-weight:400; color:var(--muted);">(bruto; realizado, previsto é o Preço cotado)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div></div>
-      <div><label>Valor líquido <span style="font-weight:400; color:var(--muted);">(o que caiu na conta; Pix Mercado Pago preenche sozinho)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div></div>
-      <div><label>Taxa Mercado Pago <span style="font-weight:400; color:var(--muted);">(calculada: recebido − líquido)</span></label><input type="text" id="vg-lid-taxa-mp" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
-      <div><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
-      <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
-      <div class="full"><label>Notas</label><textarea id="vg-lid-notas" rows="2"></textarea></div>
-    </div>
-
-    <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">💰 Pagamento à motorista <span style="font-weight:400; color:var(--muted);">(repasse quinzenal)</span></h4>
-    <div class="formgrid">
-      <div><label>Valor repassado <span style="font-weight:400; color:var(--muted);">(realizado; previsto é o Repasse motorista acima)</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div></div>
-      <div><label>Lucro real Go Ladies <span style="font-weight:400; color:var(--muted);">(calculado: líquido/recebido/cotado − repassado)</span></label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"></div>
-      <div><label>Forma de pagamento</label><select id="vg-pg-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
-      <div><label>Status do pagamento</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
-      <div><label>Data prevista</label><input type="date" id="vg-pg-data-prevista"></div>
-      <div><label>Data do pagamento <span style="font-weight:400; color:var(--muted);">(realizada)</span></label><input type="date" id="vg-pg-data"></div>
-      <div class="full"><label>Comprovante <span style="font-weight:400; color:var(--muted);">(link do PIX/print, aparece pra ela no painel)</span></label><input type="text" id="vg-pg-comprovante" placeholder="https://..."></div>
-      <div class="full"><label>Notas (incentivo, reembolso etc.)</label><textarea id="vg-pg-notas" rows="2"></textarea></div>
-    </div>
+    <!-- ── 7. Repasse à motorista ── -->
+    <section class="vg-sec">
+      <div class="vg-sec-tit"><span>💸 7. Repasse à motorista</span><span class="vg-sec-sub">Quinzenal</span></div>
+      <div class="formgrid">
+        <div class="destaque"><label>Status do repasse</label><select id="vg-pg-status"><option>Pendente</option><option>Pago</option></select></div>
+        <div><label>Forma de pagamento</label><select id="vg-pg-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
+        <div><label>Valor repassado</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-pg-valor" step="0.01" oninput="recalcularComissaoPagamento()"></div><span class="dica">O realizado; o previsto é o Repasse à motorista.</span></div>
+        <div><label>Lucro real Go Ladies</label><input type="text" id="vg-pg-comissao" readonly style="background:var(--border); cursor:not-allowed;"><span class="dica">Calculado: líquido (ou recebido, ou cobrado) − repassado.</span></div>
+        <div><label>Data prevista do repasse</label><input type="date" id="vg-pg-data-prevista"></div>
+        <div><label>Data do repasse (realizada)</label><input type="date" id="vg-pg-data"></div>
+        <div class="full"><label>Comprovante</label><input type="text" id="vg-pg-comprovante" placeholder="https://..."><span class="dica">Link do Pix ou print; aparece pra ela no painel.</span></div>
+        <div class="full"><label>Notas (incentivo, reembolso etc.)</label><textarea id="vg-pg-notas" rows="2"></textarea></div>
+      </div>
+    </section>
 
     <!-- Só leitura + ações próprias: o Salvar da viagem não mexe em avaliacoes. -->
-    <div id="vg-avaliacao-wrap" style="display:none;">
-      <h4 style="font-size:13px; margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">⭐ Avaliações desta viagem</h4>
+    <section class="vg-sec" id="vg-avaliacao-wrap" style="display:none;">
+      <div class="vg-sec-tit"><span>⭐ 8. Avaliações desta viagem</span></div>
       <div id="vg-avaliacao-lista"></div>
-    </div>
+    </section>
+
+    <!-- ── Outros: raramente usados, ficam recolhidos. Abre sozinho quando
+         algum deles tem valor (abrirOutrosViagemSePreciso). ── -->
+    <details class="vg-sec" id="vg-outros">
+      <summary class="vg-sec-tit"><span>⚙️ Outros <span class="vg-sec-sub">(cliente fixa, grupo de WhatsApp, perda, cancelamento)</span></span></summary>
+      <div class="formgrid" style="margin-top:12px;">
+        <div class="full">
+          <label>Dias da semana <span style="font-weight:400; color:var(--muted);">(pra cliente fixa, ex: segunda a sexta, mesmo horário)</span></label>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;" id="vg-dias-semana-wrap">
+            <label class="chip-check"><input type="checkbox" value="Segunda"> Segunda</label>
+            <label class="chip-check"><input type="checkbox" value="Terça"> Terça</label>
+            <label class="chip-check"><input type="checkbox" value="Quarta"> Quarta</label>
+            <label class="chip-check"><input type="checkbox" value="Quinta"> Quinta</label>
+            <label class="chip-check"><input type="checkbox" value="Sexta"> Sexta</label>
+            <label class="chip-check"><input type="checkbox" value="Sábado"> Sábado</label>
+            <label class="chip-check"><input type="checkbox" value="Domingo"> Domingo</label>
+          </div>
+        </div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-grupo-whats"> Grupo de WhatsApp criado</label></div>
+        <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
+        <!-- Cancelamento pela cliente (Termo v2, cl. 9.6): 50% com menos de 2 h,
+             100% no no-show; repassado à motorista com os mesmos 25%. -->
+        <div class="full"><label>Cancelamento cobrado da cliente <span style="font-weight:400; color:var(--muted);">(só se cancelou depois de aceita)</span></label>
+          <select id="vg-cancelamento" onchange="atualizarCancelamento()">
+            <option value="">Nenhum</option>
+            <option value="2h">Cancelou com menos de 2 h: 50%</option>
+            <option value="noshow">Não compareceu (15 min sem contato): 100%</option>
+          </select>
+        </div>
+        <div class="full" id="vg-cancelamento-info" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);"></div>
+      </div>
+    </details>
 
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-viagem" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteViagem()">Excluir</button>
@@ -5643,6 +5719,7 @@ function confirmarAssistente(){
     iaSet("vg-preco-cotado", d.preco_cotado); iaSet("vg-preco-motorista", d.preco_motorista);
     iaSet("vg-viagem-status", d.status); iaSet("vg-motivo-perda", d.motivo_perda);
     atualizarDesconto(); atualizarStatusOferta(); marcarObrigatoriosViagem();
+    mostrarCampoEvento(); sincronizarVoltaViagem(); atualizarResumoViagem();
     showToast("Confira os campos em rosa e clique em Salvar");
     return;
   }
@@ -6921,7 +6998,7 @@ function atualizarStatusOferta(){
       ? "✅ Ao salvar, a viagem vai sozinha pra 'Aguardando aceite de motorista' e " + (marcadas > 1 ? "as " + marcadas + " motoristas marcadas recebem" : "a motorista marcada recebe") + " o aviso no WhatsApp em até 1 min."
       : "💵 Pagamento ok, falta só você: marque acima quem pode pegar essa corrida e salve. A oferta abre na hora pra elas.";
   } else if(cotado !== "" && !confirmado){
-    el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção de cotação pra liberar agora.";
+    el.textContent = "🔒 Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção 4. Preço pra liberar agora.";
   } else if(!pagoOk){
     el.textContent = "💵 Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, marque 'Liberar oferta sem esperar o Pix'.";
   } else if(status === "Aguardando aceite de motorista"){
@@ -7244,6 +7321,10 @@ function openViagemModal(id){
   atualizarStatusOferta();
   marcarObrigatoriosViagem();
   renderAvaliacoesViagem();
+  mostrarCampoEvento();
+  sincronizarVoltaViagem();
+  document.getElementById("vg-outros").open = !!(v.dias_semana || v.motivo_perda || v.cancelamento_cobrado);
+  atualizarResumoViagem();
 
   document.getElementById("btn-excluir-viagem").style.display = id ? "inline-block" : "none";
   document.getElementById("viagem-modal").classList.add("open");
@@ -7262,6 +7343,49 @@ function marcarObrigatoriosViagem(){
 }
 document.getElementById("viagem-modal").addEventListener("input", marcarObrigatoriosViagem);
 document.getElementById("viagem-modal").addEventListener("change", marcarObrigatoriosViagem);
+document.getElementById("viagem-modal").addEventListener("input", atualizarResumoViagem);
+document.getElementById("viagem-modal").addEventListener("change", atualizarResumoViagem);
+// Faixa do topo do modal: quem, quando, ida e volta, quanto e em que pé está.
+function atualizarResumoViagem(){
+  const el = document.getElementById("vg-resumo");
+  const val = id => document.getElementById(id).value;
+  const selCliente = document.getElementById("vg-cliente");
+  const nome = val("vg-cliente") ? selCliente.options[selCliente.selectedIndex].textContent : "Cliente não definida";
+  const partes = [`<b>${escapeHtml(nome)}</b>`];
+  partes.push(val("vg-data") ? `📅 ${formatarDataBR(val("vg-data"))}${val("vg-horario-partida") ? " às " + val("vg-horario-partida") : ""}` : "📅 sem data");
+  partes.push(document.getElementById("vg-tem-volta").checked ? "↔️ ida e volta" : "➡️ só ida");
+  if(val("vg-preco-cotado")) partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(val("vg-preco-cotado")))}</span>`);
+  partes.push(`<span class="tag">${escapeHtml(rotuloStatusViagem(val("vg-viagem-status")))}</span>`);
+  el.innerHTML = partes.join("<span style=\"color:var(--border2);\">·</span>");
+}
+// Descrição do evento só aparece pra Tipo = Evento (ou se já tiver texto).
+function mostrarCampoEvento(){
+  const ehEvento = document.getElementById("vg-tipo-servico").value === "Evento";
+  document.getElementById("vg-evento-wrap").style.display = (ehEvento || document.getElementById("vg-evento-descricao").value) ? "" : "none";
+}
+const CAMPOS_VOLTA_VIAGEM = ["vg-data-retorno","vg-horario-retorno","vg-duracao-retorno-min","vg-horario-chegada-retorno","vg-distancia-retorno-km","vg-origem-retorno","vg-destino-retorno"];
+// Abre a seção Volta quando a viagem já tem algum dado de volta.
+function sincronizarVoltaViagem(){
+  const tem = CAMPOS_VOLTA_VIAGEM.some(id=>document.getElementById(id).value !== "") || document.getElementById("vg-adicional-noturno-retorno").checked;
+  document.getElementById("vg-tem-volta").checked = tem;
+  document.getElementById("vg-volta-campos").style.display = tem ? "" : "none";
+  document.getElementById("vg-volta-sec").classList.toggle("vg-sec-fechada", !tem);
+}
+// Desmarcar "Tem volta" apaga os campos: escondidos, eles continuariam sendo
+// salvos e cobrados sem ninguém ver.
+function alternarVoltaViagem(){
+  const cb = document.getElementById("vg-tem-volta");
+  if(!cb.checked){
+    const preenchida = CAMPOS_VOLTA_VIAGEM.some(id=>document.getElementById(id).value !== "");
+    if(preenchida && !confirm("Tirar a volta desta viagem? Os dados da volta serão apagados ao salvar.")){ cb.checked = true; return; }
+    CAMPOS_VOLTA_VIAGEM.forEach(id=>{ document.getElementById(id).value = ""; });
+    document.getElementById("vg-adicional-noturno-retorno").checked = false;
+    recalcularCotacao();
+  }
+  document.getElementById("vg-volta-campos").style.display = cb.checked ? "" : "none";
+  document.getElementById("vg-volta-sec").classList.toggle("vg-sec-fechada", !cb.checked);
+  atualizarResumoViagem();
+}
 // "Aguardando pagamento" quer dizer que a cliente aceitou o valor. Sem a
 // confirmação marcada o n8n não cria o Pix nem manda o WhatsApp, e a viagem
 // fica parada na coluna (viagem #38, 23/09/2026: preço revisado a pedido
