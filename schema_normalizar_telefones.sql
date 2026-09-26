@@ -5,28 +5,13 @@
 -- Seguro rodar mais de uma vez (idempotente). Números que não têm 10 ou 11
 -- dígitos (depois de tirar DDI 55, se tiver) ficam como estavam, sem tentar
 -- adivinhar o formato.
-
-create or replace function public.fn_formatar_telefone_br(numero text)
-returns text
-language plpgsql
-as $$
-declare
-  d text;
-begin
-  if numero is null then return null; end if;
-  d := regexp_replace(numero, '\D', '', 'g');
-  if length(d) in (12,13) and left(d,2) = '55' then
-    d := substring(d from 3);
-  end if;
-  if length(d) = 11 then
-    return '(' || substring(d,1,2) || ') ' || substring(d,3,5) || '-' || substring(d,8,4);
-  elsif length(d) = 10 then
-    return '(' || substring(d,1,2) || ') ' || substring(d,3,4) || '-' || substring(d,7,4);
-  else
-    return numero;
-  end if;
-end;
-$$;
+--
+-- 26/09/2026: a função `fn_formatar_telefone_br` virou permanente em
+-- schema_painel_cliente.sql (usada por vincular_cliente_login) — este script
+-- não cria nem apaga mais a função, só normaliza os dados; e ganhou duas
+-- tabelas novas (evento_contatos, demandas_fora_area) que não existiam
+-- quando ele rodou da primeira vez. eventos_acesso_app fica de fora de
+-- propósito: é log do que a pessoa digitou de verdade, não cadastro.
 
 update public.leads set whatsapp = public.fn_formatar_telefone_br(whatsapp) where whatsapp is not null;
 update public.motoristas set whatsapp = public.fn_formatar_telefone_br(whatsapp) where whatsapp is not null;
@@ -35,5 +20,5 @@ update public.parceiro_contatos set numero = public.fn_formatar_telefone_br(nume
 update public.pecas_pedidos set cliente_whatsapp = public.fn_formatar_telefone_br(cliente_whatsapp) where cliente_whatsapp is not null;
 update public.candidatas set whatsapp = public.fn_formatar_telefone_br(whatsapp) where whatsapp is not null;
 update public.vagas_candidatas set whatsapp = public.fn_formatar_telefone_br(whatsapp) where whatsapp is not null;
-
-drop function public.fn_formatar_telefone_br(text);
+update public.evento_contatos set telefone = public.fn_formatar_telefone_br(telefone) where telefone is not null;
+update public.demandas_fora_area set whatsapp = public.fn_formatar_telefone_br(whatsapp) where whatsapp is not null;
