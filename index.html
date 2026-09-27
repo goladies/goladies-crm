@@ -3634,7 +3634,7 @@ function renderAcessosSite(d){
     if(!linhasCl.length) linhasCl = Object.entries(cl).map(([k, val])=>`<tr><td>${escapeHtml(k)}</td><td><b>${fmt(val, "d")}</b></td></tr>`);
     blocos.push(`
       <div>
-        <h4>Clarity: como navegaram (${dataBR(d.clarity_dia)}, só o site principal)</h4>
+        <h4>Clarity: como navegaram (${dataBR(d.clarity_dia)})</h4>
         <table class="tbl"><thead><tr><th>Indicador</th><th>Últimas 24h</th></tr></thead><tbody>
           ${linhasCl.join("") || `<tr><td class="empty" colspan="2">Sem dados</td></tr>`}
         </tbody></table>
