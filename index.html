@@ -2408,9 +2408,11 @@ async function logErroCliente(mensagem, contexto){
   try {
     await sb.from("crm_erros_cliente").insert({
       mensagem: String(mensagem).slice(0, 2000),
-      contexto: contexto || null,
-      pagina: location.pathname,
-      user_agent: navigator.userAgent,
+      contexto: contexto ? String(contexto).slice(0, 200) : null,
+      // Aberto como data: (prévia/arquivo), o pathname é o HTML inteiro (~700 KB)
+      // e enchia o banco; por isso grava só o protocolo nesse caso.
+      pagina: location.protocol === "data:" ? "data:" : location.pathname.slice(0, 300),
+      user_agent: navigator.userAgent.slice(0, 500),
     });
   } catch(e) { /* nunca deixa o log quebrar o app */ }
 }
