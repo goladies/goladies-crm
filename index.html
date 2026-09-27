@@ -1289,7 +1289,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')"><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Contas a Pagar</button>
         <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')"><svg class=ic aria-hidden=true><use href=#i-target /></svg> Metas</button>
         <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Resumo</button>
-        <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia'); carregarCustosIa();"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de IA</button>
+        <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia'); carregarCustosIa();"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de tecnologia</button>
       </div>
 
       <div id="subtab-receber">
@@ -1359,9 +1359,10 @@ tr.tr-click{cursor:pointer;}
 
       <div id="subtab-custos-ia" style="display:none;">
         <div class="pagehead">
-          <div><p style="margin:0; color:var(--muted); font-size:12.5px;">Quanto cada recurso de IA gastou no mês: o Claude cobra em dólar por token, e aqui já vem convertido pra real. Conta a partir do dia em que o registro foi ligado.</p></div>
+          <div><p style="margin:0; color:var(--muted); font-size:12.5px;">Quanto a tecnologia custou no mês. IA (Claude): cobrada em dólar por token, aqui já convertida pra real, contando a partir do dia em que o registro foi ligado. Google Cloud: a fatura de verdade, lida todo dia às 7h.</p></div>
           <button class="btn secondary small" type="button" onclick="carregarCustosIa()"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar</button>
         </div>
+        <h3 style="margin:4px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> IA (Claude)</h3>
         <div class="cards" id="custos-ia-cards"></div>
         <div class="panel" id="custos-ia-limite"></div>
         <div class="panel">
@@ -1371,6 +1372,13 @@ tr.tr-click{cursor:pointer;}
         <div class="panel">
           <h3>Últimos 30 dias</h3>
           <div class="chartwrap"><canvas id="chart-custos-ia"></canvas></div>
+        </div>
+        <h3 style="margin:22px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Google Cloud (mapas, endereços e rotas)</h3>
+        <div class="cards" id="custos-nuvem-cards"></div>
+        <div class="panel">
+          <h3>Por serviço (mês atual)</h3>
+          <table class="tbl"><thead><tr><th>Serviço</th><th>Uso bruto</th><th>Cota grátis e descontos</th><th>Cobrado</th></tr></thead><tbody id="custos-nuvem-servicos"></tbody></table>
+          <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;" id="custos-nuvem-rodape"></p>
         </div>
         <div class="panel">
           <h3>Ajustes</h3>
@@ -3479,6 +3487,39 @@ async function carregarCustosIa(){
   }
   custosIaCache = data;
   renderCustosIa(data);
+  carregarCustosNuvem();
+}
+// Google Cloud: a fatura exportada pro BigQuery, gravada pelo n8n às 7h.
+// "creditos" vem negativo (cota grátis do Maps e descontos); cobrado = bruto + créditos.
+async function carregarCustosNuvem(){
+  const cards = document.getElementById("custos-nuvem-cards");
+  if(!cards) return;
+  const { data: d, error } = await sb.rpc("custos_nuvem_resumo");
+  if(error){
+    cards.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_custos_nuvem.sql no Supabase.</p>`;
+    return;
+  }
+  // A conta do Google costuma faturar em real; se vier em dólar, converte pela cotação
+  const cot = Number((custosIaCache && custosIaCache.config && custosIaCache.config.cotacao_dolar) || 0);
+  const emReal = v => (d.moeda && d.moeda !== "BRL") ? Number(v || 0) * cot : Number(v || 0);
+  const liquido = emReal(Number(d.mes_bruto || 0) + Number(d.mes_creditos || 0));
+  cards.innerHTML = `
+    <div class="card"><div class="num">${formatarMoedaBR(liquido)}</div><div class="label">Cobrado no mês</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(emReal(d.mes_bruto))}</div><div class="label">Uso bruto no mês (antes da cota grátis)</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(emReal(d.mes_anterior_liquido))}</div><div class="label">Cobrado no mês anterior</div></div>
+  `;
+  const servicos = d.por_servico || [];
+  document.getElementById("custos-nuvem-servicos").innerHTML = servicos.map(s=>`
+    <tr>
+      <td>${escapeHtml(s.servico)}</td>
+      <td>${formatarMoedaBR(emReal(s.bruto))}</td>
+      <td>${formatarMoedaBR(emReal(s.creditos))}</td>
+      <td><b>${formatarMoedaBR(emReal(s.liquido))}</b></td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="4">Nenhum uso registrado neste mês ainda</td></tr>`;
+  document.getElementById("custos-nuvem-rodape").innerHTML = d.ultima_leitura
+    ? `Última leitura da fatura: ${new Date(d.ultima_leitura).toLocaleString("pt-BR")}. O Google fecha os valores com até 24h de atraso.`
+    : `A fatura ainda não foi lida. Ela chega pelo n8n todo dia às 7h.`;
 }
 function renderCustosIa(d){
   const cfg = d.config || {};
