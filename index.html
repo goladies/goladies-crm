@@ -3469,6 +3469,10 @@ const EVENTOS_SITE = {
   "page_view": "Páginas vistas",
   "first_visit": "Primeira visita",
   "scroll": "Rolou até o fim",
+  "form_start": "Começou a preencher um formulário",
+  "form_submit": "Enviou um formulário",
+  "file_download": "Baixou um arquivo",
+  "video_start": "Começou a ver um vídeo",
   "click": "Clique pra fora do site",
   // Meta Pixel
   "PageView": "Páginas vistas",
@@ -3497,6 +3501,19 @@ const CLARITY_CAMPOS = [
 ];
 const acessosCache = {};
 let acessosDias = 30;
+// Junta as várias formas que a mesma origem aparece no GA4
+function nomeOrigemSite(o){
+  const s = String(o || "").toLowerCase();
+  if(s === "(direct)") return "Direto";
+  if(s === "(not set)") return "Não identificado";
+  if(/(^|\.)instagram\.com$|^instagram$|^ig$/.test(s)) return "Instagram";
+  if(/(^|\.)facebook\.com$|^facebook$|^fb$/.test(s)) return "Facebook";
+  if(s === "l.wl.co" || /whatsapp/.test(s)) return "WhatsApp";
+  if(/(^|\.)google\.[a-z.]+$|^google$/.test(s)) return "Google";
+  if(/chatgpt|openai/.test(s)) return "ChatGPT";
+  if(/goladies\.com\.br$|ladiesindrive\.com\.br$/.test(s)) return "O próprio site (entre páginas)";
+  return o;
+}
 function nomeEventoSite(n){
   if(EVENTOS_SITE[n]) return EVENTOS_SITE[n];
   const app = /^app_(.+)$/i.exec(n);
@@ -3582,13 +3599,23 @@ function renderAcessosSite(d){
           || `<tr><td class="empty" colspan="2">${vazio}</td></tr>`}
       </tbody></table>
     </div>`;
-  const top = (arr, qtd, nomear)=>arr.slice().sort((a, b)=>b.atual - a.atual).slice(0, qtd).map(l=>({ nome: nomear ? nomear(l.chave) : l.chave, atual: l.atual, anterior: l.anterior }));
+  // Soma as linhas que ficam com o mesmo nome depois de traduzidas (ex.: ig + instagram)
+  const top = (arr, qtd, nomear)=>{
+    const grupos = {};
+    arr.forEach(l=>{
+      const nome = nomear ? nomear(l.chave) : l.chave;
+      const g = grupos[nome] || (grupos[nome] = { nome, atual: 0, anterior: 0 });
+      g.atual += Number(l.atual || 0);
+      g.anterior += Number(l.anterior || 0);
+    });
+    return Object.values(grupos).sort((a, b)=>b.atual - a.atual).slice(0, qtd);
+  };
 
   const blocos = [];
   if(leitura.ga4){
     blocos.push(tabela("De onde vieram (sessões)", "Canal", top(lista("ga4", "canal"), 10, k=>CANAIS_GA4[k] || k), "Sem visitas no período"));
-    blocos.push(tabela("Sites e apps de origem (sessões)", "Origem", top(lista("ga4", "origem"), 10, k=>k === "(direct)" ? "Direto" : k), "Sem visitas no período"));
-    blocos.push(tabela("Páginas mais vistas", "Página", top(lista("ga4", "pagina"), 12), "Sem visitas no período"));
+    blocos.push(tabela("Sites e apps de origem (sessões)", "Origem", top(lista("ga4", "origem"), 10, nomeOrigemSite), "Sem visitas no período"));
+    blocos.push(tabela("Páginas mais vistas", "Página", top(lista("ga4", "pagina"), 12, k=>k.replace(/index\.html$/, "")), "Sem visitas no período"));
     blocos.push(tabela("Ações no site (Google Analytics)", "Ação",
       top(lista("ga4", "evento").filter(l=>!EVENTOS_GA4_OCULTOS.includes(l.chave)), 12, nomeEventoSite), "Nenhuma ação registrada"));
   }
