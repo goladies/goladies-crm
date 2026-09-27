@@ -497,6 +497,18 @@ tr.tr-click{cursor:pointer;}
   text-decoration:none; transition:all .15s;
 }
 .analytics-atalhos a:hover{border-color:var(--rosa); color:var(--rosa-texto);}
+.acessos-dias{display:inline-flex; border:1px solid var(--border2); border-radius:10px; overflow:hidden;}
+.acessos-dias button{background:var(--bg-input); color:var(--text2); border:0; padding:6px 12px; font-size:12.5px; cursor:pointer; font-family:inherit;}
+.acessos-dias button + button{border-left:1px solid var(--border2);}
+.acessos-dias button.ativo{background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;}
+.card .delta{font-size:11.5px; margin-top:4px; color:var(--muted);}
+.card .delta.sobe{color:var(--c-green);}
+.card .delta.desce{color:var(--c-red);}
+.acessos-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; margin-top:18px;}
+.acessos-grid h4{margin:0 0 8px; font-size:13.5px;}
+.acessos-grid .tbl td:last-child, .acessos-grid .tbl th:last-child{text-align:right; white-space:nowrap;}
+.acessos-grid .tbl td:first-child{word-break:break-word;}
+.acessos-aviso{color:var(--c-amber); font-size:12.5px; margin:10px 0 0;}
 .uso-lista{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;}
 .uso-item .uso-topo{display:flex; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:6px;}
 .uso-item .uso-topo b{font-size:15px;}
@@ -849,8 +861,19 @@ tr.tr-click{cursor:pointer;}
         <table class="tbl tbl-funil"><thead><tr id="funnel-head"></tr></thead><tbody><tr id="funnel-body"></tr></tbody></table>
       </div>
       <div class="panel">
-        <h3>Acessos e rastreamento do site</h3>
-        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Atalhos pra abrir as ferramentas direto (os números de acesso em si ainda não aparecem aqui dentro; ver nota em Config).</p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Acessos e rastreamento do site</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="acessos-periodo">Site, app da cliente e painel da motorista, até ontem. O n8n lê as ferramentas todo dia às 7h30.</p>
+          </div>
+          <div class="acessos-dias" role="group" aria-label="Período">
+            <button type="button" data-dias="7" onclick="carregarAcessosSite(7)">7 dias</button>
+            <button type="button" data-dias="30" class="ativo" onclick="carregarAcessosSite(30)">30 dias</button>
+            <button type="button" data-dias="90" onclick="carregarAcessosSite(90)">90 dias</button>
+          </div>
+        </div>
+        <div id="acessos-site"><p class="empty">Carregando...</p></div>
+        <p style="color:var(--muted); font-size:12.5px; margin:14px 0 8px;">Abrir as ferramentas:</p>
         <div class="analytics-atalhos">
           <a href="https://analytics.google.com/" target="_blank"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Google Analytics (GA4)</a>
           <a href="https://tagmanager.google.com/" target="_blank"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Google Tag Manager</a>
@@ -3418,6 +3441,208 @@ function renderDashboard(){
   renderTransporteDashboard();
   renderUsuariasApp();
   carregarUsoSupabase();
+  carregarAcessosSite();
+}
+
+// ===== ACESSOS DO SITE (GA4, Meta Pixel, Clarity) =====
+// O n8n "ACESSOS do site" grava um número por dia/fonte/métrica em
+// acessos_site_diario às 7h30; acessos_site_resumo() soma o período.
+const CANAIS_GA4 = {
+  "Direct": "Direto (digitou ou link salvo)",
+  "Organic Social": "Redes sociais",
+  "Paid Social": "Anúncio em rede social",
+  "Organic Search": "Busca no Google",
+  "Paid Search": "Anúncio no Google",
+  "Referral": "Outros sites",
+  "Organic Video": "Vídeo",
+  "Email": "E-mail",
+  "Unassigned": "Não identificado",
+};
+const EVENTOS_SITE = {
+  // GA4
+  "clique_whatsapp": "Clique no WhatsApp",
+  "gerar_lead": "Pedido de orçamento",
+  "candidatura_motorista": "Candidatura de motorista",
+  "candidatura_vaga": "Candidatura a vaga",
+  "publicar_vaga": "Vaga publicada",
+  "sign_up": "Cadastro no app",
+  "page_view": "Páginas vistas",
+  "first_visit": "Primeira visita",
+  "scroll": "Rolou até o fim",
+  "click": "Clique pra fora do site",
+  // Meta Pixel
+  "PageView": "Páginas vistas",
+  "Lead": "Pedido de orçamento",
+  "CliqueWhatsApp": "Clique no WhatsApp",
+  "CompleteRegistration": "Cadastro no app",
+  "CandidaturaMotorista": "Candidatura de motorista",
+  "CandidaturaVaga": "Candidatura a vaga",
+  "PublicarVaga": "Vaga publicada",
+};
+// Eventos automáticos do GA4 que só repetem o que os cartões já mostram
+const EVENTOS_GA4_OCULTOS = ["session_start", "user_engagement", "page_view", "first_visit"];
+// Clarity: [métrica.campo, nome, formato]
+const CLARITY_CAMPOS = [
+  ["Traffic.totalSessionCount", "Sessões", "n"],
+  ["Traffic.distinctUserCount", "Pessoas diferentes", "n"],
+  ["Traffic.pagesPerSessionPercentage", "Páginas por sessão", "d"],
+  ["ScrollDepth.averageScrollDepth", "Rolagem média da página", "%"],
+  ["EngagementTime.activeTime", "Tempo ativo médio", "s"],
+  ["RageClickCount.sessionsWithMetricPercentage", "Sessões com clique de raiva", "%"],
+  ["DeadClickCount.sessionsWithMetricPercentage", "Sessões com clique sem resposta", "%"],
+  ["QuickbackClick.sessionsWithMetricPercentage", "Sessões que voltaram rápido", "%"],
+  ["ExcessiveScroll.sessionsWithMetricPercentage", "Sessões com rolagem perdida", "%"],
+  ["ScriptErrorCount.sessionsWithMetricPercentage", "Sessões com erro na página", "%"],
+  ["Traffic.totalBotSessionCount", "Sessões de robôs (fora da conta)", "n"],
+];
+const acessosCache = {};
+let acessosDias = 30;
+function nomeEventoSite(n){
+  if(EVENTOS_SITE[n]) return EVENTOS_SITE[n];
+  const app = /^app_(.+)$/i.exec(n);
+  return app ? "App: " + app[1].replace(/_/g, " ") : n;
+}
+function formatarDuracao(seg){
+  seg = Math.round(Number(seg || 0));
+  if(seg < 60) return seg + " s";
+  const m = Math.floor(seg / 60), s = seg % 60;
+  return m + " min" + (s ? " " + s + " s" : "");
+}
+async function carregarAcessosSite(dias){
+  const wrap = document.getElementById("acessos-site");
+  if(!wrap) return;
+  const forcar = !!dias;
+  acessosDias = dias || acessosDias;
+  document.querySelectorAll(".acessos-dias button").forEach(b=>b.classList.toggle("ativo", Number(b.dataset.dias) === acessosDias));
+  const c = acessosCache[acessosDias];
+  if(c && Date.now() - c.em < 10 * 60 * 1000){ renderAcessosSite(c.dados); return; }
+  if(forcar) wrap.innerHTML = `<p class="empty">Carregando...</p>`;
+  const { data, error } = await sb.rpc("acessos_site_resumo", { p_dias: acessosDias });
+  if(error){
+    wrap.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_acessos_site.sql no Supabase.</p>`;
+    return;
+  }
+  acessosCache[acessosDias] = { dados: data, em: Date.now() };
+  renderAcessosSite(data);
+}
+function renderAcessosSite(d){
+  const wrap = document.getElementById("acessos-site");
+  if(!wrap || !d) return;
+  const dataBR = s=>s ? s.slice(8, 10) + "/" + s.slice(5, 7) : "";
+  document.getElementById("acessos-periodo").textContent =
+    `De ${dataBR(d.inicio)} a ${dataBR(d.fim)}, comparado com os ${acessosDias} dias anteriores. Site, app da cliente e painel da motorista. O n8n lê as ferramentas todo dia às 7h30.`;
+
+  const leitura = d.ultima_leitura || {};
+  if(!leitura.ga4 && !leitura.meta && !leitura.clarity){
+    wrap.innerHTML = `<p class="empty">Nenhuma leitura ainda. Os números chegam pelo workflow "ACESSOS do site" do n8n, todo dia às 7h30.</p>`;
+    return;
+  }
+
+  const tot = d.totais || {};
+  const v = k=>Number((tot[k] || {}).atual || 0);
+  const ant = k=>(tot[k] || {}).anterior;
+  const listas = d.listas || [];
+  const lista = (fonte, metrica)=>listas.filter(l=>l.fonte === fonte && l.metrica === metrica);
+  const somaLista = (fonte, metrica, chave, campo)=>lista(fonte, metrica).filter(l=>l.chave === chave).reduce((s, l)=>s + Number(l[campo] || 0), 0);
+
+  const n = x=>Number(x || 0).toLocaleString("pt-BR");
+  const delta = (atual, anterior, fmt)=>{
+    anterior = Number(anterior || 0);
+    if(!anterior) return `<div class="delta">sem dados do período anterior</div>`;
+    const pct = Math.round((atual - anterior) / anterior * 100);
+    if(pct === 0) return `<div class="delta">igual ao período anterior</div>`;
+    return `<div class="delta ${pct > 0 ? "sobe" : "desce"}">${pct > 0 ? "▲" : "▼"} ${Math.abs(pct)}% (antes: ${(fmt || n)(anterior)})</div>`;
+  };
+  const card = (num, label, atual, anterior, fmt)=>`<div class="card"><div class="num">${num}</div><div class="label">${label}</div>${delta(atual, anterior, fmt)}</div>`;
+
+  const sess = v("ga4.sessoes"), sessAnt = Number(ant("ga4.sessoes") || 0);
+  const tempo = v("ga4.tempo_engajado"), tempoAnt = Number(ant("ga4.tempo_engajado") || 0);
+  const zap = somaLista("ga4", "evento", "clique_whatsapp", "atual");
+  const zapAnt = somaLista("ga4", "evento", "clique_whatsapp", "anterior");
+  const leads = somaLista("ga4", "evento", "gerar_lead", "atual") + somaLista("ga4", "evento", "sign_up", "atual");
+  const leadsAnt = somaLista("ga4", "evento", "gerar_lead", "anterior") + somaLista("ga4", "evento", "sign_up", "anterior");
+
+  const cards = leitura.ga4 ? `
+    <div class="cards" style="margin-bottom:12px;">
+      ${card(n(v("ga4.usuarios")), "Visitantes (soma dos dias)", v("ga4.usuarios"), ant("ga4.usuarios"))}
+      ${card(n(sess), "Sessões", sess, sessAnt)}
+      ${card(n(v("ga4.visualizacoes")), "Páginas vistas", v("ga4.visualizacoes"), ant("ga4.visualizacoes"))}
+      ${card(formatarDuracao(sess ? tempo / sess : 0), "Tempo médio por sessão", sess ? tempo / sess : 0, sessAnt ? tempoAnt / sessAnt : 0, formatarDuracao)}
+      ${card(n(zap), "Cliques no WhatsApp", zap, zapAnt)}
+      ${card(n(leads), "Orçamentos pedidos + cadastros no app", leads, leadsAnt)}
+    </div>
+    <div style="position:relative; height:220px;"><canvas id="chart-acessos-site"></canvas></div>
+  ` : `<p class="empty">O Google Analytics ainda não foi lido.</p>`;
+
+  const tabela = (titulo, cab, linhas, vazio)=>`
+    <div>
+      <h4>${titulo}</h4>
+      <table class="tbl"><thead><tr><th>${cab}</th><th>Período</th></tr></thead><tbody>
+        ${linhas.map(l=>`<tr><td>${escapeHtml(l.nome)}</td><td><b>${n(l.atual)}</b>${l.anterior != null ? ` <small style="color:var(--muted);">(antes ${n(l.anterior)})</small>` : ""}</td></tr>`).join("")
+          || `<tr><td class="empty" colspan="2">${vazio}</td></tr>`}
+      </tbody></table>
+    </div>`;
+  const top = (arr, qtd, nomear)=>arr.slice().sort((a, b)=>b.atual - a.atual).slice(0, qtd).map(l=>({ nome: nomear ? nomear(l.chave) : l.chave, atual: l.atual, anterior: l.anterior }));
+
+  const blocos = [];
+  if(leitura.ga4){
+    blocos.push(tabela("De onde vieram (sessões)", "Canal", top(lista("ga4", "canal"), 10, k=>CANAIS_GA4[k] || k), "Sem visitas no período"));
+    blocos.push(tabela("Sites e apps de origem (sessões)", "Origem", top(lista("ga4", "origem"), 10, k=>k === "(direct)" ? "Direto" : k), "Sem visitas no período"));
+    blocos.push(tabela("Páginas mais vistas", "Página", top(lista("ga4", "pagina"), 12), "Sem visitas no período"));
+    blocos.push(tabela("Ações no site (Google Analytics)", "Ação",
+      top(lista("ga4", "evento").filter(l=>!EVENTOS_GA4_OCULTOS.includes(l.chave)), 12, nomeEventoSite), "Nenhuma ação registrada"));
+  }
+  if(leitura.meta){
+    blocos.push(tabela("Meta Pixel (Facebook e Instagram)", "Evento", top(lista("meta", "evento"), 12, nomeEventoSite), "Nenhum evento no período"));
+  }
+  if(leitura.clarity){
+    const cl = d.clarity_ultimo || {};
+    const fmt = (val, f)=>f === "%" ? Number(val).toLocaleString("pt-BR", {maximumFractionDigits:1}) + "%"
+      : f === "s" ? formatarDuracao(val)
+      : f === "d" ? Number(val).toLocaleString("pt-BR", {maximumFractionDigits:1})
+      : n(val);
+    let linhasCl = CLARITY_CAMPOS.filter(([k])=>cl[k] != null).map(([k, nome, f])=>`<tr><td>${nome}</td><td><b>${fmt(cl[k], f)}</b></td></tr>`);
+    // Se a Clarity mudar os nomes, mostra o que veio pra não ficar em branco
+    if(!linhasCl.length) linhasCl = Object.entries(cl).map(([k, val])=>`<tr><td>${escapeHtml(k)}</td><td><b>${fmt(val, "d")}</b></td></tr>`);
+    blocos.push(`
+      <div>
+        <h4>Clarity: como navegaram (${dataBR(d.clarity_dia)}, só o site principal)</h4>
+        <table class="tbl"><thead><tr><th>Indicador</th><th>Últimas 24h</th></tr></thead><tbody>
+          ${linhasCl.join("") || `<tr><td class="empty" colspan="2">Sem dados</td></tr>`}
+        </tbody></table>
+      </div>`);
+  }
+
+  // Aviso quando alguma fonte parou de chegar (mais de 2 dias sem leitura)
+  const nomesFonte = { ga4: "Google Analytics", meta: "Meta Pixel", clarity: "Clarity" };
+  const atrasadas = Object.keys(nomesFonte).filter(f=>!leitura[f] || Date.now() - new Date(leitura[f]) > 2 * 864e5);
+  const aviso = atrasadas.length
+    ? `<p class="acessos-aviso">Sem leitura recente: ${atrasadas.map(f=>nomesFonte[f] + (leitura[f] ? " (última em " + new Date(leitura[f]).toLocaleDateString("pt-BR") + ")" : " (nunca leu)")).join(", ")}. Conferir as execuções do workflow "ACESSOS do site" no n8n.</p>`
+    : "";
+
+  wrap.innerHTML = cards + `<div class="acessos-grid">${blocos.join("")}</div>` + aviso +
+    `<p style="color:var(--muted); font-size:12px; margin:10px 0 0;">Visitantes somam os dias: quem volta em dias diferentes conta de novo. Google e Meta contam diferente (bloqueador de anúncio, cookies), então os números não batem entre si.</p>`;
+
+  if(leitura.ga4){
+    const porDia = d.por_dia || [];
+    const dias = [];
+    for(let dt = new Date(d.inicio + "T12:00:00"); dt <= new Date(d.fim + "T12:00:00"); dt.setDate(dt.getDate() + 1)){
+      dias.push(dt.toISOString().slice(0, 10));
+    }
+    const serie = campo=>dias.map(dia=>{ const p = porDia.find(x=>x.dia === dia); return p ? Number(p[campo] || 0) : 0; });
+    if(window._chartAcessos) window._chartAcessos.destroy();
+    window._chartAcessos = new Chart(document.getElementById("chart-acessos-site"), {
+      type: "line",
+      data: {
+        labels: dias.map(dataBR),
+        datasets: [
+          { label: "Visitantes", data: serie("usuarios"), borderColor: corCss("--rosa") || "#FF2D9C", backgroundColor: corCss("--rosa") || "#FF2D9C", tension: .3, pointRadius: dias.length > 31 ? 0 : 2 },
+          { label: "Sessões", data: serie("sessoes"), borderColor: corCss("--c-blue") || "#3B82F6", backgroundColor: corCss("--c-blue") || "#3B82F6", tension: .3, pointRadius: dias.length > 31 ? 0 : 2 },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  }
 }
 
 // ===== USO DO SUPABASE (plano gratuito) =====
