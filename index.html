@@ -497,6 +497,12 @@ tr.tr-click{cursor:pointer;}
   text-decoration:none; transition:all .15s;
 }
 .analytics-atalhos a:hover{border-color:var(--rosa); color:var(--rosa-texto);}
+.uso-lista{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;}
+.uso-item .uso-topo{display:flex; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:6px;}
+.uso-item .uso-topo b{font-size:15px;}
+.uso-trilho{height:10px; border-radius:99px; background:rgba(127,127,127,.22); overflow:hidden;}
+.uso-trilho span{display:block; height:100%; border-radius:99px; min-width:3px;}
+.uso-item small{display:block; color:var(--muted); font-size:12px; margin-top:5px;}
 
 /* ---------- CALENDÁRIO DE EVENTOS ---------- */
 .cal-head{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
@@ -851,6 +857,17 @@ tr.tr-click{cursor:pointer;}
           <a href="https://business.facebook.com/events_manager2/list/pixel/1547418116918632" target="_blank"><svg class=ic aria-hidden=true><use href=#i-speakerphone /></svg> Meta Events Manager</a>
           <a href="https://clarity.microsoft.com/projects/view/xjd308la6r/dashboard" target="_blank"><svg class=ic aria-hidden=true><use href=#i-click /></svg> Microsoft Clarity</a>
         </div>
+      </div>
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-gauge /></svg> Uso do Supabase (plano gratuito)</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quanto do limite grátis já está ocupado. Verde até 60%, amarelo até 85%, vermelho acima.</p>
+          </div>
+          <button class="btn secondary small" type="button" onclick="carregarUsoSupabase(true)"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar</button>
+        </div>
+        <div id="dash-uso-supabase"><p class="empty">Carregando...</p></div>
+        <p style="color:var(--muted); font-size:12.5px; margin:14px 0 0;">Tráfego (5 GB/mês) e chamadas de funções (500 mil/mês) o banco não enxerga: <a href="https://supabase.com/dashboard/project/ilhuhbcklvcdrggovmth/usage" target="_blank" style="color:var(--rosa-texto);">ver na página Usage do Supabase <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></a></p>
       </div>
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-cake /></svg> Aniversários próximos</h3>
@@ -3365,6 +3382,80 @@ function renderDashboard(){
   renderEventosDashboard();
   renderTransporteDashboard();
   renderUsuariasApp();
+  carregarUsoSupabase();
+}
+
+// ===== USO DO SUPABASE (plano gratuito) =====
+// A função uso_supabase() mede e já grava a foto do dia (histórico).
+// Guarda em memória por 10 min pra não chamar a cada render do dashboard.
+const LIMITES_SUPABASE_FREE = { banco: 500 * 1024 * 1024, arquivos: 1024 * 1024 * 1024, ativas: 50000 };
+let usoSupabaseCache = null, usoSupabaseEm = 0;
+function formatarBytes(b){
+  b = Number(b || 0);
+  if(b < 1024 * 1024) return (b / 1024).toLocaleString("pt-BR", {maximumFractionDigits:0}) + " KB";
+  if(b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toLocaleString("pt-BR", {maximumFractionDigits:1}) + " MB";
+  return (b / 1024 / 1024 / 1024).toLocaleString("pt-BR", {maximumFractionDigits:2}) + " GB";
+}
+async function carregarUsoSupabase(forcar){
+  const wrap = document.getElementById("dash-uso-supabase");
+  if(!wrap) return;
+  if(!forcar && usoSupabaseCache && Date.now() - usoSupabaseEm < 10 * 60 * 1000){
+    renderUsoSupabase(usoSupabaseCache);
+    return;
+  }
+  if(forcar) wrap.innerHTML = `<p class="empty">Carregando...</p>`;
+  const { data, error } = await sb.rpc("uso_supabase");
+  if(error){
+    wrap.innerHTML = `<p class="empty">Não deu pra medir agora (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_uso_supabase.sql no Supabase.</p>`;
+    return;
+  }
+  usoSupabaseCache = data;
+  usoSupabaseEm = Date.now();
+  renderUsoSupabase(data);
+}
+// Ritmo de crescimento: compara hoje com a foto mais antiga dos últimos 30
+// dias; só prevê com pelo menos 7 dias de distância, senão o número é ruído.
+function previsaoUsoSupabase(historico, campo, limite){
+  const pts = (historico || []).filter(h=>h[campo] != null);
+  if(pts.length < 2) return "previsão aparece depois de 7 dias de registro";
+  const ult = pts[pts.length - 1];
+  const dUlt = new Date(ult.dia + "T00:00:00");
+  const base = pts.find(h=>(dUlt - new Date(h.dia + "T00:00:00")) / 864e5 <= 30);
+  const dias = (dUlt - new Date(base.dia + "T00:00:00")) / 864e5;
+  if(dias < 7) return "previsão aparece depois de 7 dias de registro";
+  const porDia = (ult[campo] - base[campo]) / dias;
+  if(porDia <= 0) return "sem crescimento nos últimos " + Math.round(dias) + " dias";
+  const meses = (limite - ult[campo]) / porDia / 30;
+  const ritmo = "+" + formatarBytes(porDia * 30) + "/mês";
+  if(meses > 24) return ritmo + " · mais de 2 anos até encher";
+  return ritmo + " · enche em uns " + Math.max(1, Math.round(meses)) + (Math.round(meses) === 1 ? " mês" : " meses");
+}
+function renderUsoSupabase(d){
+  const wrap = document.getElementById("dash-uso-supabase");
+  if(!wrap || !d) return;
+  const item = (titulo, usado, limite, textoUsado, textoLimite, obs)=>{
+    const pct = limite ? usado / limite * 100 : 0;
+    const cor = pct >= 85 ? "var(--c-red)" : pct >= 60 ? "var(--c-amber)" : "var(--c-green)";
+    const pctTxt = pct < 1 ? pct.toLocaleString("pt-BR", {maximumFractionDigits:1}) : Math.round(pct);
+    return `<div class="uso-item">
+      <div class="uso-topo"><span>${titulo}</span><span><b style="color:${cor};">${pctTxt}%</b></span></div>
+      <div class="uso-trilho"><span style="width:${Math.min(100, pct)}%; background:${cor};"></span></div>
+      <small>${textoUsado} de ${textoLimite}${obs ? " · " + obs : ""}</small>
+    </div>`;
+  };
+  const L = LIMITES_SUPABASE_FREE;
+  const tabelas = (d.tabelas || []).map(t=>`
+    <tr><td>${escapeHtml(t.tabela)}</td><td>${formatarBytes(t.bytes)}</td><td>${Number(t.linhas || 0).toLocaleString("pt-BR")}</td></tr>
+  `).join("");
+  wrap.innerHTML = `
+    <div class="uso-lista">
+      ${item("Banco de dados", d.banco_bytes, L.banco, formatarBytes(d.banco_bytes), "500 MB", previsaoUsoSupabase(d.historico, "banco_bytes", L.banco))}
+      ${item("Arquivos (fotos e documentos)", d.arquivos_bytes, L.arquivos, formatarBytes(d.arquivos_bytes), "1 GB", Number(d.arquivos_qtd || 0).toLocaleString("pt-BR") + " arquivos")}
+      ${item("Usuárias ativas no mês", d.ativas_mes, L.ativas, Number(d.ativas_mes || 0).toLocaleString("pt-BR"), "50 mil", Number(d.usuarias_total || 0).toLocaleString("pt-BR") + " logins cadastrados")}
+    </div>
+    <h4 style="margin:18px 0 8px; font-size:13px;">Tabelas que mais ocupam espaço</h4>
+    <table class="tbl"><thead><tr><th>Tabela</th><th>Tamanho</th><th>Linhas</th></tr></thead><tbody>${tabelas || `<tr><td class="empty" colspan="3">-</td></tr>`}</tbody></table>
+  `;
 }
 
 // ===== TRANSPORTE NO DASHBOARD =====
