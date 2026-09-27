@@ -3704,6 +3704,25 @@ function ftNomeCliente(v){
 }
 // Km da corrida inteira: desde 26/09/2026 a volta tem km próprio
 // (distancia_km_retorno); nas antigas o distancia_km já era a soma.
+// Endereço do Google ("R. Gomes Jardim, 201 - Santana, Porto Alegre - RS,
+// 90620-130, Brasil") em rua, bairro e "cidade - UF", sem CEP e "Brasil"
+// (mesma regra dos apps e do acompanhar). Formato diferente: rua = endereço inteiro.
+function partesEndereco(end){
+  const s = String(end || "").replace(/,\s*Brasil\s*$/i, "").replace(/,\s*\d{5}-?\d{3}/, "").trim();
+  const m = s.match(/^(.*),\s*([^,]+?)\s*-\s*([A-Z]{2})$/);
+  if(!m) return { rua: s, bairro: "", cidade: "" };
+  const i = m[1].lastIndexOf(" - ");
+  return { rua: i > 0 ? m[1].slice(0, i) : m[1], bairro: i > 0 ? m[1].slice(i + 3) : "", cidade: m[2] + " - " + m[3] };
+}
+// Duas pontas numa linha (decisão de 26/09/2026): mesma cidade → "Vila Jardim →
+// Santana" e a cidade uma vez só; cidades diferentes → cada ponta com a sua.
+function trechoLocais(a, b){
+  const pa = partesEndereco(a), pb = partesEndereco(b);
+  const local = p => p.bairro || p.rua;
+  if(pa.cidade && pa.cidade === pb.cidade) return { linha: `${local(pa)} → ${local(pb)}`, cidade: pa.cidade };
+  const comCidade = p => [local(p), p.cidade].filter(Boolean).join(", ");
+  return { linha: `${comCidade(pa)} → ${comCidade(pb)}`, cidade: "" };
+}
 function kmTotalViagem(v){ return Number(v.distancia_km || 0) + Number(v.distancia_km_retorno || 0); }
 
 // ===== SIMULADOR DE PREÇO =====
@@ -4023,17 +4042,25 @@ function renderFinanceiroTransporte(){
 // linha é uma mulher que quis a Go Ladies onde ela ainda não existe: é por
 // onde se decide a próxima praça e quem recrutar primeiro.
 const DEMANDA_STATUS = ["Nova", "Contatada", "Convertida", "Descartada"];
+// Célula de tabela: rua em cima, "bairro · cidade - UF" embaixo em cinza
+function enderecoCurtoCelula(end){
+  if(!end) return "-";
+  const p = partesEndereco(end);
+  const sub = [p.bairro, p.cidade].filter(Boolean).join(" · ");
+  return `<span title="${escapeHtml(end)}">${escapeHtml(p.rua)}</span>${sub ? `<div style="color:var(--muted); font-size:11.5px;">${escapeHtml(sub)}</div>` : ""}`;
+}
 function renderDemandasForaArea(){
   const corpo = document.getElementById("demandas-body");
   if(!corpo) return;
   const cards = document.getElementById("demandas-cards");
   const novas = demandasForaArea.filter(d=>d.status === "Nova").length;
-  // Agrupa pelo fim do endereço de origem (", Cidade - UF") pra mostrar onde
-  // a procura se concentra sem depender de um campo de cidade separado.
+  // Agrupa pela cidade do endereço de origem ("Canoas - RS") pra mostrar onde
+  // a procura se concentra. Antes pegava o último pedaço do endereço, que nos
+  // endereços do Google é "Brasil".
   const porLugar = {};
   demandasForaArea.forEach(d=>{
-    const partes = String(d.origem_endereco || "").split(",").map(s=>s.trim()).filter(Boolean);
-    const lugar = partes.length > 1 ? partes[partes.length - 1] : (partes[0] || "Sem endereço");
+    const p = partesEndereco(d.origem_endereco);
+    const lugar = p.cidade || p.rua || "Sem endereço";
     porLugar[lugar] = (porLugar[lugar] || 0) + 1;
   });
   const top = Object.entries(porLugar).sort((a,b)=>b[1]-a[1]).slice(0, 3);
@@ -4049,8 +4076,8 @@ function renderDemandasForaArea(){
       <td>${d.criado_em ? new Date(d.criado_em).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${escapeHtml(d.nome || "-")}</td>
       <td>${d.whatsapp ? `<a href="https://wa.me/55${String(d.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(d.whatsapp)}</a>` : escapeHtml(d.email || "-")}</td>
-      <td>${escapeHtml(d.origem_endereco || "-")}</td>
-      <td>${escapeHtml(d.destino_endereco || "-")}</td>
+      <td>${enderecoCurtoCelula(d.origem_endereco)}</td>
+      <td>${enderecoCurtoCelula(d.destino_endereco)}</td>
       <td><span class="tag novo">${escapeHtml(d.canal || "App")}</span></td>
       <td>
         <select onchange="mudarStatusDemanda(${d.id}, this.value)" style="font-size:12px; padding:4px 6px;">
@@ -7204,6 +7231,7 @@ function renderTransporteViagens(){
           <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
+          ${(()=>{ if(!v.origem_endereco || !v.destino_endereco) return ""; const t = trechoLocais(v.origem_endereco, v.destino_endereco); return `<div style="font-size:12px; margin-top:3px;">${escapeHtml(t.linha)}</div>${t.cidade ? `<div style="color:var(--muted); font-size:11px;">${escapeHtml(t.cidade)}</div>` : ""}`; })()}
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
@@ -8798,7 +8826,9 @@ function listaContasAReceberUnificada(){
       return {
         origem: "Viagem", id: pg.id || null, viagemId: v.id,
         cliente: cliente ? cliente.nome : (v.cliente_nome || "-"),
-        descricao: `Viagem #${v.id}` + (v.origem_endereco || v.destino_endereco ? ` · ${[v.origem_endereco, v.destino_endereco].filter(Boolean).join(" → ")}` : ""),
+        descricao: `Viagem #${v.id}` + (v.origem_endereco && v.destino_endereco
+          ? (t => ` · ${t.linha}${t.cidade ? ` (${t.cidade})` : ""}`)(trechoLocais(v.origem_endereco, v.destino_endereco))
+          : v.origem_endereco || v.destino_endereco ? ` · ${v.origem_endereco || v.destino_endereco}` : ""),
         valor: bruto, taxa_mp: taxa,
         liquido: pg.valor_liquido != null ? Number(pg.valor_liquido) : (taxa != null ? bruto - taxa : null),
         forma_pagamento: pg.forma_pagamento, data_prevista: v.data,
