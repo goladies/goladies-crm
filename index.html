@@ -136,22 +136,14 @@ a{color:var(--rosa-texto);}
 .nav-item svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0;}
 .nav-item:hover{background:var(--bg-hover); color:var(--text1);}
 .nav-item.active{background:var(--rosa-bg); border-left-color:var(--rosa); color:var(--rosa-texto); font-weight:600;}
-/* Destaque do Transporte na sidebar: pílula azul com brilho pulsando (mesmo azul do botão do site) */
+/* Destaque do Transporte na sidebar: pílula cinza suave, sem piscar; ativa fica rosa como os outros itens */
 .nav-item.nav-destaque{
-  margin:6px 10px; padding:10px 14px; border-radius:10px; border-left:none;
-  background:var(--c-blue-bg); color:var(--c-blue); font-weight:600;
-  border:1px solid var(--c-blue);
-  box-shadow:0 0 0 0 rgba(42,111,224,.55);
-  animation:pulso-azul 2s ease-out infinite;
+  margin:6px 10px; padding:10px 14px; border-radius:10px;
+  background:var(--bg-card2); color:var(--text1); font-weight:600;
+  border:1px solid var(--border);
 }
-.nav-item.nav-destaque:hover{background:var(--c-blue); color:#fff; animation:none; box-shadow:0 0 0 4px rgba(42,111,224,.25);}
-.nav-item.nav-destaque.active{background:var(--c-blue); border-color:var(--c-blue); color:#fff; animation:none; box-shadow:0 0 0 4px rgba(42,111,224,.25);}
-@keyframes pulso-azul{
-  0%{box-shadow:0 0 0 0 rgba(42,111,224,.55);}
-  70%{box-shadow:0 0 0 8px rgba(42,111,224,0);}
-  100%{box-shadow:0 0 0 0 rgba(42,111,224,0);}
-}
-@media (prefers-reduced-motion: reduce){ .nav-item.nav-destaque{animation:none;} }
+.nav-item.nav-destaque:hover{border-color:var(--border2);}
+.nav-item.nav-destaque.active{background:var(--rosa-bg); border-color:var(--rosa-borda); color:var(--rosa-texto);}
 .sidebar-footer{padding:12px 14px 14px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;}
 .nav-atualizar{padding:6px 4px; font-size:12px; color:var(--text3); border-left:none;}
 .nav-atualizar:hover{background:transparent; color:var(--text1);}
@@ -462,8 +454,10 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .subnav-item.active{background:var(--rosa); border-color:var(--rosa); color:#fff;}
 .kanban{display:flex; flex-wrap:wrap; gap:12px; align-items:start;}
 .kanban-col{background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:10px; min-width:0; flex:1 1 200px; box-shadow:var(--sombra);}
-.kanban-col h4{margin:0 0 10px; font-size:11.5px; color:var(--text3); text-transform:uppercase; letter-spacing:.03em; display:flex; justify-content:space-between; align-items:center;}
-.kanban-col h4 .status-badge{white-space:normal; line-height:1.35;}
+.kanban-col h4{margin:0 0 10px; font-size:11.5px; color:var(--text1); text-transform:uppercase; letter-spacing:.03em; line-height:1.35; display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+.kanban-col h4 .kc-titulo{display:flex; gap:7px;}
+.kanban-col h4 .kc-dot{width:8px; height:8px; border-radius:50%; margin-top:4px; flex-shrink:0;}
+.kanban-col h4 .kc-count{flex-shrink:0; min-width:22px; text-align:center; font-size:11px; padding:1px 7px; border-radius:10px; background:var(--bg-hover); border:1px solid var(--border); color:var(--text2);}
 .kanban-card{background:var(--bg-card2); border:1px solid var(--border); border-left:4px solid transparent; border-radius:9px; padding:10px; margin-bottom:8px; cursor:pointer; font-size:12.5px; transition:border-color .15s;}
 .kanban-card:hover{border-color:var(--rosa-borda);}
 .kanban-card .kc-top{font-weight:600; margin-bottom:2px;}
@@ -1022,10 +1016,10 @@ tr.tr-click{cursor:pointer;}
     <div id="tab-transporte" style="display:none;">
       <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, clientes de viagem, viagens e avaliações</p></div></div>
       <div class="subnav">
-        <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')">Viagens</button>
-        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')">Clientes</button>
-        <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')">Motoristas</button>
-        <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')">Avaliações</button>
+        <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')"><svg class=ic aria-hidden=true><use href=#i-route /></svg> Viagens</button>
+        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Clientes</button>
+        <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motoristas</button>
+        <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Fora da área</button>
@@ -1274,10 +1268,10 @@ tr.tr-click{cursor:pointer;}
     <div id="tab-financeiro" style="display:none;">
       <div class="pagehead"><div><h2>Financeiro</h2><p>Contas a receber, contas a pagar, metas e o resumo de faturamento/lucro</p></div></div>
       <div class="subnav">
-        <button type="button" class="subnav-item active" data-subtab="receber" onclick="mostrarSubTabFinanceiro('receber')">Contas a Receber</button>
-        <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')">Contas a Pagar</button>
-        <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')">Metas</button>
-        <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')">Resumo</button>
+        <button type="button" class="subnav-item active" data-subtab="receber" onclick="mostrarSubTabFinanceiro('receber')"><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Contas a Receber</button>
+        <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')"><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Contas a Pagar</button>
+        <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')"><svg class=ic aria-hidden=true><use href=#i-target /></svg> Metas</button>
+        <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Resumo</button>
       </div>
 
       <div id="subtab-receber">
@@ -2490,7 +2484,9 @@ const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E
 // rota medida e o preço da tabela; só falta ela conferir e clicar "Enviar
 // pra cliente" no cartão.
 const VIAGEM_STATUS = ["Solicitada","Cotando preço","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Escolher motoristas","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
-const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Cotando preço":"teal","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"pink","Escolher motoristas":"amber","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"teal","Concluída":"green","Cancelada":"gray"};
+// A cor diz com quem está a bola: azul/verde-água = equipe, amarelo = cliente,
+// vermelho = revisando preço, roxo = motorista, verde = concluída, cinza = cancelada.
+const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Cotando preço":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"amber","Escolher motoristas":"teal","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"purple","Concluída":"green","Cancelada":"gray"};
 // Rótulo diferente do valor gravado no banco (o valor fica, pra não mexer nas
 // funções e nos apps que já o usam).
 const VIAGEM_STATUS_ROTULO = {"Preço recusado pela cliente":"Revisando preço"};
@@ -7145,7 +7141,7 @@ function renderTransporteViagens(){
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
     const doColuna = filtradas.filter(v=>v.status===status);
     return `<div class="kanban-col">
-      <h4><span class="status-badge ${VIAGEM_STATUS_CLASS[status]}">${rotuloStatusViagem(status)}</span><span>${doColuna.length}</span></h4>
+      <h4><span class="kc-titulo"><span class="kc-dot" style="background:var(--c-${VIAGEM_STATUS_CLASS[status]})"></span>${rotuloStatusViagem(status)}</span><span class="kc-count">${doColuna.length}</span></h4>
       ${doColuna.map(v=>{
         const cliente = clientesTransporte.find(c=>c.id===v.cliente_id);
         const nomesMotoristas = nomesMotoristasViagem(v);
