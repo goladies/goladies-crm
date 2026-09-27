@@ -1289,6 +1289,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')"><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Contas a Pagar</button>
         <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')"><svg class=ic aria-hidden=true><use href=#i-target /></svg> Metas</button>
         <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Resumo</button>
+        <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia'); carregarCustosIa();"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de IA</button>
       </div>
 
       <div id="subtab-receber">
@@ -1353,6 +1354,32 @@ tr.tr-click{cursor:pointer;}
         <div class="panel">
           <h3>Faturamento × Lucro no ano</h3>
           <div class="chartwrap"><canvas id="chart-resumo"></canvas></div>
+        </div>
+      </div>
+
+      <div id="subtab-custos-ia" style="display:none;">
+        <div class="pagehead">
+          <div><p style="margin:0; color:var(--muted); font-size:12.5px;">Quanto cada recurso de IA gastou no mês: o Claude cobra em dólar por token, e aqui já vem convertido pra real. Conta a partir do dia em que o registro foi ligado.</p></div>
+          <button class="btn secondary small" type="button" onclick="carregarCustosIa()"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar</button>
+        </div>
+        <div class="cards" id="custos-ia-cards"></div>
+        <div class="panel" id="custos-ia-limite"></div>
+        <div class="panel">
+          <h3>Por recurso (mês atual)</h3>
+          <table class="tbl"><thead><tr><th>Recurso</th><th>Chamadas</th><th>Custo</th><th>Por chamada</th><th>% do total</th></tr></thead><tbody id="custos-ia-recursos"></tbody></table>
+        </div>
+        <div class="panel">
+          <h3>Últimos 30 dias</h3>
+          <div class="chartwrap"><canvas id="chart-custos-ia"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Ajustes</h3>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+            <label style="font-size:12.5px;">Cotação do dólar (R$)<br><input type="number" step="0.01" min="0" id="custos-ia-cotacao" style="width:130px;"></label>
+            <label style="font-size:12.5px;">Limite de alerta por mês (R$)<br><input type="number" step="1" min="0" id="custos-ia-limite-input" style="width:130px;"></label>
+            <button class="btn small" type="button" onclick="salvarConfigCustosIa()">Salvar</button>
+          </div>
+          <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">A cotação só converte pra real; a fatura de verdade vem em dólar no cartão. Fatura oficial: <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--rosa-texto);">console da Anthropic <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></a></p>
         </div>
       </div>
     </div>
@@ -3430,6 +3457,113 @@ function previsaoUsoSupabase(historico, campo, limite){
   if(meses > 24) return ritmo + " · mais de 2 anos até encher";
   return ritmo + " · enche em uns " + Math.max(1, Math.round(meses)) + (Math.round(meses) === 1 ? " mês" : " meses");
 }
+// ===== CUSTOS DE IA (Financeiro → Custos de IA) =====
+// Cada Edge Function e o robô do WhatsApp anotam os tokens em uso_ia;
+// custos_ia_resumo() devolve o mês em dólar e aqui vira real pela cotação.
+const RECURSOS_IA = {
+  "assistente-crm": "Assistente IA do CRM",
+  "assistente-motorista": "Assistente da motorista",
+  "ler-cnh": "Leitura de CNH",
+  "ler-crlv": "Leitura de CRLV",
+  "robo-whatsapp": "Robô do WhatsApp",
+};
+const CORES_RECURSOS_IA = ["--rosa", "--c-blue", "--c-teal", "--c-amber", "--c-purple", "--c-indigo"];
+let custosIaCache = null;
+async function carregarCustosIa(){
+  const cards = document.getElementById("custos-ia-cards");
+  if(!cards) return;
+  const { data, error } = await sb.rpc("custos_ia_resumo");
+  if(error){
+    cards.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_custos_ia.sql no Supabase.</p>`;
+    return;
+  }
+  custosIaCache = data;
+  renderCustosIa(data);
+}
+function renderCustosIa(d){
+  const cfg = d.config || {};
+  const cot = Number(cfg.cotacao_dolar || 0);
+  const limite = Number(cfg.limite_ia_mes_brl || 0);
+  const brl = usd => formatarMoedaBR(Number(usd || 0) * cot);
+  const mesBrl = Number(d.mes_usd || 0) * cot;
+  const chamadas = Number(d.mes_chamadas || 0);
+
+  // Previsão do mês: ritmo até hoje esticado pros dias que faltam
+  const hoje = new Date();
+  const diasMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+  const previsto = mesBrl / hoje.getDate() * diasMes;
+
+  document.getElementById("custos-ia-cards").innerHTML = `
+    <div class="card"><div class="num">${formatarMoedaBR(mesBrl)}</div><div class="label">Gasto no mês · US$ ${Number(d.mes_usd || 0).toFixed(2)}</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(previsto)}</div><div class="label">Previsão até o fim do mês</div></div>
+    <div class="card"><div class="num">${brl(d.mes_anterior_usd)}</div><div class="label">Mês anterior</div></div>
+    <div class="card"><div class="num">${chamadas.toLocaleString("pt-BR")}</div><div class="label">Chamadas no mês · ${formatarMoedaBR(chamadas ? mesBrl / chamadas : 0)} cada</div></div>
+  `;
+
+  const pct = limite ? mesBrl / limite * 100 : 0;
+  const cor = pct >= 85 ? "var(--c-red)" : pct >= 60 ? "var(--c-amber)" : "var(--c-green)";
+  const avisoSemPreco = d.sem_preco ? `<small style="color:var(--c-amber);">${d.sem_preco} chamada(s) com modelo sem preço cadastrado em ia_precos, fora da conta.</small>` : "";
+  document.getElementById("custos-ia-limite").innerHTML = `
+    <div class="uso-item">
+      <div class="uso-topo"><span>Limite de alerta do mês</span><span><b style="color:${cor};">${Math.round(pct)}%</b></span></div>
+      <div class="uso-trilho"><span style="width:${Math.min(100, pct)}%; background:${cor};"></span></div>
+      <small>${formatarMoedaBR(mesBrl)} de ${formatarMoedaBR(limite)} · previsão ${formatarMoedaBR(previsto)}${previsto > limite && limite ? ", passa do limite nesse ritmo" : ""}</small>
+      ${avisoSemPreco}
+    </div>
+  `;
+
+  const recursos = d.por_recurso || [];
+  document.getElementById("custos-ia-recursos").innerHTML = recursos.map(r=>`
+    <tr>
+      <td>${escapeHtml(RECURSOS_IA[r.recurso] || r.recurso)}</td>
+      <td>${Number(r.chamadas).toLocaleString("pt-BR")}</td>
+      <td>${brl(r.custo_usd)}</td>
+      <td>${brl(r.chamadas ? r.custo_usd / r.chamadas : 0)}</td>
+      <td>${d.mes_usd ? Math.round(r.custo_usd / d.mes_usd * 100) : 0}%</td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="5">Nenhuma chamada de IA registrada neste mês ainda</td></tr>`;
+
+  // Gráfico empilhado por dia, uma cor por recurso
+  const dias = [];
+  for(let i = 29; i >= 0; i--){
+    const dt = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - i);
+    dias.push(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`);
+  }
+  const porDia = d.por_dia || [];
+  const nomes = [...new Set(porDia.map(p=>p.recurso))];
+  const datasets = nomes.map((rec, i)=>({
+    label: RECURSOS_IA[rec] || rec,
+    data: dias.map(dia=>{
+      const p = porDia.find(x=>x.dia === dia && x.recurso === rec);
+      return p ? Math.round(Number(p.custo_usd) * cot * 100) / 100 : 0;
+    }),
+    backgroundColor: corCss(CORES_RECURSOS_IA[i % CORES_RECURSOS_IA.length]) || "#FF2D9C",
+    borderRadius: 3,
+  }));
+  if(window._chartCustosIa) window._chartCustosIa.destroy();
+  window._chartCustosIa = new Chart(document.getElementById("chart-custos-ia"), {
+    type: "bar",
+    data: { labels: dias.map(x=>x.slice(8, 10) + "/" + x.slice(5, 7)), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: c=>`${c.dataset.label}: ${formatarMoedaBR(c.parsed.y)}` } } },
+      scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v=>formatarMoedaBR(v) } } },
+    },
+  });
+
+  document.getElementById("custos-ia-cotacao").value = cot || "";
+  document.getElementById("custos-ia-limite-input").value = limite || "";
+}
+async function salvarConfigCustosIa(){
+  const cotacao = Number(document.getElementById("custos-ia-cotacao").value);
+  const limite = Number(document.getElementById("custos-ia-limite-input").value);
+  if(!(cotacao > 0) || !(limite >= 0)){ showToast("Preencha a cotação e o limite com números válidos.", true); return; }
+  const { error } = await sb.from("custos_config").update({ cotacao_dolar: cotacao, limite_ia_mes_brl: limite, atualizado_em: new Date().toISOString() }).eq("id", 1);
+  if(error){ showToast("Não salvou: " + error.message, true); return; }
+  showToast("Ajustes salvos");
+  carregarCustosIa();
+}
+
 function renderUsoSupabase(d){
   const wrap = document.getElementById("dash-uso-supabase");
   if(!wrap || !d) return;

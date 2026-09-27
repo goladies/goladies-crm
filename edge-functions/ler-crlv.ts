@@ -35,6 +35,20 @@ function montarCors(req: Request) {
   };
 }
 
+// Anota os tokens de cada chamada em uso_ia (custo de IA por recurso no CRM).
+// SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já existem em toda Edge Function.
+// Nunca deixa o registro de custo quebrar a resposta.
+async function registrarUsoIa(recurso: string, response: Anthropic.Message) {
+  try {
+    const chave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/registrar_uso_ia`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: chave, Authorization: `Bearer ${chave}` },
+      body: JSON.stringify({ p_recurso: recurso, p_modelo: response.model, p_uso: response.usage }),
+    });
+  } catch { /* sem registro, segue */ }
+}
+
 const TIPOS_ACEITOS: Record<string, string> = {
   "image/jpeg": "image/jpeg",
   "image/png": "image/png",
@@ -116,6 +130,7 @@ Deno.serve(async (req) => {
         },
       ],
     });
+    await registrarUsoIa("ler-crlv", response);
 
     const toolUse = response.content.find((b) => b.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") {
