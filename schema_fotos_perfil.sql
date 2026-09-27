@@ -71,6 +71,9 @@ create policy "Fotos motoristas - equipe e propria motorista listam" on storage.
 
 -- ── fotos-clientes: privado. Vê: equipe, a própria cliente e a motorista
 -- que tem (ou teve) oferta de uma viagem dessa cliente.
+-- ATENÇÃO (26/09/2026): esta versão não funciona pra motorista (ela não lê
+-- viagem_ofertas direto). A policy certa está em schema_foto_cliente_para_motorista.sql;
+-- se rodar este arquivo de novo, rode aquele logo depois.
 drop policy if exists "Fotos clientes - quem pode ver" on storage.objects;
 create policy "Fotos clientes - quem pode ver" on storage.objects
   for select using (

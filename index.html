@@ -227,7 +227,7 @@ a{color:var(--rosa-texto);}
 .bv-coracao{display:flex; flex-direction:column; align-items:center; gap:1px; flex-shrink:0; text-decoration:none; cursor:pointer;}
 .bv-coracao .coracao{position:relative; width:44px; height:40px; filter:drop-shadow(0 4px 10px rgba(255,45,156,.35));}
 .bv-coracao .coracao svg{width:100%; height:100%; fill:var(--rosa);}
-.bv-coracao .coracao b{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:800; padding-bottom:5px;}
+.bv-coracao .coracao b{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:800;}
 .bv-coracao small{font-size:9px; letter-spacing:.6px; text-transform:uppercase; color:var(--text3); font-weight:600;}
 .user-pill{cursor:pointer;}
 .user-pill:hover{background:var(--bg-hover);}
@@ -1016,13 +1016,13 @@ tr.tr-click{cursor:pointer;}
     <div id="tab-transporte" style="display:none;">
       <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, clientes de viagem, viagens e avaliações</p></div></div>
       <div class="subnav">
-        <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')"><svg class=ic aria-hidden=true><use href=#i-route /></svg> Viagens</button>
+        <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Viagens</button>
         <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Clientes</button>
         <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
-        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Fora da área</button>
+        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map-pin-off /></svg> Fora da área</button>
         <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos ao app</button>
       </div>
 
@@ -2025,7 +2025,7 @@ tr.tr-click{cursor:pointer;}
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
-        <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Se for só ida, é o km da corrida inteira.</span></div>
+        <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na ida</label></div>
       </div>
     </section>
@@ -2484,9 +2484,9 @@ const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E
 // rota medida e o preço da tabela; só falta ela conferir e clicar "Enviar
 // pra cliente" no cartão.
 const VIAGEM_STATUS = ["Solicitada","Cotando preço","Aguardando cliente confirmar preço","Preço recusado pela cliente","Aguardando pagamento","Escolher motoristas","Aguardando aceite de motorista","Confirmada","Em andamento","Concluída","Cancelada"];
-// A cor diz com quem está a bola: azul/verde-água = equipe, amarelo = cliente,
-// vermelho = revisando preço, roxo = motorista, verde = concluída, cinza = cancelada.
-const VIAGEM_STATUS_CLASS = {"Solicitada":"blue","Cotando preço":"blue","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"amber","Escolher motoristas":"teal","Aguardando aceite de motorista":"indigo","Confirmada":"purple","Em andamento":"purple","Concluída":"green","Cancelada":"gray"};
+// A cor diz com quem está a bola (igual nos apps da cliente e da motorista): rosa = Go Ladies,
+// amarelo = cliente, vermelho = revisando preço, azul = motorista, verde = concluída, cinza = cancelada.
+const VIAGEM_STATUS_CLASS = {"Solicitada":"pink","Cotando preço":"pink","Aguardando cliente confirmar preço":"amber","Preço recusado pela cliente":"red","Aguardando pagamento":"amber","Escolher motoristas":"pink","Aguardando aceite de motorista":"blue","Confirmada":"blue","Em andamento":"blue","Concluída":"green","Cancelada":"gray"};
 // Rótulo diferente do valor gravado no banco (o valor fica, pra não mexer nas
 // funções e nos apps que já o usam).
 const VIAGEM_STATUS_ROTULO = {"Preço recusado pela cliente":"Revisando preço"};
@@ -7175,11 +7175,20 @@ function renderTransporteViagens(){
           ? `<button type="button" class="act act-ok kc-btn" onclick="event.stopPropagation(); enviarCotacaoCliente(${v.id})"><svg class=ic aria-hidden=true><use href=#i-send /></svg> ${revisando ? "Reenviar" : "Enviar"} pra cliente</button>`
           : "";
         const trechoTxt = (km, min) => [km ? Number(km).toLocaleString("pt-BR") + " km" : "", min ? "~" + Math.round(min) + " min" : ""].filter(Boolean).join(" · ");
-        // Viagem com km da volta medido mostra cada trecho numa linha; as
-        // antigas (km de ida e volta somados) seguem no formato de antes.
-        const detCotacao = !cotando ? "" : v.distancia_km_retorno
-          ? `<div style="color:var(--muted); font-size:11px;">ida ${trechoTxt(v.distancia_km, v.duracao_prevista_min)}${v.adicional_noturno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}<br>volta ${trechoTxt(v.distancia_km_retorno, v.duracao_prevista_retorno_min)}${v.adicional_noturno_retorno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}</div>`
-          : `<div style="color:var(--muted); font-size:11px;">${trechoTxt(v.distancia_km, v.duracao_prevista_min) || "sem km"}${v.data_retorno ? " · ida e volta" : ""}${v.adicional_noturno ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : ""}</div>`;
+        // Km e tempo em todos os cartões, sempre com o trecho escrito (igual
+        // nos apps e no acompanhar). Viagens de ida e volta criadas antes de
+        // 26/09/2026 guardavam a SOMA dos dois trechos em distancia_km, sem km
+        // da volta: aí o rótulo é "ida e volta (total)", nunca "ida".
+        const lua = on => on ? " · <svg class=ic aria-hidden=true><use href=#i-moon /></svg> +30%" : "";
+        const ida = trechoTxt(v.distancia_km, v.duracao_prevista_min);
+        const volta = trechoTxt(v.distancia_km_retorno, v.duracao_prevista_retorno_min);
+        const linhasKm = !v.data_retorno
+          ? (ida ? [`trajeto ${ida}${lua(v.adicional_noturno)}`] : [])
+          : !volta
+            ? (ida ? [`ida e volta (total) ${ida}${lua(v.adicional_noturno)}`] : [])
+            : [`ida ${ida}${lua(v.adicional_noturno)}`, `volta ${volta}${lua(v.adicional_noturno_retorno)}`, `total ${trechoTxt(Number(v.distancia_km||0) + Number(v.distancia_km_retorno||0), Number(v.duracao_prevista_min||0) + Number(v.duracao_prevista_retorno_min||0))}`];
+        if(cotando && !linhasKm.length) linhasKm.push("sem km");
+        const detCotacao = linhasKm.length ? `<div style="color:var(--muted); font-size:11px;">${linhasKm.join("<br>")}</div>` : "";
         const motivoAjuste = revisando && v.preco_recusado_motivo
           ? `<div style="font-size:11px; margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--c-red-bg); color:var(--c-red);"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> ${escapeHtml(v.preco_recusado_motivo)}</div>`
           : "";
@@ -7249,6 +7258,10 @@ function openViagemModal(id){
   document.getElementById("vg-codigo-inicio").value = v.codigo_inicio || "(ainda não gerado)";
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
+  // Ida e volta criadas antes de 26/09/2026: o km da ida guardava a soma dos dois trechos
+  document.getElementById("vg-distancia-km-dica").textContent = v.data_retorno && v.distancia_km && v.distancia_km_retorno == null
+    ? "Viagem antiga: este km é a soma de ida e volta (a volta não foi medida separada)."
+    : "Se for só ida, é o km da corrida inteira.";
   document.getElementById("vg-adicional-noturno-retorno").checked = !!v.adicional_noturno_retorno;
   document.getElementById("vg-tarifa-fixa").value = v.tarifa_fixa ?? TAXA_FIXA_CLIENTE;
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;

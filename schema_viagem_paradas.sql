@@ -29,6 +29,9 @@ create policy "Staff podem tudo - viagem_paradas" on public.viagem_paradas
   with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
 
 -- Motorista lê as paradas das viagens que foram ofertadas a ela
+-- ATENÇÃO (26/09/2026): esta versão não funciona pra motorista (ela não lê
+-- viagem_ofertas direto). A policy certa está em schema_paradas_para_motorista.sql;
+-- se rodar este arquivo de novo, rode aquele logo depois.
 drop policy if exists "Motorista ve paradas das proprias viagens" on public.viagem_paradas;
 create policy "Motorista ve paradas das proprias viagens" on public.viagem_paradas
   for select
