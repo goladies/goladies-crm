@@ -3708,7 +3708,7 @@ function ftNomeCliente(v){
 // 90620-130, Brasil") em rua, bairro e "cidade - UF", sem CEP e "Brasil"
 // (mesma regra dos apps e do acompanhar). Formato diferente: rua = endereço inteiro.
 function partesEndereco(end){
-  const s = String(end || "").replace(/,\s*Brasil\s*$/i, "").replace(/,\s*\d{5}-?\d{3}/, "").trim();
+  const s = String(end || "").replace(/,\s*Bra[sz]il\s*$/i, "").replace(/,\s*\d{5}-?\d{3}/, "").trim();
   const m = s.match(/^(.*),\s*([^,]+?)\s*-\s*([A-Z]{2})$/);
   if(!m) return { rua: s, bairro: "", cidade: "" };
   const i = m[1].lastIndexOf(" - ");
