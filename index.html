@@ -218,6 +218,13 @@ a{color:var(--rosa-texto);}
 .ia-alterado{border-color:var(--rosa) !important; box-shadow:0 0 0 2px var(--rosa-bg) !important;}
 @media (max-width:860px){ .btn-assistente{order:2; padding:7px 10px;} .btn-assistente span{display:none;} }
 .main{flex:1; padding:24px 28px; min-width:0;}
+.aviso-carga{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px; padding:12px 14px;
+  background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.45); border-radius:12px;
+  color:var(--text1); font-size:13.5px; line-height:1.4;
+}
+.aviso-carga[hidden]{display:none;}
+.aviso-carga span{flex:1; min-width:200px;}
 
 /* ---------- BOAS-VINDAS na barra do topo (fixo em todas as telas), no estilo do Lapidar ---------- */
 .topbar-saudacao{flex:1; min-width:0;}
@@ -812,7 +819,7 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item nav-atualizar" id="btn-atualizar" title="Buscar de novo os dados no servidor"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar<span id="lbl-atualizado"></span></div>
       <div class="tema-linha">Aparência <button type="button" class="btn-tema js-btn-tema" onclick="toggleTema()"><svg class=ic aria-hidden=true><use href=#i-sun /></svg> Claro</button></div>
       <div class="user-pill" onclick="openMeusDadosModal()" title="Meus dados">
-        <div class="user-avatar js-user-avatar">GL</div>
+        <div class="user-avatar js-user-avatar"></div>
         <div class="user-name js-user-name">Go Ladies</div>
         <button type="button" class="user-sair js-logout" id="btn-logout" onclick="event.stopPropagation()">Sair</button>
       </div>
@@ -834,9 +841,11 @@ tr.tr-click{cursor:pointer;}
       <input type="text" id="busca-global" placeholder="Buscar nome, telefone, e-mail..." autocomplete="off" oninput="buscaGlobal(this.value)" onfocus="buscaGlobal(this.value)">
       <div class="search-results" id="busca-global-resultados"></div>
     </div>
-    <div class="user-avatar js-user-avatar" onclick="openMeusDadosModal()" title="Meus dados" style="cursor:pointer;">GL</div>
+    <div class="user-avatar js-user-avatar" onclick="openMeusDadosModal()" title="Meus dados" style="cursor:pointer;"></div>
   </div>
   <div class="main">
+
+    <div class="aviso-carga" id="aviso-carga" hidden></div>
 
     <div id="tab-dashboard">
       <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
@@ -3020,7 +3029,11 @@ function limparStaffConfirmado(){
 async function liberarPainelCompleto(){
   document.getElementById("login-screen").style.display = "none";
   document.querySelector(".app").style.display = "flex";
-  try{ const { data } = await sb.auth.getUser(); mostrarUsuaria(data && data.user); }catch(e){}
+  // Com prazo: se o getUser travar, o painel não pode ficar esperando ele
+  try{
+    const r = await Promise.race([sb.auth.getUser(), new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 8000))]);
+    mostrarUsuaria(r.data && r.data.user);
+  }catch(e){}
   await carregarDados();
   const ultimaAba = localStorage.getItem("crm-ultima-aba");
   const abaSalva = ultimaAba && document.querySelector(`.nav-item[data-tab="${ultimaAba}"]`);
@@ -3093,7 +3106,14 @@ async function tratarMudancaAutenticacao(session){
       return;
     }
 
-    const resultado = await checarNaoEhMotorista();
+    // Até 3 tentativas antes de pedir pra recarregar (lentidão passageira)
+    let resultado = await checarNaoEhMotorista();
+    for(let i = 0; resultado === "timeout" && i < 2; i++){
+      loginErro.textContent = "Conexão lenta, tentando de novo...";
+      loginErro.style.display = "block";
+      resultado = await checarNaoEhMotorista();
+    }
+    if(resultado !== "timeout") loginErro.style.display = "none";
     if(resultado === "timeout"){
       // Diferente do timeout de login (abaixo): aqui a sessão já estava
       // válida, só essa checagem específica demorou (banco momentaneamente
@@ -3126,14 +3146,55 @@ async function tratarMudancaAutenticacao(session){
 // parece que o botão que você clicou não fez nada. Com o timeout, você
 // sempre recebe um aviso em até 20s, mesmo quando o carregamento de fato
 // não termina.
+//
+// 30/09/2026: em vez de alert/toast pedindo F5, falha vira um aviso fixo no
+// topo (qualquer aba) que tenta de novo sozinho 3 vezes e depois deixa o
+// botão "Tentar de novo". Mesma correção dos apps da cliente e da motorista.
 async function carregarDados(){
   const timeoutCarregar = new Promise(resolve => setTimeout(()=>resolve({ timeout: true }), 20000));
-  const resultado = await Promise.race([carregarDadosInterno().then(()=>({ timeout: false })), timeoutCarregar]);
+  let resultado;
+  try{
+    resultado = await Promise.race([carregarDadosInterno().then(()=>({ timeout: false })), timeoutCarregar]);
+  }catch(e){
+    logErroCliente("Erro no carregarDados: " + ((e && e.message) || e), "carregarDados");
+    falhaAoCarregar("Não conseguimos carregar os dados.");
+    return;
+  }
   if(resultado.timeout){
     logErroCliente("Timeout no carregarDados (20s)", "carregarDados");
-    alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo; se continuar acontecendo, recarregue a página.");
+    falhaAoCarregar("Demorou demais pra carregar os dados.");
   }
 }
+
+let tentativasCarga = 0, timerNovaTentativa = null;
+function avisoCarga(msg, comBotao){
+  const el = document.getElementById("aviso-carga");
+  if(!msg){ el.hidden = true; el.innerHTML = ""; return; }
+  el.innerHTML = "<span>" + escapeHtml(msg) + "</span>" + (comBotao ? '<button type="button" class="btn" onclick="tentarCarregarDeNovo()">Tentar de novo</button>' : "");
+  el.hidden = false;
+}
+function falhaAoCarregar(msg){
+  if(document.querySelector(".app").style.display !== "flex") return;
+  tentativasCarga++;
+  clearTimeout(timerNovaTentativa);
+  if(tentativasCarga <= 3){
+    avisoCarga(msg + " Tentando de novo...");
+    timerNovaTentativa = setTimeout(carregarDados, 4000 * tentativasCarga);
+  } else {
+    avisoCarga(msg + " Confira sua internet e tente de novo.", true);
+  }
+}
+function tentarCarregarDeNovo(){
+  clearTimeout(timerNovaTentativa);
+  tentativasCarga = 0;
+  avisoCarga("Carregando os dados...");
+  carregarDados();
+}
+// Voltou pra aba do CRM com o aviso na tela: tenta de novo na hora
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden) return;
+  if(!document.getElementById("aviso-carga").hidden) tentarCarregarDeNovo();
+});
 // Aplica o resultado de uma consulta SÓ se ela deu certo. Se deu erro
 // (rede caiu, token expirado, RLS recusou), mantém o que já estava na
 // tela em vez de trocar por uma lista vazia — era isso que fazia "as
@@ -3257,7 +3318,11 @@ async function carregarDadosInterno(){
   // não houvesse nada cadastrado.
   if(tabelasComFalha.length){
     logErroCliente("Falha ao carregar: " + tabelasComFalha.join(", "), "carregarDados");
-    showToast("Parte dos dados não carregou (" + tabelasComFalha.length + "). Recarregue a página.", true);
+    falhaAoCarregar("Parte dos dados não carregou (" + tabelasComFalha.length + ").");
+  } else {
+    tentativasCarga = 0;
+    clearTimeout(timerNovaTentativa);
+    avisoCarga("");
   }
 }
 
