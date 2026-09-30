@@ -3202,6 +3202,7 @@ const NOME_ENVIO_SITE = {
   "site-candidatura-vaga": "Candidatura a vaga",
   "site-publicar-vaga": "Publicar vaga",
   "app-pedir-viagem": "Pedido pelo app",
+  "motora-aceitar-oferta": "Aceite de corrida (motorista)",
 };
 let errosSite = [];
 let avisoSiteAberto = false;
@@ -3226,8 +3227,8 @@ function renderAvisoSite(){
   const el = document.getElementById("aviso-site");
   if(!errosSite.length){ el.hidden = true; el.innerHTML = ""; return; }
   const n = errosSite.length;
-  let html = '<div class="aviso-site-topo"><span><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> <b>' + n + (n === 1 ? " envio do site não entrou" : " envios do site não entraram") +
-    ' no sistema.</b> A pessoa foi orientada a mandar pelo WhatsApp; confira e cadastre à mão.</span>' +
+  let html = '<div class="aviso-site-topo"><span><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> <b>' + n + (n === 1 ? " envio não entrou" : " envios não entraram") +
+    ' no sistema.</b> Confira com a pessoa (botão WhatsApp) e resolva à mão: cadastrar o pedido ou confirmar a motorista na viagem.</span>' +
     '<button type="button" class="btn secondary" onclick="avisoSiteAberto=!avisoSiteAberto;renderAvisoSite()">' + (avisoSiteAberto ? "Esconder" : "Ver") + '</button></div>';
   if(avisoSiteAberto){
     html += errosSite.map(e=>{
@@ -3239,7 +3240,7 @@ function renderAvisoSite(){
       const quando = new Date(e.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       return '<div class="aviso-site-item"><div><b>' + escapeHtml(NOME_ENVIO_SITE[e.contexto] || e.contexto) + '</b> · ' + quando +
         '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") + '</div>' +
-        '<div class="aviso-site-acoes">' + whats + '<button type="button" class="btn" onclick="resolverErroSite(' + Number(e.id) + ')">Já cadastrei</button></div></div>';
+        '<div class="aviso-site-acoes">' + whats + '<button type="button" class="btn" onclick="resolverErroSite(' + Number(e.id) + ')">Resolvido</button></div></div>';
     }).join("");
   }
   el.innerHTML = html;
