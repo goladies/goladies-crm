@@ -1118,7 +1118,10 @@ tr.tr-click{cursor:pointer;}
       <div id="subtab-viagens">
         <div class="pagehead">
           <div><h2 style="font-size:16px;">Viagens</h2><p>Do pedido até a conclusão e o pagamento à motorista</p></div>
-          <button class="btn" onclick="openViagemModal()">+ Nova viagem</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn secondary" onclick="lancarViagemFeita()" title="Viagem que já aconteceu fora do app: entra concluída, sem avisos"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Lançar viagem já feita</button>
+            <button class="btn" onclick="openViagemModal()">+ Nova viagem</button>
+          </div>
         </div>
         <div class="filters">
           <select id="filter-viagem-tipo" onchange="renderTransporteViagens()"><option value="">Todos os tipos</option></select>
@@ -2054,6 +2057,11 @@ tr.tr-click{cursor:pointer;}
       <div class="vg-resumo" id="vg-resumo"></div>
     </div>
     <p class="legenda-obrig"><b>*</b> obrigatório pra viagem rodar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span> o sistema preenche, dá pra trocar · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> só conta, não se digita</p>
+
+    <!-- Viagem já feita, lançada depois (schema_lancar_viagem_feita.sql).
+         renderViagemFeita() preenche: escolha da cobrança ao lançar, ou a
+         situação dela e o botão "Enviar cobrança agora" ao reabrir. -->
+    <div id="vg-feita-box" style="display:none; margin:0 0 14px; padding:12px 14px; border-radius:10px; border-left:4px solid var(--c-purple); background:var(--c-purple-bg); font-size:13px;"></div>
 
     <!-- ── 1. Pedido ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
@@ -7832,8 +7840,84 @@ function renderTransporteViagens(){
   preencherFotosClientes(document.getElementById("kanban-viagens"));
 }
 let editingViagemId = null;
-function openViagemModal(id){
+// ===== VIAGEM JÁ FEITA, LANÇADA DEPOIS (30/09/2026) =====
+// Viagem que aconteceu fora do app. Entra direto "Concluída", com uma
+// motorista só; nenhum aviso de saída, código, lembrete ou oferta sai (eles
+// dependem de outros status ou de data futura). A cobrança é escolha dela:
+// "Enviar" usa o caminho do pós-pago (liberar sem Pix + Concluída = um Pix
+// com "Obrigada por viajar"); "Não enviar" liga silenciar_cobranca, que
+// trava Pix, Mercado Pago e o "recebemos seu pagamento". Depois de salvar,
+// lancar_viagem_realizada acerta oferta Aceita, horários e repasse, senão a
+// viagem não aparece no painel da motorista. SQL: schema_lancar_viagem_feita.sql
+let lancandoViagemFeita = false;
+function lancarViagemFeita(){
+  openViagemModal(null, { viagemFeita: true });
+}
+function renderViagemFeita(v){
+  const box = document.getElementById("vg-feita-box");
+  const statusSel = document.getElementById("vg-viagem-status");
+  statusSel.disabled = lancandoViagemFeita;
+  if(lancandoViagemFeita){
+    document.getElementById("viagem-modal-title").textContent = "Lançar viagem já feita";
+    statusSel.value = "Concluída";
+    document.getElementById("vg-preco-confirmado").checked = true;
+    document.getElementById("vg-preparacao").checked = true;
+    document.getElementById("vg-saida").checked = true;
+    box.style.display = "block";
+    box.innerHTML = `<div style="margin-bottom:8px;">${ic("clipboard-check")} <b>Viagem que já aconteceu.</b> Entra como Concluída, no histórico do CRM, da motorista e da cliente. Nenhum aviso de saída, código ou lembrete é enviado.</div>
+      <div style="margin-bottom:6px;"><b>Marque só a motorista que dirigiu</b> (seção 5) e preencha data e horário reais.</div>
+      <div style="font-weight:600; margin:10px 0 4px;">Cobrança *</div>
+      <label class="vg-check" style="display:flex; margin-bottom:4px;"><input type="radio" name="vg-feita-cobranca" value="enviar"> Enviar cobrança pelo WhatsApp (Pix e link de cartão, sai em até 2 minutos)</label>
+      <label class="vg-check" style="display:flex;"><input type="radio" name="vg-feita-cobranca" value="nao"> Não enviar nada <span style="color:var(--muted); margin-left:4px;">(se já pagou, marque Pago na seção 6; dá pra enviar depois)</span></label>`;
+    return;
+  }
+  if(!v.lancamento_retroativo){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+  const pago = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
+  let situacao;
+  if(pago) situacao = "cliente já pagou.";
+  else if(v.silenciar_cobranca) situacao = "não enviada (você escolheu não enviar).";
+  else if(v.pix_solicitado_em) situacao = "enviada em " + new Date(v.pix_solicitado_em).toLocaleString("pt-BR") + ".";
+  else situacao = "na fila pra sair pelo WhatsApp.";
+  const botao = (!pago && v.silenciar_cobranca && v.status === "Concluída")
+    ? `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="enviarCobrancaViagemFeita()">${ic("send")} Enviar cobrança agora</button>`
+    : "";
+  box.style.display = "block";
+  box.innerHTML = `${ic("clipboard-check")} <b>Viagem lançada depois de feita.</b> Cobrança: ${escapeHtml(situacao)}${botao ? "<br>" + botao : ""}`;
+}
+async function enviarCobrancaViagemFeita(){
+  if(!editingViagemId) return;
+  const v = viagens.find(x=>x.id===editingViagemId) || {};
+  const c = clientesTransporte.find(x=>x.id===v.cliente_id);
+  if(!confirm(`Enviar a cobrança de ${formatarMoedaBR(v.preco_cotado || 0)} pra ${c ? c.nome : "a cliente"} (viagem #${editingViagemId})?\n\nEla recebe o Pix e o link de cartão no WhatsApp em até 2 minutos.`)) return;
+  const { error } = await sb.rpc("enviar_cobranca_viagem", { p_viagem_id: editingViagemId });
+  if(error){ alert("Não foi possível enviar a cobrança: " + error.message); return; }
+  showToast("Cobrança liberada! Sai em até 2 minutos.");
+  await recarregarTabelas("viagens");
+  openViagemModal(editingViagemId);
+}
+// Confere o lançamento antes de gravar. Devolve a escolha da cobrança e a
+// motorista, ou null (já avisou o que falta).
+function validarViagemFeita(){
+  const escolha = document.querySelector('input[name="vg-feita-cobranca"]:checked');
+  if(!escolha){ alert("Escolha se a cobrança vai pra cliente ou não."); return null; }
+  if(!Number(document.getElementById("vg-cliente").value)){ alert("Escolha a cliente."); return null; }
+  const marcadas = [...document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked")].map(cb=>Number(cb.value));
+  if(marcadas.length !== 1){ alert("Marque só uma motorista: a que dirigiu de fato."); return null; }
+  const data = document.getElementById("vg-data").value;
+  const hora = document.getElementById("vg-horario-partida").value;
+  if(!data || !hora){ alert("Preencha a data e o horário do embarque."); return null; }
+  if(new Date(`${data}T${hora}`) > new Date()){ alert("Essa data ainda não passou. Pra viagem futura, use \"+ Nova viagem\"."); return null; }
+  const preco = Number(document.getElementById("vg-preco-cotado").value);
+  if(escolha.value === "enviar" && !(preco > 0)){ alert("Pra enviar a cobrança, preencha o Preço cobrado da cliente."); return null; }
+  return { cobranca: escolha.value, motoristaId: marcadas[0] };
+}
+function openViagemModal(id, opcoes){
   editingViagemId = id || null;
+  lancandoViagemFeita = !id && !!(opcoes && opcoes.viagemFeita);
   document.getElementById("vg-cliente").innerHTML = `<option value="">-</option>` + clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}</option>`).join("");
   fillSelect(document.getElementById("vg-tipo-servico"), TIPO_SERVICO_VIAGEM, "Padrão");
   fillSelect(document.getElementById("vg-canal"), CANAL_RECEPCAO, "Telefone");
@@ -7950,6 +8034,7 @@ function openViagemModal(id){
   }
 
   renderReenvios(id, v);
+  renderViagemFeita(v);
 
   const pgc = pagamentosCliente.find(p=>p.viagem_id===id) || {};
   document.getElementById("vg-lid-valor").value = pgc.valor_recebido ?? "";
@@ -8070,6 +8155,8 @@ function statusViagemMudou(){
   atualizarStatusOferta();
 }
 async function saveViagem(){
+  const feita = lancandoViagemFeita ? validarViagemFeita() : null;
+  if(lancandoViagemFeita && !feita) return;
   marcarConfirmadoSeAguardandoPagamento();
   const payload = {
     cliente_id: Number(document.getElementById("vg-cliente").value) || null,
@@ -8147,6 +8234,18 @@ async function saveViagem(){
     Object.assign(payload, desconto);
   }
 
+  // Viagem já feita: nasce Concluída, sem motorista_ids (quem marca a
+  // motorista é lancar_viagem_realizada, já com a oferta Aceita; assim o
+  // trigger de ofertas nunca cria uma oferta Pendente avisável) e com a
+  // trava de cobrança desde o insert, antes do n8n olhar.
+  if(feita){
+    payload.status = "Concluída";
+    payload.motorista_ids = null;
+    payload.lancamento_retroativo = true;
+    payload.silenciar_cobranca = feita.cobranca === "nao";
+    if(feita.cobranca === "enviar") payload.liberar_sem_pagamento = true;
+  }
+
   let viagemId = editingViagemId;
   if(viagemId){
     const { error } = await sb.from("viagens").update(payload).eq("id", viagemId);
@@ -8219,6 +8318,22 @@ async function saveViagem(){
       ? await sb.from("pagamentos_motorista").update(pgPayload).eq("id", existente.id)
       : await sb.from("pagamentos_motorista").upsert(pgPayload, { onConflict: "viagem_id" });
     if(error){ alert("Erro ao salvar pagamento: " + error.message); return; }
+  }
+
+  // Depois dos pagamentos: a função só completa o repasse que ficou vazio.
+  if(feita){
+    const { error } = await sb.rpc("lancar_viagem_realizada", { p_viagem_id: viagemId, p_motorista_id: feita.motoristaId });
+    if(error){
+      alert(`A viagem #${viagemId} foi salva, mas o histórico não foi acertado: ${error.message}\n\nAbra a viagem e use "Confirmar motorista marcada nesta viagem".`);
+      closeModal("viagem-modal");
+      await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_ofertas");
+      return;
+    }
+    lancandoViagemFeita = false;
+    showToast(feita.cobranca === "enviar" ? "Viagem lançada! A cobrança sai em até 2 minutos." : "Viagem lançada, sem mensagens.");
+    closeModal("viagem-modal");
+    await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_ofertas");
+    return;
   }
 
   showToast("Salvo!");
