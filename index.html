@@ -225,6 +225,20 @@ a{color:var(--rosa-texto);}
 }
 .aviso-carga[hidden]{display:none;}
 .aviso-carga span{flex:1; min-width:200px;}
+.aviso-site{
+  margin:0 0 16px; padding:12px 14px; border-radius:12px; font-size:13.5px; line-height:1.4; color:var(--text1);
+  background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.45);
+}
+.aviso-site[hidden]{display:none;}
+.aviso-site-topo{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.aviso-site-topo span{flex:1; min-width:220px;}
+.aviso-site-item{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  margin-top:10px; padding-top:10px; border-top:1px solid rgba(239,68,68,.25);
+}
+.aviso-site-item small{display:block; color:var(--text3); margin-top:2px;}
+.aviso-site-acoes{display:flex; gap:8px; flex-wrap:wrap;}
+.aviso-site .btn{text-decoration:none;}
 
 /* ---------- BOAS-VINDAS na barra do topo (fixo em todas as telas), no estilo do Lapidar ---------- */
 .topbar-saudacao{flex:1; min-width:0;}
@@ -846,6 +860,7 @@ tr.tr-click{cursor:pointer;}
   <div class="main">
 
     <div class="aviso-carga" id="aviso-carga" hidden></div>
+    <div class="aviso-site" id="aviso-site" hidden></div>
 
     <div id="tab-dashboard">
       <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
@@ -3174,6 +3189,73 @@ async function carregarDados(){
   }
 }
 
+// ===== ENVIOS DO SITE QUE NÃO ENTRARAM NO BANCO (30/09/2026) =====
+// Pedido de viagem, quero ser motorista, candidatura e publicar vaga
+// registram em crm_erros_cliente ("NÃO gravado (resumo): erro") quando a
+// gravação falha; a pessoa foi orientada a mandar pelo WhatsApp. Aqui vira
+// aviso no topo pra equipe cadastrar à mão. "Já cadastrei" grava
+// resolvido_em (schema_erros_site_resolvido.sql); sem o SQL rodado, guarda
+// só neste navegador.
+const NOME_ENVIO_SITE = {
+  "site-agendar-viagem": "Pedido de viagem",
+  "site-candidatura-motorista": "Quero ser motorista",
+  "site-candidatura-vaga": "Candidatura a vaga",
+  "site-publicar-vaga": "Publicar vaga",
+};
+let errosSite = [];
+let avisoSiteAberto = false;
+function errosSiteResolvidosLocal(){
+  try{ return JSON.parse(localStorage.getItem("crm-erros-site-ok") || "[]"); }catch(e){ return []; }
+}
+async function carregarErrosSite(){
+  try{
+    const r = await Promise.race([
+      Promise.resolve(sb.from("crm_erros_cliente").select("*")
+        .in("contexto", Object.keys(NOME_ENVIO_SITE)).ilike("mensagem", "%NÃO gravado%")
+        .order("criado_em", { ascending: false }).limit(50)),
+      new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 15000)),
+    ]);
+    if(r.error){ console.error("crm_erros_cliente:", r.error); return; }
+    const locais = errosSiteResolvidosLocal();
+    errosSite = (r.data || []).filter(e=>!e.resolvido_em && !locais.includes(e.id));
+    renderAvisoSite();
+  }catch(e){ console.error("carregarErrosSite:", e); }
+}
+function renderAvisoSite(){
+  const el = document.getElementById("aviso-site");
+  if(!errosSite.length){ el.hidden = true; el.innerHTML = ""; return; }
+  const n = errosSite.length;
+  let html = '<div class="aviso-site-topo"><span><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> <b>' + n + (n === 1 ? " envio do site não entrou" : " envios do site não entraram") +
+    ' no sistema.</b> A pessoa foi orientada a mandar pelo WhatsApp; confira e cadastre à mão.</span>' +
+    '<button type="button" class="btn secondary" onclick="avisoSiteAberto=!avisoSiteAberto;renderAvisoSite()">' + (avisoSiteAberto ? "Esconder" : "Ver") + '</button></div>';
+  if(avisoSiteAberto){
+    html += errosSite.map(e=>{
+      const m = String(e.mensagem || "").match(/NÃO gravado \((.*)\): ([\s\S]*)$/);
+      const resumo = m ? m[1] : e.mensagem;
+      const motivo = m ? m[2] : "";
+      const tel = (resumo.match(/\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}/) || [""])[0].replace(/\D/g, "");
+      const whats = tel.length >= 10 ? '<a class="btn secondary" target="_blank" rel="noopener" href="https://api.whatsapp.com/send?phone=55' + tel + '"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> WhatsApp</a>' : "";
+      const quando = new Date(e.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      return '<div class="aviso-site-item"><div><b>' + escapeHtml(NOME_ENVIO_SITE[e.contexto] || e.contexto) + '</b> · ' + quando +
+        '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") + '</div>' +
+        '<div class="aviso-site-acoes">' + whats + '<button type="button" class="btn" onclick="resolverErroSite(' + Number(e.id) + ')">Já cadastrei</button></div></div>';
+    }).join("");
+  }
+  el.innerHTML = html;
+  el.hidden = false;
+}
+async function resolverErroSite(id){
+  errosSite = errosSite.filter(e=>e.id !== id);
+  renderAvisoSite();
+  const r = await sb.from("crm_erros_cliente").update({ resolvido_em: new Date().toISOString() }).eq("id", id).select("id");
+  if(r.error || !r.data || !r.data.length){
+    // SQL ainda não rodado (sem coluna/permissão): guarda neste navegador
+    const locais = errosSiteResolvidosLocal();
+    locais.push(id);
+    try{ localStorage.setItem("crm-erros-site-ok", JSON.stringify(locais.slice(-200))); }catch(e){}
+  }
+}
+
 let tentativasCarga = 0, timerNovaTentativa = null;
 function avisoCarga(msg, comBotao){
   const el = document.getElementById("aviso-carga");
@@ -3321,6 +3403,7 @@ async function carregarDadosInterno(){
 
   renderAll();
   marcarAtualizado();
+  carregarErrosSite();
 
   // Avisa que alguma coisa não veio, em vez de mostrar tela vazia como se
   // não houvesse nada cadastrado.
@@ -3368,6 +3451,7 @@ async function atualizarDados(manual){
   recargaSilenciosa = !manual;
   try{
     await recarregarTabelas(...TABELAS_AUTO);
+    carregarErrosSite();
     marcarAtualizado();
     if(manual) showToast("Dados atualizados!");
   } finally {
@@ -3456,7 +3540,7 @@ async function recarregarTabelas(...nomes){
   const busca = Promise.all(nomes.map(nome => sb.from(nome).select("*").order("id").then(r=>({ nome, ...r }))));
   const resultado = await Promise.race([busca.then(rs=>({ timeout: false, rs })), timeout]);
   if(resultado.timeout){
-    if(!recargaSilenciosa) alert("Demorou demais pra atualizar os dados. Confere sua internet e tenta de novo; se continuar acontecendo, recarregue a página.");
+    if(!recargaSilenciosa) avisoCarga("Demorou demais pra atualizar os dados. Confira sua internet e tente de novo.", true);
     return;
   }
   resultado.rs.forEach(r=>{
