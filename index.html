@@ -292,6 +292,8 @@ td.acoes-cel .act{margin-right:3px;}
 /* ---------- CARDS, PAINÉIS, TABELAS ---------- */
 .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:20px;}
 .card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--sombra);}
+.card-link{cursor:pointer; transition:border-color .15s, transform .15s;}
+.card-link:hover{border-color:var(--pink); transform:translateY(-1px);}
 .card .num{font-size:26px; font-weight:600; color:var(--rosa-texto); letter-spacing:-.5px;}
 .card .label{color:var(--text3); font-size:12px; margin-top:3px;}
 .panel{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:18px; box-shadow:var(--sombra); overflow-x:auto;}
@@ -3628,15 +3630,15 @@ function renderDashboard(){
   const coracao = document.getElementById("bv-coracao-num");
   if(coracao) coracao.textContent = leads.filter(l=>l.etapa==="Novo lead").length;
   cards.innerHTML = `
-    <div class="card"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
-    <div class="card"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
-    <div class="card"><div class="num">${parceirosAtivos}</div><div class="label">Parceiros ativos</div></div>
-    <div class="card"><div class="num">${orcAbertos}</div><div class="label">Orçamentos em aberto</div></div>
+    <div class="card card-link" title="Abrir a lista de leads" onclick="irParaLeads('')"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
+    <div class="card card-link" title="Abrir a lista de clientes" onclick="irParaAba('clientes')"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
+    <div class="card card-link" title="Abrir a rede de parceiras (os)" onclick="irParaAba('parceiros')"><div class="num">${parceirosAtivos}</div><div class="label">Parceiros ativos</div></div>
+    <div class="card card-link" title="Abrir os orçamentos" onclick="irParaAba('orcamentos')"><div class="num">${orcAbertos}</div><div class="label">Orçamentos em aberto</div></div>
   `;
   document.getElementById("funnel-head").innerHTML = ETAPAS.map(e=>`<th>${e}</th>`).join("");
   document.getElementById("funnel-body").innerHTML = ETAPAS.map(e=>{
     const n = leads.filter(l=>l.etapa===e).length;
-    return `<td style="font-size:18px; font-weight:700; color:var(--pink);">${n}</td>`;
+    return `<td class="card-link" title="Ver os leads em &quot;${e}&quot;" onclick="irParaLeads('${e}')" style="font-size:18px; font-weight:700; color:var(--pink);">${n}</td>`;
   }).join("");
   const recentes = [...leads].sort((a,b)=> (b.data||"").localeCompare(a.data||"")).slice(0,6);
   document.getElementById("dash-leads-recentes").innerHTML = recentes.map(l=>`
@@ -4146,12 +4148,12 @@ function renderTransporteDashboard(){
   if(periodo) periodo.textContent = `${nomeMes(mes)} de ${ano} · viagens pagas no mês, com o repasse das mesmas viagens`;
   const corLucro = f.lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
   wrap.innerHTML = `
-    <div class="card"><div class="num">${formatarMoedaBR(f.recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(f.repassado)}</div><div class="label">Repasse às motoristas</div></div>
-    <div class="card"><div class="num" style="color:${corLucro};">${formatarMoedaBR(f.lucro)}</div><div class="label">Lucro real Go Ladies</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(f.taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(f.descontos)}</div><div class="label">Descontos concedidos</div></div>
-    <div class="card"><div class="num">${f.concluidas}</div><div class="label">Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}</div></div>
+    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
+    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.repassado)}</div><div class="label">Repasse às motoristas</div></div>
+    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num" style="color:${corLucro};">${formatarMoedaBR(f.lucro)}</div><div class="label">Lucro real Go Ladies</div></div>
+    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
+    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.descontos)}</div><div class="label">Descontos concedidos</div></div>
+    <div class="card card-link" title="Ver as viagens" onclick="irParaTransporte('viagens')"><div class="num">${f.concluidas}</div><div class="label">Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}</div></div>
   `;
 }
 // Cadastro pelo app: a cliente nasce em clientes_transporte com login_criado_em
@@ -4187,6 +4189,23 @@ function renderUsuariasApp(){
       <td>${escapeHtml(u.situacao)}</td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="5">Ninguém se cadastrou pelo app ainda</td></tr>`;
+}
+// Atalhos dos cartões da Visão geral: abrem a aba de onde o número vem
+function irParaAba(tab){
+  const nav = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if(nav) nav.click();
+}
+function irParaLeads(etapa){
+  irParaAba("leads");
+  const fe = document.getElementById("filter-etapa");
+  fe.value = etapa;
+  document.getElementById("filter-categoria").value = "";
+  document.getElementById("filter-busca").value = "";
+  renderLeads();
+}
+function irParaTransporte(subtab){
+  irParaAba("transporte");
+  mostrarSubTab(subtab);
 }
 function irParaFinanceiro(subtab){
   const nav = document.querySelector('.nav-item[data-tab="financeiro"]');
