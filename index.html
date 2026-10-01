@@ -1176,6 +1176,7 @@ tr.tr-click{cursor:pointer;}
           </select>
         </div>
         <div class="cards" id="ft-cards"></div>
+        <div class="panel" id="ft-detalhe" style="display:none;"></div>
 
         <div class="panel" id="ft-sim">
           <h3><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador de preço</h3>
@@ -1251,6 +1252,7 @@ tr.tr-click{cursor:pointer;}
           <h3><svg class=ic aria-hidden=true><use href=#i-target /></svg> Validação de preço</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="ft-amostra"></p>
           <div class="cards" id="ft-cards-validacao"></div>
+          <div id="ft-detalhe-validacao" style="display:none; margin-top:12px;"></div>
           <h4 style="font-size:13px; margin:18px 0 8px;">Onde o aceite cai, por faixa de preço cotado</h4>
           <div id="ft-faixas"></div>
           <h4 style="font-size:13px; margin:22px 0 8px;">Por distância: tabela × o que realmente fechou</h4>
@@ -4702,6 +4704,71 @@ function simular(){
   document.getElementById("sim-aviso").innerHTML = avisos.map(a => `<div class="sim-aviso">${a}</div>`).join("");
 }
 
+// Cards do Financeiro do transporte: clicar abre a lista viagem por viagem
+// logo abaixo do grupo de cards; clicar de novo no mesmo card fecha.
+let ftDetalheAberto = null;
+function abrirDetalheFt(chave){
+  ftDetalheAberto = ftDetalheAberto === chave ? null : chave;
+  renderFinanceiroTransporte();
+  const alvo = ["recebido", "taxa", "repasse", "sobra"].includes(ftDetalheAberto) ? "ft-detalhe" : "ft-detalhe-validacao";
+  if(ftDetalheAberto) document.getElementById(alvo).scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function ftCabecalhoDetalhe(titulo){
+  return `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="margin:0;">Viagem por viagem · ${titulo}</h3>
+    <button class="icon-btn" type="button" onclick="abrirDetalheFt('${ftDetalheAberto}')" aria-label="Fechar">✕</button></div>`;
+}
+function renderDetalheFt(pagos, tot){
+  const el = document.getElementById("ft-detalhe");
+  if(!el) return;
+  if(!["recebido", "taxa", "repasse", "sobra"].includes(ftDetalheAberto)){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const titulos = { recebido: "Recebido das clientes", taxa: "Taxa Mercado Pago", repasse: "Repasse às motoristas", sobra: "Sobrou pra Go Ladies" };
+  const destaque = col => ftDetalheAberto === col ? ' style="font-weight:700; color:var(--rosa-texto);"' : "";
+  const linhas = [...pagos].sort((a,b)=>String(a.data_pagamento).localeCompare(String(b.data_pagamento))).map(p=>{
+    const v = viagens.find(x=>x.id === p.viagem_id);
+    const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    const bruto = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0), sobra = bruto - taxa - repasse;
+    const quem = v ? (nomesMotoristasViagem(v) || "sem motorista") : "-";
+    return `<tr${v ? ` class="tr-click" onclick="openViagemModal(${v.id})"` : ""}>
+      <td>${fmtDataBR(String(p.data_pagamento || "").slice(0,10)) || "-"}</td>
+      <td>${v ? "#" + v.id : "-"}</td>
+      <td>${v ? escapeHtml(ftNomeCliente(v)) : "-"}</td>
+      <td>${escapeHtml(quem)}${pg ? "" : `<div style="color:var(--muted); font-size:11.5px;">repasse previsto, ainda não lançado</div>`}</td>
+      <td${destaque("recebido")}>${formatarMoedaBR(bruto)}</td>
+      <td${destaque("taxa")}>${formatarMoedaBR(taxa)}</td>
+      <td${destaque("repasse")}>${formatarMoedaBR(repasse)}</td>
+      <td${destaque("sobra")}><span style="color:${sobra >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(sobra)}</span></td></tr>`;
+  }).join("");
+  el.style.display = "";
+  el.innerHTML = ftCabecalhoDetalhe(titulos[ftDetalheAberto]) + `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Recebido</th><th>Taxa</th><th>Repasse</th><th>Sobrou</th></tr></thead><tbody>
+    ${linhas || `<tr><td class="empty" colspan="8">Nenhum pagamento de cliente no período</td></tr>`}
+    ${linhas ? `<tr style="font-weight:700;"><td colspan="4">Total</td><td>${formatarMoedaBR(tot.recebido)}</td><td>${formatarMoedaBR(tot.taxaMp)}</td><td>${formatarMoedaBR(tot.repassado)}</td><td>${formatarMoedaBR(tot.lucro)}</td></tr>` : ""}
+    </tbody></table><p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Entra pela data em que a cliente pagou. Clique numa linha para abrir a viagem.</p>`;
+}
+function renderDetalheFtValidacao(cotacoes){
+  const el = document.getElementById("ft-detalhe-validacao");
+  if(!el) return;
+  if(!["cotacoes", "aceite", "desconto", "porkm"].includes(ftDetalheAberto)){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const titulos = { cotacoes: "Cotações enviadas", aceite: "Aceitas sem negociar", desconto: "Desconto pra fechar", porkm: "Preço praticado por km" };
+  let lista = [...cotacoes];
+  if(ftDetalheAberto === "desconto") lista = lista.filter(v=>ftDesfecho(v) === "fechou com desconto");
+  if(ftDetalheAberto === "porkm") lista = lista.filter(v=>["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
+  lista.sort((a,b)=>String(b.data || "").localeCompare(String(a.data || "")));
+  const linhas = lista.map(v=>{
+    const km = kmTotalViagem(v), fechado = Number(v.preco_cotado || 0);
+    return `<tr class="tr-click" onclick="openViagemModal(${v.id})">
+      <td>${v.data ? formatarDataBR(v.data) : "-"}</td><td>#${v.id}</td><td>${escapeHtml(ftNomeCliente(v))}</td>
+      <td>${formatarMoedaBR(ftPrecoTestado(v))}</td><td>${fechado ? formatarMoedaBR(fechado) : "-"}</td>
+      <td>${ftDesconto(v) ? formatarMoedaBR(ftDesconto(v)) : "-"}</td>
+      <td>${km ? km.toFixed(1).replace(".", ",") + " km" : "-"}</td>
+      <td>${km && fechado ? formatarMoedaBR(fechado / km) : "-"}</td>
+      <td>${escapeHtml(ftDesfecho(v))}</td></tr>`;
+  }).join("");
+  el.style.display = "";
+  el.innerHTML = ftCabecalhoDetalhe(titulos[ftDetalheAberto]) + `<table class="tbl"><thead><tr><th>Data</th><th>Viagem</th><th>Cliente</th><th>Preço cotado</th><th>Fechou por</th><th>Desconto</th><th>Km</th><th>R$/km</th><th>Desfecho</th></tr></thead><tbody>
+    ${linhas || `<tr><td class="empty" colspan="9">Nenhuma cotação nesse grupo no período</td></tr>`}</tbody></table>`;
+}
 function renderFinanceiroTransporte(){
   const wrap = document.getElementById("ft-cards");
   if(!wrap) return;
@@ -4722,12 +4789,14 @@ function renderFinanceiroTransporte(){
   const lucro = recebido - taxaMp - repassado;
   const margem = recebido ? (lucro / recebido) * 100 : 0;
   const corLucro = lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
-  wrap.innerHTML = `
-    <div class="card"><div class="num">${formatarMoedaBR(recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(repassado)}</div><div class="label">Repasse às motoristas</div></div>
-    <div class="card"><div class="num" style="color:${corLucro};">${formatarMoedaBR(lucro)}</div><div class="label">Sobrou pra Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%</div></div>
-  `;
+  const ftCard = (chave, num, label, cor) => `<div class="card card-link${ftDetalheAberto === chave ? " card-ativo" : ""}" title="Ver viagem por viagem" onclick="abrirDetalheFt('${chave}')"><div class="num"${cor ? ` style="color:${cor};"` : ""}>${num}</div><div class="label">${label}</div></div>`;
+  wrap.innerHTML = [
+    ftCard("recebido", formatarMoedaBR(recebido), "Recebido das clientes (bruto)"),
+    ftCard("taxa", formatarMoedaBR(taxaMp), "Taxa Mercado Pago"),
+    ftCard("repasse", formatarMoedaBR(repassado), "Repasse às motoristas"),
+    ftCard("sobra", formatarMoedaBR(lucro), `Sobrou pra Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%`, corLucro),
+  ].join("");
+  renderDetalheFt(pagos, { recebido, taxaMp, repassado, lucro });
 
   // ── Validação de preço ──
   const fechadas = cotacoes.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
@@ -4746,12 +4815,13 @@ function renderFinanceiroTransporte(){
       : `${cotacoes.length} cotações no período.`;
     amostra.style.color = cotacoes.length < 15 ? "var(--c-amber)" : "var(--muted)";
   }
-  document.getElementById("ft-cards-validacao").innerHTML = `
-    <div class="card"><div class="num">${cotacoes.length}</div><div class="label">Cotações enviadas</div></div>
-    <div class="card"><div class="num">${taxaAceite.toFixed(0)}%</div><div class="label">Aceitas sem negociar</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(descontoMedio)}</div><div class="label">Desconto médio pra fechar</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(porKm)}</div><div class="label">Preço praticado por km</div></div>
-  `;
+  document.getElementById("ft-cards-validacao").innerHTML = [
+    ftCard("cotacoes", cotacoes.length, "Cotações enviadas"),
+    ftCard("aceite", taxaAceite.toFixed(0) + "%", "Aceitas sem negociar"),
+    ftCard("desconto", formatarMoedaBR(descontoMedio), "Desconto médio pra fechar"),
+    ftCard("porkm", formatarMoedaBR(porKm), "Preço praticado por km"),
+  ].join("");
+  renderDetalheFtValidacao(cotacoes);
 
   // Faixa de preço: o teste é o valor que saiu pra cliente, antes do desconto
   document.getElementById("ft-faixas").innerHTML = FT_FAIXAS_PRECO.map(f => {
