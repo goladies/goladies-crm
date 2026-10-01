@@ -294,6 +294,7 @@ td.acoes-cel .act{margin-right:3px;}
 .card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--sombra);}
 .card-link{cursor:pointer; transition:border-color .15s, transform .15s;}
 .card-link:hover{border-color:var(--pink); transform:translateY(-1px);}
+.card-ativo{border-color:var(--pink);}
 .card .num{font-size:26px; font-weight:600; color:var(--rosa-texto); letter-spacing:-.5px;}
 .card .label{color:var(--text3); font-size:12px; margin-top:3px;}
 .panel{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:18px; box-shadow:var(--sombra); overflow-x:auto;}
@@ -1456,6 +1457,7 @@ tr.tr-click{cursor:pointer;}
         <input type="month" id="gestao-mes" onchange="renderGestao()" aria-label="Mês">
       </div>
       <div class="cards" id="gestao-cards"></div>
+      <div class="panel" id="gestao-detalhe" style="display:none;"></div>
 
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências</h3>
@@ -1479,7 +1481,23 @@ tr.tr-click{cursor:pointer;}
         <table class="tbl"><thead><tr><th>Negócio</th><th>Receita</th><th>Gastos</th><th>Resultado</th></tr></thead><tbody id="gestao-linhas"></tbody></table>
       </div>
 
-      <div class="panel" style="max-width:720px;">
+      <div class="panel" id="gestao-painel-aportes" style="max-width:720px;">
+        <h3><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Aportes da sócia</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Dinheiro pessoal seu que entrou na Go Ladies, e o que ela já te devolveu. Despesa marcada como "Paguei do meu bolso" entra aqui sozinha.</p>
+        <div id="gestao-aportes-resumo" style="margin-bottom:12px;"></div>
+        <div class="formgrid">
+          <div><label>Tipo</label><select id="ga-tipo"><option value="Aporte">Aporte (coloquei dinheiro)</option><option value="Devolução">Devolução (a Go Ladies me pagou)</option></select></div>
+          <div><label>Valor (R$)</label><input type="number" id="ga-valor" step="0.01" min="0"></div>
+          <div><label>Data</label><input type="date" id="ga-data"></div>
+          <div><label>Observação</label><input type="text" id="ga-obs" placeholder="Ex: compra do suporte de celular"></div>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start; margin-top:12px;">
+          <button class="btn" type="button" onclick="salvarAporte()">Salvar</button>
+        </div>
+        <table class="tbl" style="margin-top:12px;"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Observação</th><th></th></tr></thead><tbody id="gestao-aportes"></tbody></table>
+      </div>
+
+      <div class="panel" id="gestao-painel-caixa" style="max-width:720px;">
         <h3><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Saldo de caixa</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O Mercado Pago não manda o saldo para cá. Abra o app dele e anote aqui uma vez por semana.</p>
         <div class="formgrid">
@@ -2532,7 +2550,8 @@ tr.tr-click{cursor:pointer;}
       <div><label>Tipo de gasto</label><select id="cp-tipo-custo"><option value="">-</option><option>Fixo</option><option>Variável</option><option>Investimento</option></select></div>
       <div><label>Negócio</label><select id="cp-linha-negocio"></select></div>
       <div><label>Saiu da conta</label><select id="cp-conta-origem"></select></div>
-      <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="cp-recorrente" style="width:auto;"> Repete todo mês</label></div>
+      <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="cp-recorrente" style="width:auto;"> Repete todo mês</label>
+        <label style="display:flex; gap:8px; align-items:center; margin-top:6px;" title="Dinheiro pessoal seu que entrou na Go Ladies. Fica em Gestão → Aportes da sócia, como valor que a empresa te deve."><input type="checkbox" id="cp-aporte" style="width:auto;"> Paguei do meu bolso (aporte)</label></div>
       <div><label>Parceira (o) ligada</label><select id="cp-parceiro"><option value="">-</option></select></div>
       <div><label>Vencimento</label><input type="date" id="cp-vencimento"></div>
       <div><label>Data de pagamento</label><input type="date" id="cp-data-pagamento"></div>
@@ -2873,6 +2892,7 @@ let vendaParcelas = [];
 let contasPagar = [];
 let metasFinanceiras = [];
 let gestaoSaldos = [];
+let gestaoAportes = [];
 let pecasPedidos = [];
 let pecasTentativas = [];
 let parceiroLinks = [];
@@ -3464,8 +3484,12 @@ async function carregarDadosInterno(){
   // Saldo de caixa da Gestão (schema_gestao.sql), idem
   // Sem aplicarConsulta de propósito: antes do SQL rodar, a tabela não existe
   // e isso não deve acender o aviso de "parte dos dados não carregou".
-  const rgs = await sb.from("gestao_saldos").select("*").order("id");
+  const [rgs, rga] = await Promise.all([
+    sb.from("gestao_saldos").select("*").order("id"),
+    sb.from("gestao_aportes").select("*").order("id"),
+  ]);
   if(!rgs.error) gestaoSaldos = rgs.data || [];
+  if(!rga.error) gestaoAportes = rga.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -3573,6 +3597,7 @@ const TABELA_ATUALIZA = {
   contas_pagar: v => contasPagar = v,
   metas_financeiras: v => metasFinanceiras = v,
   gestao_saldos: v => gestaoSaldos = v,
+  gestao_aportes: v => gestaoAportes = v,
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
   parceiro_links: v => parceiroLinks = v,
@@ -9861,8 +9886,8 @@ function renderContasPagar(){
       <td>${escapeHtml(c.descricao||"-")}</td>
       <td>${escapeHtml(c.categoria||"-")}</td>
       <td>${c.valor!=null?formatarMoedaBR(c.valor):"-"}</td>
-      <td>${c.vencimento||"-"}</td>
-      <td>${c.data_pagamento||"-"}</td>
+      <td>${fmtDataBR(c.vencimento)||"-"}</td>
+      <td>${fmtDataBR(c.data_pagamento)||"-"}</td>
       <td><span class="tag ${c.status==='Pago'?'ativo':'urg-media'}">${escapeHtml(c.status)}</span></td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${c.origem==='Despesa'?`<button class="act act-edit" onclick="openContaPagarModal(${c.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button>`:''}</td>
     </tr>
@@ -9908,6 +9933,7 @@ function openContaPagarModal(id){
   fillSelect(document.getElementById("cp-conta-origem"), GESTAO_CONTAS, c.conta_origem || "CPF Juliana");
   document.getElementById("cp-tipo-custo").value = c.tipo_custo || "";
   document.getElementById("cp-recorrente").checked = !!c.recorrente;
+  document.getElementById("cp-aporte").checked = !!(id && gestaoAportes.some(a=>a.conta_pagar_id === id));
   document.getElementById("cp-descricao").value = c.descricao||"";
   document.getElementById("cp-categoria").value = c.categoria||"";
   document.getElementById("cp-valor").value = c.valor ?? "";
@@ -9938,19 +9964,46 @@ async function saveContaPagar(){
   };
   const gravar = p => editingContaPagarId
     ? sb.from("contas_pagar").update(p).eq("id", editingContaPagarId)
-    : sb.from("contas_pagar").insert(p);
-  let { error } = await gravar({ ...payload, ...extrasGestao });
+    : sb.from("contas_pagar").insert(p).select("id");
+  let { data, error } = await gravar({ ...payload, ...extrasGestao });
   // Sem o schema_gestao.sql rodado, as colunas novas não existem: salva o
   // básico e avisa, em vez de perder a despesa.
   let semColunasGestao = false;
   if(error && /column|coluna|schema cache/i.test(error.message || "")){
-    ({ error } = await gravar(payload));
+    ({ data, error } = await gravar(payload));
     semColunasGestao = !error;
   }
   if(error){ alert("Erro ao salvar: " + error.message); return; }
-  showToast(semColunasGestao ? "Salvo, sem tipo/negócio/conta: falta rodar o schema_gestao.sql" : "Salvo!", semColunasGestao);
+  const contaId = editingContaPagarId || (data && data[0] && data[0].id);
+  const erroAporte = contaId ? await sincronizarAporteDaDespesa(contaId, payload) : null;
+  if(erroAporte) showToast("Despesa salva, mas o aporte não: " + erroAporte, true);
+  else showToast(semColunasGestao ? "Salvo, sem tipo/negócio/conta: falta rodar o schema_gestao.sql" : "Salvo!", semColunasGestao);
   closeModal("conta-pagar-modal");
-  await recarregarTabelas("contas_pagar");
+  await recarregarTabelas("contas_pagar", ...(erroAporte ? [] : ["gestao_aportes"]));
+}
+// "Paguei do meu bolso": a despesa vira um aporte da sócia com o mesmo valor
+// e data. Desmarcar apaga o aporte. Devolve a mensagem de erro, ou null.
+async function sincronizarAporteDaDespesa(contaId, despesa){
+  const marcado = document.getElementById("cp-aporte").checked;
+  const existente = gestaoAportes.find(a=>a.conta_pagar_id === contaId);
+  if(!marcado && !existente) return null;
+  let res;
+  if(!marcado) res = await sb.from("gestao_aportes").delete().eq("id", existente.id);
+  else {
+    if(!(Number(despesa.valor) > 0)) return "a despesa precisa ter valor";
+    const aporte = {
+      tipo: "Aporte", valor: Number(despesa.valor), conta_pagar_id: contaId,
+      data: despesa.data_pagamento || despesa.vencimento || new Date().toISOString().slice(0,10),
+      observacao: despesa.descricao,
+    };
+    res = existente
+      ? await sb.from("gestao_aportes").update(aporte).eq("id", existente.id)
+      : await sb.from("gestao_aportes").insert(aporte);
+  }
+  if(!res.error) return null;
+  return /relation|does not exist|schema cache/i.test(res.error.message || "")
+    ? "falta rodar o schema_gestao_aportes.sql no Supabase"
+    : res.error.message;
 }
 async function deleteContaPagar(){
   if(!editingContaPagarId) return;
@@ -9958,7 +10011,9 @@ async function deleteContaPagar(){
   const { error } = await sb.from("contas_pagar").delete().eq("id", editingContaPagarId);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   closeModal("conta-pagar-modal");
-  await recarregarTabelas("contas_pagar");
+  // O aporte ligado some junto no banco (on delete cascade).
+  const tinhaAporte = gestaoAportes.some(a=>a.conta_pagar_id === editingContaPagarId);
+  await recarregarTabelas("contas_pagar", ...(tinhaAporte ? ["gestao_aportes"] : []));
 }
 
 // ===== FINANCEIRO: METAS =====
@@ -10140,13 +10195,29 @@ function gestaoMes(mes, ano){
     .filter(c=>tipoCustoDe(c) === "Fixo")
     .reduce((s,c)=>s + Number(c.valor || 0), 0);
   const receita = t.recebido + vendasMes;
+  // Parte do repasse que é dela (viagens que a Juliana dirigiu).
+  const repasseJuliana = pagamentosTransporteMes(mes, ano).filter(x=>x.ela).reduce((s,x)=>s + x.repasse, 0);
   // Margem de contribuição: o que sobra de cada R$ 1 depois da taxa do
   // Mercado Pago, do repasse e dos gastos variáveis, para pagar os fixos.
   const contribuicao = receita - t.taxaMp - t.repassado - variaveis;
   const margemPct = receita > 0 ? contribuicao / receita : null;
   const lucro = contribuicao - fixos - investimentos;
   const meta = metasFinanceiras.find(m=>m.mes === mes && m.ano === ano) || null;
-  return { mes, ano, t, vendasMes, despesas, fixos, variaveis, investimentos, fixosPrevistos, receita, contribuicao, margemPct, lucro, meta };
+  return { mes, ano, t, vendasMes, despesas, fixos, variaveis, investimentos, fixosPrevistos, receita, contribuicao, margemPct, lucro, meta, repasseJuliana };
+}
+// Pagamentos de cliente do mês, um a um, com o repasse da mesma viagem (mesma
+// regra do financeiroTransporteMes) e se foi ela quem dirigiu.
+function pagamentosTransporteMes(mes, ano){
+  return pagamentosCliente
+    .filter(p=>p.status === "Pago" && dentroDoMes(p.data_pagamento, mes, ano))
+    .map(p=>{
+      const v = viagens.find(x=>x.id === p.viagem_id);
+      const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+      const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+      const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
+      return { p, v, repasse, ela, recebido: Number(p.valor_recebido || 0), taxa: Number(p.taxa_mp || 0) };
+    })
+    .sort((a,b)=>String(a.p.data_pagamento).localeCompare(String(b.p.data_pagamento)));
 }
 // Margem de referência quando o mês ainda não teve receita: a dos últimos
 // 3 meses somados, senão o ponto de equilíbrio não tem como ser calculado.
@@ -10258,14 +10329,18 @@ function renderGestao(){
   const pctMeta = g.meta && Number(g.meta.meta_faturamento) > 0 ? Math.round(g.receita / Number(g.meta.meta_faturamento) * 100) : null;
   const falta = equilibrio != null ? Math.max(0, equilibrio - g.receita) : null;
 
-  cardsEl.innerHTML = `
-    <div class="card"><div class="num">${cx.lista.length ? formatarMoedaBR(cx.total) : "-"}</div><div class="label">Caixa${cx.maisAntigo ? ` · saldo de ${fmtDataBR(cx.maisAntigo)}` : " · informe o saldo abaixo"}</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(g.receita)}</div><div class="label">Receita de ${nomeMes(mes)}${pctMeta != null ? ` · ${pctMeta}% da meta de ${formatarMoedaBR(g.meta.meta_faturamento)}` : " · sem meta"}</div></div>
-    <div class="card"><div class="num" style="color:${corValor(g.lucro)};">${formatarMoedaBR(g.lucro)}</div><div class="label">Lucro da Go Ladies no mês · o que você ganha dirigindo entra como repasse</div></div>
-    <div class="card"><div class="num">${margem != null ? Math.round(margem * 100) + "%" : "-"}</div><div class="label">Margem de contribuição${g.margemPct == null && margem != null ? " · média dos últimos 3 meses" : ""}</div></div>
-    <div class="card"><div class="num">${equilibrio != null ? formatarMoedaBR(equilibrio) : "-"}</div><div class="label">Ponto de equilíbrio · ${equilibrio == null ? "precisa de receita e margem positiva" : falta > 0 ? `faltam ${formatarMoedaBR(falta)} para cobrir ${formatarMoedaBR(g.fixosPrevistos)} de fixos` : `fixos de ${formatarMoedaBR(g.fixosPrevistos)} cobertos`}</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(cpf.bruto)}</div><div class="label">Caiu no seu CPF em ${ano} · sua parte estimada ${formatarMoedaBR(cpf.parte)} (para o contador)</div></div>
-  `;
+  const bolso = g.repasseJuliana + g.lucro;
+  const card = (chave, num, label, cor) => `<div class="card card-link${gestaoDetalheAberto === chave ? " card-ativo" : ""}" title="Ver de onde vem" onclick="abrirDetalheGestao('${chave}')"><div class="num"${cor ? ` style="color:${cor};"` : ""}>${num}</div><div class="label">${label}</div></div>`;
+  cardsEl.innerHTML = [
+    card("caixa", cx.lista.length ? formatarMoedaBR(cx.total) : "-", `Caixa${cx.maisAntigo ? ` · saldo de ${fmtDataBR(cx.maisAntigo)}` : " · informe o saldo abaixo"}`),
+    card("receita", formatarMoedaBR(g.receita), `Receita de ${nomeMes(mes)}${pctMeta != null ? ` · ${pctMeta}% da meta de ${formatarMoedaBR(g.meta.meta_faturamento)}` : " · sem meta"}`),
+    card("lucro", formatarMoedaBR(g.lucro), "Lucro da Go Ladies no mês · o que você ganha dirigindo entra como repasse", corValor(g.lucro)),
+    card("bolso", formatarMoedaBR(bolso), "No seu bolso no mês · o que você ganhou dirigindo mais o lucro da Go Ladies", corValor(bolso)),
+    card("margem", margem != null ? Math.round(margem * 100) + "%" : "-", `Margem de contribuição${g.margemPct == null && margem != null ? " · média dos últimos 3 meses" : ""}`),
+    card("equilibrio", equilibrio != null ? formatarMoedaBR(equilibrio) : "-", `Ponto de equilíbrio · ${equilibrio == null ? "precisa de receita e margem positiva" : falta > 0 ? `faltam ${formatarMoedaBR(falta)} para cobrir ${formatarMoedaBR(g.fixosPrevistos)} de fixos` : `fixos de ${formatarMoedaBR(g.fixosPrevistos)} cobertos`}`),
+    card("cpf", formatarMoedaBR(cpf.bruto), `Caiu no seu CPF em ${ano} · sua parte estimada ${formatarMoedaBR(cpf.parte)} (para o contador)`),
+  ].join("");
+  renderDetalheGestao({ mes, ano, g, cx, cpf, margem, equilibrio, falta, bolso });
 
   const pend = gestaoPendencias(mes, ano);
   const classeNivel = { alta: "urg-alta", media: "urg-media", baixa: "novo" };
@@ -10324,6 +10399,20 @@ function renderGestao(){
       <td><button class="act act-del" title="Excluir" onclick="excluirSaldoCaixa(${s.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td></tr>`).join("")
     || `<tr><td class="empty" colspan="5">Nenhum saldo informado ainda</td></tr>`;
 
+  const ap = aportesResumo();
+  const gaData = document.getElementById("ga-data");
+  if(gaData && !gaData.value) gaData.value = new Date().toISOString().slice(0,10);
+  document.getElementById("gestao-aportes-resumo").innerHTML = gestaoAportes.length
+    ? `<strong style="font-size:15px;">${ap.saldo > 0 ? `A Go Ladies te deve ${formatarMoedaBR(ap.saldo)}` : ap.saldo < 0 ? `Você já recebeu ${formatarMoedaBR(-ap.saldo)} a mais do que colocou` : "Tudo devolvido, a Go Ladies não te deve nada"}</strong>
+       <div style="color:var(--muted); font-size:12.5px; margin-top:2px;">Você colocou ${formatarMoedaBR(ap.aportes)} · a Go Ladies devolveu ${formatarMoedaBR(ap.devolucoes)}</div>`
+    : "";
+  document.getElementById("gestao-aportes").innerHTML = [...gestaoAportes]
+    .sort((a,b)=>String(b.data).localeCompare(String(a.data)) || b.id - a.id)
+    .map(a=>`<tr><td>${fmtDataBR(a.data)}</td><td>${escapeHtml(a.tipo)}</td><td>${formatarMoedaBR(a.valor)}</td>
+      <td>${a.conta_pagar_id ? `<a href="#" onclick="openContaPagarModal(${a.conta_pagar_id}); return false;">${escapeHtml(a.observacao || "Despesa")}</a>` : escapeHtml(a.observacao || "-")}</td>
+      <td>${a.conta_pagar_id ? "" : `<button class="act act-del" title="Excluir" onclick="excluirAporte(${a.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`}</td></tr>`).join("")
+    || `<tr><td class="empty" colspan="5">Nenhum aporte registrado ainda</td></tr>`;
+
   const ctx = document.getElementById("chart-gestao");
   if(ctx && ctx.offsetParent !== null){
     const meses = Array.from({length: 6}, (_, i)=>{ const d = new Date(ano, mes - 6 + i, 1); return gestaoMes(d.getMonth() + 1, d.getFullYear()); });
@@ -10341,6 +10430,145 @@ function renderGestao(){
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
     });
   }
+}
+// "Como chegamos nesse número": clicar num card abre a conta linha a linha
+// logo abaixo dos cards; clicar de novo no mesmo card fecha.
+let gestaoDetalheAberto = null;
+function abrirDetalheGestao(chave){
+  gestaoDetalheAberto = gestaoDetalheAberto === chave ? null : chave;
+  renderGestao();
+  if(gestaoDetalheAberto) document.getElementById("gestao-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function renderDetalheGestao(ctx){
+  const el = document.getElementById("gestao-detalhe");
+  if(!el) return;
+  if(!gestaoDetalheAberto){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const { mes, ano, g, cx, cpf, margem, equilibrio, falta, bolso } = ctx;
+  const R = formatarMoedaBR;
+  const linkViagem = v => v ? `<a href="#" onclick="abrirViagemDoPagamento(${v.id}); return false;">viagem #${v.id}</a>` : "sem viagem ligada";
+  const linkDespesa = c => `<a href="#" onclick="openContaPagarModal(${c.id}); return false;">${escapeHtml(c.descricao || "-")}</a>`;
+  // Linha da conta: sinal ("+", "−", "=" ou ""), texto, valor e detalhe opcional.
+  const conta = linhas => `<table class="tbl"><tbody>${linhas.map(l=>`
+    <tr${l.s === "=" ? ' style="font-weight:700;"' : ""}><td style="width:22px; color:var(--muted);">${l.s || ""}</td>
+    <td>${l.t}${l.d ? `<div style="color:var(--muted); font-size:12.5px; margin-top:2px;">${l.d}</div>` : ""}</td>
+    <td style="text-align:right; white-space:nowrap;${l.cor ? ` color:${l.cor};` : ""}">${l.v != null ? R(l.v) : ""}</td></tr>`).join("")}</tbody></table>`;
+  const listaDespesas = tipo => g.despesas.filter(c=>tipoCustoDe(c) === tipo).map(c=>({
+    s: "−", t: linkDespesa(c), v: Number(c.valor || 0),
+    d: `${tipo}${c.tipo_custo ? "" : tipoCustoDaCategoria(c.categoria) ? " pela categoria" : " porque o tipo está vazio"} · pago em ${fmtDataBR(c.data_pagamento || c.vencimento)}${gestaoAportes.some(a=>a.conta_pagar_id === c.id) ? " · pago do seu bolso" : ""}`,
+  }));
+  const pagos = pagamentosTransporteMes(mes, ano);
+  const vendas = vendaParcelas.filter(p=>p.status === "Pago" && dentroDoMes(p.data_realizada, mes, ano));
+  const corV = v => v >= 0 ? "var(--c-green)" : "var(--c-red)";
+  let titulo = "", corpo = "";
+
+  if(gestaoDetalheAberto === "caixa"){
+    titulo = "Caixa";
+    corpo = (cx.lista.length
+      ? conta([...cx.lista.map(s=>({ s: "+", t: escapeHtml(s.conta), d: `saldo anotado em ${fmtDataBR(s.data)}${s.observacao ? " · " + escapeHtml(s.observacao) : ""}`, v: Number(s.saldo || 0) })), { s: "=", t: "Total", v: cx.total }])
+      : `<p style="margin:0 0 10px;">Nenhum saldo anotado ainda. O Mercado Pago não manda o saldo para cá: abra o app dele e anote.</p>`)
+      + `<p style="margin:10px 0 0;"><a href="#" onclick="document.getElementById('gestao-painel-caixa').scrollIntoView({behavior:'smooth'}); return false;">Ir para Saldo de caixa</a></p>`;
+  }
+  else if(gestaoDetalheAberto === "receita"){
+    titulo = `Receita de ${nomeMes(mes)}/${ano}`;
+    corpo = conta([
+      ...pagos.map(x=>({ s: "+", t: linkViagem(x.v), d: `pago em ${fmtDataBR(x.p.data_pagamento)}${x.p.forma_pagamento ? " · " + escapeHtml(x.p.forma_pagamento) : ""}`, v: x.recebido })),
+      ...vendas.map(p=>({ s: "+", t: "Parcela de venda", d: `recebida em ${fmtDataBR(p.data_realizada)}`, v: Number(p.valor || 0) })),
+      { s: "=", t: "Receita do mês", v: g.receita },
+    ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Entra pela data em que a cliente pagou, não pela data da viagem.</p>`;
+  }
+  else if(gestaoDetalheAberto === "lucro" || gestaoDetalheAberto === "margem"){
+    const baseConta = [
+      { s: "+", t: "Recebido das clientes", v: g.t.recebido, d: `${pagos.length} pagamento(s) no mês` },
+      ...(g.vendasMes ? [{ s: "+", t: "Vendas", v: g.vendasMes }] : []),
+      { s: "−", t: "Taxa Mercado Pago", v: g.t.taxaMp },
+      { s: "−", t: "Repasse às motoristas", v: g.t.repassado, d: g.repasseJuliana ? `${R(g.repasseJuliana)} disso é seu, das viagens que você dirigiu` : "" },
+      ...listaDespesas("Variável"),
+      { s: "=", t: "Contribuição (o que sobra para pagar os fixos)", v: g.contribuicao, cor: corV(g.contribuicao) },
+    ];
+    if(gestaoDetalheAberto === "margem"){
+      titulo = "Margem de contribuição";
+      corpo = conta(baseConta) + `<p style="margin:10px 0 0;">${g.margemPct != null
+        ? `${R(g.contribuicao)} ÷ ${R(g.receita)} de receita = <strong>${Math.round(g.margemPct * 100)}%</strong>. De cada R$ 1,00 que entra, sobram uns ${R(g.margemPct)} para pagar os fixos.`
+        : margem != null ? `Sem receita em ${nomeMes(mes)}, então a margem usada é a média dos últimos 3 meses: <strong>${Math.round(margem * 100)}%</strong>.` : "Sem receita nos últimos 3 meses para calcular."}</p>`;
+    } else {
+      titulo = `Lucro da Go Ladies em ${nomeMes(mes)}/${ano}`;
+      corpo = conta([
+        ...baseConta,
+        ...listaDespesas("Fixo"),
+        ...listaDespesas("Investimento"),
+        { s: "=", t: "Lucro da Go Ladies", v: g.lucro, cor: corV(g.lucro) },
+      ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa despesa para corrigir o tipo. Compra que não se repete é Investimento; gasto que muda com o número de viagens é Variável.</p>`;
+    }
+  }
+  else if(gestaoDetalheAberto === "bolso"){
+    titulo = `No seu bolso em ${nomeMes(mes)}/${ano}`;
+    corpo = conta([
+      ...pagos.filter(x=>x.ela).map(x=>({ s: "+", t: `Você dirigiu a ${linkViagem(x.v)}`, d: `repasse da viagem paga em ${fmtDataBR(x.p.data_pagamento)}`, v: x.repasse })),
+      { s: g.lucro >= 0 ? "+" : "−", t: "Lucro da Go Ladies no mês", v: Math.abs(g.lucro), d: "a empresa é sua, então o resultado dela também é", cor: corV(g.lucro) },
+      { s: "=", t: "No seu bolso", v: bolso, cor: corV(bolso) },
+    ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">É o resultado do mês. O que você colocou do próprio bolso fica separado, em Aportes da sócia.</p>`;
+  }
+  else if(gestaoDetalheAberto === "equilibrio"){
+    titulo = "Ponto de equilíbrio";
+    const previstas = recorrentesNaoLancadas(mes, ano).filter(c=>tipoCustoDe(c) === "Fixo");
+    corpo = conta([
+      ...g.despesas.filter(c=>tipoCustoDe(c) === "Fixo").map(c=>({ s: "+", t: linkDespesa(c), d: `pago em ${fmtDataBR(c.data_pagamento || c.vencimento)}${c.recorrente ? " · repete todo mês" : " · não marcada como repete todo mês"}`, v: Number(c.valor || 0) })),
+      ...previstas.map(c=>({ s: "+", t: linkDespesa(c), d: "previsto: repete todo mês e ainda não foi lançado neste mês", v: Number(c.valor || 0) })),
+      { s: "=", t: "Fixos do mês", v: g.fixosPrevistos },
+    ]) + `<p style="margin:10px 0 0;">${equilibrio != null
+      ? `${R(g.fixosPrevistos)} ÷ ${Math.round(margem * 100)}% de margem = <strong>${R(equilibrio)}</strong> de receita para empatar. Entraram ${R(g.receita)}${falta > 0 ? `, faltam ${R(falta)}` : ", fixos cobertos"}.`
+      : g.fixosPrevistos ? "Precisa de receita com margem positiva para calcular." : "Sem gastos fixos neste mês: qualquer receita já cobre."}</p>`;
+  }
+  else if(gestaoDetalheAberto === "cpf"){
+    titulo = `Caiu no seu CPF em ${ano}`;
+    const doAno = pagamentosCliente.filter(p=>p.status === "Pago"
+      && (p.conta_recebedora || "CPF Juliana") === "CPF Juliana"
+      && p.data_pagamento && Number(String(p.data_pagamento).slice(0,4)) === ano)
+      .sort((a,b)=>String(a.data_pagamento).localeCompare(String(b.data_pagamento)));
+    corpo = `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Bruto</th><th>Taxa</th><th>Quem dirigiu</th><th>Sua parte</th></tr></thead><tbody>${doAno.map(p=>{
+      const v = viagens.find(x=>x.id === p.viagem_id);
+      const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
+      const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+      const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+      const b = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
+      return `<tr><td>${fmtDataBR(String(p.data_pagamento).slice(0,10))}</td><td>${linkViagem(v)}</td><td>${R(b)}</td><td>${R(taxa)}</td>
+        <td>${ela ? "Você" : escapeHtml(v ? nomesMotoristasViagem(v) || "-" : "-")}</td><td>${R(ela ? b - taxa : b - taxa - repasse)}</td></tr>`;
+    }).join("") || `<tr><td class="empty" colspan="6">Nada pago no CPF em ${ano}</td></tr>`}
+    ${doAno.length ? `<tr style="font-weight:700;"><td colspan="2">Total</td><td>${R(cpf.bruto)}</td><td></td><td></td><td>${R(cpf.parte)}</td></tr>` : ""}</tbody></table>
+    <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Estimativa para levar ao contador, não é cálculo de imposto. Nas viagens de outra motorista, sua parte é o que sobra depois do repasse.</p>`;
+  }
+  el.style.display = "";
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">Como chegamos nesse número · ${titulo}</h3>
+      <button class="icon-btn" type="button" onclick="abrirDetalheGestao('${gestaoDetalheAberto}')" aria-label="Fechar">✕</button>
+    </div>${corpo}`;
+}
+function aportesResumo(){
+  const soma = tipo => gestaoAportes.filter(a=>a.tipo === tipo).reduce((s,a)=>s + Number(a.valor || 0), 0);
+  const aportes = soma("Aporte"), devolucoes = soma("Devolução");
+  return { aportes, devolucoes, saldo: aportes - devolucoes };
+}
+async function salvarAporte(){
+  const valor = Number(document.getElementById("ga-valor").value);
+  if(!(valor > 0)){ alert("Informe o valor"); return; }
+  const payload = {
+    tipo: document.getElementById("ga-tipo").value,
+    valor: Math.round(valor * 100) / 100,
+    data: document.getElementById("ga-data").value || new Date().toISOString().slice(0,10),
+    observacao: document.getElementById("ga-obs").value.trim() || null,
+  };
+  const { error } = await sb.from("gestao_aportes").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message + (/relation|does not exist|schema cache/i.test(error.message) ? "\n\nFalta rodar o schema_gestao_aportes.sql no Supabase." : "")); return; }
+  document.getElementById("ga-valor").value = "";
+  document.getElementById("ga-obs").value = "";
+  showToast(payload.tipo === "Aporte" ? "Aporte salvo!" : "Devolução salva!");
+  await recarregarTabelas("gestao_aportes");
+}
+async function excluirAporte(id){
+  if(!confirm("Excluir este lançamento?")) return;
+  const { error } = await sb.from("gestao_aportes").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  await recarregarTabelas("gestao_aportes");
 }
 async function salvarSaldoCaixa(){
   const saldo = document.getElementById("gs-saldo").value;
