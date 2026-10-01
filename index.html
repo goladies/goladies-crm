@@ -825,6 +825,7 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="links" data-titulo="Links das motoristas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Links</span></div>
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
+      <div class="nav-item" data-tab="gestao" data-titulo="Gestão do negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.2"/></svg><span>Gestão</span></div>
       <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
       <div class="nav-item" data-tab="servicos" data-titulo="Catálogo de serviços"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços</span></div>
       <div class="nav-item" data-tab="config" data-titulo="Dados do painel"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></svg><span>Dados</span></div>
@@ -1439,6 +1440,51 @@ tr.tr-click{cursor:pointer;}
           </div>
           <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">A cotação só converte pra real; a fatura de verdade vem em dólar no cartão. Fatura oficial: <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--rosa-texto);">console da Anthropic <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></a></p>
         </div>
+      </div>
+    </div>
+
+    <div id="tab-gestao" style="display:none;">
+      <div class="pagehead">
+        <div><h2>Gestão do negócio</h2><p>Só a Go Ladies: dinheiro do mês, ponto de equilíbrio, caixa, renda no seu CPF e o que está pendente. O Mapa da Vida fica no admin do Instituto Gema.</p></div>
+        <input type="month" id="gestao-mes" onchange="renderGestao()" aria-label="Mês">
+      </div>
+      <div class="cards" id="gestao-cards"></div>
+
+      <div class="panel">
+        <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O que está previsto e ainda não foi registrado. Enquanto isso não for resolvido, os números acima ficam incompletos.</p>
+        <div id="gestao-pendencias"></div>
+      </div>
+
+      <div class="panel">
+        <h3><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Últimos 6 meses</h3>
+        <div class="chartwrap"><canvas id="chart-gestao"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h3><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Para onde foi o dinheiro no mês</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Do maior para o menor gasto. A coluna "Acumulado" mostra quais poucas linhas levam a maior parte do dinheiro.</p>
+        <table class="tbl"><thead><tr><th>Gasto</th><th>Tipo</th><th>Negócio</th><th>Valor</th><th>% do total</th><th>Acumulado</th></tr></thead><tbody id="gestao-gastos"></tbody></table>
+      </div>
+
+      <div class="panel">
+        <h3><svg class=ic aria-hidden=true><use href=#i-briefcase /></svg> Resultado por negócio no mês</h3>
+        <table class="tbl"><thead><tr><th>Negócio</th><th>Receita</th><th>Gastos</th><th>Resultado</th></tr></thead><tbody id="gestao-linhas"></tbody></table>
+      </div>
+
+      <div class="panel" style="max-width:720px;">
+        <h3><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Saldo de caixa</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O Mercado Pago não manda o saldo para cá. Abra o app dele e anote aqui uma vez por semana.</p>
+        <div class="formgrid">
+          <div><label>Conta</label><select id="gs-conta"></select></div>
+          <div><label>Saldo (R$)</label><input type="number" id="gs-saldo" step="0.01"></div>
+          <div><label>Data</label><input type="date" id="gs-data"></div>
+          <div><label>Observação</label><input type="text" id="gs-obs" placeholder="Ex: Mercado Pago"></div>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start; margin-top:12px;">
+          <button class="btn" type="button" onclick="salvarSaldoCaixa()">Salvar saldo</button>
+        </div>
+        <table class="tbl" style="margin-top:12px;"><thead><tr><th>Data</th><th>Conta</th><th>Saldo</th><th>Observação</th><th></th></tr></thead><tbody id="gestao-saldos"></tbody></table>
       </div>
     </div>
 
@@ -2474,8 +2520,12 @@ tr.tr-click{cursor:pointer;}
     </div>
     <div class="formgrid">
       <div class="full"><label>Descrição *</label><input type="text" id="cp-descricao"></div>
-      <div><label>Categoria</label><input type="text" id="cp-categoria" placeholder="Ex: Aluguel, Ferramentas, Comissão"></div>
+      <div><label>Categoria</label><input type="text" id="cp-categoria" list="cp-categorias-lista" placeholder="Escolha ou digite" onchange="sugerirTipoCusto()"><datalist id="cp-categorias-lista"></datalist></div>
       <div><label>Valor (R$)</label><input type="number" id="cp-valor"></div>
+      <div><label>Tipo de gasto</label><select id="cp-tipo-custo"><option value="">-</option><option>Fixo</option><option>Variável</option><option>Investimento</option></select></div>
+      <div><label>Negócio</label><select id="cp-linha-negocio"></select></div>
+      <div><label>Saiu da conta</label><select id="cp-conta-origem"></select></div>
+      <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="cp-recorrente" style="width:auto;"> Repete todo mês</label></div>
       <div><label>Parceira (o) ligada</label><select id="cp-parceiro"><option value="">-</option></select></div>
       <div><label>Vencimento</label><input type="date" id="cp-vencimento"></div>
       <div><label>Data de pagamento</label><input type="date" id="cp-data-pagamento"></div>
@@ -2815,6 +2865,7 @@ let vendas = [];
 let vendaParcelas = [];
 let contasPagar = [];
 let metasFinanceiras = [];
+let gestaoSaldos = [];
 let pecasPedidos = [];
 let pecasTentativas = [];
 let parceiroLinks = [];
@@ -3403,6 +3454,12 @@ async function carregarDadosInterno(){
   linksMotoristas = aplicarConsulta("links_motoristas", rlk, linksMotoristas);
   linkAvaliacoes = aplicarConsulta("link_avaliacoes", rla, linkAvaliacoes);
 
+  // Saldo de caixa da Gestão (schema_gestao.sql), idem
+  // Sem aplicarConsulta de propósito: antes do SQL rodar, a tabela não existe
+  // e isso não deve acender o aviso de "parte dos dados não carregou".
+  const rgs = await sb.from("gestao_saldos").select("*").order("id");
+  if(!rgs.error) gestaoSaldos = rgs.data || [];
+
   renderAll();
   marcarAtualizado();
   carregarErrosSite();
@@ -3508,6 +3565,7 @@ const TABELA_ATUALIZA = {
   venda_parcelas: v => vendaParcelas = v,
   contas_pagar: v => contasPagar = v,
   metas_financeiras: v => metasFinanceiras = v,
+  gestao_saldos: v => gestaoSaldos = v,
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
   parceiro_links: v => parceiroLinks = v,
@@ -4327,7 +4385,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderGestao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -9744,11 +9802,39 @@ function abrirViagemDoPagamento(viagemId){
   openViagemModal(viagemId);
 }
 let editingContaPagarId = null;
+// Plano de contas da Gestão. A categoria continua texto livre (as despesas
+// antigas não quebram); a lista só sugere os nomes padrão, e o grupo define
+// se o gasto é fixo ou variável, o que alimenta o ponto de equilíbrio.
+const PLANO_CONTAS = {
+  "Variável": ["Combustível", "Manutenção do carro", "Pedágio e estacionamento", "Lavagem", "Taxas de pagamento"],
+  "Fixo": ["Tecnologia e software", "Telefone e internet", "Seguro do carro", "Contabilidade", "Impostos e taxas (DAS, alvarás)", "Contas de app (Apple, Google)", "Anúncios", "Material de divulgação e brindes", "Pró-labore", "Treinamentos e cursos"],
+  "Investimento": ["Equipamentos", "Eventos"],
+};
+const GESTAO_LINHAS = ["Transporte", "Certificação", "Eventos e patrocínio", "Parceiras (os) e vendas", "Estrutura geral"];
+const GESTAO_CONTAS = ["CPF Juliana", "CNPJ Instituto Gema"];
+function tipoCustoDaCategoria(cat){
+  const alvo = String(cat || "").trim().toLowerCase();
+  for(const [tipo, cats] of Object.entries(PLANO_CONTAS)){
+    if(cats.some(c=>c.toLowerCase() === alvo)) return tipo;
+  }
+  return "";
+}
+function tipoCustoDe(c){ return c.tipo_custo || tipoCustoDaCategoria(c.categoria) || "Fixo"; }
+function sugerirTipoCusto(){
+  const sel = document.getElementById("cp-tipo-custo");
+  const t = tipoCustoDaCategoria(document.getElementById("cp-categoria").value);
+  if(t && !sel.value) sel.value = t;
+}
 function openContaPagarModal(id){
   editingContaPagarId = id || null;
   document.getElementById("cp-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+  document.getElementById("cp-categorias-lista").innerHTML = Object.values(PLANO_CONTAS).flat().map(c=>`<option value="${escapeHtml(c)}">`).join("");
   document.getElementById("conta-pagar-modal-title").textContent = id ? "Editar despesa" : "Nova despesa";
   const c = contasPagar.find(x=>x.id===id) || {};
+  fillSelect(document.getElementById("cp-linha-negocio"), GESTAO_LINHAS, c.linha_negocio || "Estrutura geral");
+  fillSelect(document.getElementById("cp-conta-origem"), GESTAO_CONTAS, c.conta_origem || "CPF Juliana");
+  document.getElementById("cp-tipo-custo").value = c.tipo_custo || "";
+  document.getElementById("cp-recorrente").checked = !!c.recorrente;
   document.getElementById("cp-descricao").value = c.descricao||"";
   document.getElementById("cp-categoria").value = c.categoria||"";
   document.getElementById("cp-valor").value = c.valor ?? "";
@@ -9771,11 +9857,25 @@ async function saveContaPagar(){
     data_pagamento: document.getElementById("cp-data-pagamento").value || null,
     status: document.getElementById("cp-status").value,
   };
-  const { error } = editingContaPagarId
-    ? await sb.from("contas_pagar").update(payload).eq("id", editingContaPagarId)
-    : await sb.from("contas_pagar").insert(payload);
+  const extrasGestao = {
+    tipo_custo: document.getElementById("cp-tipo-custo").value || tipoCustoDaCategoria(payload.categoria) || null,
+    linha_negocio: document.getElementById("cp-linha-negocio").value || "Estrutura geral",
+    conta_origem: document.getElementById("cp-conta-origem").value || "CPF Juliana",
+    recorrente: document.getElementById("cp-recorrente").checked,
+  };
+  const gravar = p => editingContaPagarId
+    ? sb.from("contas_pagar").update(p).eq("id", editingContaPagarId)
+    : sb.from("contas_pagar").insert(p);
+  let { error } = await gravar({ ...payload, ...extrasGestao });
+  // Sem o schema_gestao.sql rodado, as colunas novas não existem: salva o
+  // básico e avisa, em vez de perder a despesa.
+  let semColunasGestao = false;
+  if(error && /column|coluna|schema cache/i.test(error.message || "")){
+    ({ error } = await gravar(payload));
+    semColunasGestao = !error;
+  }
   if(error){ alert("Erro ao salvar: " + error.message); return; }
-  showToast("Salvo!");
+  showToast(semColunasGestao ? "Salvo, sem tipo/negócio/conta: falta rodar o schema_gestao.sql" : "Salvo!", semColunasGestao);
   closeModal("conta-pagar-modal");
   await recarregarTabelas("contas_pagar");
 }
@@ -9917,6 +10017,279 @@ function renderResumoFinanceiro(){
       options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true}} }
     });
   }
+}
+
+// ===== GESTÃO DO NEGÓCIO (só Go Ladies) =====
+// Visão para decidir, em cima do que o CRM já grava. Regras:
+// - Transporte usa financeiroTransporteMes (âncora no pagamento da cliente,
+//   repasse das mesmas viagens), igual ao Dashboard.
+// - Despesas entram pela data de pagamento; as recorrentes ainda não lançadas
+//   no mês entram como "previstas" só no ponto de equilíbrio.
+// - O Mapa da Vida NÃO entra aqui: é do Instituto Gema e tem o admin dele.
+function gestaoMesSelecionado(){
+  const el = document.getElementById("gestao-mes");
+  if(el && !el.value){
+    const h = new Date();
+    el.value = `${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,"0")}`;
+  }
+  const [ano, mes] = (el ? el.value : "").split("-").map(Number);
+  const h = new Date();
+  return { mes: mes || h.getMonth()+1, ano: ano || h.getFullYear() };
+}
+function despesasPagasNoMes(mes, ano){
+  return contasPagar.filter(c=>c.status === "Pago" && dentroDoMes(c.data_pagamento || c.vencimento, mes, ano));
+}
+// Recorrente sem lançamento no mês (mesma descrição) vira gasto previsto.
+function recorrentesNaoLancadas(mes, ano){
+  const doMes = contasPagar.filter(c=>dentroDoMes(c.data_pagamento || c.vencimento, mes, ano));
+  const vistas = new Set();
+  return contasPagar
+    .filter(c=>c.recorrente)
+    .sort((a,b)=>b.id - a.id)
+    .filter(c=>{
+      const chave = String(c.descricao || "").trim().toLowerCase();
+      if(vistas.has(chave)) return false;
+      vistas.add(chave);
+      return !doMes.some(d=>String(d.descricao || "").trim().toLowerCase() === chave);
+    });
+}
+function gestaoMes(mes, ano){
+  const t = financeiroTransporteMes(mes, ano);
+  const vendasMes = vendaParcelas
+    .filter(p=>p.status === "Pago" && dentroDoMes(p.data_realizada, mes, ano))
+    .reduce((s,p)=>s + Number(p.valor || 0), 0);
+  const despesas = despesasPagasNoMes(mes, ano);
+  const somaTipo = tipo => despesas.filter(c=>tipoCustoDe(c) === tipo).reduce((s,c)=>s + Number(c.valor || 0), 0);
+  const fixos = somaTipo("Fixo");
+  const variaveis = somaTipo("Variável");
+  const investimentos = somaTipo("Investimento");
+  const fixosPrevistos = fixos + recorrentesNaoLancadas(mes, ano)
+    .filter(c=>tipoCustoDe(c) === "Fixo")
+    .reduce((s,c)=>s + Number(c.valor || 0), 0);
+  const receita = t.recebido + vendasMes;
+  // Margem de contribuição: o que sobra de cada R$ 1 depois da taxa do
+  // Mercado Pago, do repasse e dos gastos variáveis, para pagar os fixos.
+  const contribuicao = receita - t.taxaMp - t.repassado - variaveis;
+  const margemPct = receita > 0 ? contribuicao / receita : null;
+  const lucro = contribuicao - fixos - investimentos;
+  const meta = metasFinanceiras.find(m=>m.mes === mes && m.ano === ano) || null;
+  return { mes, ano, t, vendasMes, despesas, fixos, variaveis, investimentos, fixosPrevistos, receita, contribuicao, margemPct, lucro, meta };
+}
+// Margem de referência quando o mês ainda não teve receita: a dos últimos
+// 3 meses somados, senão o ponto de equilíbrio não tem como ser calculado.
+function margemReferencia(mes, ano){
+  let rec = 0, contrib = 0;
+  for(let i = 0; i < 3; i++){
+    const d = new Date(ano, mes - 1 - i, 1);
+    const g = gestaoMes(d.getMonth() + 1, d.getFullYear());
+    rec += g.receita; contrib += g.contribuicao;
+  }
+  return rec > 0 ? contrib / rec : null;
+}
+// A Juliana também é motorista: as viagens dela não têm repasse para outra
+// pessoa. Reconhece pelo sobrenome, e-mail ou um dos dois WhatsApp dela.
+function ehMotoristaJuliana(m){
+  if(!m) return false;
+  const n = String(m.nome || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const email = String(m.email || "").toLowerCase();
+  const fone = String(m.whatsapp || "").replace(/\D/g, "");
+  return n.includes("castilhos") || n.includes("paprocki")
+    || email.includes("jucastilhos") || email === "contato@goladies.com.br"
+    || fone.endsWith("996401691") || fone.endsWith("989725128");
+}
+// Renda no CPF no ano: tudo o que caiu no Mercado Pago do CPF, e a parte que é
+// dela de fato (viagens que ela dirigiu: bruto menos taxa; das outras
+// motoristas: só o que sobra depois do repasse). Estimativa para conversar
+// com o contador, não cálculo de imposto.
+function rendaCpfNoAno(ano){
+  const pagos = pagamentosCliente.filter(p=>p.status === "Pago"
+    && (p.conta_recebedora || "CPF Juliana") === "CPF Juliana"
+    && p.data_pagamento && Number(String(p.data_pagamento).slice(0,4)) === ano);
+  let bruto = 0, parte = 0;
+  pagos.forEach(p=>{
+    const b = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
+    const v = viagens.find(x=>x.id === p.viagem_id);
+    const ids = v ? idsMotoristasViagem(v) : [];
+    const ela = ids.some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)));
+    const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    bruto += b;
+    parte += ela ? b - taxa : b - taxa - repasse;
+  });
+  return { bruto, parte, qtd: pagos.length };
+}
+function caixaAtual(){
+  const porConta = {};
+  [...gestaoSaldos]
+    .sort((a,b)=>String(a.data).localeCompare(String(b.data)) || a.id - b.id)
+    .forEach(s=>{ porConta[s.conta] = s; });
+  const lista = Object.values(porConta);
+  const total = lista.reduce((s,x)=>s + Number(x.saldo || 0), 0);
+  const maisAntigo = lista.length ? lista.map(x=>x.data).sort()[0] : null;
+  return { lista, total, maisAntigo };
+}
+function diasDesde(dataStr){
+  if(!dataStr) return null;
+  const d = new Date(String(dataStr).slice(0,10) + "T00:00:00");
+  const h = new Date(); h.setHours(0,0,0,0);
+  return Math.round((h - d) / 86400000);
+}
+function gestaoPendencias(mes, ano){
+  const itens = [];
+  const pagoDa = id => pagamentosCliente.some(p=>p.viagem_id === id && p.status === "Pago");
+  const semPagamento = viagens.filter(v=>v.status === "Concluída" && Number(v.preco_cotado || 0) > 0 && !pagoDa(v.id));
+  if(semPagamento.length) itens.push({
+    nivel: "alta", texto: `${semPagamento.length} viagem(ns) concluída(s) sem pagamento registrado`,
+    detalhe: semPagamento.slice(0,5).map(v=>`<a href="#" onclick="abrirViagemDoPagamento(${v.id}); return false;">#${v.id}</a>`).join(", "),
+  });
+  const semRepasse = viagens.filter(v=>pagoDa(v.id) && Number(v.preco_motorista || 0) > 0
+    && !pagamentosMotorista.some(m=>m.viagem_id === v.id)
+    && !idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))));
+  if(semRepasse.length) itens.push({
+    nivel: "media", texto: `${semRepasse.length} viagem(ns) paga(s) sem repasse lançado para outra motorista`,
+    detalhe: semRepasse.slice(0,5).map(v=>`<a href="#" onclick="abrirViagemDoPagamento(${v.id}); return false;">#${v.id}</a>`).join(", "),
+  });
+  const hojeStr = new Date().toISOString().slice(0,10);
+  const vencidas = contasPagar.filter(c=>c.status !== "Pago" && c.vencimento && c.vencimento < hojeStr);
+  if(vencidas.length) itens.push({
+    nivel: "alta", texto: `${vencidas.length} despesa(s) vencida(s) sem pagamento`,
+    detalhe: vencidas.slice(0,5).map(c=>`<a href="#" onclick="openContaPagarModal(${c.id}); return false;">${escapeHtml(c.descricao || "-")}</a>`).join(", "),
+  });
+  const recorr = recorrentesNaoLancadas(mes, ano);
+  if(recorr.length) itens.push({
+    nivel: "media", texto: `${recorr.length} despesa(s) que repete(m) todo mês ainda não lançada(s) em ${nomeMes(mes)}`,
+    detalhe: recorr.slice(0,6).map(c=>`${escapeHtml(c.descricao || "-")} (${formatarMoedaBR(c.valor)})`).join(", "),
+  });
+  if(!metasFinanceiras.some(m=>m.mes === mes && m.ano === ano)) itens.push({
+    nivel: "baixa", texto: `Sem meta cadastrada para ${nomeMes(mes)}/${ano}`,
+    detalhe: `<a href="#" onclick="irParaFinanceiro('metas'); return false;">Cadastrar meta</a>`,
+  });
+  const cx = caixaAtual();
+  const dias = diasDesde(cx.maisAntigo);
+  if(!cx.lista.length) itens.push({ nivel: "media", texto: "Nenhum saldo de caixa informado ainda", detalhe: "Anote o saldo do Mercado Pago no fim desta página." });
+  else if(dias > 7) itens.push({ nivel: "baixa", texto: `Saldo de caixa sem atualizar há ${dias} dias`, detalhe: "Anote o saldo atual no fim desta página." });
+  const semTipo = contasPagar.filter(c=>!c.tipo_custo && !tipoCustoDaCategoria(c.categoria)).length;
+  if(semTipo) itens.push({ nivel: "baixa", texto: `${semTipo} despesa(s) sem tipo (fixo, variável ou investimento)`, detalhe: "Sem tipo, elas contam como gasto fixo. Abra em Financeiro → Contas a Pagar e escolha." });
+  return itens;
+}
+function renderGestao(){
+  const cardsEl = document.getElementById("gestao-cards");
+  if(!cardsEl) return;
+  const { mes, ano } = gestaoMesSelecionado();
+  const g = gestaoMes(mes, ano);
+  const cx = caixaAtual();
+  const cpf = rendaCpfNoAno(ano);
+  const margem = g.margemPct != null ? g.margemPct : margemReferencia(mes, ano);
+  const equilibrio = margem && margem > 0 ? g.fixosPrevistos / margem : null;
+  const corValor = v => v >= 0 ? "var(--c-green)" : "var(--c-red)";
+  const pctMeta = g.meta && Number(g.meta.meta_faturamento) > 0 ? Math.round(g.receita / Number(g.meta.meta_faturamento) * 100) : null;
+  const falta = equilibrio != null ? Math.max(0, equilibrio - g.receita) : null;
+
+  cardsEl.innerHTML = `
+    <div class="card"><div class="num">${cx.lista.length ? formatarMoedaBR(cx.total) : "-"}</div><div class="label">Caixa${cx.maisAntigo ? ` · saldo de ${fmtDataBR(cx.maisAntigo)}` : " · informe o saldo abaixo"}</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(g.receita)}</div><div class="label">Receita de ${nomeMes(mes)}${pctMeta != null ? ` · ${pctMeta}% da meta de ${formatarMoedaBR(g.meta.meta_faturamento)}` : " · sem meta"}</div></div>
+    <div class="card"><div class="num" style="color:${corValor(g.lucro)};">${formatarMoedaBR(g.lucro)}</div><div class="label">Lucro da Go Ladies no mês · o que você ganha dirigindo entra como repasse</div></div>
+    <div class="card"><div class="num">${margem != null ? Math.round(margem * 100) + "%" : "-"}</div><div class="label">Margem de contribuição${g.margemPct == null && margem != null ? " · média dos últimos 3 meses" : ""}</div></div>
+    <div class="card"><div class="num">${equilibrio != null ? formatarMoedaBR(equilibrio) : "-"}</div><div class="label">Ponto de equilíbrio · ${equilibrio == null ? "precisa de receita e margem positiva" : falta > 0 ? `faltam ${formatarMoedaBR(falta)} para cobrir ${formatarMoedaBR(g.fixosPrevistos)} de fixos` : `fixos de ${formatarMoedaBR(g.fixosPrevistos)} cobertos`}</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(cpf.bruto)}</div><div class="label">Caiu no seu CPF em ${ano} · sua parte estimada ${formatarMoedaBR(cpf.parte)} (para o contador)</div></div>
+  `;
+
+  const pend = gestaoPendencias(mes, ano);
+  const classeNivel = { alta: "urg-alta", media: "urg-media", baixa: "novo" };
+  const rotuloNivel = { alta: "Urgente", media: "Atenção", baixa: "Ajuste" };
+  document.getElementById("gestao-pendencias").innerHTML = pend.length
+    ? `<table class="tbl"><tbody>${pend.map(p=>`
+        <tr><td style="width:90px;"><span class="tag ${classeNivel[p.nivel]}">${rotuloNivel[p.nivel]}</span></td>
+        <td><strong>${p.texto}</strong>${p.detalhe ? `<div style="color:var(--muted); font-size:12.5px; margin-top:2px;">${p.detalhe}</div>` : ""}</td></tr>`).join("")}</tbody></table>`
+    : `<p style="margin:0;">Nada pendente. Os números acima estão completos.</p>`;
+
+  // Para onde foi o dinheiro: taxa e repasse entram como linhas, senão a
+  // maior saída do transporte some da lista.
+  const linhasGasto = [
+    { nome: "Repasse às motoristas", tipo: "Variável", linha: "Transporte", valor: g.t.repassado },
+    { nome: "Taxa Mercado Pago", tipo: "Variável", linha: "Transporte", valor: g.t.taxaMp },
+  ];
+  const porCategoria = {};
+  g.despesas.forEach(c=>{
+    const chave = (c.categoria || "Sem categoria") + "|" + tipoCustoDe(c) + "|" + (c.linha_negocio || "Estrutura geral");
+    porCategoria[chave] = (porCategoria[chave] || 0) + Number(c.valor || 0);
+  });
+  Object.entries(porCategoria).forEach(([k,v])=>{
+    const [nome, tipo, linha] = k.split("|");
+    linhasGasto.push({ nome, tipo, linha, valor: v });
+  });
+  const gastos = linhasGasto.filter(x=>x.valor > 0).sort((a,b)=>b.valor - a.valor);
+  const totalGastos = gastos.reduce((s,x)=>s + x.valor, 0);
+  let acumulado = 0;
+  document.getElementById("gestao-gastos").innerHTML = gastos.map(x=>{
+    acumulado += x.valor;
+    return `<tr><td>${escapeHtml(x.nome)}</td><td>${escapeHtml(x.tipo)}</td><td>${escapeHtml(x.linha)}</td>
+      <td>${formatarMoedaBR(x.valor)}</td><td>${Math.round(x.valor / totalGastos * 100)}%</td><td>${Math.round(acumulado / totalGastos * 100)}%</td></tr>`;
+  }).join("") + (gastos.length
+    ? `<tr style="font-weight:700;"><td colspan="3">Total</td><td>${formatarMoedaBR(totalGastos)}</td><td colspan="2"></td></tr>`
+    : `<tr><td class="empty" colspan="6">Nenhum gasto pago em ${nomeMes(mes)}</td></tr>`);
+
+  const resultadoLinha = GESTAO_LINHAS.map(linha=>{
+    const receita = linha === "Transporte" ? g.t.recebido : linha === "Parceiras (os) e vendas" ? g.vendasMes : 0;
+    const gasto = gastos.filter(x=>x.linha === linha).reduce((s,x)=>s + x.valor, 0);
+    return { linha, receita, gasto, resultado: receita - gasto };
+  }).filter(l=>l.receita || l.gasto);
+  document.getElementById("gestao-linhas").innerHTML = resultadoLinha.map(l=>`
+    <tr><td>${escapeHtml(l.linha)}</td><td>${formatarMoedaBR(l.receita)}</td><td>${formatarMoedaBR(l.gasto)}</td>
+    <td style="color:${corValor(l.resultado)};">${formatarMoedaBR(l.resultado)}</td></tr>`).join("")
+    || `<tr><td class="empty" colspan="4">Sem movimento em ${nomeMes(mes)}</td></tr>`;
+
+  const selConta = document.getElementById("gs-conta");
+  if(selConta && !selConta.dataset.filled){
+    fillSelect(selConta, GESTAO_CONTAS, "CPF Juliana");
+    document.getElementById("gs-data").value = new Date().toISOString().slice(0,10);
+    selConta.dataset.filled = 1;
+  }
+  document.getElementById("gestao-saldos").innerHTML = [...gestaoSaldos]
+    .sort((a,b)=>String(b.data).localeCompare(String(a.data)) || b.id - a.id).slice(0, 8)
+    .map(s=>`<tr><td>${fmtDataBR(s.data)}</td><td>${escapeHtml(s.conta)}</td><td>${formatarMoedaBR(s.saldo)}</td><td>${escapeHtml(s.observacao || "-")}</td>
+      <td><button class="act act-del" title="Excluir" onclick="excluirSaldoCaixa(${s.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td></tr>`).join("")
+    || `<tr><td class="empty" colspan="5">Nenhum saldo informado ainda</td></tr>`;
+
+  const ctx = document.getElementById("chart-gestao");
+  if(ctx && ctx.offsetParent !== null){
+    const meses = Array.from({length: 6}, (_, i)=>{ const d = new Date(ano, mes - 6 + i, 1); return gestaoMes(d.getMonth() + 1, d.getFullYear()); });
+    if(window._chartGestao) window._chartGestao.destroy();
+    window._chartGestao = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: meses.map(m=>`${nomeMes(m.mes)}/${String(m.ano).slice(2)}`),
+        datasets: [
+          { label: "Receita", data: meses.map(m=>m.receita), backgroundColor: corCss("--rosa") || "#FF2D9C", borderRadius: 6 },
+          { label: "Gastos", data: meses.map(m=>m.receita - m.lucro), backgroundColor: corCss("--c-amber") || "#FFC145", borderRadius: 6 },
+          { label: "Lucro", data: meses.map(m=>m.lucro), type: "line", borderColor: corCss("--c-green") || "#1FAA72", backgroundColor: corCss("--c-green") || "#1FAA72", tension: .3 },
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+    });
+  }
+}
+async function salvarSaldoCaixa(){
+  const saldo = document.getElementById("gs-saldo").value;
+  if(saldo === ""){ alert("Informe o saldo"); return; }
+  const payload = {
+    conta: document.getElementById("gs-conta").value,
+    saldo: Math.round(Number(saldo) * 100) / 100,
+    data: document.getElementById("gs-data").value || new Date().toISOString().slice(0,10),
+    observacao: document.getElementById("gs-obs").value.trim() || null,
+  };
+  const { error } = await sb.from("gestao_saldos").insert(payload);
+  if(error){ alert("Erro ao salvar o saldo: " + error.message + (/relation|does not exist|schema cache/i.test(error.message) ? "\n\nFalta rodar o schema_gestao.sql no Supabase." : "")); return; }
+  document.getElementById("gs-saldo").value = "";
+  document.getElementById("gs-obs").value = "";
+  showToast("Saldo salvo!");
+  await recarregarTabelas("gestao_saldos");
+}
+async function excluirSaldoCaixa(id){
+  if(!confirm("Excluir este saldo?")) return;
+  const { error } = await sb.from("gestao_saldos").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  await recarregarTabelas("gestao_saldos");
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove("open"); }
