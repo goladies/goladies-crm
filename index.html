@@ -378,6 +378,11 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .sugestoes-endereco div{padding:10px 12px; font-size:12.5px; cursor:pointer; border-bottom:1px solid var(--border); color:var(--text1);}
 .sugestoes-endereco div:last-child{border-bottom:none;}
 .sugestoes-endereco div:hover{background:var(--bg-hover);}
+.sugestoes-endereco div.rotulo{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); cursor:default; background:var(--bg-card);}
+.sugestoes-endereco div.rotulo:hover{background:var(--bg-card);}
+.campo-endereco.com-lista-cliente>input{padding-right:42px;}
+.btn-lista-endereco{position:absolute; right:4px; top:50%; transform:translateY(-50%); width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:8px; color:var(--muted); cursor:pointer;}
+.btn-lista-endereco:hover{background:var(--bg-hover); color:var(--rosa);}
 .legenda-obrig{font-size:12px; color:var(--text3); margin:6px 0 12px;}
 .legenda-obrig b{color:var(--rosa-texto);}
 .legenda-obrig i{color:var(--c-red); font-style:normal; font-weight:600;}
@@ -7372,6 +7377,55 @@ async function selecionarEnderecoGoogle(pred, input, lista, sessionToken){
 }
 
 document.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+
+// Botão ☰ nos endereços da viagem: lista os lugares salvos e os endereços que a
+// cliente escolhida já usou (função enderecos_usados, schema_enderecos_usados.sql).
+["vg-origem-endereco","vg-destino-endereco","vg-origem-retorno","vg-destino-retorno"].forEach(id=>{
+  const input = document.getElementById(id);
+  const wrap = input && input.closest(".campo-endereco");
+  if(!wrap) return;
+  wrap.classList.add("com-lista-cliente");
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-lista-endereco";
+  btn.title = "Endereços que a cliente já usou";
+  btn.innerHTML = ic("menu-2");
+  btn.addEventListener("click", ()=>abrirListaEnderecosCliente(input, wrap));
+  wrap.appendChild(btn);
+});
+async function abrirListaEnderecosCliente(input, wrap){
+  const lista = wrap.querySelector(".sugestoes-endereco");
+  if(lista.classList.contains("aberta")){ lista.classList.remove("aberta"); return; }
+  const clienteId = Number(document.getElementById("vg-cliente").value) || null;
+  const mostrar = html=>{ lista.innerHTML = html; lista.classList.add("aberta"); };
+  if(!clienteId){ mostrar(`<div class="rotulo">Escolha a cliente primeiro.</div>`); return; }
+  mostrar(`<div class="rotulo">Buscando...</div>`);
+  const [rl, ru] = await Promise.all([
+    Promise.resolve(sb.from("lugares_cliente").select("nome,endereco").eq("cliente_id", clienteId).order("id")),
+    Promise.resolve(sb.rpc("enderecos_usados", { p_cliente_id: clienteId })),
+  ]);
+  if(ru.error) console.warn("enderecos_usados (rodou o schema_enderecos_usados.sql?):", ru.error.message);
+  const salvos = rl.data || [];
+  const chave = e=>String(e||"").trim().toLowerCase();
+  const jaSalvo = new Set(salvos.map(l=>chave(l.endereco)));
+  const usados = (ru.data || []).filter(u=>!jaSalvo.has(chave(u.endereco)));
+  const itens = [];
+  const item = (rotuloTxt, end, extra)=>{
+    itens.push({ end });
+    return `<div data-i="${itens.length-1}"><b>${escapeHtml(rotuloTxt || end)}</b>${rotuloTxt ? ` · ${escapeHtml(end)}` : ""}${extra ? ` <span style="color:var(--muted);">${extra}</span>` : ""}</div>`;
+  };
+  let html = "";
+  if(salvos.length) html += `<div class="rotulo">Lugares salvos dela</div>` + salvos.map(l=>item(l.nome, l.endereco)).join("");
+  if(usados.length) html += `<div class="rotulo">Já foi para</div>` + usados.slice(0, 12).map(u=>item("", u.endereco, `${u.vezes}x`)).join("");
+  if(!html) html = `<div class="rotulo">Essa cliente ainda não tem endereços salvos nem viagens.</div>`;
+  mostrar(html);
+  lista.querySelectorAll("div[data-i]").forEach(el=>el.addEventListener("mousedown", e=>{
+    e.preventDefault();
+    input.value = itens[Number(el.dataset.i)].end;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    lista.classList.remove("aberta"); lista.innerHTML = "";
+  }));
+}
 
 // ===== TRANSPORTE: VIAGENS (KANBAN) =====
 function abrirRotaMaps(){
