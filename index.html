@@ -4987,7 +4987,9 @@ function renderAcessosApp(){
     (!appF || e.app===appF) &&
     (!tipoF || e.tipo===tipoF) &&
     (!buscaF || [e.nome, e.whatsapp, e.email].some(v=>String(v||"").toLowerCase().includes(buscaF)))
-  );
+  // Ordena aqui porque a recarga automática de minuto em minuto
+  // (recarregarTabelas) traz as linhas por id, do mais antigo pro mais novo.
+  ).sort((a,b)=>String(b.criado_em||"").localeCompare(String(a.criado_em||"")));
 
   const concluidos = eventosAcessoApp.filter(e=>e.tipo==="cadastro_concluido").length;
   const errosCadastro = eventosAcessoApp.filter(e=>e.tipo==="cadastro_erro").length;
