@@ -1441,6 +1441,19 @@ tr.tr-click{cursor:pointer;}
           <table class="tbl"><thead><tr><th>Serviço</th><th>Uso bruto</th><th>Cota grátis e descontos</th><th>Cobrado</th></tr></thead><tbody id="custos-nuvem-servicos"></tbody></table>
           <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;" id="custos-nuvem-rodape"></p>
         </div>
+        <h3 style="margin:22px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Lançado à mão (assinatura do Claude e outras ferramentas)</h3>
+        <div class="cards" id="custos-total-cards"></div>
+        <div class="panel">
+          <h3>Neste mês</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O que não dá pra ler sozinho: a assinatura do Claude que você usa no Claude Code e os créditos de uso extras. Olhe em Configurações → Uso no Claude e lance aqui.</p>
+          <table class="tbl"><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th><th></th></tr></thead><tbody id="custos-manuais-lista"></tbody></table>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-top:12px;">
+            <label style="font-size:12.5px;">Descrição<br><input type="text" id="custo-manual-desc" placeholder="Ex: Assinatura Claude" style="width:220px;"></label>
+            <label style="font-size:12.5px;">Tipo<br><select id="custo-manual-cat"><option value="assinatura">Assinatura</option><option value="creditos">Créditos de uso</option><option value="outro">Outro</option></select></label>
+            <label style="font-size:12.5px;">Valor (R$)<br><input type="number" step="0.01" min="0" id="custo-manual-valor" style="width:130px;"></label>
+            <button class="btn small" type="button" onclick="lancarCustoManual()">Lançar</button>
+          </div>
+        </div>
         <div class="panel">
           <h3>Ajustes</h3>
           <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
@@ -3993,7 +4006,8 @@ async function carregarCustosIa(){
   }
   custosIaCache = data;
   renderCustosIa(data);
-  carregarCustosNuvem();
+  await carregarCustosNuvem();
+  carregarCustosManuais();
 }
 // Google Cloud: a fatura exportada pro BigQuery, gravada pelo n8n às 7h.
 // "creditos" vem negativo (cota grátis do Maps e descontos); cobrado = bruto + créditos.
@@ -4009,6 +4023,7 @@ async function carregarCustosNuvem(){
   const cot = Number((custosIaCache && custosIaCache.config && custosIaCache.config.cotacao_dolar) || 0);
   const emReal = v => (d.moeda && d.moeda !== "BRL") ? Number(v || 0) * cot : Number(v || 0);
   const liquido = emReal(Number(d.mes_bruto || 0) + Number(d.mes_creditos || 0));
+  custosNuvemLiquido = liquido;
   cards.innerHTML = `
     <div class="card"><div class="num">${formatarMoedaBR(liquido)}</div><div class="label">Cobrado no mês</div></div>
     <div class="card"><div class="num">${formatarMoedaBR(emReal(d.mes_bruto))}</div><div class="label">Uso bruto no mês (antes da cota grátis)</div></div>
@@ -4100,6 +4115,55 @@ function renderCustosIa(d){
 
   document.getElementById("custos-ia-cotacao").value = cot || "";
   document.getElementById("custos-ia-limite-input").value = limite || "";
+}
+// Custos lançados à mão (assinatura do Claude, créditos de uso, outras ferramentas)
+let custosNuvemLiquido = 0;
+const CATEGORIAS_CUSTO_MANUAL = { assinatura: "Assinatura", creditos: "Créditos de uso", outro: "Outro" };
+function mesAtualISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+async function carregarCustosManuais(){
+  const lista = document.getElementById("custos-manuais-lista");
+  if(!lista) return;
+  const { data, error } = await sb.from("custos_manuais").select("id, descricao, categoria, valor_brl").eq("mes", mesAtualISO()).order("criado_em");
+  if(error){
+    lista.innerHTML = `<tr><td class="empty" colspan="4">Não deu pra carregar (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_custos_manuais_e_alerta.sql no Supabase.</td></tr>`;
+    return;
+  }
+  const itens = data || [];
+  lista.innerHTML = itens.map(i=>`
+    <tr>
+      <td>${escapeHtml(i.descricao)}</td>
+      <td>${escapeHtml(CATEGORIAS_CUSTO_MANUAL[i.categoria] || i.categoria)}</td>
+      <td><b>${formatarMoedaBR(i.valor_brl)}</b></td>
+      <td><button class="btn secondary small" type="button" onclick="apagarCustoManual(${i.id})">Apagar</button></td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="4">Nada lançado neste mês ainda</td></tr>`;
+  const manual = itens.reduce((t, i)=>t + Number(i.valor_brl || 0), 0);
+  const ia = Number(custosIaCache && custosIaCache.mes_usd || 0) * Number(custosIaCache && custosIaCache.config && custosIaCache.config.cotacao_dolar || 0);
+  document.getElementById("custos-total-cards").innerHTML = `
+    <div class="card"><div class="num">${formatarMoedaBR(ia + custosNuvemLiquido + manual)}</div><div class="label">Tecnologia no mês (IA da Go Ladies + Google + lançado à mão)</div></div>
+    <div class="card"><div class="num">${formatarMoedaBR(manual)}</div><div class="label">Lançado à mão no mês</div></div>
+  `;
+}
+async function lancarCustoManual(){
+  const descricao = document.getElementById("custo-manual-desc").value.trim();
+  const categoria = document.getElementById("custo-manual-cat").value;
+  const valor = Number(document.getElementById("custo-manual-valor").value);
+  if(!descricao || !(valor >= 0) || document.getElementById("custo-manual-valor").value === ""){ showToast("Preencha a descrição e o valor.", true); return; }
+  const { error } = await sb.from("custos_manuais").insert({ mes: mesAtualISO(), descricao, categoria, valor_brl: valor });
+  if(error){ showToast("Não salvou: " + error.message, true); return; }
+  document.getElementById("custo-manual-desc").value = "";
+  document.getElementById("custo-manual-valor").value = "";
+  showToast("Lançado");
+  carregarCustosManuais();
+}
+async function apagarCustoManual(id){
+  if(!confirm("Apagar este lançamento?")) return;
+  const { error } = await sb.from("custos_manuais").delete().eq("id", id);
+  if(error){ showToast("Não apagou: " + error.message, true); return; }
+  carregarCustosManuais();
 }
 async function salvarConfigCustosIa(){
   const cotacao = Number(document.getElementById("custos-ia-cotacao").value);
