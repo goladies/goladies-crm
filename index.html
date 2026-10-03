@@ -502,6 +502,13 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .foto-perfil img{width:100%; height:100%; object-fit:cover; display:block;}
 .foto-perfil-wrap{display:flex; align-items:center; gap:14px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:12px;}
 .foto-perfil-wrap small{display:block; color:var(--muted); font-size:12px; margin:2px 0 8px;}
+.ligacoes-wrap{margin-top:14px; border-top:1px solid var(--border); padding-top:12px; font-size:13px;}
+.ligacoes-wrap h4{font-size:13px; margin:0 0 8px;}
+.lig-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border);}
+.lig-item small{color:var(--muted);}
+.lig-sugestao{margin:6px 0; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);}
+.lig-form{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+.lig-form .full{grid-column:1/-1;}
 .avatar-mini{width:28px; height:28px; border-radius:50%; background:var(--pink); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; vertical-align:middle; margin-right:8px; flex:0 0 auto;}
 .avatar-mini img{width:100%; height:100%; object-fit:cover; display:block;}
 .kc-alerta{display:block; font-size:10.5px; font-weight:800; margin-bottom:4px;}
@@ -961,6 +968,7 @@ tr.tr-click{cursor:pointer;}
       <div class="filters">
         <select id="filter-etapa" onchange="renderLeads()"><option value="">Todas as etapas</option></select>
         <select id="filter-categoria" onchange="renderLeads()"><option value="">Todas as categorias</option></select>
+        <select id="filter-pessoa-leads" onchange="renderLeads()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
         <input type="text" id="filter-busca" placeholder="Buscar por nome..." oninput="renderLeads()">
       </div>
       <div class="panel">
@@ -988,6 +996,7 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div class="filters">
         <select id="filter-tipo-parceria" onchange="renderParceiros()"><option value="">Todos os tipos</option></select>
+        <select id="filter-pessoa-parceiros" onchange="renderParceiros()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
       </div>
       <div class="panel">
         <table class="tbl">
@@ -1125,6 +1134,7 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="filters">
           <select id="filter-cliente-segmento" onchange="renderTransporteClientes()"><option value="">Todos os segmentos</option></select>
+          <select id="filter-pessoa-clientes" onchange="renderTransporteClientes()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">Viagens de <input type="date" id="filter-cliente-de" onchange="renderTransporteClientes()"></label>
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">até <input type="date" id="filter-cliente-ate" onchange="renderTransporteClientes()"></label>
           <button type="button" class="act" onclick="limparPeriodoClientes()">Limpar período</button>
@@ -1580,7 +1590,9 @@ tr.tr-click{cursor:pointer;}
       <button class="icon-btn" type="button" onclick="closeModal('lead-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <div class="formgrid">
-      <div><label>Nome *</label><input type="text" id="f-nome"></div>
+      <div><label>Tipo de cadastro</label><select id="f-tipo" onchange="aplicarTipoPessoa('f')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+      <div id="f-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div><label id="f-nome-lbl">Nome *</label><input type="text" id="f-nome"></div>
       <div><label>WhatsApp *</label><input type="text" id="f-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
       <div><label>E-mail</label><input type="text" id="f-email"></div>
       <div><label>Bairro</label><input type="text" id="f-bairro"></div>
@@ -1595,10 +1607,11 @@ tr.tr-click{cursor:pointer;}
       <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"><option>Instagram</option><option>Facebook</option><option>Google</option><option>Indicação</option><option>Grupo de networking</option><option>Outro</option></select></div>
       <div id="f-origem-outro-wrap" style="display:none;"><label>Qual?</label><input type="text" id="f-origem-outro" placeholder="Descreva a origem"></div>
       <div><label>Data de entrada</label><input type="date" id="f-data"></div>
-      <div><label>Aniversário</label><input type="date" id="f-aniversario"></div>
+      <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
       <div><label>Responsável</label><input type="text" id="f-responsavel" value="Jú"></div>
       <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
     </div>
+    <div class="ligacoes-wrap" id="f-ligacoes"></div>
 
     <div id="f-vendas-wrap" style="margin-top:18px;">
       <h4 style="font-size:13px; margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Vendas</h4>
@@ -1685,7 +1698,9 @@ tr.tr-click{cursor:pointer;}
         <label>Puxar dados de um lead/cliente já cadastrado <span style="font-weight:400; color:var(--muted);">(opcional, preenche nome, contato, aniversário e região)</span></label>
         <select id="p-puxar-lead" onchange="puxarDadosLead()"><option value="">- Selecionar -</option></select>
       </div>
-      <div class="full"><label>Nome *</label><input type="text" id="p-nome"></div>
+      <div><label>Tipo de cadastro</label><select id="p-tipo" onchange="aplicarTipoPessoa('p')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+      <div id="p-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div class="full"><label id="p-nome-lbl">Nome *</label><input type="text" id="p-nome"></div>
       <div class="full">
         <label>Categorias <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
         <div id="p-categorias-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
@@ -1717,10 +1732,11 @@ tr.tr-click{cursor:pointer;}
           <label class="chip-check"><input type="checkbox" value="Embaixadora"> Embaixadora</label>
         </div>
       </div>
-      <div><label>Aniversário</label><input type="date" id="p-aniversario"></div>
+      <div><label id="p-aniv-lbl">Aniversário</label><input type="date" id="p-aniversario"></div>
       <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
       <div class="full"><label>Notas</label><textarea id="p-notas" rows="2"></textarea></div>
     </div>
+    <div class="ligacoes-wrap" id="p-ligacoes"></div>
 
     <div id="p-contatos-wrap" style="margin-top:18px;">
       <h4 style="font-size:13px; margin:0 0 8px;">Celular / Telefone</h4>
@@ -1979,6 +1995,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Validade da CNH</label><input type="date" id="mt-cnh-validade"></div>
       <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
     </div>
+    <div class="ligacoes-wrap" id="mt-ligacoes"></div>
 
     <div style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
       <h4 style="font-size:13px; margin:0 0 10px;">Veículo (CRLV)</h4>
@@ -2116,11 +2133,13 @@ tr.tr-click{cursor:pointer;}
       </div>
     </div>
     <div class="formgrid">
-      <div class="full"><label>Nome *</label><input type="text" id="ct-nome"></div>
+      <div><label>Tipo de cadastro</label><select id="ct-tipo" onchange="aplicarTipoPessoa('ct')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+      <div id="ct-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="ct-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div class="full"><label id="ct-nome-lbl">Nome *</label><input type="text" id="ct-nome"></div>
       <div><label>WhatsApp</label><input type="text" id="ct-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
       <div><label>E-mail</label><input type="text" id="ct-email"></div>
       <div><label>Região</label><input type="text" id="ct-regiao"></div>
-      <div><label>Aniversário</label><input type="date" id="ct-aniversario"></div>
+      <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
       <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
       <div class="full"><label>Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
@@ -2131,6 +2150,7 @@ tr.tr-click{cursor:pointer;}
            mesmo WhatsApp, aparece o botão de unificar. -->
       <div class="full" id="ct-acesso-painel" style="font-size:13px; color:var(--muted);"></div>
     </div>
+    <div class="ligacoes-wrap" id="ct-ligacoes"></div>
     <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
          motoristas disseram dela; nota_motorista + comentario é o que ela disse. -->
     <div id="ct-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
@@ -2884,6 +2904,7 @@ function linkMapaMotorista(m, separador){
 
 let leads = [];
 let parceiros = [];
+let vinculosCadastros = [];
 let orcamentos = [];
 let motoristas = [];
 let documentosMotorista = [];
@@ -3506,6 +3527,10 @@ async function carregarDadosInterno(){
   if(!rgs.error) gestaoSaldos = rgs.data || [];
   if(!rga.error) gestaoAportes = rga.data || [];
 
+  // Ligações entre cadastros (schema_pessoa_juridica.sql): tolerante a SQL ainda não rodado.
+  const rvc2 = await sb.from("vinculos_cadastros").select("*").order("id");
+  if(!rvc2.error) vinculosCadastros = rvc2.data || [];
+
   renderAll();
   marcarAtualizado();
   carregarErrosSite();
@@ -3613,6 +3638,7 @@ const TABELA_ATUALIZA = {
   metas_financeiras: v => metasFinanceiras = v,
   gestao_saldos: v => gestaoSaldos = v,
   gestao_aportes: v => gestaoAportes = v,
+  vinculos_cadastros: v => vinculosCadastros = v,
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
   parceiro_links: v => parceiroLinks = v,
@@ -4323,9 +4349,9 @@ function renderAniversariosDashboard(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth()+2, 0);
   const candidatos = [
-    ...leads.map(l=>({nome:l.nome, tipo:"Lead", aniversario:l.aniversario})),
-    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)", aniversario:p.aniversario})),
-    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem", aniversario:c.aniversario})),
+    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), aniversario:l.aniversario})),
+    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), aniversario:p.aniversario})),
+    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":""), aniversario:c.aniversario})),
     ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", aniversario:m.aniversario})),
   ];
   const proximos = candidatos
@@ -4350,11 +4376,11 @@ function renderLeads(){
   ], "leads");
   const filtered = aplicarOrdenacao("leads", leads.filter(l=>
     (!etapaF || l.etapa===etapaF) && (!catF || l.categoria===catF) &&
-    (!buscaF || l.nome.toLowerCase().includes(buscaF))
+    (!buscaF || l.nome.toLowerCase().includes(buscaF)) && filtroPessoaOk("filter-pessoa-leads", l)
   ));
   document.getElementById("leads-body").innerHTML = filtered.map(l=>`
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td><strong>${escapeHtml(l.nome)}</strong>${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
+      <td><strong>${escapeHtml(l.nome)}</strong>${etiquetaPJ(l)}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
@@ -4376,7 +4402,7 @@ function renderClientes(){
   document.getElementById("clientes-body").innerHTML = clientes.map(l=>{
     const qtdServicos = orcamentos.filter(o=>o.lead_id===l.id).length;
     return `<tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td>${escapeHtml(l.nome)}</td>
+      <td>${escapeHtml(l.nome)}${etiquetaPJ(l)}</td>
       <td>${numeroClicavel(l.whatsapp)}</td>
       <td>${escapeHtml(l.cidade||"-")}</td>
       <td>${qtdServicos}</td>
@@ -4404,12 +4430,12 @@ function renderParceiros(){
     {label:"Tipo de parceria", campo:"tipo_parceria"},
     {label:"Selo Go Ladies", campo:"selo"}, {label:"Status", campo:"status"}, {label:"Último contato", campo:null}, {label:"", campo:null}
   ], "parceiros");
-  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)));
+  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p)));
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
     return `<tr class="tr-click" onclick="openParceiroModal(${p.id})">
-      <td>${escapeHtml(p.nome)}${p.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}</td>
+      <td>${escapeHtml(p.nome)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}</td>
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
       <td>${(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`).join(" ")||"-"}</td>
@@ -5145,6 +5171,7 @@ function openLeadModal(id){
   toggleOrigemOutro();
   document.getElementById("f-data").value = l.data||new Date().toISOString().slice(0,10);
   document.getElementById("f-aniversario").value = l.aniversario||"";
+  carregarTipoPessoa("f", l);
   document.getElementById("f-responsavel").value = l.responsavel||"Jú";
   document.getElementById("f-notas").value = l.notas||"";
   document.getElementById("fv-servico").value = "";
@@ -5194,6 +5221,7 @@ async function saveLead(){
     responsavel: document.getElementById("f-responsavel").value,
     notas: document.getElementById("f-notas").value,
   };
+  Object.assign(payload, camposPJ("f", leads.find(x=>x.id===editingLeadId)));
   const isNew = !editingLeadId;
   const { data, error } = editingLeadId
     ? await sb.from("leads").update(payload).eq("id", editingLeadId)
@@ -5207,7 +5235,7 @@ async function saveLead(){
     if(document.getElementById("fi-assunto").value.trim()) await addInteracaoLead();
   }
   await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes");
-  if(isNew){ renderVendasLead(); renderInteracoesLead(); }
+  if(isNew){ renderVendasLead(); renderInteracoesLead(); renderLigacoes("f"); }
   else { closeModal("lead-modal"); }
 }
 async function deleteLead(id){
@@ -5901,6 +5929,7 @@ function openParceiroModal(id){
     cb.checked = tiposMarcados.includes(cb.value);
   });
   document.getElementById("p-aniversario").value = p.aniversario||"";
+  carregarTipoPessoa("p", p);
   document.getElementById("p-comissao").value = p.comissao||"";
   document.getElementById("p-notas").value = p.notas||"";
   document.getElementById("pc-tipo").value = "Celular";
@@ -5934,6 +5963,7 @@ async function saveParceiro(){
     comissao: document.getElementById("p-comissao").value,
     notas: document.getElementById("p-notas").value,
   };
+  Object.assign(payload, camposPJ("p", parceiros.find(x=>x.id===editingParceiroId)));
   const isNew = !editingParceiroId;
   const { data, error } = editingParceiroId
     ? await sb.from("parceiros").update(payload).eq("id", editingParceiroId)
@@ -5949,7 +5979,7 @@ async function saveParceiro(){
     if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
   }
   await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes");
-  if(isNew){ renderContatosParceiro(); renderLinksParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); }
+  if(isNew){ renderContatosParceiro(); renderLinksParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
   else { closeModal("parceiro-modal"); }
 }
 async function deleteParceiro(id){
@@ -7034,6 +7064,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-email").value = m.email||"";
   document.getElementById("mt-regiao").value = m.regiao||"";
   document.getElementById("mt-aniversario").value = m.aniversario||"";
+  renderLigacoes("mt");
   document.getElementById("mt-veiculo").value = m.veiculo||"";
   document.getElementById("mt-placa").value = m.placa||"";
   document.getElementById("mt-cpf").value = m.cpf||"";
@@ -7246,7 +7277,7 @@ async function saveMotorista(){
   await salvarDocPrincipal("endereco", editingMotoristaId);
   await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
   await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes");
-  if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); }
+  if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); }
   else { closeModal("motorista-modal"); }
 }
 async function deleteMotorista(id){
@@ -7309,7 +7340,7 @@ function renderTransporteClientes(){
     {label:"Pago", campo:"pago", tipo:"numero"}, {label:"Pendente", campo:"pendente", tipo:"numero"},
     {label:"Nota", campo:"nota", tipo:"numero"}, {label:"Motorista", campo:"motorista_top"}, {label:"", campo:null}
   ], "clientesTransporte");
-  const base = clientesTransporte.filter(c=>!segF || c.segmento===segF).map(c=>resumoClienteViagem(c, de, ate)).filter(r=>!temPeriodo || r.qtd_viagens>0);
+  const base = clientesTransporte.filter(c=>(!segF || c.segmento===segF) && filtroPessoaOk("filter-pessoa-clientes", c)).map(c=>resumoClienteViagem(c, de, ate)).filter(r=>!temPeriodo || r.qtd_viagens>0);
   const filtradas = aplicarOrdenacao("clientesTransporte", base);
   clientesTransporteRelatorio = filtradas;
   const tot = base.reduce((t,r)=>({viagens:t.viagens+r.qtd_viagens, pago:t.pago+r.pago, pendente:t.pendente+r.pendente}), {viagens:0,pago:0,pendente:0});
@@ -7317,7 +7348,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)"><svg class=ic aria-hidden=true><use href=#i-star /></svg></span>`:""}</td>
@@ -7366,6 +7397,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-email").value = c.email||"";
   document.getElementById("ct-regiao").value = c.regiao||"";
   document.getElementById("ct-aniversario").value = c.aniversario||"";
+  carregarTipoPessoa("ct", c);
   document.getElementById("ct-segmento").value = c.segmento||"";
   document.getElementById("ct-origem").value = c.origem||"Indicação";
   document.getElementById("ct-familiares").value = c.familiares||"";
@@ -7447,6 +7479,7 @@ async function saveClienteTransporte(){
     pos_pago: document.getElementById("ct-pos-pago").checked,
     notas: document.getElementById("ct-notas").value,
   };
+  Object.assign(payload, camposPJ("ct", clientesTransporte.find(x=>x.id===editingClienteTransporteId)));
   const { data, error } = editingClienteTransporteId
     ? await sb.from("clientes_transporte").update(payload).eq("id", editingClienteTransporteId).select()
     : await sb.from("clientes_transporte").insert(payload).select();
@@ -7462,6 +7495,185 @@ async function deleteClienteTransporte(id){
   const { error } = await sb.from("clientes_transporte").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("clientes_transporte", "viagens");
+}
+
+// ===== PESSOA FÍSICA / EMPRESA (PJ) E LIGAÇÕES ENTRE CADASTROS =====
+// Leads, parceiras (os) e clientes de viagem podem ser PF ou PJ (empresa com
+// CNPJ; a data de "aniversário" vira a abertura do CNPJ). Motoristas são sempre
+// PF. A tabela vinculos_cadastros liga cadastros entre si, de qualquer tipo:
+//   'empresa'      : a = pessoa, b = empresa, com cargo/função
+//   'mesma_pessoa' : a e b são a mesma pessoa em papéis diferentes
+// (schema_pessoa_juridica.sql). Sem o SQL rodado, os seletores ainda abrem,
+// mas salvar uma empresa e ligar cadastros devolve erro do banco.
+const CADASTROS = {
+  f:  { tabela:"leads",               rotulo:"Lead",              lista:()=>leads,              aberto:()=>editingLeadId,              abrir:id=>openLeadModal(id),              modal:"lead-modal" },
+  p:  { tabela:"parceiros",           rotulo:"Parceira (o)",      lista:()=>parceiros,          aberto:()=>editingParceiroId,          abrir:id=>openParceiroModal(id),          modal:"parceiro-modal" },
+  ct: { tabela:"clientes_transporte", rotulo:"Cliente de viagem", lista:()=>clientesTransporte, aberto:()=>editingClienteTransporteId, abrir:id=>openClienteTransporteModal(id), modal:"cliente-transporte-modal" },
+  mt: { tabela:"motoristas",          rotulo:"Motorista",         lista:()=>motoristas,         aberto:()=>editingMotoristaId,         abrir:id=>openMotoristaModal(id),         modal:"motorista-modal" },
+};
+function cadastroDaTabela(tabela){ return Object.values(CADASTROS).find(c=>c.tabela===tabela); }
+function ehEmpresa(r){ return !!r && r.tipo_pessoa==="PJ"; }
+function etiquetaPJ(r){ return ehEmpresa(r) ? ' <span class="tag" title="Empresa (CNPJ)">PJ</span>' : ""; }
+function filtroPessoaOk(selectId, r){
+  const v = (document.getElementById(selectId)||{}).value;
+  return !v || (r.tipo_pessoa||"PF")===v;
+}
+function formatarCNPJ(v){
+  const d = String(v||"").replace(/\D/g,"").slice(0,14);
+  return d.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2");
+}
+function aplicarTipoPessoa(pre){
+  const pj = document.getElementById(pre+"-tipo").value==="PJ";
+  document.getElementById(pre+"-cnpj-wrap").style.display = pj ? "block" : "none";
+  document.getElementById(pre+"-nome-lbl").textContent = pj ? "Razão social / nome fantasia *" : "Nome *";
+  document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
+  renderLigacoes(pre);
+}
+function carregarTipoPessoa(pre, reg){
+  document.getElementById(pre+"-tipo").value = (reg && reg.tipo_pessoa) || "PF";
+  document.getElementById(pre+"-cnpj").value = formatarCNPJ((reg && reg.cnpj) || "");
+  aplicarTipoPessoa(pre);
+}
+// Só manda as colunas novas quando precisa (empresa, ou o cadastro já veio do
+// banco com elas), pra não quebrar o salvar de uma PF antes do SQL rodar.
+function camposPJ(pre, reg){
+  const tipo = document.getElementById(pre+"-tipo").value;
+  if(tipo!=="PJ" && !(reg && "tipo_pessoa" in reg)) return {};
+  return { tipo_pessoa: tipo, cnpj: tipo==="PJ" ? (document.getElementById(pre+"-cnpj").value.trim() || null) : null };
+}
+function ehEmpresaNoModal(pre){
+  return pre!=="mt" && document.getElementById(pre+"-tipo").value==="PJ";
+}
+function ligacoesDe(tabela, id){
+  return vinculosCadastros.filter(v=>(v.a_tabela===tabela && v.a_id===id) || (v.b_tabela===tabela && v.b_id===id));
+}
+function jaLigados(tabela, id, tipo, tabela2, id2){
+  return vinculosCadastros.some(v=>v.tipo===tipo && (
+    (v.a_tabela===tabela && v.a_id===id && v.b_tabela===tabela2 && v.b_id===id2) ||
+    (v.b_tabela===tabela && v.b_id===id && v.a_tabela===tabela2 && v.a_id===id2)));
+}
+function abrirCadastroLigado(pre, tabela, id){
+  closeModal(CADASTROS[pre].modal);
+  cadastroDaTabela(tabela).abrir(id);
+}
+function mesmoEmail(a, b){
+  return !!a && !!b && String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
+}
+// Alvos possíveis do vínculo, agrupados por tipo de cadastro: "tabela:id".
+// modo: "empresa" (PF escolhendo a empresa), "pessoa" (empresa escolhendo a
+// pessoa) ou "mesma_pessoa" (PF em outro papel, sempre em outra tabela).
+function opcoesAlvoLigacao(pre, modo){
+  const c = CADASTROS[pre], id = c.aberto();
+  return Object.values(CADASTROS).map(cad=>{
+    const itens = cad.lista().filter(r=>{
+      if(cad.tabela===c.tabela && r.id===id) return false;
+      if(modo==="empresa") return ehEmpresa(r);
+      if(modo==="pessoa") return !ehEmpresa(r) && !jaLigados(c.tabela, id, "empresa", cad.tabela, r.id);
+      return !ehEmpresa(r) && cad.tabela!==c.tabela && !jaLigados(c.tabela, id, "mesma_pessoa", cad.tabela, r.id);
+    }).filter(r=>!(modo==="empresa" && jaLigados(c.tabela, id, "empresa", cad.tabela, r.id)));
+    return itens.length ? `<optgroup label="${cad.rotulo}">${itens.map(r=>`<option value="${cad.tabela}:${r.id}">${escapeHtml(r.nome)}</option>`).join("")}</optgroup>` : "";
+  }).join("");
+}
+function renderLigacoes(pre){
+  const el = document.getElementById(pre+"-ligacoes");
+  if(!el) return;
+  const c = CADASTROS[pre], id = c.aberto();
+  if(!id){
+    el.innerHTML = `<h4>Ligações</h4><p style="color:var(--muted); font-size:12.5px; margin:0;">Salve o cadastro primeiro. Depois dá pra ligar a uma empresa (com cargo) ou a outro cadastro da mesma pessoa.</p>`;
+    return;
+  }
+  const empresa = ehEmpresaNoModal(pre);
+  const meu = c.lista().find(r=>r.id===id) || {};
+  const itens = ligacoesDe(c.tabela, id).map(v=>{
+    const souA = v.a_tabela===c.tabela && v.a_id===id;
+    const outraTabela = souA ? v.b_tabela : v.a_tabela, outroId = souA ? v.b_id : v.a_id;
+    const outro = cadastroDaTabela(outraTabela).lista().find(r=>r.id===outroId);
+    if(!outro) return "";
+    let texto;
+    if(v.tipo==="empresa") texto = souA ? `Empresa: <b>${escapeHtml(outro.nome)}</b>` : `Pessoa: <b>${escapeHtml(outro.nome)}</b>`;
+    else texto = `Mesma pessoa: <b>${escapeHtml(outro.nome)}</b>`;
+    const extra = [v.cargo ? escapeHtml(v.cargo) : "", v.principal ? "proprietária / contato principal" : "", cadastroDaTabela(outraTabela).rotulo].filter(Boolean).join(" · ");
+    return `<div class="lig-item"><div>${texto}<br><small>${extra}</small></div><div style="white-space:nowrap;">
+      <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${outraTabela}',${outroId})">Abrir</button>
+      <button type="button" class="act act-del" title="Remover ligação" onclick="removerLigacao('${pre}',${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+  }).join("");
+
+  // Possível mesma pessoa em outro cadastro (mesmo WhatsApp ou e-mail)
+  let sugestoes = "";
+  if(!empresa){
+    const outros = [];
+    Object.values(CADASTROS).forEach(cad=>{
+      if(cad.tabela===c.tabela) return;
+      cad.lista().forEach(r=>{
+        if(ehEmpresa(r) || jaLigados(c.tabela, id, "mesma_pessoa", cad.tabela, r.id)) return;
+        if(mesmoTelefone(r.whatsapp, meu.whatsapp) || mesmoEmail(r.email, meu.email)) outros.push({cad, r});
+      });
+    });
+    sugestoes = outros.map(({cad, r})=>`<div class="lig-sugestao"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp ou e-mail de <b>${escapeHtml(r.nome)}</b> (${cad.rotulo}). É a mesma pessoa?
+      <button type="button" class="act act-edit" style="margin-left:6px;" onclick="ligarMesmaPessoa('${pre}','${cad.tabela}',${r.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Ligar como mesma pessoa</button></div>`).join("");
+  }
+
+  const form = empresa
+    ? `<div class="lig-form">
+        <div class="full"><label>Adicionar pessoa desta empresa</label><select id="${pre}-lig-alvo"><option value="">- Selecionar -</option>${opcoesAlvoLigacao(pre,"pessoa")}</select></div>
+        <div><label>Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
+        <div style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
+        <div class="full"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar pessoa</button></div>
+      </div>`
+    : `<div class="lig-form">
+        <div class="full"><label>Nova ligação</label><select id="${pre}-lig-tipo" onchange="trocarTipoLigacao('${pre}')">${pre!=="mt" ? `<option value="empresa">Trabalha em / é vinculada a uma empresa</option>` : ""}<option value="mesma_pessoa">É a mesma pessoa que outro cadastro (outro papel)</option></select></div>
+        <div class="full"><select id="${pre}-lig-alvo"></select></div>
+        <div id="${pre}-lig-cargo-wrap"><label>Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
+        <div id="${pre}-lig-principal-wrap" style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
+        <div class="full"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar</button></div>
+      </div>`;
+  el.innerHTML = `<h4>Ligações</h4>${itens || `<p style="color:var(--muted); font-size:12.5px; margin:0 0 4px;">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
+  if(!empresa) trocarTipoLigacao(pre);
+}
+function trocarTipoLigacao(pre){
+  const tipo = document.getElementById(pre+"-lig-tipo").value;
+  document.getElementById(pre+"-lig-alvo").innerHTML = `<option value="">- Selecionar -</option>` + opcoesAlvoLigacao(pre, tipo);
+  const emp = tipo==="empresa";
+  document.getElementById(pre+"-lig-cargo-wrap").style.display = emp ? "block" : "none";
+  document.getElementById(pre+"-lig-principal-wrap").style.display = emp ? "flex" : "none";
+}
+async function inserirVinculo(pre, linha){
+  const { error } = await sb.from("vinculos_cadastros").insert(linha);
+  if(error){
+    alert(/does not exist|schema cache/i.test(error.message)
+      ? "Rode primeiro o SQL schema_pessoa_juridica.sql no Supabase (SQL Editor)."
+      : "Erro ao ligar: " + error.message);
+    return false;
+  }
+  await recarregarTabelas("vinculos_cadastros");
+  renderLigacoes(pre);
+  return true;
+}
+async function adicionarLigacao(pre){
+  const c = CADASTROS[pre], id = c.aberto();
+  const empresa = ehEmpresaNoModal(pre);
+  const tipo = empresa ? "empresa" : document.getElementById(pre+"-lig-tipo").value;
+  const alvo = document.getElementById(pre+"-lig-alvo").value;
+  if(!alvo){ alert("Escolha o cadastro que vai ser ligado."); return; }
+  const tabelaAlvo = alvo.split(":")[0], idAlvo = Number(alvo.split(":")[1]);
+  const cargo = (document.getElementById(pre+"-lig-cargo").value||"").trim() || null;
+  const principal = !!document.getElementById(pre+"-lig-principal").checked;
+  let linha;
+  if(tipo==="mesma_pessoa") linha = { tipo, a_tabela:c.tabela, a_id:id, b_tabela:tabelaAlvo, b_id:idAlvo };
+  else if(empresa)          linha = { tipo, a_tabela:tabelaAlvo, a_id:idAlvo, b_tabela:c.tabela, b_id:id, cargo, principal };
+  else                      linha = { tipo, a_tabela:c.tabela, a_id:id, b_tabela:tabelaAlvo, b_id:idAlvo, cargo, principal };
+  if(await inserirVinculo(pre, linha)) showToast("Ligado!");
+}
+async function ligarMesmaPessoa(pre, tabela, outroId){
+  const c = CADASTROS[pre];
+  if(await inserirVinculo(pre, { tipo:"mesma_pessoa", a_tabela:c.tabela, a_id:c.aberto(), b_tabela:tabela, b_id:outroId })) showToast("Ligado!");
+}
+async function removerLigacao(pre, vid){
+  if(!confirm("Remover esta ligação? Os dois cadastros continuam existindo.")) return;
+  const { error } = await sb.from("vinculos_cadastros").delete().eq("id", vid);
+  if(error){ alert("Erro ao remover: " + error.message); return; }
+  await recarregarTabelas("vinculos_cadastros");
+  renderLigacoes(pre);
 }
 
 // ===== BUSCA DE ENDEREÇO (Google Places, mesmo padrão do site) =====
