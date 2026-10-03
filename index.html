@@ -2461,7 +2461,7 @@ tr.tr-click{cursor:pointer;}
         <button class="icon-btn" type="button" onclick="limparArquivoAssistente()" aria-label="Remover arquivo"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div class="ia-status" id="ia-status"></div>
-      <div class="ia-exemplos" id="ia-exemplos">Dica: no celular, "Foto / PDF" abre a câmera ou a galeria. Também dá pra colar um print (Ctrl+V) aqui dentro. Por enquanto entendo <b>Eventos</b> e <b>Viagens</b> (criar e alterar).</div>
+      <div class="ia-exemplos" id="ia-exemplos">Dica: no celular, "Foto / PDF" abre a câmera ou a galeria. Também dá pra colar um print (Ctrl+V) aqui dentro. Entendo <b>Eventos</b>, <b>Viagens</b> e <b>Cadastros</b> (leads, parceiras (os), clientes e motoristas): criar, alterar e conferir o que está gravado.</div>
     </div>
     <div id="ia-resultado"></div>
   </div>
@@ -6561,6 +6561,7 @@ document.addEventListener("paste", (e)=>{
 // ── Contexto: data de hoje (Porto Alegre) + listas curtas com id e nome,
 // pra IA apontar ids em vez de adivinhar ──
 function hojePOA(){ return new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }); }
+function finalFone(t){ return String(t||"").replace(/\D/g,"").slice(-4); }
 function montarContextoAssistente(){
   const hoje = hojePOA();
   const limite = new Date(hoje + "T00:00:00"); limite.setDate(limite.getDate() - 30);
@@ -6570,8 +6571,10 @@ function montarContextoAssistente(){
   return {
     hoje,
     dia_semana_hoje: new Date().toLocaleDateString("pt-BR", { weekday: "long", timeZone: "America/Sao_Paulo" }),
-    clientes: clientesTransporte.map(c=>({ id: c.id, nome: c.nome })),
-    motoristas: motoristas.filter(m=>!["Inativa","Não aprovada"].includes(m.status)).map(m=>({ id: m.id, nome: m.nome, status: m.status })),
+    clientes: clientesTransporte.map(c=>({ id: c.id, nome: c.nome, fone_final: finalFone(c.whatsapp) })),
+    leads: leads.slice(-300).map(l=>({ id: l.id, nome: l.nome, fone_final: finalFone(l.whatsapp) })),
+    parceiras: parceiros.slice(-300).map(x=>({ id: x.id, nome: x.nome })),
+    motoristas: motoristas.filter(m=>!["Inativa","Não aprovada"].includes(m.status)).map(m=>({ id: m.id, nome: m.nome, status: m.status, fone_final: finalFone(m.whatsapp) })),
     viagens: viagens
       .filter(v=>!v.data || v.data >= desde)
       .sort((a,b)=>(b.data||"").localeCompare(a.data||""))
@@ -6626,6 +6629,7 @@ const IA_ROTULOS = {
   cliente_nome:"Cliente", cliente_id:"Cliente (cadastro)", motorista_ids:"Motoristas", tipo_servico:"Tipo de serviço", evento_descricao:"Evento",
   canal_recepcao:"Canal", origem_endereco:"Saída", destino_endereco:"Destino", data:"Data", horario_partida:"Saída às", horario_chegada:"Chegar às",
   data_retorno:"Data da volta", horario_retorno:"Volta às", preco_cotado:"Preço cliente", preco_motorista:"Repasse motorista", distancia_km:"Distância (km)", motivo_perda:"Motivo",
+  tabela:"Cadastro em", whatsapp:"WhatsApp", email:"E-mail", regiao:"Região", aniversario:"Aniversário / abertura", tipo_pessoa:"Tipo", cnpj:"CNPJ", notas:"Notas",
 };
 function fmtDataBR(iso){ return /^\d{4}-\d{2}-\d{2}$/.test(iso||"") ? iso.split("-").reverse().join("/") : iso; }
 function valorPreenchido(v){ return !(v === "" || v === null || v === undefined || (Array.isArray(v) && !v.length)); }
@@ -6634,12 +6638,15 @@ function fmtValorIA(chave, v){
   if(chave === "contatos") return v.map(c=>[c.nome, c.cargo, c.telefone, c.email].filter(Boolean).map(escapeHtml).join(" · ")).join("; ");
   if(chave === "motorista_ids") return v.map(id=>escapeHtml((motoristas.find(m=>m.id===id)||{}).nome || "#"+id)).join(", ");
   if(chave === "cliente_id") return escapeHtml((clientesTransporte.find(c=>c.id===v)||{}).nome || "#"+v);
+  if(chave === "tabela") return escapeHtml((cadastroDaTabela(v)||{}).rotulo || v);
+  if(chave === "tipo_pessoa") return v === "PJ" ? "Empresa (CNPJ)" : "Pessoa física";
   if(/^data/.test(chave)) return fmtDataBR(v);
   if(/^preco/.test(chave)) return "R$ " + Number(v).toFixed(2).replace(".", ",");
   return escapeHtml(String(v));
 }
 function renderResultadoAssistente(acao, d){
   const box = document.getElementById("ia-resultado");
+  if(acao === "conferir_cadastro"){ renderConferirAssistente(d); return; }
   if(acao === "nao_entendi"){
     box.innerHTML = `<div class="ia-card"><h4><svg class=ic aria-hidden=true><use href=#i-help-circle /></svg> Preciso de mais detalhes</h4>
       <div class="ia-resumo">${escapeHtml(d.mensagem||"")}</div>
@@ -6647,17 +6654,36 @@ function renderResultadoAssistente(acao, d){
       <div class="ia-aviso">Complete o texto acima e clique em Interpretar de novo.</div></div>`;
     return;
   }
-  const titulos = { criar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Novo evento", editar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Alterar evento", criar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Nova viagem", editar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Alterar viagem" };
+  const titulos = { criar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Novo evento", editar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Alterar evento", criar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Nova viagem", editar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Alterar viagem", criar_cadastro:"<svg class=ic aria-hidden=true><use href=#i-users /></svg> Novo cadastro", editar_cadastro:"<svg class=ic aria-hidden=true><use href=#i-users /></svg> Alterar cadastro" };
   const alvo = acao === "editar_evento" ? (eventos.find(e=>e.id===d.evento_id)||{}).nome
              : acao === "editar_viagem" ? (()=>{ const v = viagens.find(x=>x.id===d.viagem_id); return v ? `#${v.id} · ${(clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome||"sem cliente"} · ${fmtDataBR(v.data)||""}` : null; })()
+             : acao === "editar_cadastro" ? (()=>{ const cad = cadastroDaTabela(d.tabela); const r = cad && cad.lista().find(x=>x.id===d.cadastro_id); return r ? `${cad.rotulo} · ${r.nome}` : null; })()
              : null;
-  const ocultar = ["resumo","evento_id","viagem_id"];
+  const ocultar = ["resumo","evento_id","viagem_id","cadastro_id"];
   const itens = Object.keys(d).filter(k=>!ocultar.includes(k) && valorPreenchido(d[k]) && !(k==="cliente_nome" && valorPreenchido(d.cliente_id)))
     .map(k=>`<li><b>${IA_ROTULOS[k]||k}:</b> ${fmtValorIA(k, d[k])}</li>`).join("");
   const avisos = [];
   if((acao==="editar_evento" && !eventos.find(e=>e.id===d.evento_id)) || (acao==="editar_viagem" && !viagens.find(v=>v.id===d.viagem_id))) avisos.push("Não achei esse registro no CRM. Clique em Atualizar e tente de novo.");
   if((acao==="criar_viagem" || acao==="editar_viagem") && !valorPreenchido(d.cliente_id) && valorPreenchido(d.cliente_nome)) avisos.push(`"${escapeHtml(d.cliente_nome)}" não está no cadastro de clientes: escolha a cliente no modal (ou cadastre antes em Clientes).`);
   if(acao==="criar_viagem" && !valorPreenchido(d.cliente_id) && !valorPreenchido(d.cliente_nome)) avisos.push("Nenhuma cliente identificada: escolha no modal.");
+  if(acao === "criar_cadastro" || acao === "editar_cadastro"){
+    const cad = cadastroDaTabela(d.tabela);
+    if(!cad) avisos.push("Não sei em qual cadastro isso entra. Diga se é lead, parceira (o), cliente de viagem ou motorista.");
+    else {
+      if(acao === "editar_cadastro" && !cad.lista().find(r=>r.id===d.cadastro_id)) avisos.push("Não achei esse cadastro no CRM. Clique em Atualizar e tente de novo.");
+      if(d.tabela === "parceiros" && valorPreenchido(d.email)) avisos.push("A ficha de parceira (o) não tem campo de e-mail: ele não será preenchido. Anote nas notas se precisar.");
+      if(d.tabela === "parceiros" && valorPreenchido(d.whatsapp)) avisos.push("Na parceira (o), o número entra no formulário de contato: depois de confirmar, clique em + Adicionar contato e em Salvar.");
+      if(d.tabela === "motoristas" && (d.tipo_pessoa === "PJ" || valorPreenchido(d.cnpj))) avisos.push("Motorista é sempre pessoa física: tipo e CNPJ serão ignorados.");
+      if(d.tabela === "motoristas" && valorPreenchido(d.notas)) avisos.push("A ficha de motorista não tem campo de notas (use Observações dentro da ficha): as notas serão ignoradas.");
+      if(acao === "editar_cadastro" && valorPreenchido(d.email) && d.tabela !== "parceiros") avisos.push("Isto muda só o e-mail de contato do cadastro. O e-mail de login dela no app continua o mesmo.");
+      if(acao === "criar_cadastro" && valorPreenchido(d.whatsapp)){
+        Object.values(CADASTROS).forEach(c2=>{
+          const achou = c2.lista().find(r=>mesmoTelefone(r.whatsapp, d.whatsapp));
+          if(achou) avisos.push(`Esse WhatsApp já está no cadastro de <b>${escapeHtml(achou.nome)}</b> (${c2.rotulo}). Se for a mesma pessoa, use Alterar; se for outro papel dela, cadastre e ligue em Ligações.`);
+        });
+      }
+    }
+  }
   box.innerHTML = `<div class="ia-card"><h4>${titulos[acao]||acao}${alvo ? ` <span style="color:var(--text2); font-weight:400;">· ${escapeHtml(alvo)}</span>` : ""}</h4>
     <div class="ia-resumo">${escapeHtml(d.resumo||"")}</div>
     ${itens ? `<ul>${itens}</ul>` : `<div class="ia-aviso">Nenhum campo identificado.</div>`}
@@ -6737,7 +6763,101 @@ function confirmarAssistente(){
     showToast("Confira os campos em rosa e clique em Salvar");
     return;
   }
+  if(acao === "criar_cadastro" || acao === "editar_cadastro"){
+    const cad = cadastroDaTabela(d.tabela), cfg = IA_CAMPOS_CADASTRO[d.tabela];
+    if(!cad || !cfg){ statusAssistente("Não sei em qual cadastro isso entra.", "c-red"); return; }
+    const edicao = acao === "editar_cadastro";
+    if(edicao && !cad.lista().find(r=>r.id===d.cadastro_id)){ statusAssistente("Cadastro não encontrado. Clique em Atualizar e tente de novo.", "c-red"); return; }
+    closeAssistenteModal();
+    cad.abrir(edicao ? d.cadastro_id : null);
+    if(cfg.pj){
+      if(d.tipo_pessoa === "PF" || d.tipo_pessoa === "PJ"){ iaSet(cfg.pre + "-tipo", d.tipo_pessoa); aplicarTipoPessoa(cfg.pre); }
+      if(valorPreenchido(d.cnpj)) iaSet(cfg.pre + "-cnpj", formatarCNPJ(d.cnpj));
+    }
+    iaSet(cfg.nome, d.nome);
+    if(valorPreenchido(d.whatsapp)) iaSet(cfg.whatsapp, formatarTelefoneBR(d.whatsapp));
+    if(cfg.email && valorPreenchido(d.email)) iaSet(cfg.email, String(d.email).trim());
+    iaSet(cfg.regiao, d.regiao); iaSet(cfg.aniversario, d.aniversario);
+    if(cfg.notas && valorPreenchido(d.notas)){
+      const el = document.getElementById(cfg.notas);
+      el.value = edicao && el.value.trim() ? el.value.trim() + "\n" + d.notas : d.notas;
+      el.classList.add("ia-alterado");
+    }
+    showToast("Confira os campos em rosa e clique em Salvar");
+    return;
+  }
   statusAssistente("Ação ainda não suportada: " + acao, "c-amber");
+}
+
+// ── Cadastros pelo assistente ──
+// Em que campos do modal cada dado da IA entra. Parceira não tem WhatsApp nem
+// e-mail na ficha: o número vai pro formulário rápido de contato (pc-numero).
+const IA_CAMPOS_CADASTRO = {
+  leads:               { pre:"f",  pj:true,  nome:"f-nome",  whatsapp:"f-whatsapp",  email:"f-email",  regiao:"f-bairro",  aniversario:"f-aniversario",  notas:"f-notas" },
+  parceiros:           { pre:"p",  pj:true,  nome:"p-nome",  whatsapp:"pc-numero",   email:null,       regiao:"p-regiao",  aniversario:"p-aniversario",  notas:"p-notas" },
+  clientes_transporte: { pre:"ct", pj:true,  nome:"ct-nome", whatsapp:"ct-whatsapp", email:"ct-email", regiao:"ct-regiao", aniversario:"ct-aniversario", notas:"ct-notas" },
+  motoristas:          { pre:"mt", pj:false, nome:"mt-nome", whatsapp:"mt-whatsapp", email:"mt-email", regiao:"mt-regiao", aniversario:"mt-aniversario", notas:null },
+};
+const IA_CONFERIR_CAMPOS = [
+  ["nome","Nome"], ["tipo_pessoa","Tipo"], ["cnpj","CNPJ"], ["whatsapp","WhatsApp"], ["email","E-mail"], ["regiao","Região"],
+  ["bairro","Bairro"], ["cidade","Cidade"], ["aniversario","Aniversário / abertura"], ["segmento","Segmento"], ["status","Status"], ["origem","Origem"], ["notas","Notas"],
+];
+function normalizarParaComparar(campo, v){
+  v = String(v ?? "").trim();
+  if(campo === "whatsapp") return v.replace(/\D/g,"").replace(/^55/,"").slice(-8);
+  if(campo === "cnpj") return v.replace(/\D/g,"");
+  return v.toLowerCase();
+}
+function valorExibidoConferencia(campo, v){
+  if(!valorPreenchido(v)) return `<span style="color:var(--text3);">(vazio)</span>`;
+  if(campo === "tipo_pessoa") return v === "PJ" ? "Empresa (CNPJ)" : "Pessoa física";
+  if(campo === "aniversario") return escapeHtml(fmtDataBR(v));
+  return escapeHtml(String(v));
+}
+// Conferir: busca o cadastro no banco AGORA e mostra o que está gravado (não
+// o que a IA acha), com certo/errado quando ela disse o valor esperado.
+async function renderConferirAssistente(d){
+  const box = document.getElementById("ia-resultado");
+  const cad = cadastroDaTabela(d.tabela);
+  if(!cad){
+    box.innerHTML = `<div class="ia-card"><div class="ia-aviso">Não sei qual cadastro conferir. Diga se é lead, parceira (o), cliente de viagem ou motorista.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="ia-card"><div class="ia-resumo">${escapeHtml(d.resumo||"")}</div><div class="ia-aviso">Buscando no banco...</div></div>`;
+  const { data, error } = await sb.from(d.tabela).select("*").eq("id", d.cadastro_id).maybeSingle();
+  if(error || !data){
+    box.innerHTML = `<div class="ia-card"><div class="ia-aviso"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Não consegui ler esse cadastro no banco${error ? " (" + escapeHtml(error.message) + ")" : ""}. Clique em Atualizar e tente de novo.</div></div>`;
+    return;
+  }
+  const pedidos = (d.campos || []).map(String);
+  const esperado = {};
+  (d.esperado || []).forEach(e=>{ if(e && e.campo) esperado[e.campo] = e.valor; });
+  const linhas = IA_CONFERIR_CAMPOS.filter(([k])=>(k in data) && (pedidos.includes(k) || k in esperado || valorPreenchido(data[k]))).map(([k, rot])=>{
+    let marca = "";
+    if(k in esperado){
+      const bate = normalizarParaComparar(k, data[k]) === normalizarParaComparar(k, esperado[k]);
+      marca = bate
+        ? ` <span style="color:var(--green);"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> confere com o que você disse</span>`
+        : ` <span style="color:var(--red);"><svg class=ic aria-hidden=true><use href=#i-circle-x /></svg> diferente do que você disse (${escapeHtml(String(esperado[k]))})</span>`;
+    }
+    const destaque = pedidos.includes(k) || k in esperado;
+    return `<li style="${destaque ? "" : "color:var(--text2);"}"><b>${rot}:</b> ${valorExibidoConferencia(k, data[k])}${marca}</li>`;
+  }).join("");
+  const mexeuEmail = pedidos.includes("email") || "email" in esperado;
+  const aviso = data.auth_user_id && mexeuEmail
+    ? `<div class="ia-aviso"><svg class=ic aria-hidden=true><use href=#i-lock /></svg> Esta pessoa tem login no app. Aqui você conferiu o e-mail de <b>contato</b>; o e-mail de login pode ser outro e só ela troca, pelo app.</div>` : "";
+  box.innerHTML = `<div class="ia-card"><h4><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> ${escapeHtml(cad.rotulo)} · ${escapeHtml(data.nome || "#" + data.id)} <span style="color:var(--text2); font-weight:400;">· gravado no banco agora</span></h4>
+    <ul>${linhas || "<li>Nada preenchido.</li>"}</ul>${aviso}
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn ghost small" type="button" onclick="document.getElementById('ia-resultado').innerHTML=''; iaAssistAcao=null;">Fechar</button>
+      <button class="btn small" type="button" onclick="abrirCadastroDoAssistente('${d.tabela}', ${data.id})">Abrir cadastro</button>
+    </div></div>`;
+}
+function abrirCadastroDoAssistente(tabela, id){
+  const cad = cadastroDaTabela(tabela);
+  if(!cad) return;
+  closeAssistenteModal();
+  cad.abrir(id);
 }
 
 // ===== LEITURA DE CNH/CRLV COM IA =====

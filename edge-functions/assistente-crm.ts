@@ -1,8 +1,9 @@
 // Go Ladies — Edge Function "assistente-crm"
 // Recebe um pedido em texto (digitado ou ditado pelo microfone) e/ou uma
 // foto, print ou PDF (flyer de evento, conversa de WhatsApp...) e devolve
-// UMA ação estruturada pro CRM: criar/editar evento ou criar/editar viagem.
-// Não grava nada: quem grava é o CRM, depois que a Juliana confere no modal
+// UMA ação estruturada pro CRM: criar/editar evento ou viagem, criar/editar
+// cadastro (lead, parceira, cliente de viagem, motorista) ou conferir um
+// cadastro já gravado. Não grava nada: quem grava é o CRM, depois que a Juliana confere no modal
 // pré-preenchido e clica em Salvar. Mesmo desenho do ler-cnh / ler-crlv.
 //
 // COMO IMPLANTAR (primeira vez):
@@ -131,6 +132,23 @@ const CAMPOS_VIAGEM = {
   motivo_perda: str("Motivo do cancelamento, se ela disse. Vazio caso contrário."),
 };
 
+const TABELAS_CADASTRO = ["leads", "parceiros", "clientes_transporte", "motoristas"];
+const CAMPOS_CADASTRO = {
+  nome: str("Nome da pessoa ou razão social/nome fantasia da empresa. Vazio se não souber."),
+  whatsapp: str("WhatsApp/telefone como foi dito, com DDD. Vazio se não souber."),
+  email: str("E-mail exatamente como foi dito/escrito, em minúsculas. Vazio se não souber. Não existe em parceiras (o CRM avisa)."),
+  regiao: str("Região ou bairro. Vazio se não souber."),
+  aniversario: str("Data de nascimento AAAA-MM-DD (pessoa física) ou data de abertura do CNPJ (empresa). Vazio se não souber."),
+  tipo_pessoa: str("PF (pessoa física) ou PJ (empresa com CNPJ). Só se ela disse ou ficou claro. Vazio pra não mexer. Motorista é sempre PF."),
+  cnpj: str("CNPJ, só se for empresa e foi dito. Vazio caso contrário."),
+  notas: str("Observação a acrescentar na ficha. Vazio se não houver."),
+};
+const TABELA_CADASTRO = {
+  type: "string",
+  enum: TABELAS_CADASTRO,
+  description: "Em qual cadastro: leads (contatos de compra/venda/manutenção), parceiros (parceiras (os), oficinas, embaixadoras), clientes_transporte (clientes de viagem) ou motoristas. Se ela só disse 'cliente' sem contexto, é clientes_transporte.",
+};
+
 const TOOLS: Anthropic.Tool[] = [
   {
     name: "criar_evento",
@@ -188,8 +206,57 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "conferir_cadastro",
+    description: "Ela quer CONFERIR/verificar um cadastro que já existe (ex: 'alterei o e-mail da cliente X, está certo?', 'o que está salvo da Y?'). O CRM busca o cadastro no banco e mostra o que está gravado; você só aponta qual cadastro (pelas listas do contexto) e quais campos ela quer ver.",
+    input_schema: {
+      type: "object",
+      properties: {
+        resumo: str("Uma frase em português dizendo o que será conferido. Ex: 'Vou mostrar o e-mail e o WhatsApp gravados da cliente Rafaela.'"),
+        tabela: TABELA_CADASTRO,
+        cadastro_id: { type: "integer", description: "id do cadastro na lista correspondente do contexto." },
+        campos: { type: "array", description: "Campos que ela quer ver, dentre: nome, whatsapp, email, regiao, aniversario, tipo_pessoa, cnpj, notas. Lista vazia pra mostrar os principais.", items: { type: "string" } },
+        esperado: {
+          type: "array",
+          description: "Só se ela disse qual valor deveria estar gravado (ex: 'o e-mail novo é ana@x.com'): o CRM compara e marca certo/errado. Lista vazia caso contrário.",
+          items: { type: "object", properties: { campo: str("Um dos campos acima."), valor: str("O valor que ela disse.") }, required: ["campo", "valor"] },
+        },
+      },
+      required: ["resumo", "tabela", "cadastro_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "editar_cadastro",
+    description: "Alterar um cadastro que já existe (nome, WhatsApp, e-mail, região, data, tipo PF/PJ, CNPJ, notas). Identifique pelo nome nas listas do contexto. Preencha SÓ os campos que mudam; os outros ficam vazios e o CRM não mexe neles.",
+    input_schema: {
+      type: "object",
+      properties: {
+        resumo: str("Uma frase em português dizendo qual cadastro e o que muda. Ex: 'Vou trocar o e-mail da cliente Rafaela para rafa@x.com.'"),
+        tabela: TABELA_CADASTRO,
+        cadastro_id: { type: "integer", description: "id do cadastro na lista correspondente do contexto." },
+        ...CAMPOS_CADASTRO,
+      },
+      required: ["resumo", "tabela", "cadastro_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "criar_cadastro",
+    description: "Cadastrar uma pessoa ou empresa nova (lead, parceira (o), cliente de viagem ou motorista). Se já existir no contexto alguém com o mesmo nome, use editar_cadastro.",
+    input_schema: {
+      type: "object",
+      properties: {
+        resumo: str("Uma frase em português dizendo o que vai ser cadastrado. Ex: 'Vou cadastrar a cliente de viagem Ana Souza, WhatsApp (51) 99999-0000.'"),
+        tabela: TABELA_CADASTRO,
+        ...CAMPOS_CADASTRO,
+      },
+      required: ["resumo", "tabela", "nome"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "nao_entendi",
-    description: "Use quando não dá pra montar uma ação com segurança: pedido ambíguo, fora do escopo (só existem evento e viagem por enquanto), viagem/evento/cliente que não está no contexto, ou material ilegível. Explique e pergunte o que falta.",
+    description: "Use quando não dá pra montar uma ação com segurança: pedido ambíguo, fora do escopo (hoje só existem evento, viagem e cadastro de lead/parceira/cliente/motorista; financeiro e ligações entre cadastros ainda não), viagem/evento/cliente que não está no contexto, ou material ilegível. Explique e pergunte o que falta.",
     input_schema: {
       type: "object",
       properties: {
@@ -214,6 +281,8 @@ Regras:
 - Pra identificar cliente, motorista, viagem ou evento existente, use SÓ as listas do contexto. Se não achar com segurança, use nao_entendi e pergunte.
 - Se o pedido mistura duas ações (ex: criar evento e uma viagem), faça a principal e diga em resumo que a outra fica pra um próximo comando.
 - Em editar_*, mande só os campos que mudam; omita o resto.
+- Cadastros (lead, parceira, cliente de viagem, motorista): pra alterar ou conferir, ache a pessoa nas listas do contexto (clientes, leads, parceiras, motoristas; fone_final são os 4 últimos dígitos do WhatsApp, pra separar nomes iguais). Se houver mais de uma possível, use nao_entendi e pergunte. Se ela disser que já alterou algo e quer saber se ficou certo, use conferir_cadastro, nunca afirme que está certo: o CRM mostra o que está gravado.
+- O CRM nunca troca o e-mail de LOGIN do app da cliente; editar_cadastro muda só o e-mail de contato do cadastro.
 - O campo resumo é o que ela vai ler antes de confirmar: seja específica (nome, data, valor).`;
 
 Deno.serve(async (req) => {
