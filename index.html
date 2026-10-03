@@ -336,6 +336,7 @@ select,input[type=text],input[type=number],input[type=date],input[type=datetime-
 }
 select:focus,input:focus,textarea:focus{border-color:var(--rosa);}
 select option{background:var(--bg-card); color:var(--text1);}
+select optgroup{background:var(--bg-card); color:var(--rosa); font-style:normal; font-weight:700;}
 input::placeholder,textarea::placeholder{color:var(--text3);}
 /* Autofill do navegador pintava o campo de branco no tema escuro */
 input:-webkit-autofill,input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100px var(--bg-card) inset !important; -webkit-text-fill-color:var(--text1) !important;}
@@ -2142,7 +2143,7 @@ tr.tr-click{cursor:pointer;}
       <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
       <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
-      <div class="full"><label>Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
+      <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Pode pagar depois (pós-pago) <span style="color:var(--muted);">(cliente de confiança: a oferta abre pras motoristas sem esperar o Pix, e o Pix é pedido quando a viagem termina)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
       <!-- Login do painel da cliente (app.goladies.com.br): ela cria
@@ -7527,6 +7528,8 @@ function aplicarTipoPessoa(pre){
   document.getElementById(pre+"-cnpj-wrap").style.display = pj ? "block" : "none";
   document.getElementById(pre+"-nome-lbl").textContent = pj ? "Razão social / nome fantasia *" : "Nome *";
   document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
+  const fam = document.getElementById(pre+"-fam-lbl");
+  if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, idosos etc.)";
   renderLigacoes(pre);
 }
 function carregarTipoPessoa(pre, reg){
