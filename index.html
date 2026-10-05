@@ -11241,11 +11241,15 @@ function lcColetar(de, ate){
     const v = viagens.find(x=>x.id === p.viagem_id);
     if(v && idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)))) return;
     const pago = p.status === "Pago";
+    // Repasse que ainda não saiu de viagem cancelada não vai mais sair.
+    if(!pago && (!v || v.status === "Cancelada")) return;
+    const quem = v ? nomesMotoristasViagem(v) : "";
     const data = String((pago ? p.data_pagamento : (p.data_prevista_pagamento || (v && v.data))) || "").slice(0,10);
     if(!dentro(data) || !(Number(p.valor_repassado) > 0)) return;
     itens.push({ chave: "pm" + p.id, data, tipo: "saida", previsto: !pago, valor: Number(p.valor_repassado),
       contaId: mp ? mp.id : null, titulo: `Repasse · viagem #${p.viagem_id}`, categoria: "Repasse a motoristas",
-      sub: v ? nomesMotoristasViagem(v) || "motorista" : "motorista", acao: `abrirViagemDoPagamento(${p.viagem_id})`,
+      sub: quem || "viagem sem motorista marcada: abra e marque quem dirigiu", semMotorista: !quem,
+      acao: `abrirViagemDoPagamento(${p.viagem_id})`,
       jaFoi: pago ? null : `abrirViagemDoPagamento(${p.viagem_id})` });
   });
   vendaParcelas.forEach(p=>{
@@ -11395,7 +11399,8 @@ function lcLinha(i){
   const sub = i.tipo === "transf" ? (i.sub || "transferência")
     : [i.categoria, conta ? conta.nome : (i.aporte ? "do seu bolso (aporte)" : "conta não informada"), i.sub].filter(Boolean).join(" · ");
   const selos = (i.fixa ? `<span class="lc-selo">fixa${i.aproximado ? " · valor muda" : ""}</span>` : "")
-    + (i.definir ? `<span class="lc-selo definir">a definir</span>` : "");
+    + (i.definir ? `<span class="lc-selo definir">a definir</span>` : "")
+    + (i.semMotorista ? `<span class="lc-selo definir">sem motorista</span>` : "");
   const sinal = i.tipo === "entrada" ? "+ " : i.tipo === "saida" ? "− " : "";
   const cor = i.tipo === "entrada" ? "lc-pos" : i.tipo === "transf" ? "lc-azul" : "";
   return `<div class="lc-item" onclick="${i.acao}">
