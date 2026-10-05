@@ -2045,6 +2045,13 @@ tr.tr-click{cursor:pointer;}
       </div>
     </div>
 
+    <!-- Leituras do odômetro: cada mudança de motoristas.km_atual vira uma linha
+         em motorista_km_historico (gatilho do schema_km_historico.sql). -->
+    <div id="mt-km-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
+      <h4 style="font-size:13px; margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-gauge /></svg> Histórico de km <span id="mt-km-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+      <div id="mt-km-lista"></div>
+    </div>
+
     <div id="mt-documentos-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
       <h4 style="font-size:13px; margin:0 0 10px;">Antecedentes Criminais</h4>
       <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
@@ -7254,6 +7261,7 @@ function openMotoristaModal(id){
   renderDocumentosMotorista();
   renderObservacoesMotorista();
   renderAvaliacoesMotorista();
+  renderKmHistoricoMotorista();
   document.getElementById("motorista-modal").classList.add("open");
 }
 function renderDocumentosMotorista(){
@@ -9298,6 +9306,38 @@ function renderAvaliacoesMotorista(){
   const avs = avaliacoesDaMotorista(editingMotoristaId).filter(a=>a.nota_motorista!=null || a.comentario);
   document.getElementById("mt-avaliacoes-resumo").textContent = resumoNotas(avs.filter(a=>a.visivel), "nota_motorista");
   document.getElementById("mt-avaliacoes-lista").innerHTML = htmlListaAvaliacoes(avs, "motorista");
+}
+const KM_ORIGEM_ROTULO = { painel:"Painel", abastecimento:"Abastecimento", manutencao:"Manutenção", carga_inicial:"Registro anterior" };
+function fmtKm(n){ return Number(n).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " km"; }
+async function renderKmHistoricoMotorista(){
+  const wrap = document.getElementById("mt-km-wrap");
+  const id = editingMotoristaId;
+  if(!id){ wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+  const lista = document.getElementById("mt-km-lista");
+  const resumo = document.getElementById("mt-km-resumo");
+  lista.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Carregando...</p>`;
+  resumo.textContent = "";
+  const { data, error } = await sb.from("motorista_km_historico")
+    .select("km, km_anterior, origem, registrado_em")
+    .eq("motorista_id", id)
+    .order("registrado_em", { ascending: true });
+  if(editingMotoristaId !== id) return; // trocou de ficha enquanto carregava
+  if(error){ lista.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Não deu pra carregar o histórico: ${escapeHtml(error.message)}</p>`; return; }
+  const regs = data || [];
+  if(!regs.length){ lista.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">Nenhuma leitura de km ainda. Aparece aqui quando ela atualiza o km no painel.</p>`; return; }
+  // Diferença contra a leitura anterior no tempo (e não km_anterior, que só o gatilho preenche)
+  const linhas = regs.map((r, i)=>({ ...r, dif: i ? Number(r.km) - Number(regs[i-1].km) : null }));
+  const primeira = regs[0], ultima = regs[regs.length-1];
+  const rodado = Number(ultima.km) - Number(primeira.km);
+  resumo.textContent = `· ${regs.length} leitura${regs.length>1?"s":""}` + (regs.length>1 && rodado>0
+    ? ` · ${fmtKm(rodado)} desde ${new Date(primeira.registrado_em).toLocaleDateString("pt-BR")}` : "");
+  lista.innerHTML = `<div style="max-height:260px; overflow-y:auto;">` + linhas.reverse().map(r=>`
+    <div style="display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
+      <span>${new Date(r.registrado_em).toLocaleDateString("pt-BR")} <span style="color:var(--muted);">· ${KM_ORIGEM_ROTULO[r.origem] || escapeHtml(r.origem||"")}</span></span>
+      <span><strong>${fmtKm(r.km)}</strong>${r.dif!=null && r.dif!==0
+        ? ` <span style="color:${r.dif<0 ? "var(--red)" : "var(--muted)"};" ${r.dif<0 ? 'title="Menor que a leitura anterior: pode ser erro de digitação"' : ""}>(${r.dif>0?"+":""}${fmtKm(r.dif)})</span>` : ""}</span>
+    </div>`).join("") + `</div>`;
 }
 function renderAvaliacoesCliente(){
   const wrap = document.getElementById("ct-avaliacoes-wrap");
