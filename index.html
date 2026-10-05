@@ -1431,7 +1431,9 @@ tr.tr-click{cursor:pointer;}
             <thead><tr><th>Mês</th><th>Faturamento</th><th>Meta</th><th>Taxa MP</th><th>Despesas</th><th>Lucro</th><th>Meta lucro</th></tr></thead>
             <tbody id="resumo-body"></tbody>
           </table>
+          <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique num mês para ver de onde vem cada número.</p>
         </div>
+        <div class="panel" id="resumo-detalhe" style="display:none;"></div>
         <div class="panel">
           <h3>Faturamento × Lucro no ano</h3>
           <div class="chartwrap"><canvas id="chart-resumo"></canvas></div>
@@ -4112,7 +4114,7 @@ function renderCustosIa(d){
   const cor = pct >= 85 ? "var(--c-red)" : pct >= 60 ? "var(--c-amber)" : "var(--c-green)";
   const avisoSemPreco = d.sem_preco ? `<small style="color:var(--c-amber);">${d.sem_preco} chamada(s) com modelo sem preço cadastrado em ia_precos, fora da conta.</small>` : "";
   document.getElementById("custos-ia-limite").innerHTML = `
-    <div class="uso-item">
+    <div class="uso-item" style="cursor:pointer;" title="Mudar o limite" onclick="document.getElementById('custos-ia-limite-input').scrollIntoView({behavior:'smooth', block:'center'}); document.getElementById('custos-ia-limite-input').focus({preventScroll:true});">
       <div class="uso-topo"><span>Limite de alerta do mês</span><span><b style="color:${cor};">${Math.round(pct)}%</b></span></div>
       <div class="uso-trilho"><span style="width:${Math.min(100, pct)}%; background:${cor};"></span></div>
       <small>${formatarMoedaBR(mesBrl)} de ${formatarMoedaBR(limite)} · previsão ${formatarMoedaBR(previsto)}${previsto > limite && limite ? ", passa do limite nesse ritmo" : ""}</small>
@@ -10595,11 +10597,11 @@ function renderMetas(){
     document.getElementById("mf-ano").value = new Date().getFullYear();
   }
   document.getElementById("metas-body").innerHTML = [...metasFinanceiras].sort((a,b)=> (b.ano-a.ano) || (b.mes-a.mes)).map(m=>`
-    <tr>
+    <tr class="tr-click" title="Editar a meta" onclick="editarMeta(${m.id})">
       <td>${nomeMes(m.mes)}/${m.ano}</td>
       <td>${formatarMoedaBR(m.meta_faturamento)}</td>
       <td>${formatarMoedaBR(m.meta_lucro)}</td>
-      <td><button class="act act-edit" onclick="editarMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()"><a href="#" style="font-size:12.5px; margin-right:8px;" onclick="irParaGestaoDoMes(${m.mes}, ${m.ano}); return false;">Ver o mês na Gestão</a><button class="act act-edit" onclick="editarMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMeta(${m.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="4">Nenhuma meta cadastrada ainda</td></tr>`;
 }
@@ -10610,6 +10612,8 @@ function editarMeta(id){
   document.getElementById("mf-ano").value = m.ano;
   document.getElementById("mf-faturamento").value = m.meta_faturamento ?? "";
   document.getElementById("mf-lucro").value = m.meta_lucro ?? "";
+  document.getElementById("mf-faturamento").scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("mf-faturamento").focus({ preventScroll: true });
 }
 async function saveMeta(){
   const mes = Number(document.getElementById("mf-mes").value);
@@ -10676,15 +10680,17 @@ function renderResumoFinanceiro(){
   const totalDesp = linhas.reduce((s,l)=>s+l.despesas,0);
   const totalTaxa = linhas.reduce((s,l)=>s+l.taxaMp,0);
   const totalLucro = totalFat - totalDesp;
+  // A meta abre Metas no mês certo; o resto da linha abre a conta do mês.
+  const celMeta = (l, v) => `<td><a href="#" title="${v!=null?"Editar":"Cadastrar"} a meta" onclick="event.stopPropagation(); irParaMetaDoMes(${l.mes}, ${ano}); return false;"${v!=null?"":' style="color:var(--muted);"'}>${v!=null?formatarMoedaBR(v):"+ meta"}</a></td>`;
   document.getElementById("resumo-body").innerHTML = linhas.map(l=>`
-    <tr>
+    <tr class="tr-click" title="Ver de onde vem" onclick="abrirDetalheResumo(${l.mes})"${resumoDetalheMes===l.mes?' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"':""}>
       <td>${nomeMes(l.mes)}</td>
       <td>${formatarMoedaBR(l.faturamento)}</td>
-      <td>${l.metaFaturamento!=null?formatarMoedaBR(l.metaFaturamento):"-"}</td>
+      ${celMeta(l, l.metaFaturamento)}
       <td>${formatarMoedaBR(l.taxaMp)}</td>
       <td>${formatarMoedaBR(l.despesas)}</td>
       <td style="color:${l.lucro>=0?'var(--green)':'var(--red)'};">${formatarMoedaBR(l.lucro)}</td>
-      <td>${l.metaLucro!=null?formatarMoedaBR(l.metaLucro):"-"}</td>
+      ${celMeta(l, l.metaLucro)}
     </tr>
   `).join("") + `
     <tr style="font-weight:700;">
@@ -10706,9 +10712,55 @@ function renderResumoFinanceiro(){
           { label:"Lucro", data: linhas.map(l=>l.lucro), backgroundColor:corCss("--c-green") || "#1FAA72", borderRadius:6 },
         ]
       },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true}} }
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true}},
+        onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        onClick: (e, els) => { if(els.length){ resumoDetalheMes = null; abrirDetalheResumo(els[0].index + 1); } } }
     });
   }
+  renderDetalheResumo(ano);
+}
+// Resumo: clicar num mês abre a conta linha a linha, cada item com link
+// para onde ele foi lançado; clicar de novo no mesmo mês fecha.
+let resumoDetalheMes = null;
+function abrirDetalheResumo(mes){
+  resumoDetalheMes = resumoDetalheMes === mes ? null : mes;
+  renderResumoFinanceiro();
+  if(resumoDetalheMes) document.getElementById("resumo-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function renderDetalheResumo(ano){
+  const el = document.getElementById("resumo-detalhe");
+  if(!el) return;
+  const mes = resumoDetalheMes;
+  if(!mes){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const R = formatarMoedaBR, l = resumoFinanceiroMes(mes, ano);
+  const lk = (acao, texto) => `<a href="#" onclick="${acao}; return false;">${texto}</a>`;
+  const parcelas = vendaParcelas.filter(p=>dentroDoMes(p.data_realizada, mes, ano));
+  const pagosViagem = pagamentosCliente.filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano));
+  const despesas = contasPagar.filter(c=>c.status==='Pago' && dentroDoMes(c.data_pagamento, mes, ano));
+  const repasses = pagamentosMotorista.filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano));
+  const linhas = [
+    ...pagosViagem.map(p=>({ s: "+", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Viagem #${p.viagem_id}`), d: `cliente pagou em ${fmtDataBR(String(p.data_pagamento).slice(0,10))}${p.forma_pagamento ? " · " + escapeHtml(p.forma_pagamento) : ""}`, v: Number(p.valor_recebido || 0) })),
+    ...parcelas.map(p=>{ const { lead, venda } = labelVendaParcela(p); return { s: "+", t: lk(`openParcelaModal(${p.id})`, escapeHtml(`${lead ? lead.nome : "Venda"} · ${venda ? venda.servico_produto : "parcela"}`)), d: `recebida em ${fmtDataBR(p.data_realizada)}`, v: Number(p.valor || 0) }; }),
+    { s: "=", t: "Faturamento", v: l.faturamento, b: true },
+    ...pagosViagem.filter(p=>Number(p.taxa_mp || 0)).map(p=>({ s: "−", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Taxa Mercado Pago · viagem #${p.viagem_id}`), v: Number(p.taxa_mp) })),
+    ...repasses.map(p=>{ const v = viagens.find(x=>x.id === p.viagem_id); return { s: "−", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Repasse · viagem #${p.viagem_id}`), d: `${escapeHtml(v ? nomesMotoristasViagem(v) || "motorista" : "motorista")} · pago em ${fmtDataBR(p.data_pagamento)}`, v: Number(p.valor_repassado || 0) }; }),
+    ...despesas.map(c=>({ s: "−", t: lk(`openContaPagarModal(${c.id})`, escapeHtml(c.descricao || "-")), d: `${escapeHtml(c.categoria || "sem categoria")} · pago em ${fmtDataBR(c.data_pagamento)}`, v: Number(c.valor || 0) })),
+    { s: "=", t: "Lucro", v: l.lucro, b: true, cor: l.lucro >= 0 ? "var(--c-green)" : "var(--c-red)" },
+  ];
+  el.style.display = "";
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">Como chegamos nesse número · ${nomeMes(mes)}/${ano}</h3>
+      <button class="icon-btn" type="button" onclick="abrirDetalheResumo(resumoDetalheMes)" aria-label="Fechar">✕</button>
+    </div>
+    <table class="tbl"><tbody>${linhas.map(x=>`
+      <tr${x.b ? ' style="font-weight:700;"' : ""}><td style="width:22px; color:var(--muted);">${x.s}</td>
+      <td>${x.t}${x.d ? `<div style="color:var(--muted); font-size:12.5px; margin-top:2px;">${x.d}</div>` : ""}</td>
+      <td style="text-align:right; white-space:nowrap;${x.cor ? ` color:${x.cor};` : ""}">${R(x.v)}</td></tr>`).join("")}</tbody></table>
+    <p style="margin:10px 0 0; font-size:12.5px;">${lk(`irParaGestaoDoMes(${mes}, ${ano})`, "Abrir este mês na Gestão")} <span style="color:var(--muted);">(lá o lucro considera o repasse previsto das viagens pagas, mesmo antes de lançado)</span></p>`;
+}
+function irParaGestaoDoMes(mes, ano){
+  document.getElementById("gestao-mes").value = `${ano}-${String(mes).padStart(2,"0")}`;
+  document.querySelector('.nav-item[data-tab="gestao"]').click();
 }
 
 // ===== GESTÃO DO NEGÓCIO (só Go Ladies) =====
