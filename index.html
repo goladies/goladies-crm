@@ -2745,6 +2745,28 @@ tr.tr-click{cursor:pointer;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="fin-conferir-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="fin-conferir-modal-title" style="margin:0;">Conferir saldo</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('fin-conferir-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p style="font-size:13px; margin:10px 0 0;">O CRM calcula <b id="fcf-calculado"></b> nesta conta. Abra o app do Mercado Pago e digite o que ele mostra.</p>
+    <div class="formgrid">
+      <div><label>Saldo no app (R$) *</label><input type="number" step="0.01" id="fcf-saldo" oninput="fcfAtualizar()"></div>
+      <div><label>Data</label><input type="date" id="fcf-data"></div>
+      <div class="full" id="fcf-resultado" style="font-size:13px;"></div>
+      <div class="full" id="fcf-ajuste-wrap" style="display:none;"><label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="fcf-ajuste" style="width:auto;"> Não achei a saída: registrar a diferença como ajuste</label></div>
+      <div class="full"><label>Observação</label><input type="text" id="fcf-obs" placeholder="Ex: rendimento de outubro"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-conferencia" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirConferencia()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('fin-conferir-modal')">Sair</button>
+      <button class="btn" id="btn-salvar-conferencia" onclick="salvarConferencia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="fin-transf-modal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -3128,6 +3150,7 @@ let gestaoAportes = [];
 let finContas = [];
 let finTransferencias = [];
 let finEntradas = [];
+let finConferencias = [];
 let lcSqlFaltando = false;
 // Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
 // saem da Caixinha Jú Motorista.
@@ -3745,6 +3768,9 @@ async function carregarDadosInterno(){
   if(!rfc.error) finContas = rfc.data || [];
   if(!rft.error) finTransferencias = rft.data || [];
   if(!rfe.error) finEntradas = rfe.data || [];
+  // Conferir saldo (schema_conferir_saldo.sql), também tolerante.
+  const rfcf = await sb.from("fin_conferencias").select("*").order("id");
+  if(!rfcf.error) finConferencias = rfcf.data || [];
   await carregarGastosJuMotorista();
 
   renderAll();
@@ -3858,6 +3884,7 @@ const TABELA_ATUALIZA = {
   fin_contas: v => finContas = [...v].sort((a,b)=>(a.ordem||0)-(b.ordem||0) || a.id-b.id),
   fin_transferencias: v => finTransferencias = v,
   fin_entradas: v => finEntradas = v,
+  fin_conferencias: v => finConferencias = v,
   vinculos_cadastros: v => vinculosCadastros = v,
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
@@ -11333,6 +11360,18 @@ function lcColetar(de, ate){
       d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
     }
   });
+  // Conferir saldo: a diferença para mais é rendimento; para menos, ajuste.
+  finConferencias.forEach(c=>{
+    if(c.tipo === "Conferido" || !Number(c.diferenca) || !dentro(c.data)) return;
+    const rend = c.tipo === "Rendimento";
+    const conta = finConta(c.fin_conta_id);
+    itens.push({ chave: "cf" + c.id, data: String(c.data).slice(0,10), tipo: rend ? "entrada" : "saida", previsto: false,
+      valor: Math.abs(Number(c.diferenca)), contaId: c.fin_conta_id, conferencia: true,
+      titulo: rend ? `Rendimento · ${conta ? conta.nome : "conta"}` : `Ajuste de saldo · ${conta ? conta.nome : "conta"}`,
+      categoria: rend ? "Rendimentos" : "Ajustes de saldo",
+      sub: `app mostrou ${lcR(c.saldo_informado)}, CRM calculava ${lcR(c.saldo_calculado)}${c.observacao ? " · " + c.observacao : ""}`,
+      acao: `abrirConferencia(${c.id})` });
+  });
   finTransferencias.forEach(t=>{
     if(!dentro(t.data)) return;
     const a = finConta(t.de_conta_id), b = finConta(t.para_conta_id);
@@ -11361,8 +11400,12 @@ function lcItensDoMes(mes, ano){
 function lcSaldoConta(c){
   const hoje = hojeLocalISO();
   const inicio = String(c.data_saldo_inicial || hoje).slice(0,10);
-  if(inicio >= hoje) return Number(c.saldo_inicial || 0);
   let saldo = Number(c.saldo_inicial || 0);
+  // Conferência no próprio dia do saldo informado já veio depois dele.
+  finConferencias.forEach(f=>{
+    if(f.fin_conta_id === c.id && f.tipo !== "Conferido" && String(f.data).slice(0,10) === inicio) saldo += Number(f.diferenca || 0);
+  });
+  if(inicio >= hoje) return saldo;
   lcColetar(lcDiaSeguinte(inicio), hoje).forEach(i=>{
     if(i.previsto) return;
     if(i.tipo === "entrada" && i.contaId === c.id) saldo += i.valor;
@@ -11398,6 +11441,14 @@ function lcDeveria(de, ate){
     if(e.status !== "Recebido" || !dentro(e.data_recebimento) || jaNaGl(e.fin_conta_id)) return;
     r.glOutros += Number(e.parte_go_ladies != null ? e.parte_go_ladies : e.valor || 0);
   });
+  // Rendimento do Mercado Pago (dinheiro ainda não separado) é da Go Ladies.
+  // O das caixinhas já nasce no lugar certo.
+  r.glRendimentos = 0;
+  finConferencias.forEach(c=>{
+    const conta = finConta(c.fin_conta_id);
+    if(c.tipo === "Rendimento" && conta && conta.bolso === "Geral" && dentro(c.data)) r.glRendimentos += Number(c.diferenca || 0);
+  });
+  r.glOutros += r.glRendimentos;
   finTransferencias.forEach(t=>{
     if(!dentro(t.data)) return;
     const v = Number(t.valor || 0);
@@ -11488,7 +11539,7 @@ function renderLcResumo(mes, ano){
       <p>O CRM só mostra; quem transfere é você. Viagem: a Go Ladies fica com o que caiu menos o repasse da motorista (a taxa que a própria viagem calcula).</p></div></div>
     ${!finContas.length ? `<p class="lc-sub">Cadastre a conta e as caixinhas em <a href="#" onclick="lcAba('contas'); return false;">Contas e caixinhas</a>.</p>` : `
     <table class="tbl lc-tbl"><thead><tr><th>Caixinha</th><th style="text-align:right;">Deveria receber</th><th style="text-align:right;">Você passou</th><th style="text-align:right;">Situação</th></tr></thead><tbody>
-      ${linhaCx(gl ? gl.nome : "Caixinha Go Ladies", gl, d.gl, d.passouGl, `viagens ${lcR(d.glViagens)}${d.glOutros ? ` + outros serviços ${lcR(d.glOutros)}` : ""} · <a href="#" onclick="lcAbrirConta${gl ? `(${gl.id})` : "s()"}; return false;">ver extrato</a>`)}
+      ${linhaCx(gl ? gl.nome : "Caixinha Go Ladies", gl, d.gl, d.passouGl, `viagens ${lcR(d.glViagens)}${d.glOutros - d.glRendimentos ? ` + outros serviços ${lcR(d.glOutros - d.glRendimentos)}` : ""}${d.glRendimentos ? ` + rendimento do Mercado Pago ${lcR(d.glRendimentos)}` : ""} · <a href="#" onclick="lcAbrirConta${gl ? `(${gl.id})` : "s()"}; return false;">ver extrato</a>`)}
       ${linhaCx(ju ? ju.nome : "Caixinha Jú Motorista", ju, d.ju, d.passouJu, `repasse das viagens que você dirigiu · <a href="#" onclick="lcAbrirConta${ju ? `(${ju.id})` : "s()"}; return false;">ver extrato</a>`)}
     </tbody></table>
     ${d.aDefinir.length ? `<p style="margin:10px 0 0; font-size:13px;"><span class="lc-selo definir" style="margin:0;">a definir</span> ${d.aDefinir.length} recebimento(s) sem a parte da Go Ladies: ${d.aDefinir.map(p=>{ const { lead, venda } = labelVendaParcela(p); return `<a href="#" onclick="openParcelaModal(${p.id}); return false;">${escapeHtml((venda ? venda.servico_produto : "venda") + " · " + (lead ? lead.nome : ""))} (${lcR(p.valor)})</a>`; }).join(", ")}</p>` : ""}
@@ -11503,13 +11554,17 @@ function renderLcResumo(mes, ano){
   const recorrHoje = lcItensDoMes(hm.getMonth() + 1, hm.getFullYear()).filter(i=>i.chave.startsWith("rc") && i.data <= limite);
   const atencao = [...deAberto, ...recorrHoje].sort((a,b)=>a.data.localeCompare(b.data));
   const negativos = finContas.filter(c=>c.ativa !== false).map(c=>({ c, s: lcSaldoConta(c) })).filter(x=>x.s < -0.009);
-  if(atencao.length || negativos.length){
+  const semConferir = finContas.filter(c=>c.ativa !== false).map(c=>({ c, dias: diasDesde(lcUltimaConferencia(c)) })).filter(x=>x.dias > 30);
+  if(atencao.length || negativos.length || semConferir.length){
     html += `<div class="panel lc-carinho">
       <h3><svg class=ic aria-hidden=true><use href=#i-alarm /></svg> Olha isso com carinho</h3>
       <p class="lc-sub" style="margin:-6px 0 8px;">Nada aqui é cobrança, é só para nada passar batido.</p>
       ${negativos.map(x=>`<div class="lc-item" onclick="lcAbrirConta(${x.c.id})"><div class="lc-ico"><svg class=ic aria-hidden=true><use href=#i-building /></svg></div>
         <div class="lc-meio"><div class="lc-tit">Saldo negativo</div><div class="lc-sub">${escapeHtml(x.c.nome)} está com ${lcR(x.s)} aqui no CRM. Quase sempre falta registrar uma entrada ou o saldo inicial está desatualizado. Confira com o saldo do banco.</div></div>
-        <div class="lc-dir"><button type="button" class="lc-ja" onclick="event.stopPropagation(); abrirFinConta(${x.c.id})">ajustar saldo</button></div></div>`).join("")}
+        <div class="lc-dir"><button type="button" class="lc-ja" onclick="event.stopPropagation(); abrirConferencia(null, ${x.c.id})">conferir saldo</button></div></div>`).join("")}
+      ${semConferir.map(x=>`<div class="lc-item" onclick="abrirConferencia(null, ${x.c.id})"><div class="lc-ico"><svg class=ic aria-hidden=true><use href=#i-coins /></svg></div>
+        <div class="lc-meio"><div class="lc-tit">Conferir o saldo de ${escapeHtml(x.c.nome)}</div><div class="lc-sub">Faz ${x.dias} dias que o saldo não é conferido. O rendimento do mês entra quando você confere.</div></div>
+        <div class="lc-dir"><button type="button" class="lc-ja" onclick="event.stopPropagation(); abrirConferencia(null, ${x.c.id})">conferir saldo</button></div></div>`).join("")}
       ${atencao.map(i=>{ const venc = i.data < hoje ? `venceu em ${fmtDataBR(i.data)}` : i.data === hoje ? "vence hoje" : `vence em ${fmtDataBR(i.data)}`;
         return lcLinha({ ...i, sub: [venc, i.sub].filter(Boolean).join(" · "), previsto: false }); }).join("")}
     </div>`;
@@ -11565,12 +11620,12 @@ function renderLcContas(){
       ? `${escapeHtml(c.bolso)}${mae ? " · dentro de " + escapeHtml(mae.nome) : ""}`
       : filhas.length ? `fora das caixinhas · nas caixinhas: ${lcR(emCx)} · ao todo ${lcR(s + emCx)}` : "sem caixinhas aqui";
     return `<div class="lc-conta" onclick="lcAbrirConta(${c.id})" title="Ver os lançamentos desta ${c.tipo === "Caixinha" ? "caixinha" : "conta"}">
-      <a href="#" class="ed" onclick="event.stopPropagation(); abrirFinConta(${c.id}); return false;">editar</a>
+      <span class="ed"><a href="#" onclick="event.stopPropagation(); abrirConferencia(null, ${c.id}); return false;">conferir saldo</a> · <a href="#" onclick="event.stopPropagation(); abrirFinConta(${c.id}); return false;">editar</a></span>
       <div class="n"><svg class=ic aria-hidden=true><use href=#i-${c.tipo === "Caixinha" ? "coins" : "building"} /></svg> ${escapeHtml(c.nome)}</div>
       <div class="k">${c.tipo === "Caixinha" ? "Caixinha" : "Conta"}${c.recebe_viagens ? " · as clientes pagam aqui" : ""}</div>
       <div class="v ${s < -0.009 ? "lc-neg" : ""}">${lcR(s)}</div>
       <div class="s">${rodape}</div>
-      <div class="s" style="margin-top:4px;">saldo informado: ${lcR(c.saldo_inicial)} em ${fmtDataBR(String(c.data_saldo_inicial || "").slice(0,10))}</div>
+      <div class="s" style="margin-top:4px;">conferido em ${fmtDataBR(lcUltimaConferencia(c))}${lcRendimentoTotal(c) ? ` · rendeu ${lcR(lcRendimentoTotal(c))} desde ${fmtDataBR(String(c.data_saldo_inicial || "").slice(0,10))}` : ""}</div>
     </div>`;
   };
   const inativas = finContas.filter(c=>c.ativa === false);
@@ -11728,6 +11783,90 @@ async function excluirFinConta(){
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   closeModal("fin-conta-modal");
   await recarregarTabelas("fin_contas", "fin_transferencias", "fin_entradas", "contas_pagar", "venda_parcelas");
+}
+
+// ----- Conferir saldo (rendimento e ajuste) -----
+function lcUltimaConferencia(c){
+  const datas = finConferencias.filter(f=>f.fin_conta_id === c.id).map(f=>String(f.data).slice(0,10));
+  datas.push(String(c.data_saldo_inicial || hojeLocalISO()).slice(0,10));
+  return datas.sort().pop();
+}
+function lcRendimentoTotal(c){
+  return finConferencias.filter(f=>f.fin_conta_id === c.id && f.tipo === "Rendimento").reduce((s,f)=>s + Number(f.diferenca || 0), 0);
+}
+// Rendimentos que são da Go Ladies no mês: Caixinha Go Ladies e Mercado Pago
+// (dinheiro ainda não separado). Entram no lucro da Gestão, fora do faturamento.
+function rendimentosGoLadiesMes(mes, ano){
+  return finConferencias.filter(f=>{
+    const c = finConta(f.fin_conta_id);
+    return f.tipo === "Rendimento" && c && ["Go Ladies", "Geral"].includes(c.bolso) && dentroDoMes(f.data, mes, ano);
+  });
+}
+let conferindoContaId = null, editingConferenciaId = null;
+// abrirConferencia(id) mostra uma já feita (só dá para excluir); abrirConferencia(null, contaId) abre uma nova.
+function abrirConferencia(id, contaId){
+  if(lcPrecisaSql()) return;
+  const f = id ? finConferencias.find(x=>x.id === id) : null;
+  editingConferenciaId = f ? f.id : null;
+  conferindoContaId = f ? f.fin_conta_id : contaId;
+  const c = finConta(conferindoContaId);
+  if(!c) return;
+  document.getElementById("fin-conferir-modal-title").textContent = `Conferir saldo · ${c.nome}`;
+  document.getElementById("fcf-calculado").textContent = f ? lcR(f.saldo_calculado) : lcR(lcSaldoConta(c));
+  document.getElementById("fcf-saldo").value = f ? f.saldo_informado : "";
+  document.getElementById("fcf-data").value = f ? String(f.data).slice(0,10) : hojeLocalISO();
+  document.getElementById("fcf-obs").value = f ? (f.observacao || "") : "";
+  document.getElementById("fcf-ajuste").checked = !!(f && f.tipo === "Ajuste");
+  ["fcf-saldo", "fcf-data", "fcf-obs", "fcf-ajuste"].forEach(i=>{ document.getElementById(i).disabled = !!f; });
+  document.getElementById("btn-salvar-conferencia").style.display = f ? "none" : "";
+  document.getElementById("btn-excluir-conferencia").style.display = f ? "inline-block" : "none";
+  fcfAtualizar();
+  document.getElementById("fin-conferir-modal").classList.add("open");
+  if(!f) setTimeout(()=>document.getElementById("fcf-saldo").focus(), 50);
+}
+function fcfDiferenca(){
+  if(editingConferenciaId){ const f = finConferencias.find(x=>x.id === editingConferenciaId); return { inf: Number(f.saldo_informado), dif: Number(f.saldo_informado) - Number(f.saldo_calculado) }; }
+  const str = document.getElementById("fcf-saldo").value;
+  if(str === "") return null;
+  const inf = Number(str);
+  return { inf, dif: Math.round((inf - lcSaldoConta(finConta(conferindoContaId))) * 100) / 100 };
+}
+function fcfAtualizar(){
+  const box = document.getElementById("fcf-resultado"), wrap = document.getElementById("fcf-ajuste-wrap");
+  const r = fcfDiferenca();
+  wrap.style.display = r && r.dif < -0.009 ? "" : "none";
+  if(!r){ box.innerHTML = ""; return; }
+  const c = finConta(conferindoContaId);
+  const dono = c && c.bolso === "Jú Motorista" ? "é seu, como motorista" : "é da Go Ladies";
+  box.innerHTML = Math.abs(r.dif) < 0.01 ? `<span class="lc-pos">Bateu certinho.</span> Fica guardado que você conferiu nesse dia.`
+    : r.dif > 0 ? `<span class="lc-pos">Rendeu ${lcR(r.dif)}.</span> Vira um lançamento de rendimento nesta conta; esse dinheiro ${dono}.`
+    : `<span class="lc-neg">Faltam ${lcR(-r.dif)}.</span> Quase sempre é uma saída que não foi lançada (procure em Lançamentos). Se não achar, marque abaixo para registrar como ajuste.`;
+}
+async function salvarConferencia(){
+  const r = fcfDiferenca();
+  if(!r){ alert("Digite o saldo que o app mostra"); return; }
+  const c = finConta(conferindoContaId);
+  const calculado = lcSaldoConta(c);
+  const ajuste = document.getElementById("fcf-ajuste").checked;
+  const tipo = Math.abs(r.dif) < 0.01 ? "Conferido" : r.dif > 0 ? "Rendimento" : (ajuste ? "Ajuste" : "Conferido");
+  const payload = {
+    fin_conta_id: c.id, data: document.getElementById("fcf-data").value || hojeLocalISO(),
+    saldo_informado: r.inf, saldo_calculado: Math.round(calculado * 100) / 100,
+    diferenca: tipo === "Conferido" ? 0 : r.dif, tipo,
+    observacao: document.getElementById("fcf-obs").value.trim() || null,
+  };
+  const { error } = await sb.from("fin_conferencias").insert(payload);
+  if(error){ alert(/relation|does not exist|schema cache/i.test(error.message || "") ? "Falta rodar o schema_conferir_saldo.sql no Supabase." : "Erro ao salvar: " + error.message); return; }
+  showToast(tipo === "Rendimento" ? `Rendimento de ${lcR(r.dif)} lançado.` : tipo === "Ajuste" ? "Ajuste lançado." : "Conferência guardada.");
+  closeModal("fin-conferir-modal");
+  await recarregarTabelas("fin_conferencias");
+}
+async function excluirConferencia(){
+  if(!editingConferenciaId || !confirm("Excluir esta conferência? O rendimento ou ajuste dela sai do saldo.")) return;
+  const { error } = await sb.from("fin_conferencias").delete().eq("id", editingConferenciaId);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  closeModal("fin-conferir-modal");
+  await recarregarTabelas("fin_conferencias");
 }
 
 let editingTransfId = null;
@@ -11894,9 +12033,11 @@ function gestaoMes(mes, ano){
   // Mercado Pago, do repasse e dos gastos variáveis, para pagar os fixos.
   const contribuicao = receita - t.taxaMp - t.repassado - variaveis;
   const margemPct = receita > 0 ? contribuicao / receita : null;
-  const lucro = contribuicao - fixos - investimentos;
+  // Rendimento do Mercado Pago e da Caixinha Go Ladies: soma no lucro, fora da receita.
+  const rendimentos = rendimentosGoLadiesMes(mes, ano).reduce((s,f)=>s + Number(f.diferenca || 0), 0);
+  const lucro = contribuicao - fixos - investimentos + rendimentos;
   const meta = metasFinanceiras.find(m=>m.mes === mes && m.ano === ano) || null;
-  return { mes, ano, t, vendasMes, despesas, fixos, variaveis, investimentos, fixosPrevistos, receita, contribuicao, margemPct, lucro, meta, repasseJuliana };
+  return { mes, ano, t, vendasMes, despesas, fixos, variaveis, investimentos, fixosPrevistos, receita, contribuicao, margemPct, lucro, meta, repasseJuliana, rendimentos };
 }
 // Pagamentos de cliente do mês, um a um, com o repasse da mesma viagem (mesma
 // regra do financeiroTransporteMes) e se foi ela quem dirigiu.
@@ -12253,6 +12394,7 @@ function renderDetalheGestao(ctx){
         ...baseConta,
         ...listaDespesas("Fixo"),
         ...listaDespesas("Investimento"),
+        ...rendimentosGoLadiesMes(mes, ano).map(f=>{ const c = finConta(f.fin_conta_id); return { s: "+", t: `Rendimento · ${escapeHtml(c ? c.nome : "conta")}`, d: `conferido em ${fmtDataBR(String(f.data).slice(0,10))} · fora da receita`, v: Number(f.diferenca || 0) }; }),
         { s: "=", t: "Lucro da Go Ladies", v: g.lucro, cor: corV(g.lucro) },
       ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa despesa para corrigir o tipo. Compra que não se repete é Investimento; gasto que muda com o número de viagens é Variável.</p>`;
     }
