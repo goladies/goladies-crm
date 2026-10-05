@@ -900,6 +900,7 @@ tr.tr-click{cursor:pointer;}
           <button class="btn secondary small" type="button" onclick="irParaFinanceiro('resumo')">Ver financeiro completo</button>
         </div>
         <div class="cards" id="dash-cards-transporte"></div>
+        <div id="dash-transporte-detalhe" style="display:none; margin-top:14px;"></div>
       </div>
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-user /></svg> Novas usuárias do app</h3>
@@ -980,6 +981,7 @@ tr.tr-click{cursor:pointer;}
         <select id="filter-categoria" onchange="renderLeads()"><option value="">Todas as categorias</option></select>
         <select id="filter-pessoa-leads" onchange="renderLeads()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
         <input type="text" id="filter-busca" placeholder="Buscar por nome..." oninput="renderLeads()">
+        <span id="filter-servico-chip" class="tag novo" style="display:none; align-self:center;"></span>
       </div>
       <div class="panel">
         <table class="tbl">
@@ -3736,7 +3738,7 @@ function renderDashboard(){
   }).join("");
   const recentes = [...leads].sort((a,b)=> (b.data||"").localeCompare(a.data||"")).slice(0,6);
   document.getElementById("dash-leads-recentes").innerHTML = recentes.map(l=>`
-    <tr><td>${escapeHtml(l.nome)}</td><td>${escapeHtml(l.categoria||"-")}</td><td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td></tr>
+    <tr class="tr-click" onclick="openLeadModal(${l.id})"><td>${escapeHtml(l.nome)}</td><td>${escapeHtml(l.categoria||"-")}</td><td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td></tr>
   `).join("") || `<tr><td class="empty" colspan="3">Sem leads ainda</td></tr>`;
 
   const counts = {};
@@ -3747,7 +3749,10 @@ function renderDashboard(){
   window._chart = new Chart(ctx, {
     type:"bar",
     data:{ labels: sorted.map(s=>s[0]), datasets:[{ label:"Vezes solicitado", data: sorted.map(s=>s[1]), backgroundColor:corCss("--rosa") || "#FF2D9C", borderRadius:6 }] },
-    options:{ responsive:true, maintainAspectRatio:false, indexAxis:"y", plugins:{legend:{display:false}}, scales:{x:{ticks:{stepSize:1}}} }
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:"y", plugins:{legend:{display:false}}, scales:{x:{ticks:{stepSize:1}}},
+      // Clicar numa barra abre os leads que pediram aquele serviço
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+      onClick: (e, els) => { if(els.length) irParaLeadsServico(sorted[els[0].index][0]); } }
   });
   renderAniversariosDashboard();
   renderEventosDashboard();
@@ -3815,6 +3820,9 @@ const CLARITY_CAMPOS = [
   ["ErrorClickCount.sessionsWithMetricPercentage", "Sessões com clique que deu erro", "%"],
   ["Traffic.totalBotSessionCount", "Sessões de robôs (fora da conta)", "n"],
 ];
+const URL_GA4 = "https://analytics.google.com/";
+const URL_META_EVENTOS = "https://business.facebook.com/events_manager2/list/pixel/1547418116918632";
+const URL_CLARITY = "https://clarity.microsoft.com/projects/view/xjd308la6r/dashboard";
 const acessosCache = {};
 let acessosDias = 30;
 // Junta as várias formas que a mesma origem aparece no GA4
@@ -3886,7 +3894,9 @@ function renderAcessosSite(d){
     if(pct === 0) return `<div class="delta">igual ao período anterior</div>`;
     return `<div class="delta ${pct > 0 ? "sobe" : "desce"}">${pct > 0 ? "▲" : "▼"} ${Math.abs(pct)}% (antes: ${(fmt || n)(anterior)})</div>`;
   };
-  const card = (num, label, atual, anterior, fmt)=>`<div class="card"><div class="num">${num}</div><div class="label">${label}</div>${delta(atual, anterior, fmt)}</div>`;
+  // O detalhe de cada número mora na ferramenta de origem: clicar abre ela
+  const abre = url=>`window.open('${url}', '_blank', 'noopener')`;
+  const card = (num, label, atual, anterior, fmt)=>`<div class="card card-link" title="Abrir no Google Analytics" onclick="${abre(URL_GA4)}"><div class="num">${num}</div><div class="label">${label}</div>${delta(atual, anterior, fmt)}</div>`;
 
   const sess = v("ga4.sessoes"), sessAnt = Number(ant("ga4.sessoes") || 0);
   const tempo = v("ga4.tempo_engajado"), tempoAnt = Number(ant("ga4.tempo_engajado") || 0);
@@ -3907,11 +3917,11 @@ function renderAcessosSite(d){
     <div style="position:relative; height:220px;"><canvas id="chart-acessos-site"></canvas></div>
   ` : `<p class="empty">O Google Analytics ainda não foi lido.</p>`;
 
-  const tabela = (titulo, cab, linhas, vazio)=>`
+  const tabela = (titulo, cab, linhas, vazio, url = URL_GA4, ferramenta = "Google Analytics")=>`
     <div>
       <h4>${titulo}</h4>
       <table class="tbl"><thead><tr><th>${cab}</th><th>Período</th></tr></thead><tbody>
-        ${linhas.map(l=>`<tr><td>${escapeHtml(l.nome)}</td><td><b>${n(l.atual)}</b>${l.anterior != null ? ` <small style="color:var(--muted);">(antes ${n(l.anterior)})</small>` : ""}</td></tr>`).join("")
+        ${linhas.map(l=>`<tr class="tr-click" title="Abrir no ${ferramenta}" onclick="${abre(url)}"><td>${escapeHtml(l.nome)}</td><td><b>${n(l.atual)}</b>${l.anterior != null ? ` <small style="color:var(--muted);">(antes ${n(l.anterior)})</small>` : ""}</td></tr>`).join("")
           || `<tr><td class="empty" colspan="2">${vazio}</td></tr>`}
       </tbody></table>
     </div>`;
@@ -3936,7 +3946,7 @@ function renderAcessosSite(d){
       top(lista("ga4", "evento").filter(l=>!EVENTOS_GA4_OCULTOS.includes(l.chave)), 12, nomeEventoSite), "Nenhuma ação registrada"));
   }
   if(leitura.meta){
-    blocos.push(tabela("Meta Pixel (Facebook e Instagram)", "Evento", top(lista("meta", "evento"), 12, nomeEventoSite), "Nenhum evento no período"));
+    blocos.push(tabela("Meta Pixel (Facebook e Instagram)", "Evento", top(lista("meta", "evento"), 12, nomeEventoSite), "Nenhum evento no período", URL_META_EVENTOS, "Meta Events Manager"));
   }
   if(leitura.clarity){
     const cl = d.clarity_ultimo || {};
@@ -3944,9 +3954,10 @@ function renderAcessosSite(d){
       : f === "s" ? formatarDuracao(val)
       : f === "d" ? Number(val).toLocaleString("pt-BR", {maximumFractionDigits:1})
       : n(val);
-    let linhasCl = CLARITY_CAMPOS.filter(([k])=>cl[k] != null).map(([k, nome, f])=>`<tr><td>${nome}</td><td><b>${fmt(cl[k], f)}</b></td></tr>`);
+    const trCl = `<tr class="tr-click" title="Abrir na Clarity" onclick="${abre(URL_CLARITY)}">`;
+    let linhasCl = CLARITY_CAMPOS.filter(([k])=>cl[k] != null).map(([k, nome, f])=>`${trCl}<td>${nome}</td><td><b>${fmt(cl[k], f)}</b></td></tr>`);
     // Se a Clarity mudar os nomes, mostra o que veio pra não ficar em branco
-    if(!linhasCl.length) linhasCl = Object.entries(cl).map(([k, val])=>`<tr><td>${escapeHtml(k)}</td><td><b>${fmt(val, "d")}</b></td></tr>`);
+    if(!linhasCl.length) linhasCl = Object.entries(cl).map(([k, val])=>`${trCl}<td>${escapeHtml(k)}</td><td><b>${fmt(val, "d")}</b></td></tr>`);
     blocos.push(`
       <div>
         <h4>Clarity: como navegaram (${dataBR(d.clarity_dia)})</h4>
@@ -3983,7 +3994,9 @@ function renderAcessosSite(d){
           { label: "Sessões", data: serie("sessoes"), borderColor: corCss("--c-blue") || "#3B82F6", backgroundColor: corCss("--c-blue") || "#3B82F6", tension: .3, pointRadius: dias.length > 31 ? 0 : 2 },
         ],
       },
-      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        onClick: (e, els) => { if(els.length) window.open(URL_GA4, "_blank", "noopener"); } },
     });
   }
 }
@@ -4286,11 +4299,15 @@ async function salvarConfigCustosIa(){
 function renderUsoSupabase(d){
   const wrap = document.getElementById("dash-uso-supabase");
   if(!wrap || !d) return;
+  // Cada barra abre a tela do Supabase onde aquele uso aparece
+  const SB = "https://supabase.com/dashboard/project/ilhuhbcklvcdrggovmth";
+  const abre = url=>`window.open('${url}', '_blank', 'noopener')`;
+  const destinos = { "Banco de dados": SB + "/database/tables", "Arquivos (fotos e documentos)": SB + "/storage/buckets", "Usuárias ativas no mês": SB + "/auth/users" };
   const item = (titulo, usado, limite, textoUsado, textoLimite, obs)=>{
     const pct = limite ? usado / limite * 100 : 0;
     const cor = pct >= 85 ? "var(--c-red)" : pct >= 60 ? "var(--c-amber)" : "var(--c-green)";
     const pctTxt = pct < 1 ? pct.toLocaleString("pt-BR", {maximumFractionDigits:1}) : Math.round(pct);
-    return `<div class="uso-item">
+    return `<div class="uso-item" style="cursor:pointer;" title="Abrir no Supabase" onclick="${abre(destinos[titulo] || SB + "/usage")}">
       <div class="uso-topo"><span>${titulo}</span><span><b style="color:${cor};">${pctTxt}%</b></span></div>
       <div class="uso-trilho"><span style="width:${Math.min(100, pct)}%; background:${cor};"></span></div>
       <small>${textoUsado} de ${textoLimite}${obs ? " · " + obs : ""}</small>
@@ -4298,7 +4315,7 @@ function renderUsoSupabase(d){
   };
   const L = LIMITES_SUPABASE_FREE;
   const tabelas = (d.tabelas || []).map(t=>`
-    <tr><td>${escapeHtml(t.tabela)}</td><td>${formatarBytes(t.bytes)}</td><td>${Number(t.linhas || 0).toLocaleString("pt-BR")}</td></tr>
+    <tr class="tr-click" title="Abrir a tabela no Supabase" onclick="${abre(SB + "/editor")}"><td>${escapeHtml(t.tabela)}</td><td>${formatarBytes(t.bytes)}</td><td>${Number(t.linhas || 0).toLocaleString("pt-BR")}</td></tr>
   `).join("");
   wrap.innerHTML = `
     <div class="uso-lista">
@@ -4351,14 +4368,59 @@ function renderTransporteDashboard(){
   const periodo = document.getElementById("dash-transporte-periodo");
   if(periodo) periodo.textContent = `${nomeMes(mes)} de ${ano} · viagens pagas no mês, com o repasse das mesmas viagens`;
   const corLucro = f.lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
-  wrap.innerHTML = `
-    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.recebido)}</div><div class="label">Recebido das clientes (bruto)</div></div>
-    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.repassado)}</div><div class="label">Repasse às motoristas</div></div>
-    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num" style="color:${corLucro};">${formatarMoedaBR(f.lucro)}</div><div class="label">Lucro real Go Ladies</div></div>
-    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.taxaMp)}</div><div class="label">Taxa Mercado Pago</div></div>
-    <div class="card card-link" title="Ver o financeiro do transporte" onclick="irParaTransporte('financeiro-transporte')"><div class="num">${formatarMoedaBR(f.descontos)}</div><div class="label">Descontos concedidos</div></div>
-    <div class="card card-link" title="Ver as viagens" onclick="irParaTransporte('viagens')"><div class="num">${f.concluidas}</div><div class="label">Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}</div></div>
-  `;
+  // Cada card abre, logo abaixo, a lista do mês que forma o número
+  const cardT = (chave, num, label, cor) => `<div class="card card-link${dashTransporteDetalhe === chave ? " card-ativo" : ""}" title="Ver viagem por viagem" onclick="abrirDetalheDashTransporte('${chave}')"><div class="num"${cor ? ` style="color:${cor};"` : ""}>${num}</div><div class="label">${label}</div></div>`;
+  wrap.innerHTML = [
+    cardT("recebido", formatarMoedaBR(f.recebido), "Recebido das clientes (bruto)"),
+    cardT("repasse", formatarMoedaBR(f.repassado), "Repasse às motoristas"),
+    cardT("lucro", formatarMoedaBR(f.lucro), "Lucro real Go Ladies", corLucro),
+    cardT("taxa", formatarMoedaBR(f.taxaMp), "Taxa Mercado Pago"),
+    cardT("descontos", formatarMoedaBR(f.descontos), "Descontos concedidos"),
+    cardT("concluidas", f.concluidas, `Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}`),
+  ].join("");
+  renderDetalheDashTransporte(mes, ano, f);
+}
+let dashTransporteDetalhe = null;
+function abrirDetalheDashTransporte(chave){
+  dashTransporteDetalhe = dashTransporteDetalhe === chave ? null : chave;
+  renderTransporteDashboard();
+  if(dashTransporteDetalhe) document.getElementById("dash-transporte-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function renderDetalheDashTransporte(mes, ano, f){
+  const el = document.getElementById("dash-transporte-detalhe");
+  if(!el) return;
+  const chave = dashTransporteDetalhe;
+  if(!chave){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const R = formatarMoedaBR;
+  const titulos = { recebido: "Recebido das clientes", repasse: "Repasse às motoristas", lucro: "Lucro real Go Ladies", taxa: "Taxa Mercado Pago", descontos: "Descontos concedidos", concluidas: "Viagens concluídas" };
+  let tabela;
+  if(chave === "concluidas"){
+    const lista = viagens.filter(v=>v.status === "Concluída" && dentroDoMes(v.concluida_em || v.data, mes, ano))
+      .sort((a,b)=>String(a.concluida_em || a.data).localeCompare(String(b.concluida_em || b.data)));
+    tabela = `<table class="tbl"><thead><tr><th>Concluída em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Preço</th><th>Pagamento</th></tr></thead><tbody>
+      ${lista.map(v=>{ const pago = pagamentosCliente.some(p=>p.viagem_id === v.id && p.status === "Pago");
+        return `<tr class="tr-click" onclick="abrirViagemDoPagamento(${v.id})"><td>${fmtDataBR(String(v.concluida_em || v.data || "").slice(0,10)) || "-"}</td><td>#${v.id}</td><td>${escapeHtml(ftNomeCliente(v))}</td>
+        <td>${escapeHtml(nomesMotoristasViagem(v) || "-")}</td><td>${R(v.preco_cotado)}</td><td><span class="tag ${pago ? "ativo" : "urg-media"}">${pago ? "Pago" : "Sem pagamento"}</span></td></tr>`; }).join("")
+        || `<tr><td class="empty" colspan="6">Nenhuma viagem concluída em ${nomeMes(mes)}</td></tr>`}</tbody></table>`;
+  } else {
+    let pagos = pagamentosTransporteMes(mes, ano);
+    if(chave === "descontos") pagos = pagos.filter(x=>x.v && Number(x.v.desconto_valor || 0) > 0);
+    const destaque = col => (chave === col || (chave === "lucro" && col === "sobra")) ? ' style="font-weight:700; color:var(--rosa-texto);"' : "";
+    tabela = `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Recebido</th><th>Desconto</th><th>Taxa</th><th>Repasse</th><th>Sobrou</th></tr></thead><tbody>
+      ${pagos.map(x=>{ const sobra = x.recebido - x.taxa - x.repasse;
+        return `<tr${x.v ? ` class="tr-click" onclick="abrirViagemDoPagamento(${x.v.id})"` : ""}><td>${fmtDataBR(String(x.p.data_pagamento || "").slice(0,10))}</td><td>${x.v ? "#" + x.v.id : "-"}</td>
+        <td>${x.v ? escapeHtml(ftNomeCliente(x.v)) : "-"}</td><td>${x.v ? escapeHtml(nomesMotoristasViagem(x.v) || "-") : "-"}</td>
+        <td${destaque("recebido")}>${R(x.recebido)}</td><td${destaque("descontos")}>${x.v && Number(x.v.desconto_valor || 0) ? R(x.v.desconto_valor) : "-"}</td>
+        <td${destaque("taxa")}>${R(x.taxa)}</td><td${destaque("repasse")}>${R(x.repasse)}</td>
+        <td${destaque("sobra")}><span style="color:${sobra >= 0 ? "var(--c-green)" : "var(--c-red)"};">${R(sobra)}</span></td></tr>`; }).join("")
+        || `<tr><td class="empty" colspan="9">Nada nesse grupo em ${nomeMes(mes)}</td></tr>`}</tbody></table>`;
+  }
+  el.style.display = "";
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">Viagem por viagem · ${titulos[chave]} em ${nomeMes(mes)}</h3>
+      <button class="icon-btn" type="button" onclick="abrirDetalheDashTransporte(dashTransporteDetalhe)" aria-label="Fechar">✕</button>
+    </div>${tabela}
+    <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa linha para abrir a viagem. ${chave === "concluidas" ? "" : "Entra pela data em que a cliente pagou."}</p>`;
 }
 // Cadastro pelo app: a cliente nasce em clientes_transporte com login_criado_em
 // preenchido (função cliente_id_atual); a motorista já existe no funil e ganha
@@ -4400,11 +4462,20 @@ function irParaAba(tab){
   if(nav) nav.click();
 }
 function irParaLeads(etapa){
+  filtroServicoLeads = "";
   irParaAba("leads");
   const fe = document.getElementById("filter-etapa");
   fe.value = etapa;
   document.getElementById("filter-categoria").value = "";
   document.getElementById("filter-busca").value = "";
+  renderLeads();
+}
+// Filtro por serviço só existe vindo do gráfico do Dashboard; aparece como
+// etiqueta com ✕ ao lado dos filtros de Leads.
+let filtroServicoLeads = "";
+function irParaLeadsServico(servico){
+  irParaLeads("");
+  filtroServicoLeads = servico;
   renderLeads();
 }
 function irParaTransporte(subtab){
@@ -4431,10 +4502,10 @@ function renderAniversariosDashboard(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth()+2, 0);
   const candidatos = [
-    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), aniversario:l.aniversario})),
-    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), aniversario:p.aniversario})),
-    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":""), aniversario:c.aniversario})),
-    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", aniversario:m.aniversario})),
+    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
+    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
+    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":""), aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
+    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
   ];
   const proximos = candidatos
     .filter(c=>c.aniversario)
@@ -4442,7 +4513,7 @@ function renderAniversariosDashboard(){
     .filter(c=>c.proxima && c.proxima >= hoje && c.proxima <= fimProximoMes)
     .sort((a,b)=>a.proxima-b.proxima);
   el.innerHTML = proximos.map(c=>`
-    <tr><td>${escapeHtml(c.nome)}</td><td>${escapeHtml(c.tipo)}</td><td>${c.proxima.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</td></tr>
+    <tr class="tr-click" onclick="${c.abrir}"><td>${escapeHtml(c.nome)}</td><td>${escapeHtml(c.tipo)}</td><td>${c.proxima.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</td></tr>
   `).join("") || `<tr><td class="empty" colspan="3">Nenhum aniversário nessa janela</td></tr>`;
 }
 
@@ -4456,7 +4527,11 @@ function renderLeads(){
     {label:"Urgência", campo:"urgencia"}, {label:"Etapa", campo:"etapa"}, {label:"Origem", campo:"origem"},
     {label:"Entrada", campo:"data"}, {label:"", campo:null}
   ], "leads");
+  const chip = document.getElementById("filter-servico-chip");
+  chip.style.display = filtroServicoLeads ? "" : "none";
+  chip.innerHTML = filtroServicoLeads ? `Serviço: ${escapeHtml(filtroServicoLeads)} <button type="button" class="icon-btn" style="font-size:11px;" aria-label="Tirar filtro" onclick="filtroServicoLeads=''; renderLeads();">✕</button>` : "";
   const filtered = aplicarOrdenacao("leads", leads.filter(l=>
+    (!filtroServicoLeads || l.servico===filtroServicoLeads) &&
     (!etapaF || l.etapa===etapaF) && (!catF || l.categoria===catF) &&
     (!buscaF || l.nome.toLowerCase().includes(buscaF)) && filtroPessoaOk("filter-pessoa-leads", l)
   ));
