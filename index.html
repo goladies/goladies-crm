@@ -2470,6 +2470,8 @@ tr.tr-click{cursor:pointer;}
         <div class="sugerido"><label>Valor líquido <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O que caiu na conta; Pix Mercado Pago preenche sozinho.</span></div>
         <div class="automatico"><label>Taxa Mercado Pago <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-lid-taxa-mp" readonly tabindex="-1"><span class="dica">Calculada: recebido − líquido.</span></div>
         <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
+        <div><label>Devolvido à cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-devolvido" step="0.01" min="0"></div><span class="dica">Viagem paga e depois cancelada: pago menos a multa.</span></div>
+        <div><label>Data da devolução</label><input type="date" id="vg-lid-data-devolucao"></div>
         <div class="full"><label>Notas</label><textarea id="vg-lid-notas" rows="2"></textarea></div>
       </div>
     </section>
@@ -2514,15 +2516,13 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="full"><label class="vg-check"><input type="checkbox" id="vg-grupo-whats"> Grupo de WhatsApp criado</label></div>
         <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
-        <!-- Cancelamento pela cliente (Termo v2, cl. 9.6): 50% com menos de 2 h,
-             100% no no-show; repassado à motorista com os mesmos 25%. -->
-        <div class="full"><label>Cancelamento cobrado da cliente <span style="font-weight:400; color:var(--muted);">(só se cancelou depois de aceita)</span></label>
-          <select id="vg-cancelamento" onchange="atualizarCancelamento()">
-            <option value="">Nenhum</option>
-            <option value="2h">Cancelou com menos de 2 h: 50%</option>
-            <option value="noshow">Não compareceu (15 min sem contato): 100%</option>
-          </select>
-        </div>
+        <!-- Cancelamento (05/10/2026): sem porcentagem fixa. A multa é
+             combinada com a cliente caso a caso, e o repasse da motorista
+             sobre ela também. O select antigo fica escondido só para não
+             apagar o que já foi gravado em viagens antigas. -->
+        <select id="vg-cancelamento" style="display:none;" aria-hidden="true"><option value="">Nenhum</option><option value="2h">2h</option><option value="noshow">noshow</option></select>
+        <div><label>Multa combinada com a cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-multa" step="0.01" min="0" oninput="atualizarCancelamento()"></div><span class="dica">Só em viagem cancelada. Vazio = sem multa.</span></div>
+        <div><label>Repasse da motorista na multa</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-repasse-multa" step="0.01" min="0" oninput="atualizarCancelamento()"></div><span class="dica">Você decide. Vazio = a motorista não recebe.</span></div>
         <div class="full" id="vg-cancelamento-info" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg);"></div>
       </div>
     </details>
@@ -4535,14 +4535,14 @@ function dentroDoMes(dataStr, mes, ano){
 function financeiroTransporteMes(mes, ano){
   const pagos = pagamentosCliente.filter(p=>p.status === "Pago" && dentroDoMes(p.data_pagamento, mes, ano));
   const viagensPagas = pagos.map(p=>viagens.find(v=>v.id === p.viagem_id)).filter(Boolean);
-  const recebido = pagos.reduce((s,p)=>s + Number(p.valor_recebido || 0), 0);
+  const recebido = pagos.reduce((s,p)=>s + Number(p.valor_recebido || 0) - devolvidoDe(p), 0);
   const taxaMp = pagos.reduce((s,p)=>s + Number(p.taxa_mp || 0), 0);
   const repassado = pagos.reduce((s,p)=>{
     const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
     const viagem = viagens.find(v=>v.id === p.viagem_id);
     // Ainda não registrado o repasse: usa o previsto da viagem, pra não
     // inflar o lucro com um custo que já existe e só não foi lançado.
-    return s + Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (viagem ? viagem.preco_motorista : 0)) || 0);
+    return s + repasseDaViagem(viagem, pg);
   }, 0);
   const descontos = viagensPagas.reduce((s,v)=>s + Number(v.desconto_valor || 0), 0);
   const concluidas = viagens.filter(v=>v.status === "Concluída" && dentroDoMes(v.concluida_em || v.data, mes, ano)).length;
@@ -5169,7 +5169,7 @@ function renderDetalheFt(pagos, tot){
   const linhas = [...pagos].sort((a,b)=>String(a.data_pagamento).localeCompare(String(b.data_pagamento))).map(p=>{
     const v = viagens.find(x=>x.id === p.viagem_id);
     const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
-    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    const repasse = repasseDaViagem(v, pg);
     const bruto = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0), sobra = bruto - taxa - repasse;
     const quem = v ? (nomesMotoristasViagem(v) || "sem motorista") : "-";
     return `<tr${v ? ` class="tr-click" onclick="openViagemModal(${v.id})"` : ""}>
@@ -5232,7 +5232,7 @@ function renderFinanceiroTransporte(){
   const repassado = pagos.reduce((s,p) => {
     const pg = pagamentosMotorista.find(m => m.viagem_id === p.viagem_id);
     const v = viagens.find(x => x.id === p.viagem_id);
-    return s + Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    return s + repasseDaViagem(v, pg);
   }, 0);
   const lucro = recebido - taxaMp - repassado;
   const margem = recebido ? (lucro / recebido) * 100 : 0;
@@ -8500,44 +8500,38 @@ function atualizarDesconto(){
   motivo.style.borderColor = (desconto && !motivo.value) ? "var(--c-red)" : "";
   recalcularComissaoCotacao();
 }
-// Cancelamento pela cliente (Termo v2, cl. 9.6). Não muda o preço cotado nem
-// o status: só mostra quanto cobrar, quanto devolver do Pix e quanto repassar,
-// e pré-preenche o "Valor repassado" se ela ainda não mexeu nele.
+// Cancelamento (05/10/2026): multa e repasse sobre ela combinados caso a
+// caso, em reais. Só mostra a conta; quem decide os valores é ela. Se a
+// cliente já pagou, sugere a devolução (pago − multa) quando o campo está vazio.
 function atualizarCancelamento(){
-  const sel = document.getElementById("vg-cancelamento");
   const box = document.getElementById("vg-cancelamento-info");
-  if(!sel || !box) return;
-  const regra = TAXA_CANCELAMENTO[sel.value];
-  const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
-  const campoPgValor = document.getElementById("vg-pg-valor");
-  if(!regra || !cotado){
-    box.style.display = "none"; box.innerHTML = "";
-    // Voltou pra "Nenhum": se o repassado ainda era o automático, volta pro repasse cheio
-    const repasseStr = document.getElementById("vg-preco-motorista").value;
-    if(repasseStr !== "" && campoPgValor.value !== "" && campoPgValor.value === campoPgValor.dataset.autoValor && campoPgValor.value !== repasseStr){
-      campoPgValor.value = repasseStr;
-      campoPgValor.dataset.autoValor = repasseStr;
-      recalcularComissaoPagamento();
-    }
-    return;
-  }
-  const taxa = cotado * regra.pct;
-  const repasse = taxa * PERCENTUAL_REPASSE_MOTORISTA;
-  const devolver = cotado - taxa;
+  if(!box) return;
+  const multaStr = document.getElementById("vg-multa").value;
+  const repStr = document.getElementById("vg-repasse-multa").value;
+  if(multaStr === "" && repStr === ""){ box.style.display = "none"; box.innerHTML = ""; return; }
+  const multa = Number(multaStr) || 0, rep = Number(repStr) || 0;
   const fmt = v => formatarMoedaBR(v);
-  const pgc = pagamentosCliente.find(p=>p.viagem_id===editingViagemId);
-  const jaPagou = pgc && pgc.status === "Pago";
-  box.innerHTML = `<b>${escapeHtml(regra.rotulo)}</b>: cobrar <b>${fmt(taxa)}</b> da cliente`
-    + (devolver > 0 ? (jaPagou ? ` (devolver <b>${fmt(devolver)}</b> do Pix)` : ` (se já pagou, devolver ${fmt(devolver)})`) : "")
-    + ` · repassar <b>${fmt(repasse)}</b> pra motorista (75%) · Go Ladies fica com ${fmt(taxa - repasse)}.`
-    + `<br><span style="color:var(--muted);">Lembre de mudar o status pra "Cancelada" e registrar o recebido/repassado embaixo. Fora do prazo de 2 h não se cobra nada.</span>`;
-  box.style.display = "";
-  if(campoPgValor.value === "" || campoPgValor.value === campoPgValor.dataset.autoValor){
-    campoPgValor.value = repasse.toFixed(2);
-    campoPgValor.dataset.autoValor = repasse.toFixed(2);
-    recalcularComissaoPagamento();
+  const pago = document.getElementById("vg-lid-status").value === "Pago" ? Number(document.getElementById("vg-lid-valor").value) || 0 : 0;
+  const devolver = Math.max(0, pago - multa);
+  const campoDev = document.getElementById("vg-lid-devolvido");
+  if(pago > 0 && (campoDev.value === "" || campoDev.value === campoDev.dataset.autoValor)){
+    campoDev.value = devolver.toFixed(2);
+    campoDev.dataset.autoValor = devolver.toFixed(2);
   }
+  box.innerHTML = `Multa <b>${fmt(multa)}</b> · motorista recebe <b>${fmt(rep)}</b> · Go Ladies fica com <b>${fmt(multa - rep)}</b>`
+    + (pago > 0 ? ` · a cliente pagou ${fmt(pago)}, devolver <b>${fmt(devolver)}</b> (campo "Devolvido à cliente")` : multa > 0 ? " · a cliente ainda não pagou: cobre só a multa" : "")
+    + `<br><span style="color:var(--muted);">Lembre de mudar o status para "Cancelada". O "Valor repassado" da motorista passa a ser o repasse da multa ao salvar.</span>`;
+  box.style.display = "";
 }
+// Repasse que conta para uma viagem: o lançado; senão, cancelada usa só o
+// repasse da multa, e as outras o previsto da viagem.
+function repasseDaViagem(v, pg){
+  if(pg && pg.valor_repassado != null) return Number(pg.valor_repassado) || 0;
+  if(!v) return 0;
+  if(v.status === "Cancelada") return Number(v.repasse_multa || 0);
+  return Number(v.preco_motorista || 0);
+}
+function devolvidoDe(p){ return Number((p && p.valor_devolvido) || 0); }
 function recalcularComissaoCotacao(){
   const cotadoStr = document.getElementById("vg-preco-cotado").value;
   const repasseStr = document.getElementById("vg-preco-motorista").value;
@@ -9074,6 +9068,8 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
+  document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
+  document.getElementById("vg-repasse-multa").value = v.repasse_multa ?? "";
   document.getElementById("vg-preco-tabela").value = v.preco_tabela ?? "";
   const motivoSalvo = v.desconto_motivo || "";
   const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
@@ -9150,6 +9146,9 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-lid-status").value = pgc.status || "Pendente";
   document.getElementById("vg-lid-data").value = pgc.data_pagamento || "";
   document.getElementById("vg-lid-notas").value = pgc.notas || "";
+  document.getElementById("vg-lid-devolvido").value = pgc.valor_devolvido ?? "";
+  document.getElementById("vg-lid-devolvido").dataset.autoValor = "";
+  document.getElementById("vg-lid-data-devolucao").value = pgc.data_devolucao || "";
   recalcularTaxaMp();
   document.getElementById("vg-preco-travado").style.display = viagemJaPaga() ? "" : "none";
 
@@ -9167,7 +9166,7 @@ function openViagemModal(id, opcoes){
   renderAvaliacoesViagem();
   mostrarCampoEvento();
   sincronizarVoltaViagem();
-  document.getElementById("vg-outros").open = !!(v.dias_semana || v.motivo_perda || v.cancelamento_cobrado);
+  document.getElementById("vg-outros").open = !!(v.dias_semana || v.motivo_perda || v.cancelamento_cobrado || v.multa_cancelamento != null || v.repasse_multa != null);
   atualizarResumoViagem();
 
   document.getElementById("btn-excluir-viagem").style.display = id ? "inline-block" : "none";
@@ -9318,6 +9317,15 @@ async function saveViagem(){
   if(colunasExistem || adicionais.espera_extra_min || adicionais.adicional_noturno || adicionais.cancelamento_cobrado){
     Object.assign(payload, adicionais);
   }
+  // Colunas de schema_cancelamento_multa.sql (05/10/2026): mesmo cuidado.
+  const multa = {
+    multa_cancelamento: document.getElementById("vg-multa").value === "" ? null : Number(document.getElementById("vg-multa").value),
+    repasse_multa: document.getElementById("vg-repasse-multa").value === "" ? null : Number(document.getElementById("vg-repasse-multa").value),
+  };
+  const colunasMultaExistem = viagens.length > 0 && ("multa_cancelamento" in viagens[0]);
+  if(colunasMultaExistem || multa.multa_cancelamento != null || multa.repasse_multa != null){
+    Object.assign(payload, multa);
+  }
   // Colunas de schema_distancia_ida_volta.sql (26/09/2026): mesmo cuidado.
   const volta = {
     distancia_km_retorno: document.getElementById("vg-distancia-retorno-km").value === "" ? null : Number(document.getElementById("vg-distancia-retorno-km").value),
@@ -9383,6 +9391,15 @@ async function saveViagem(){
   if(colunasTaxaMpExistem || taxaMp.valor_liquido != null){
     Object.assign(pgcPayload, taxaMp);
   }
+  const devolucao = {
+    valor_devolvido: document.getElementById("vg-lid-devolvido").value === "" ? null : Number(document.getElementById("vg-lid-devolvido").value),
+    data_devolucao: document.getElementById("vg-lid-data-devolucao").value || null,
+  };
+  if(devolucao.valor_devolvido > 0 && !devolucao.data_devolucao) devolucao.data_devolucao = hojeLocalISO();
+  const colunasDevolucaoExistem = pagamentosCliente.length > 0 && ("valor_devolvido" in pagamentosCliente[0]);
+  if(colunasDevolucaoExistem || devolucao.valor_devolvido != null){
+    Object.assign(pgcPayload, devolucao);
+  }
   const temDadoPagamentoCliente = pgcPayload.valor_recebido != null || pgcPayload.forma_pagamento || pgcPayload.data_pagamento || pgcPayload.notas || pgcPayload.status === "Pago";
   const existentePgc = pagamentosCliente.find(p=>p.viagem_id===viagemId);
   if(temDadoPagamentoCliente || existentePgc){
@@ -9413,9 +9430,23 @@ async function saveViagem(){
     comprovante_url: document.getElementById("vg-pg-comprovante").value || null,
     notas: document.getElementById("vg-pg-notas").value,
   };
-  const temDadoPagamento = pgPayload.valor_repassado != null || pgPayload.comissao_plataforma != null || pgPayload.forma_pagamento || pgPayload.data_prevista_pagamento || pgPayload.data_pagamento || pgPayload.comprovante_url || pgPayload.notas;
   const existente = pagamentosMotorista.find(p=>p.viagem_id===viagemId);
-  if(temDadoPagamento || existente){
+  // Viagem cancelada: o repasse ainda não pago vira o repasse da multa; sem
+  // repasse de multa, pergunta antes de apagar o repasse pendente.
+  let repasseApagado = false;
+  if(payload.status === "Cancelada" && pgPayload.status !== "Pago"){
+    const repMulta = Number(multa.repasse_multa || 0);
+    if(repMulta > 0) pgPayload.valor_repassado = repMulta;
+    else if(existente && existente.status !== "Pago"){
+      if(confirm(`A viagem #${viagemId} está cancelada. Apagar o repasse pendente de ${formatarMoedaBR(existente.valor_repassado)} da motorista?`)){
+        const { error } = await sb.from("pagamentos_motorista").delete().eq("id", existente.id);
+        if(error){ alert("Erro ao apagar o repasse: " + error.message); return; }
+        repasseApagado = true;
+      }
+    } else if(!existente) pgPayload.valor_repassado = null;
+  }
+  const temDadoPagamento = pgPayload.valor_repassado != null || pgPayload.comissao_plataforma != null || pgPayload.forma_pagamento || pgPayload.data_prevista_pagamento || pgPayload.data_pagamento || pgPayload.comprovante_url || pgPayload.notas;
+  if(!repasseApagado && (temDadoPagamento || existente)){
     // upsert em vez de insert: a motorista pode ter concluído a viagem no
     // painel dela depois que essa página carregou, e aí "existente" é null
     // aqui mas já existe linha no banco — foi assim que a viagem 21 ganhou
@@ -10808,10 +10839,10 @@ function renderContasPagar(){
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhuma conta a pagar registrada ainda</td></tr>`;
 }
+// Abre a viagem por cima da tela atual: antes ia para Transporte → Viagens e,
+// ao fechar, ela ficava lá em vez de voltar para o Financeiro (05/10/2026).
 function abrirViagemDoPagamento(viagemId){
   if(!viagemId) return;
-  document.querySelector('[data-tab="transporte"]').click();
-  mostrarSubTab('viagens');
   openViagemModal(viagemId);
 }
 let editingContaPagarId = null;
@@ -11009,7 +11040,7 @@ function resumoFinanceiroMes(mes, ano){
   // visível. Antes as viagens não entravam no faturamento e só o repasse à
   // motorista contava, o que fazia o lucro afundar a cada viagem feita.
   const pagosViagem = pagamentosCliente.filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano));
-  const faturamentoViagens = pagosViagem.reduce((s,p)=>s+Number(p.valor_recebido||0),0);
+  const faturamentoViagens = pagosViagem.reduce((s,p)=>s+Number(p.valor_recebido||0)-devolvidoDe(p),0);
   const taxaMp = pagosViagem.reduce((s,p)=>s+Number(p.taxa_mp||0),0);
   const faturamento = vendas + faturamentoViagens;
   const despesasGerais = contasPagar
@@ -11097,7 +11128,7 @@ function renderDetalheResumo(ano){
   const despesas = contasPagar.filter(c=>c.status==='Pago' && dentroDoMes(c.data_pagamento, mes, ano));
   const repasses = pagamentosMotorista.filter(p=>p.status==='Pago' && dentroDoMes(p.data_pagamento, mes, ano));
   const linhas = [
-    ...pagosViagem.map(p=>({ s: "+", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Viagem #${p.viagem_id}`), d: `cliente pagou em ${fmtDataBR(String(p.data_pagamento).slice(0,10))}${p.forma_pagamento ? " · " + escapeHtml(p.forma_pagamento) : ""}`, v: Number(p.valor_recebido || 0) })),
+    ...pagosViagem.map(p=>({ s: "+", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Viagem #${p.viagem_id}`), d: `cliente pagou em ${fmtDataBR(String(p.data_pagamento).slice(0,10))}${p.forma_pagamento ? " · " + escapeHtml(p.forma_pagamento) : ""}${devolvidoDe(p) ? ` · devolvido ${formatarMoedaBR(devolvidoDe(p))}` : ""}`, v: Number(p.valor_recebido || 0) - devolvidoDe(p) })),
     ...parcelas.map(p=>{ const { lead, venda } = labelVendaParcela(p); return { s: "+", t: lk(`openParcelaModal(${p.id})`, escapeHtml(`${lead ? lead.nome : "Venda"} · ${venda ? venda.servico_produto : "parcela"}`)), d: `recebida em ${fmtDataBR(p.data_realizada)}`, v: Number(p.valor || 0) }; }),
     ...entradasAvulsasMes(mes, ano).map(e=>({ s: "+", t: lk(`abrirEntradaAvulsa(${e.id})`, escapeHtml(e.descricao || "Entrada")), d: `${escapeHtml(e.categoria || "entrada")} · recebida em ${fmtDataBR(e.data_recebimento)}`, v: Number(e.valor || 0) })),
     { s: "=", t: "Faturamento", v: l.faturamento, b: true },
@@ -11221,6 +11252,12 @@ function lcColetar(de, ate){
   pagamentosCliente.forEach(p=>{
     if(p.status !== "Pago") return;
     pagosViagem.add(p.viagem_id);
+    // Viagem paga e depois cancelada: o que voltou para a cliente sai do Mercado Pago.
+    const dataDev = String(p.data_devolucao || p.data_pagamento || "").slice(0,10);
+    if(devolvidoDe(p) > 0 && dentro(dataDev)) itens.push({ chave: "dv" + p.id, data: dataDev, tipo: "saida", previsto: false, valor: devolvidoDe(p),
+      contaId: (p.conta_recebedora || "CPF Juliana") === "CPF Juliana" && mp ? mp.id : null,
+      titulo: `Devolução · viagem #${p.viagem_id}`, categoria: "Devoluções a clientes", sub: "viagem cancelada",
+      acao: `abrirViagemDoPagamento(${p.viagem_id})` });
     const data = String(p.data_pagamento || "").slice(0,10);
     if(!dentro(data)) return;
     const bruto = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
@@ -11345,8 +11382,8 @@ function lcDeveria(de, ate){
     if(p.status !== "Pago" || !dentro(p.data_pagamento)) return;
     const v = viagens.find(x=>x.id === p.viagem_id);
     const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
-    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
-    const liquido = p.valor_liquido != null ? Number(p.valor_liquido) : Number(p.valor_recebido || 0) - Number(p.taxa_mp || 0);
+    const repasse = repasseDaViagem(v, pg);
+    const liquido = (p.valor_liquido != null ? Number(p.valor_liquido) : Number(p.valor_recebido || 0) - Number(p.taxa_mp || 0)) - devolvidoDe(p);
     const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
     r.glViagens += liquido - repasse;
     if(ela) r.ju += repasse;
@@ -11869,9 +11906,9 @@ function pagamentosTransporteMes(mes, ano){
     .map(p=>{
       const v = viagens.find(x=>x.id === p.viagem_id);
       const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
-      const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+      const repasse = repasseDaViagem(v, pg);
       const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
-      return { p, v, repasse, ela, recebido: Number(p.valor_recebido || 0), taxa: Number(p.taxa_mp || 0) };
+      return { p, v, repasse, ela, recebido: Number(p.valor_recebido || 0) - devolvidoDe(p), taxa: Number(p.taxa_mp || 0) };
     })
     .sort((a,b)=>String(a.p.data_pagamento).localeCompare(String(b.p.data_pagamento)));
 }
@@ -11907,12 +11944,12 @@ function rendaCpfNoAno(ano){
     && p.data_pagamento && Number(String(p.data_pagamento).slice(0,4)) === ano);
   let bruto = 0, parte = 0;
   pagos.forEach(p=>{
-    const b = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
+    const b = Number(p.valor_recebido || 0) - devolvidoDe(p), taxa = Number(p.taxa_mp || 0);
     const v = viagens.find(x=>x.id === p.viagem_id);
     const ids = v ? idsMotoristasViagem(v) : [];
     const ela = ids.some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)));
     const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
-    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    const repasse = repasseDaViagem(v, pg);
     bruto += b;
     parte += ela ? b - taxa : b - taxa - repasse;
   });
@@ -12249,7 +12286,7 @@ function renderDetalheGestao(ctx){
       const v = viagens.find(x=>x.id === p.viagem_id);
       const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
       const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
-      const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+      const repasse = repasseDaViagem(v, pg);
       const b = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
       return `<tr><td>${fmtDataBR(String(p.data_pagamento).slice(0,10))}</td><td>${linkViagem(v)}</td><td>${R(b)}</td><td>${R(taxa)}</td>
         <td>${ela ? "Você" : escapeHtml(v ? nomesMotoristasViagem(v) || "-" : "-")}</td><td>${R(ela ? b - taxa : b - taxa - repasse)}</td></tr>`;
