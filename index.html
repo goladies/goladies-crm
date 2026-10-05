@@ -4826,7 +4826,7 @@ function abrirDetalheFt(chave){
 function ftCabecalhoDetalhe(titulo){
   return `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
     <h3 style="margin:0;">Viagem por viagem · ${titulo}</h3>
-    <button class="icon-btn" type="button" onclick="abrirDetalheFt('${ftDetalheAberto}')" aria-label="Fechar">✕</button></div>`;
+    <button class="icon-btn" type="button" onclick="abrirDetalheFt(ftDetalheAberto)" aria-label="Fechar">✕</button></div>`;
 }
 function renderDetalheFt(pagos, tot){
   const el = document.getElementById("ft-detalhe");
@@ -4859,11 +4859,17 @@ function renderDetalheFt(pagos, tot){
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
   if(!el) return;
-  if(!["cotacoes", "aceite", "desconto", "porkm"].includes(ftDetalheAberto)){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const [grupo, idx] = String(ftDetalheAberto || "").split("|");
+  const faixa = grupo === "faixa" ? FT_FAIXAS_PRECO[idx] : grupo === "km" ? FT_FAIXAS_KM[idx] : null;
+  if(!["cotacoes", "aceite", "desconto", "porkm"].includes(ftDetalheAberto) && !faixa){ el.style.display = "none"; el.innerHTML = ""; return; }
   const titulos = { cotacoes: "Cotações enviadas", aceite: "Aceitas sem negociar", desconto: "Desconto pra fechar", porkm: "Preço praticado por km" };
   let lista = [...cotacoes];
   if(ftDetalheAberto === "desconto") lista = lista.filter(v=>ftDesfecho(v) === "fechou com desconto");
   if(ftDetalheAberto === "porkm") lista = lista.filter(v=>["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
+  // Faixas: mesmo filtro das barras e da tabela por distância
+  if(grupo === "faixa") lista = lista.filter(v=>{ const p = ftPrecoTestado(v); return p >= faixa.min && p < faixa.max; });
+  if(grupo === "km") lista = lista.filter(v=>{ const km = kmTotalViagem(v); return km > 0 && km >= faixa.min && km < faixa.max; });
+  if(faixa) titulos[ftDetalheAberto] = `${grupo === "faixa" ? "Preço cotado" : "Distância"} ${faixa.rotulo}`;
   lista.sort((a,b)=>String(b.data || "").localeCompare(String(a.data || "")));
   const linhas = lista.map(v=>{
     const km = kmTotalViagem(v), fechado = Number(v.preco_cotado || 0);
@@ -4920,9 +4926,10 @@ function renderFinanceiroTransporte(){
 
   const amostra = document.getElementById("ft-amostra");
   if(amostra){
-    amostra.textContent = cotacoes.length < 15
+    amostra.innerHTML = (cotacoes.length < 15
       ? `${cotacoes.length} cotação(ões) no período: amostra pequena demais pra concluir. A leitura começa a valer perto de 15 a 20.`
-      : `${cotacoes.length} cotações no período.`;
+      : `${cotacoes.length} cotações no período.`)
+      + (cotacoes.length ? ` <a href="#" onclick="abrirDetalheFt('cotacoes'); return false;">Ver as cotações</a>` : "");
     amostra.style.color = cotacoes.length < 15 ? "var(--c-amber)" : "var(--muted)";
   }
   document.getElementById("ft-cards-validacao").innerHTML = [
@@ -4934,13 +4941,14 @@ function renderFinanceiroTransporte(){
   renderDetalheFtValidacao(cotacoes);
 
   // Faixa de preço: o teste é o valor que saiu pra cliente, antes do desconto
-  document.getElementById("ft-faixas").innerHTML = FT_FAIXAS_PRECO.map(f => {
+  document.getElementById("ft-faixas").innerHTML = FT_FAIXAS_PRECO.map((f, i) => {
     const naFaixa = cotacoes.filter(v => { const p = ftPrecoTestado(v); return p >= f.min && p < f.max; });
     if(!naFaixa.length) return "";
     const ok = naFaixa.filter(v => ftDesfecho(v) === "aceitou direto").length;
     const pct = Math.round((ok / naFaixa.length) * 100);
     const cor = pct >= 60 ? "--c-green" : pct >= 30 ? "--c-amber" : "--c-red";
-    return `<div style="display:flex; align-items:center; gap:10px; padding:5px 0;">
+    const ativo = ftDetalheAberto === `faixa|${i}`;
+    return `<div class="tr-click" title="Ver as cotações dessa faixa" onclick="abrirDetalheFt('faixa|${i}')" style="display:flex; align-items:center; gap:10px; padding:5px 6px; margin:0 -6px; border-radius:6px; cursor:pointer;${ativo ? " background:var(--c-pink-bg, rgba(255,45,156,.1));" : ""}">
       <div style="width:120px; font-size:12.5px; color:var(--muted);">${f.rotulo}</div>
       <div style="flex:1; background:var(--border); border-radius:4px; height:16px;">
         <div style="width:${Math.max(pct, 2)}%; background:var(${cor}); height:100%; border-radius:4px;"></div>
@@ -4949,7 +4957,7 @@ function renderFinanceiroTransporte(){
     </div>`;
   }).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma cotação no período ainda.</p>`;
 
-  document.getElementById("ft-kms").innerHTML = FT_FAIXAS_KM.map(f => {
+  document.getElementById("ft-kms").innerHTML = FT_FAIXAS_KM.map((f, i) => {
     const naFaixa = cotacoes.filter(v => { const km = kmTotalViagem(v); return km > 0 && km >= f.min && km < f.max; });
     if(!naFaixa.length) return "";
     const ok = naFaixa.filter(v => ftDesfecho(v) === "aceitou direto").length;
@@ -4958,7 +4966,7 @@ function renderFinanceiroTransporte(){
     const fechouMedia = fech.length ? fech.reduce((s,v) => s + Number(v.preco_cotado || 0), 0) / fech.length : 0;
     const kmFech = fech.reduce((s,v) => s + kmTotalViagem(v), 0);
     const gap = tabelaMedia && fechouMedia ? Math.round((1 - fechouMedia / tabelaMedia) * 100) : 0;
-    return `<tr>
+    return `<tr class="tr-click" title="Ver as cotações dessa distância" onclick="abrirDetalheFt('km|${i}')">
       <td>${f.rotulo}</td>
       <td style="color:var(--muted);">${naFaixa.length}</td>
       <td>${Math.round((ok / naFaixa.length) * 100)}%</td>
