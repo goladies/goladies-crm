@@ -491,6 +491,62 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .subnav-item{background:var(--bg-input); border:1px solid var(--border2); color:var(--text2); padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s;}
 .subnav-item:hover{color:var(--text1); border-color:var(--rosa);}
 .subnav-item.active{background:var(--rosa); border-color:var(--rosa); color:#fff;}
+
+/* ---------- LIVRO-CAIXA (Financeiro, no jeito da Vida Financeira do Lapidar) ---------- */
+.lc-topo{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.lc-mes{display:inline-flex; align-items:center; gap:4px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:6px 8px;}
+.lc-mes strong{min-width:150px; text-align:center; font-size:14px;}
+.lc-mes button{background:none; border:none; color:var(--rosa-texto); font-size:18px; font-weight:700; cursor:pointer; padding:2px 10px; border-radius:8px; font-family:inherit;}
+.lc-mes button:hover{background:var(--rosa-bg);}
+.lc-mes .lc-hoje{font-size:12.5px;}
+.lc-acoes{display:flex; gap:8px; flex-wrap:wrap;}
+.lc-abas{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; overflow-x:auto;}
+.lc-abas button{background:none; border:none; border-bottom:2px solid transparent; color:var(--text2); padding:9px 14px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap;}
+.lc-abas button:hover{color:var(--text1);}
+.lc-abas button.active{color:var(--rosa-texto); border-bottom-color:var(--rosa);}
+.lc-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:16px;}
+.lc-card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer; transition:border-color .15s;}
+.lc-card:hover{border-color:var(--rosa);}
+.lc-card .t{font-size:11.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text3);}
+.lc-card .v{font-size:23px; font-weight:700; margin:4px 0 2px; letter-spacing:-.3px;}
+.lc-card .s{font-size:12px; color:var(--text3);}
+.lc-pos{color:var(--c-green);} .lc-neg{color:var(--c-red);} .lc-azul{color:var(--c-blue);}
+.lc-item{display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); cursor:pointer;}
+.lc-item:last-child{border-bottom:none;}
+.lc-item:hover .lc-tit{color:var(--rosa-texto);}
+.lc-ico{width:36px; height:36px; flex:0 0 36px; border-radius:10px; background:var(--rosa-bg); color:var(--rosa-texto); display:flex; align-items:center; justify-content:center;}
+.lc-ico.entrada{background:var(--c-green-bg); color:var(--c-green);}
+.lc-ico.transf{background:var(--c-blue-bg); color:var(--c-blue);}
+.lc-meio{flex:1; min-width:0;}
+.lc-tit{font-weight:600; font-size:14px;}
+.lc-sub{font-size:12.5px; color:var(--text3); margin-top:2px;}
+.lc-dir{text-align:right; white-space:nowrap; display:flex; flex-direction:column; align-items:flex-end; gap:4px;}
+.lc-val{font-weight:700; font-size:14.5px;}
+.lc-selo{display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:6px; background:var(--c-green-bg); color:var(--c-green); vertical-align:middle; margin-left:4px;}
+.lc-selo.previsto{background:var(--c-gray-bg); color:var(--c-gray); margin-left:0;}
+.lc-selo.definir{background:var(--c-amber-bg); color:var(--c-amber);}
+.lc-ja{font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:7px; border:1px solid var(--border2); background:var(--bg-input); color:var(--text2); cursor:pointer; font-family:inherit;}
+.lc-ja:hover{border-color:var(--c-green); color:var(--c-green);}
+.lc-dia{font-size:11.5px; font-weight:700; color:var(--text3); margin:14px 0 2px;}
+.lc-legenda{font-size:12.5px; color:var(--text2); margin:-4px 0 6px;}
+.lc-contas{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-bottom:22px;}
+.lc-conta{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer; transition:border-color .15s;}
+.lc-conta:hover{border-color:var(--rosa);}
+.lc-conta .n{font-weight:700; font-size:14.5px; display:flex; gap:6px; align-items:center;}
+.lc-conta .k{font-size:11.5px; color:var(--text3); margin-top:2px;}
+.lc-conta .v{font-size:21px; font-weight:700; margin:10px 0 4px;}
+.lc-conta .s{font-size:11.5px; color:var(--text3);}
+.lc-conta .ed{float:right; font-size:11.5px;}
+.lc-sec{display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap; margin:6px 0 12px;}
+.lc-sec h3{margin:0;}
+.lc-sec p{margin:3px 0 0; font-size:12.5px; color:var(--text3);}
+.lc-carinho{border-color:var(--rosa-borda);}
+.lc-tbl td{padding:7px 4px;}
+@media (max-width:640px){
+  .lc-mes strong{min-width:120px;}
+  .lc-item{flex-wrap:wrap;}
+  .lc-dir{flex-direction:row; align-items:center; width:100%; justify-content:flex-end;}
+}
 .kanban{display:flex; flex-wrap:wrap; gap:12px; align-items:start;}
 .kanban-col{background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:10px; min-width:0; flex:1 1 200px; box-shadow:var(--sombra);}
 .kanban-col h4{margin:0 0 10px; font-size:11.5px; color:var(--text1); text-transform:uppercase; letter-spacing:.03em; line-height:1.35; display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
@@ -1366,16 +1422,53 @@ tr.tr-click{cursor:pointer;}
     </div>
 
     <div id="tab-financeiro" style="display:none;">
-      <div class="pagehead"><div><h2>Financeiro</h2><p>Contas a receber, contas a pagar, metas e o resumo de faturamento/lucro</p></div></div>
+      <div class="pagehead"><div><h2>Financeiro</h2><p>Livro-caixa, contas a receber, contas a pagar, metas e o resumo de faturamento/lucro</p></div></div>
       <div class="subnav">
-        <button type="button" class="subnav-item active" data-subtab="receber" onclick="mostrarSubTabFinanceiro('receber')"><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Contas a Receber</button>
+        <button type="button" class="subnav-item active" data-subtab="livro" onclick="mostrarSubTabFinanceiro('livro')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Livro-caixa</button>
+        <button type="button" class="subnav-item" data-subtab="receber" onclick="mostrarSubTabFinanceiro('receber')"><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Contas a Receber</button>
         <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')"><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Contas a Pagar</button>
         <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')"><svg class=ic aria-hidden=true><use href=#i-target /></svg> Metas</button>
         <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Resumo</button>
         <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia'); carregarCustosIa();"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de tecnologia</button>
       </div>
 
-      <div id="subtab-receber">
+      <div id="subtab-livro">
+        <div class="lc-topo">
+          <div class="lc-mes">
+            <button type="button" onclick="lcMudarMes(-1)" aria-label="Mês anterior">‹</button>
+            <strong id="lc-mes-rotulo"></strong>
+            <button type="button" onclick="lcMudarMes(1)" aria-label="Próximo mês">›</button>
+            <button type="button" class="lc-hoje" onclick="lcMudarMes(0)">hoje</button>
+          </div>
+          <div class="lc-acoes">
+            <button class="btn ghost" type="button" onclick="abrirTransferencia()"><svg class=ic aria-hidden=true><use href=#i-arrows-exchange /></svg> Transferir</button>
+            <button class="btn secondary" type="button" onclick="abrirEntradaAvulsa(null)">+ Entrada</button>
+            <button class="btn" type="button" onclick="lcNovaSaida()">+ Saída</button>
+          </div>
+        </div>
+        <div class="lc-abas">
+          <button type="button" class="active" data-lcaba="resumo" onclick="lcAba('resumo')">Resumo</button>
+          <button type="button" data-lcaba="lancamentos" onclick="lcAba('lancamentos')">Lançamentos</button>
+          <button type="button" data-lcaba="contas" onclick="lcAba('contas')">Contas e caixinhas</button>
+          <button type="button" data-lcaba="categorias" onclick="lcAba('categorias')">Categorias</button>
+        </div>
+        <div id="lc-aviso-sql" class="panel" style="display:none;"></div>
+        <div id="lc-pane-resumo"></div>
+        <div id="lc-pane-lancamentos" style="display:none;">
+          <div class="filters">
+            <select id="lc-f-tipo" onchange="renderLcLancamentos()"><option value="">Entradas e saídas</option><option value="entrada">Só entradas</option><option value="saida">Só saídas</option><option value="transf">Só transferências</option></select>
+            <select id="lc-f-status" onchange="renderLcLancamentos()"><option value="">Previstos e realizados</option><option value="previsto">Só previstos</option><option value="realizado">Só realizados</option></select>
+            <select id="lc-f-conta" onchange="renderLcLancamentos()"></select>
+            <select id="lc-f-cat" onchange="renderLcLancamentos()"></select>
+          </div>
+          <p class="lc-legenda"><span class="lc-selo">fixa</span> repete todo mês · <b>≈</b> valor estimado, muda todo mês · <span class="lc-selo previsto">previsto</span> ainda não aconteceu</p>
+          <div id="lc-lista"></div>
+        </div>
+        <div id="lc-pane-contas" style="display:none;"></div>
+        <div id="lc-pane-categorias" style="display:none;"></div>
+      </div>
+
+      <div id="subtab-receber" style="display:none;">
         <div class="pagehead">
           <div><p style="margin:0; color:var(--muted); font-size:12.5px;">Parcelas de vendas cadastradas em Leads + o dinheiro das viagens (bruto que a cliente paga, taxa do Mercado Pago e o que sobra líquido). Clicar numa linha de viagem abre a viagem.</p></div>
         </div>
@@ -2588,6 +2681,8 @@ tr.tr-click{cursor:pointer;}
       <div><label>Data prevista</label><input type="date" id="pz-data-prevista"></div>
       <div><label>Data realizada</label><input type="date" id="pz-data-realizada"></div>
       <div><label>Status</label><select id="pz-status"><option>Pendente</option><option>Pago</option></select></div>
+      <div><label>Caiu em qual conta</label><select id="pz-fin-conta"></select></div>
+      <div><label>Quanto fica para a Go Ladies (R$)</label><input type="number" step="0.01" min="0" id="pz-parte" placeholder="a definir"><span class="dica">Você decide caso a caso. O resto é seu.</span></div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('parcela-modal')">Sair</button>
@@ -2609,7 +2704,9 @@ tr.tr-click{cursor:pointer;}
       <div><label>Tipo de gasto</label><select id="cp-tipo-custo"><option value="">-</option><option>Fixo</option><option>Variável</option><option>Investimento</option></select></div>
       <div><label>Negócio</label><select id="cp-linha-negocio"></select></div>
       <div><label>Saiu da conta</label><select id="cp-conta-origem"></select></div>
+      <div><label>Saiu de qual conta ou caixinha</label><select id="cp-fin-conta"></select><span class="dica">É o que mexe no saldo do Livro-caixa.</span></div>
       <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="cp-recorrente" style="width:auto;"> Repete todo mês</label>
+        <label style="display:flex; gap:8px; align-items:center; margin-top:6px;"><input type="checkbox" id="cp-valor-muda" style="width:auto;"> Valor muda todo mês (≈)</label>
         <label style="display:flex; gap:8px; align-items:center; margin-top:6px;" title="Dinheiro pessoal seu que entrou na Go Ladies. Fica em Gestão → Aportes da sócia, como valor que a empresa te deve."><input type="checkbox" id="cp-aporte" style="width:auto;"> Paguei do meu bolso (aporte)</label></div>
       <div><label>Parceira (o) ligada</label><select id="cp-parceiro"><option value="">-</option></select></div>
       <div><label>Vencimento</label><input type="date" id="cp-vencimento"></div>
@@ -2620,6 +2717,79 @@ tr.tr-click{cursor:pointer;}
       <button class="btn ghost" id="btn-excluir-conta-pagar" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteContaPagar()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('conta-pagar-modal')">Sair</button>
       <button class="btn" onclick="saveContaPagar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fin-conta-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="fin-conta-modal-title" style="margin:0;">Nova conta</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('fin-conta-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Nome *</label><input type="text" id="fc-nome" placeholder="Ex: Caixinha Go Ladies"></div>
+      <div><label>É uma</label><select id="fc-tipo" onchange="fcTipoMudou()"><option value="Conta">Conta</option><option value="Caixinha">Caixinha</option></select></div>
+      <div id="fc-mae-wrap"><label>Dentro de qual conta</label><select id="fc-mae"></select></div>
+      <div><label>De quem é o dinheiro</label><select id="fc-bolso"><option>Go Ladies</option><option>Jú Motorista</option><option>Gema</option><option>Pessoal</option><option value="Geral">Geral (cai tudo junto, depois separa)</option></select></div>
+      <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="fc-recebe" style="width:auto;"> Os pagamentos das clientes caem aqui</label></div>
+      <div><label>Saldo (R$)</label><input type="number" step="0.01" id="fc-saldo"><span class="dica">O que o banco mostra no fim do dia abaixo.</span></div>
+      <div><label>No fim do dia</label><input type="date" id="fc-data"><span class="dica">Daqui pra frente o saldo se atualiza sozinho.</span></div>
+      <div><label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="fc-ativa" style="width:auto;"> Conta em uso</label></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-fin-conta" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirFinConta()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('fin-conta-modal')">Sair</button>
+      <button class="btn" onclick="salvarFinConta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fin-transf-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="fin-transf-modal-title" style="margin:0;">Transferir</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('fin-transf-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p id="ft-sugestao" style="font-size:12.5px; color:var(--text3); margin:8px 0 0;"></p>
+    <div class="formgrid">
+      <div><label>De</label><select id="ft-de"></select></div>
+      <div><label>Para</label><select id="ft-para" onchange="ftSugerirValor()"></select></div>
+      <div><label>Valor (R$) *</label><input type="number" step="0.01" min="0" id="ft-valor"></div>
+      <div><label>Data</label><input type="date" id="ft-data"></div>
+      <div class="full"><label>Observação</label><input type="text" id="ft-obs" placeholder="Ex: parte da Go Ladies das viagens da semana"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-fin-transf" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirTransferencia()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('fin-transf-modal')">Sair</button>
+      <button class="btn" onclick="salvarTransferencia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fin-entrada-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="fin-entrada-modal-title" style="margin:0;">Nova entrada</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('fin-entrada-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p style="font-size:12.5px; color:var(--text3); margin:8px 0 0;">Para dinheiro que não é viagem nem venda de lead: parceiros (os), cotas de patrocínio, serviço avulso. Viagens e vendas entram sozinhas.</p>
+    <div class="formgrid">
+      <div class="full"><label>Descrição *</label><input type="text" id="fe-descricao" placeholder="Ex: Cota de patrocínio · Loja X"></div>
+      <div><label>Categoria</label><input type="text" id="fe-categoria" list="fe-categorias-lista" placeholder="Escolha ou digite"><datalist id="fe-categorias-lista"></datalist></div>
+      <div><label>Valor (R$) *</label><input type="number" step="0.01" min="0" id="fe-valor"></div>
+      <div><label>Status</label><select id="fe-status"><option>Previsto</option><option>Recebido</option></select></div>
+      <div><label>Caiu em qual conta</label><select id="fe-conta"></select></div>
+      <div><label>Data prevista</label><input type="date" id="fe-data-prevista"></div>
+      <div><label>Data em que recebeu</label><input type="date" id="fe-data-recebimento"></div>
+      <div><label>Quanto fica para a Go Ladies (R$)</label><input type="number" step="0.01" min="0" id="fe-parte" placeholder="vazio = tudo"><span class="dica">Vazio: vai inteira para a Go Ladies.</span></div>
+      <div><label>Parceira (o) ligada</label><select id="fe-parceiro"></select></div>
+      <div class="full"><label>Observação</label><input type="text" id="fe-obs"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-fin-entrada" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirEntradaAvulsa()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('fin-entrada-modal')">Sair</button>
+      <button class="btn" onclick="salvarEntradaAvulsa()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2954,6 +3124,14 @@ let contasPagar = [];
 let metasFinanceiras = [];
 let gestaoSaldos = [];
 let gestaoAportes = [];
+// Livro-caixa (schema_livro_caixa.sql)
+let finContas = [];
+let finTransferencias = [];
+let finEntradas = [];
+let lcSqlFaltando = false;
+// Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
+// saem da Caixinha Jú Motorista.
+let gastosJuMotorista = [];
 let pecasPedidos = [];
 let pecasTentativas = [];
 let parceiroLinks = [];
@@ -3556,6 +3734,19 @@ async function carregarDadosInterno(){
   const rvc2 = await sb.from("vinculos_cadastros").select("*").order("id");
   if(!rvc2.error) vinculosCadastros = rvc2.data || [];
 
+  // Livro-caixa (schema_livro_caixa.sql): mesma tolerância. Sem o SQL a aba
+  // mostra o aviso para rodar, em vez de acender a falha de carga.
+  const [rfc, rft, rfe] = await Promise.all([
+    sb.from("fin_contas").select("*").order("ordem").order("id"),
+    sb.from("fin_transferencias").select("*").order("id"),
+    sb.from("fin_entradas").select("*").order("id"),
+  ]);
+  lcSqlFaltando = !!rfc.error;
+  if(!rfc.error) finContas = rfc.data || [];
+  if(!rft.error) finTransferencias = rft.data || [];
+  if(!rfe.error) finEntradas = rfe.data || [];
+  await carregarGastosJuMotorista();
+
   renderAll();
   marcarAtualizado();
   carregarErrosSite();
@@ -3605,6 +3796,7 @@ async function atualizarDados(manual){
   if(btn) btn.style.opacity = ".5";
   recargaSilenciosa = !manual;
   try{
+    if(manual) await carregarGastosJuMotorista();
     await recarregarTabelas(...TABELAS_AUTO);
     carregarErrosSite();
     marcarAtualizado();
@@ -3663,6 +3855,9 @@ const TABELA_ATUALIZA = {
   metas_financeiras: v => metasFinanceiras = v,
   gestao_saldos: v => gestaoSaldos = v,
   gestao_aportes: v => gestaoAportes = v,
+  fin_contas: v => finContas = [...v].sort((a,b)=>(a.ordem||0)-(b.ordem||0) || a.id-b.id),
+  fin_transferencias: v => finTransferencias = v,
+  fin_entradas: v => finEntradas = v,
   vinculos_cadastros: v => vinculosCadastros = v,
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
@@ -4683,7 +4878,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderGestao(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -10481,7 +10676,20 @@ function listaContasAReceberUnificada(){
         data_realizada: pg.data_pagamento, status: pg.status || "Pendente",
       };
     });
-  return [...parcelas, ...daViagem];
+  // Entradas avulsas do Livro-caixa (parceiros, patrocínio, serviço avulso).
+  const avulsas = finEntradas.map(e=>({
+    origem: "Entrada", id: e.id, viagemId: null,
+    cliente: (parceiros.find(p=>p.id === e.parceiro_id) || {}).nome || "-",
+    descricao: (e.categoria ? e.categoria + " · " : "") + (e.descricao || "-"),
+    valor: Number(e.valor || 0), taxa_mp: null, liquido: null,
+    forma_pagamento: null, data_prevista: e.data_prevista,
+    data_realizada: e.data_recebimento, status: e.status === "Recebido" ? "Pago" : "Pendente",
+  }));
+  return [...parcelas, ...daViagem, ...avulsas];
+}
+// Entradas avulsas recebidas no mês (somam no faturamento e na receita).
+function entradasAvulsasMes(mes, ano){
+  return finEntradas.filter(e=>e.status === "Recebido" && dentroDoMes(e.data_recebimento, mes, ano));
 }
 function renderContasReceber(){
   const fs = document.getElementById("filter-receber-status");
@@ -10498,8 +10706,8 @@ function renderContasReceber(){
   const totalBruto = lista.reduce((s,c)=>s+Number(c.valor||0),0);
   const totalTaxa = lista.reduce((s,c)=>s+Number(c.taxa_mp||0),0);
   document.getElementById("receber-body").innerHTML = lista.map(c=>`
-    <tr class="tr-click" onclick="${c.origem==='Viagem'?`abrirViagemDoPagamento(${c.viagemId})`:`openParcelaModal(${c.id})`}">
-      <td><span class="tag ${c.origem==='Viagem'?'negociacao':'novo'}">${c.origem}</span></td>
+    <tr class="tr-click" onclick="${c.origem==='Viagem'?`abrirViagemDoPagamento(${c.viagemId})`:c.origem==='Entrada'?`abrirEntradaAvulsa(${c.id})`:`openParcelaModal(${c.id})`}">
+      <td><span class="tag ${c.origem==='Viagem'?'negociacao':c.origem==='Entrada'?'ativo':'novo'}">${c.origem}</span></td>
       <td>${escapeHtml(c.cliente||"-")}</td>
       <td>${escapeHtml(c.descricao||"-")}</td>
       <td>${formatarMoedaBR(c.valor)}</td>
@@ -10539,6 +10747,8 @@ function openParcelaModal(id){
   document.getElementById("pz-data-prevista").value = p.data_prevista || "";
   document.getElementById("pz-data-realizada").value = p.data_realizada || "";
   document.getElementById("pz-status").value = p.status || "Pendente";
+  preencherSelectFinConta(document.getElementById("pz-fin-conta"), p.fin_conta_id, "Não sei / outra");
+  document.getElementById("pz-parte").value = p.parte_go_ladies ?? "";
   document.getElementById("parcela-modal").classList.add("open");
 }
 async function saveParcela(){
@@ -10550,6 +10760,10 @@ async function saveParcela(){
     data_realizada: document.getElementById("pz-data-realizada").value || null,
     status: document.getElementById("pz-status").value,
   };
+  if(!lcSqlFaltando) Object.assign(payload, {
+    fin_conta_id: Number(document.getElementById("pz-fin-conta").value) || null,
+    parte_go_ladies: document.getElementById("pz-parte").value === "" ? null : Number(document.getElementById("pz-parte").value),
+  });
   const { error } = await sb.from("venda_parcelas").update(payload).eq("id", editingParcelaId);
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   showToast("Salvo!");
@@ -10634,6 +10848,8 @@ function openContaPagarModal(id){
   fillSelect(document.getElementById("cp-conta-origem"), GESTAO_CONTAS, c.conta_origem || "CPF Juliana");
   document.getElementById("cp-tipo-custo").value = c.tipo_custo || "";
   document.getElementById("cp-recorrente").checked = !!c.recorrente;
+  document.getElementById("cp-valor-muda").checked = !!c.valor_muda;
+  preencherSelectFinConta(document.getElementById("cp-fin-conta"), c.fin_conta_id, "Não sei / outra");
   document.getElementById("cp-aporte").checked = !!(id && gestaoAportes.some(a=>a.conta_pagar_id === id));
   document.getElementById("cp-descricao").value = c.descricao||"";
   document.getElementById("cp-categoria").value = c.categoria||"";
@@ -10663,6 +10879,12 @@ async function saveContaPagar(){
     conta_origem: document.getElementById("cp-conta-origem").value || "CPF Juliana",
     recorrente: document.getElementById("cp-recorrente").checked,
   };
+  // Livro-caixa: só manda as colunas novas se o schema_livro_caixa.sql já rodou.
+  // Paga do bolso (aporte) não saiu de conta nenhuma da Go Ladies.
+  if(!lcSqlFaltando) Object.assign(extrasGestao, {
+    fin_conta_id: document.getElementById("cp-aporte").checked ? null : (Number(document.getElementById("cp-fin-conta").value) || null),
+    valor_muda: document.getElementById("cp-valor-muda").checked,
+  });
   const gravar = p => editingContaPagarId
     ? sb.from("contas_pagar").update(p).eq("id", editingContaPagarId)
     : sb.from("contas_pagar").insert(p).select("id");
@@ -10780,7 +11002,8 @@ async function deleteMeta(id){
 function resumoFinanceiroMes(mes, ano){
   const vendas = vendaParcelas
     .filter(p=>dentroDoMes(p.data_realizada, mes, ano))
-    .reduce((s,p)=>s+Number(p.valor||0),0);
+    .reduce((s,p)=>s+Number(p.valor||0),0)
+    + entradasAvulsasMes(mes, ano).reduce((s,e)=>s+Number(e.valor||0),0);
   // Decisão de 22/09/2026: a viagem entra pelo BRUTO que a cliente pagou e a
   // taxa do Mercado Pago vira despesa, pra o custo do meio de pagamento ficar
   // visível. Antes as viagens não entravam no faturamento e só o repasse à
@@ -10876,6 +11099,7 @@ function renderDetalheResumo(ano){
   const linhas = [
     ...pagosViagem.map(p=>({ s: "+", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Viagem #${p.viagem_id}`), d: `cliente pagou em ${fmtDataBR(String(p.data_pagamento).slice(0,10))}${p.forma_pagamento ? " · " + escapeHtml(p.forma_pagamento) : ""}`, v: Number(p.valor_recebido || 0) })),
     ...parcelas.map(p=>{ const { lead, venda } = labelVendaParcela(p); return { s: "+", t: lk(`openParcelaModal(${p.id})`, escapeHtml(`${lead ? lead.nome : "Venda"} · ${venda ? venda.servico_produto : "parcela"}`)), d: `recebida em ${fmtDataBR(p.data_realizada)}`, v: Number(p.valor || 0) }; }),
+    ...entradasAvulsasMes(mes, ano).map(e=>({ s: "+", t: lk(`abrirEntradaAvulsa(${e.id})`, escapeHtml(e.descricao || "Entrada")), d: `${escapeHtml(e.categoria || "entrada")} · recebida em ${fmtDataBR(e.data_recebimento)}`, v: Number(e.valor || 0) })),
     { s: "=", t: "Faturamento", v: l.faturamento, b: true },
     ...pagosViagem.filter(p=>Number(p.taxa_mp || 0)).map(p=>({ s: "−", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Taxa Mercado Pago · viagem #${p.viagem_id}`), v: Number(p.taxa_mp) })),
     ...repasses.map(p=>{ const v = viagens.find(x=>x.id === p.viagem_id); return { s: "−", t: lk(`abrirViagemDoPagamento(${p.viagem_id})`, `Repasse · viagem #${p.viagem_id}`), d: `${escapeHtml(v ? nomesMotoristasViagem(v) || "motorista" : "motorista")} · pago em ${fmtDataBR(p.data_pagamento)}`, v: Number(p.valor_repassado || 0) }; }),
@@ -10896,6 +11120,681 @@ function renderDetalheResumo(ano){
 function irParaGestaoDoMes(mes, ano){
   document.getElementById("gestao-mes").value = `${ano}-${String(mes).padStart(2,"0")}`;
   document.querySelector('.nav-item[data-tab="gestao"]').click();
+}
+
+// ===== FINANCEIRO: LIVRO-CAIXA =====
+// No jeito da Vida Financeira do Lapidar, mas para o dinheiro da Go Ladies
+// (05/10/2026). Não tem tabela própria de lançamentos: lê o que o CRM já
+// grava (pagamentos das viagens, repasses, parcelas de venda, despesas) e o
+// que a Juliana lança como motorista no app (sai da Caixinha Jú Motorista).
+// Só três coisas são novas: contas/caixinhas, transferências entre elas e
+// entradas avulsas (parceiros, patrocínio). Regras:
+// - Saldo = o informado no fim do dia de data_saldo_inicial + o que
+//   aconteceu depois, até hoje.
+// - Parte da Go Ladies numa viagem = o que caiu (líquido da taxa do MP) menos
+//   o repasse da motorista, que é a taxa que a própria viagem calcula. Em
+//   outros serviços ela decide caso a caso (parte_go_ladies; vazio = a definir).
+// - O CRM só mostra quanto deveria ir para cada caixinha; quem transfere é ela.
+let lcMes = null;
+let lcAbaAtual = "resumo";
+const LC_MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const LC_CATEGORIAS_ENTRADA = ["Parceiros (os)", "Cotas de patrocínio", "Serviço avulso", "Eventos", "Outras entradas"];
+const LC_STATUS_SEM_PREVISAO = ["Cancelada", "Cotando preço", "Preço recusado pela cliente"];
+
+function lcMesAtual(){
+  if(!lcMes){ const h = new Date(); lcMes = { mes: h.getMonth() + 1, ano: h.getFullYear() }; }
+  return lcMes;
+}
+function lcMudarMes(delta){
+  if(delta === 0) lcMes = null;
+  else {
+    const m = lcMesAtual();
+    const d = new Date(m.ano, m.mes - 1 + delta, 1);
+    lcMes = { mes: d.getMonth() + 1, ano: d.getFullYear() };
+  }
+  renderLivroCaixa();
+}
+function lcAba(nome){
+  lcAbaAtual = nome;
+  document.querySelectorAll(".lc-abas button").forEach(b=>b.classList.toggle("active", b.dataset.lcaba === nome));
+  ["resumo", "lancamentos", "contas", "categorias"].forEach(n=>{
+    document.getElementById("lc-pane-" + n).style.display = n === nome ? "" : "none";
+  });
+  renderLivroCaixa();
+}
+// "-R$ 2.420,40", como no Lapidar (o formatarMoedaBR dá "R$ -2.420,40").
+function lcR(v){ const n = Number(v || 0); return (n < 0 ? "-" : "") + formatarMoedaBR(Math.abs(n)); }
+function lcIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function lcLimitesMes(mes, ano){ return { de: lcIso(new Date(ano, mes - 1, 1)), ate: lcIso(new Date(ano, mes, 0)) }; }
+function lcDiaSeguinte(iso){ const d = new Date(String(iso).slice(0,10) + "T12:00:00"); d.setDate(d.getDate() + 1); return lcIso(d); }
+function lcNoMesDia(dataBase, mes, ano){
+  const dia = Math.min(Number(String(dataBase || "").slice(8,10)) || 1, new Date(ano, mes, 0).getDate());
+  return `${ano}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+}
+function finConta(id){ return finContas.find(c=>c.id === id) || null; }
+function contaRecebeViagens(){ return finContas.find(c=>c.recebe_viagens && c.ativa !== false) || null; }
+function caixinhaDoBolso(bolso){
+  return finContas.find(c=>c.tipo === "Caixinha" && c.bolso === bolso && c.ativa !== false)
+    || finContas.find(c=>c.bolso === bolso && c.ativa !== false) || null;
+}
+function preencherSelectFinConta(el, selecionada, vazio){
+  if(!el) return;
+  const sel = selecionada ? Number(selecionada) : null;
+  el.innerHTML = (vazio != null ? `<option value="">${escapeHtml(vazio)}</option>` : "")
+    + finContas.filter(c=>c.ativa !== false || c.id === sel)
+      .map(c=>`<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${escapeHtml((c.tipo === "Caixinha" ? "↳ " : "") + c.nome)}</option>`).join("");
+}
+function lcIcone(cat, tipo){
+  const c = String(cat || "").toLowerCase();
+  const mapa = [["combust", "gas-station"], ["manuten", "tool"], ["telefone", "device-mobile"], ["tecnolog", "sparkles"], ["viage", "car"],
+    ["repasse", "steering-wheel"], ["patroc", "heart-handshake"], ["parceir", "users"], ["anúnc", "speakerphone"], ["imposto", "building"],
+    ["motorista", "car"], ["serviço", "lifebuoy"], ["seguro", "shield-check"], ["contab", "calculator"], ["divulga", "speakerphone"]];
+  const achado = mapa.find(([k])=>c.includes(k));
+  return achado ? achado[1] : (tipo === "entrada" ? "cash" : tipo === "transf" ? "arrows-exchange" : "receipt");
+}
+
+// Gastos de motorista da Juliana (aba Carro do app). "Pago por outra pessoa"
+// não saiu da caixinha; manutenção planejada ainda não aconteceu.
+async function carregarGastosJuMotorista(){
+  const ids = motoristas.filter(ehMotoristaJuliana).map(m=>m.id);
+  if(!ids.length){ gastosJuMotorista = []; return; }
+  const [ra, rm, rd] = await Promise.all([
+    sb.from("motorista_abastecimentos").select("*").in("motorista_id", ids),
+    sb.from("motorista_manutencoes").select("*").in("motorista_id", ids),
+    sb.from("motorista_despesas").select("*").in("motorista_id", ids),
+  ]);
+  const lista = [];
+  (ra.data || []).forEach(a=>{ if(!a.pago_por_outra_pessoa && a.data) lista.push({ chave: "ab" + a.id, data: a.data, valor: Number(a.valor_total || 0), titulo: "Abastecimento" + (a.posto ? " · " + a.posto : ""), tipo: "Combustível", fixo: false }); });
+  (rm.data || []).forEach(m=>{ if(!m.pago_por_outra_pessoa && m.status === "feita" && m.data && Number(m.valor) > 0) lista.push({ chave: "mn" + m.id, data: m.data, valor: Number(m.valor), titulo: m.descricao || m.tipo || "Manutenção", tipo: "Manutenção do carro", fixo: false }); });
+  (rd.data || []).forEach(d=>{ if(!d.pago_por_outra_pessoa && d.data) lista.push({ chave: "dp" + d.id, data: d.data, valor: Number(d.valor || 0), titulo: d.descricao || d.categoria || "Gasto", tipo: d.categoria || "Gasto", fixo: !!d.fixo_mensal }); });
+  gastosJuMotorista = lista;
+}
+
+// Tudo o que entra, sai ou muda de lugar entre `de` e `ate` (inclusive),
+// realizado ou previsto. Cada item sabe abrir sua origem (acao) e, quando
+// previsto, ser marcado como feito (jaFoi).
+function lcColetar(de, ate){
+  const dentro = d => d && String(d).slice(0,10) >= de && String(d).slice(0,10) <= ate;
+  const itens = [];
+  const mp = contaRecebeViagens();
+  const pagosViagem = new Set();
+  pagamentosCliente.forEach(p=>{
+    if(p.status !== "Pago") return;
+    pagosViagem.add(p.viagem_id);
+    const data = String(p.data_pagamento || "").slice(0,10);
+    if(!dentro(data)) return;
+    const bruto = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
+    const liquido = p.valor_liquido != null ? Number(p.valor_liquido) : bruto - taxa;
+    itens.push({ chave: "pc" + p.id, data, tipo: "entrada", previsto: false, valor: liquido,
+      contaId: (p.conta_recebedora || "CPF Juliana") === "CPF Juliana" && mp ? mp.id : null,
+      titulo: `Viagem #${p.viagem_id}`, categoria: "Viagens",
+      sub: taxa ? `pagou ${lcR(bruto)} · taxa do Mercado Pago ${lcR(taxa)}` : (p.forma_pagamento || ""),
+      acao: `abrirViagemDoPagamento(${p.viagem_id})` });
+  });
+  viagens.forEach(v=>{
+    if(LC_STATUS_SEM_PREVISAO.includes(v.status) || pagosViagem.has(v.id) || !(Number(v.preco_cotado) > 0) || !dentro(v.data)) return;
+    itens.push({ chave: "vg" + v.id, data: String(v.data).slice(0,10), tipo: "entrada", previsto: true, valor: Number(v.preco_cotado),
+      contaId: mp ? mp.id : null, titulo: `Viagem #${v.id}`, categoria: "Viagens", sub: `${v.status || "agendada"} · ainda sem pagamento`,
+      acao: `abrirViagemDoPagamento(${v.id})` });
+  });
+  pagamentosMotorista.forEach(p=>{
+    const v = viagens.find(x=>x.id === p.viagem_id);
+    if(v && idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)))) return;
+    const pago = p.status === "Pago";
+    const data = String((pago ? p.data_pagamento : (p.data_prevista_pagamento || (v && v.data))) || "").slice(0,10);
+    if(!dentro(data) || !(Number(p.valor_repassado) > 0)) return;
+    itens.push({ chave: "pm" + p.id, data, tipo: "saida", previsto: !pago, valor: Number(p.valor_repassado),
+      contaId: mp ? mp.id : null, titulo: `Repasse · viagem #${p.viagem_id}`, categoria: "Repasse a motoristas",
+      sub: v ? nomesMotoristasViagem(v) || "motorista" : "motorista", acao: `abrirViagemDoPagamento(${p.viagem_id})`,
+      jaFoi: pago ? null : `abrirViagemDoPagamento(${p.viagem_id})` });
+  });
+  vendaParcelas.forEach(p=>{
+    const pago = p.status === "Pago";
+    const data = String((pago ? p.data_realizada : p.data_prevista) || "").slice(0,10);
+    if(!dentro(data)) return;
+    const { lead, venda } = labelVendaParcela(p);
+    itens.push({ chave: "vp" + p.id, data, tipo: "entrada", previsto: !pago, valor: Number(p.valor || 0),
+      contaId: p.fin_conta_id || null, titulo: `${venda ? venda.servico_produto : "Venda"} · ${lead ? lead.nome : "cliente"}`,
+      categoria: "Serviços do ecossistema", definir: pago && p.parte_go_ladies == null,
+      sub: p.parte_go_ladies != null ? `Go Ladies fica com ${lcR(p.parte_go_ladies)}` : "parte da Go Ladies a definir",
+      acao: `openParcelaModal(${p.id})`, jaFoi: pago ? null : `marcarParcelaPaga(${p.id})` });
+  });
+  finEntradas.forEach(e=>{
+    const pago = e.status === "Recebido";
+    const data = String((pago ? e.data_recebimento : e.data_prevista) || "").slice(0,10);
+    if(!dentro(data)) return;
+    itens.push({ chave: "fe" + e.id, data, tipo: "entrada", previsto: !pago, valor: Number(e.valor || 0),
+      contaId: e.fin_conta_id || null, titulo: e.descricao || "Entrada", categoria: e.categoria || "Outras entradas",
+      sub: e.parte_go_ladies != null ? `Go Ladies fica com ${lcR(e.parte_go_ladies)}` : "",
+      acao: `abrirEntradaAvulsa(${e.id})`, jaFoi: pago ? null : `lcJaFoiEntrada(${e.id})` });
+  });
+  contasPagar.forEach(c=>{
+    const pago = c.status === "Pago";
+    const data = String((pago ? (c.data_pagamento || c.vencimento) : c.vencimento) || "").slice(0,10);
+    if(!dentro(data)) return;
+    const aporte = gestaoAportes.some(a=>a.conta_pagar_id === c.id);
+    itens.push({ chave: "cp" + c.id, data, tipo: "saida", previsto: !pago, valor: Number(c.valor || 0),
+      contaId: aporte ? null : (c.fin_conta_id || null), aporte, titulo: c.descricao || "Despesa",
+      categoria: c.categoria || "Sem categoria", fixa: !!c.recorrente, aproximado: !!c.valor_muda,
+      acao: `openContaPagarModal(${c.id})`, jaFoi: pago ? null : `lcJaFoiDespesa(${c.id})` });
+  });
+  const ju = caixinhaDoBolso("Jú Motorista");
+  gastosJuMotorista.forEach(g=>{
+    const base = { tipo: "saida", valor: g.valor, contaId: ju ? ju.id : null, titulo: g.titulo, categoria: "Gastos de motorista",
+      sub: `${g.tipo} · lançado no app da motorista`, fixa: g.fixo, acao: "lcAvisoAppMotorista()" };
+    if(!g.fixo){ if(dentro(g.data)) itens.push({ ...base, chave: g.chave, data: g.data, previsto: g.data > hojeLocalISO() }); return; }
+    // Gasto fixo do app (seguro, parcela...): vale todo mês, no mesmo dia, a partir do mês dele.
+    let d = new Date(String(de).slice(0,4), Number(String(de).slice(5,7)) - 1, 1);
+    const fim = new Date(String(ate).slice(0,4), Number(String(ate).slice(5,7)) - 1, 1);
+    while(d <= fim){
+      const dia = lcNoMesDia(g.data, d.getMonth() + 1, d.getFullYear());
+      if(dia >= String(g.data).slice(0,10) && dentro(dia)) itens.push({ ...base, chave: g.chave + "-" + dia, data: dia, previsto: dia > hojeLocalISO() });
+      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    }
+  });
+  finTransferencias.forEach(t=>{
+    if(!dentro(t.data)) return;
+    const a = finConta(t.de_conta_id), b = finConta(t.para_conta_id);
+    itens.push({ chave: "tr" + t.id, data: String(t.data).slice(0,10), tipo: "transf", previsto: false, valor: Number(t.valor || 0),
+      deId: t.de_conta_id, paraId: t.para_conta_id, titulo: `${a ? a.nome : "?"} → ${b ? b.nome : "?"}`,
+      categoria: "Transferências", sub: t.observacao || "", acao: `abrirTransferencia(${t.id})` });
+  });
+  return itens;
+}
+// Mês inteiro: o coletado mais as despesas fixas que ainda não foram lançadas
+// nele (mesma regra da Gestão), como previstas, a partir do mês em que começaram.
+function lcItensDoMes(mes, ano){
+  const { de, ate } = lcLimitesMes(mes, ano);
+  const itens = lcColetar(de, ate);
+  recorrentesNaoLancadas(mes, ano).forEach(c=>{
+    const origem = String(c.data_pagamento || c.vencimento || "").slice(0,10);
+    if(!origem || origem.slice(0,7) > de.slice(0,7)) return;
+    itens.push({ chave: "rc" + c.id, data: lcNoMesDia(origem, mes, ano), tipo: "saida", previsto: true, valor: Number(c.valor || 0),
+      contaId: c.fin_conta_id || null, titulo: c.descricao || "Despesa", categoria: c.categoria || "Sem categoria",
+      fixa: true, aproximado: !!c.valor_muda, sub: "ainda não lançada este mês",
+      acao: `lancarRecorrente(${c.id}, ${mes}, ${ano})`, jaFoi: `lcJaFoiRecorrente(${c.id}, ${mes}, ${ano})` });
+  });
+  return itens.sort((a,b)=>b.data.localeCompare(a.data) || a.tipo.localeCompare(b.tipo));
+}
+// Saldo de hoje de uma conta ou caixinha (só o que é dela, sem as caixinhas de dentro).
+function lcSaldoConta(c){
+  const hoje = hojeLocalISO();
+  const inicio = String(c.data_saldo_inicial || hoje).slice(0,10);
+  if(inicio >= hoje) return Number(c.saldo_inicial || 0);
+  let saldo = Number(c.saldo_inicial || 0);
+  lcColetar(lcDiaSeguinte(inicio), hoje).forEach(i=>{
+    if(i.previsto) return;
+    if(i.tipo === "entrada" && i.contaId === c.id) saldo += i.valor;
+    if(i.tipo === "saida" && i.contaId === c.id) saldo -= i.valor;
+    if(i.tipo === "transf"){ if(i.deId === c.id) saldo -= i.valor; if(i.paraId === c.id) saldo += i.valor; }
+  });
+  return saldo;
+}
+// Quanto deveria ter ido para cada caixinha com o dinheiro que entrou entre
+// `de` e `ate`, e quanto ela já passou. Dinheiro que já caiu direto na
+// caixinha da Go Ladies não precisa ser transferido.
+function lcDeveria(de, ate){
+  const dentro = d => d && String(d).slice(0,10) >= de && String(d).slice(0,10) <= ate;
+  const gl = caixinhaDoBolso("Go Ladies"), ju = caixinhaDoBolso("Jú Motorista");
+  const r = { glViagens: 0, glOutros: 0, ju: 0, aDefinir: [], passouGl: 0, passouJu: 0, viagens: [] };
+  pagamentosCliente.forEach(p=>{
+    if(p.status !== "Pago" || !dentro(p.data_pagamento)) return;
+    const v = viagens.find(x=>x.id === p.viagem_id);
+    const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+    const repasse = Number((pg && pg.valor_repassado != null ? pg.valor_repassado : (v ? v.preco_motorista : 0)) || 0);
+    const liquido = p.valor_liquido != null ? Number(p.valor_liquido) : Number(p.valor_recebido || 0) - Number(p.taxa_mp || 0);
+    const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
+    r.glViagens += liquido - repasse;
+    if(ela) r.ju += repasse;
+    r.viagens.push({ id: p.viagem_id, liquido, repasse, ela, gl: liquido - repasse });
+  });
+  const jaNaGl = id => { const c = finConta(id); return c && c.bolso === "Go Ladies"; };
+  vendaParcelas.forEach(p=>{
+    if(p.status !== "Pago" || !dentro(p.data_realizada) || jaNaGl(p.fin_conta_id)) return;
+    if(p.parte_go_ladies == null) r.aDefinir.push(p); else r.glOutros += Number(p.parte_go_ladies);
+  });
+  finEntradas.forEach(e=>{
+    if(e.status !== "Recebido" || !dentro(e.data_recebimento) || jaNaGl(e.fin_conta_id)) return;
+    r.glOutros += Number(e.parte_go_ladies != null ? e.parte_go_ladies : e.valor || 0);
+  });
+  finTransferencias.forEach(t=>{
+    if(!dentro(t.data)) return;
+    const v = Number(t.valor || 0);
+    if(gl){ if(t.para_conta_id === gl.id) r.passouGl += v; if(t.de_conta_id === gl.id) r.passouGl -= v; }
+    if(ju){ if(t.para_conta_id === ju.id) r.passouJu += v; if(t.de_conta_id === ju.id) r.passouJu -= v; }
+  });
+  r.gl = r.glViagens + r.glOutros;
+  return r;
+}
+
+function renderLivroCaixa(){
+  const rot = document.getElementById("lc-mes-rotulo");
+  if(!rot) return;
+  const { mes, ano } = lcMesAtual();
+  rot.textContent = `${LC_MESES[mes - 1]} de ${ano}`;
+  const aviso = document.getElementById("lc-aviso-sql");
+  aviso.style.display = lcSqlFaltando ? "" : "none";
+  aviso.innerHTML = lcSqlFaltando ? `<b>Falta rodar o <code>schema_livro_caixa.sql</code></b> no Supabase (SQL Editor). Até lá dá para ver os números, mas não dá para cadastrar contas, caixinhas, transferências nem entradas avulsas.` : "";
+  if(lcAbaAtual === "resumo") renderLcResumo(mes, ano);
+  if(lcAbaAtual === "lancamentos") renderLcLancamentos();
+  if(lcAbaAtual === "contas") renderLcContas();
+  if(lcAbaAtual === "categorias") renderLcCategorias(mes, ano);
+}
+// Clicar num card, conta ou categoria leva à lista de lançamentos já filtrada.
+function lcIrParaLancamentos(filtros){
+  lcAba("lancamentos");
+  const f = filtros || {};
+  document.getElementById("lc-f-tipo").value = f.tipo || "";
+  document.getElementById("lc-f-status").value = f.status || "";
+  document.getElementById("lc-f-conta").value = f.conta || "";
+  document.getElementById("lc-f-cat").value = f.cat || "";
+  renderLcLancamentos();
+}
+function lcLinha(i){
+  const conta = i.contaId ? finConta(i.contaId) : null;
+  const sub = i.tipo === "transf" ? (i.sub || "transferência")
+    : [i.categoria, conta ? conta.nome : (i.aporte ? "do seu bolso (aporte)" : "conta não informada"), i.sub].filter(Boolean).join(" · ");
+  const selos = (i.fixa ? `<span class="lc-selo">fixa${i.aproximado ? " · valor muda" : ""}</span>` : "")
+    + (i.definir ? `<span class="lc-selo definir">a definir</span>` : "");
+  const sinal = i.tipo === "entrada" ? "+ " : i.tipo === "saida" ? "− " : "";
+  const cor = i.tipo === "entrada" ? "lc-pos" : i.tipo === "transf" ? "lc-azul" : "";
+  return `<div class="lc-item" onclick="${i.acao}">
+      <div class="lc-ico ${i.tipo}"><svg class=ic aria-hidden=true><use href=#i-${lcIcone(i.categoria, i.tipo)} /></svg></div>
+      <div class="lc-meio"><div class="lc-tit">${escapeHtml(i.titulo)}${selos}</div><div class="lc-sub">${escapeHtml(sub)}</div></div>
+      <div class="lc-dir"><div class="lc-val ${cor}">${sinal}${i.aproximado ? "≈ " : ""}${lcR(i.valor)}</div>
+        <div>${i.previsto ? `<span class="lc-selo previsto">previsto</span>` : ""}${i.jaFoi ? ` <button type="button" class="lc-ja" onclick="event.stopPropagation(); ${i.jaFoi}">✓ já foi</button>` : ""}</div></div>
+    </div>`;
+}
+
+function renderLcResumo(mes, ano){
+  const el = document.getElementById("lc-pane-resumo");
+  const itens = lcItensDoMes(mes, ano);
+  const soma = (tipo, prev) => itens.filter(i=>i.tipo === tipo && (prev == null || i.previsto === prev)).reduce((s,i)=>s + i.valor, 0);
+  const entR = soma("entrada", false), entT = soma("entrada"), saiR = soma("saida", false), saiT = soma("saida");
+  const aPagar = itens.filter(i=>i.tipo === "saida" && i.previsto);
+  const card = (t, v, cor, s, acao) => `<div class="lc-card" onclick="${acao}"><div class="t">${t}</div><div class="v ${cor}">${v}</div><div class="s">${s}</div></div>`;
+  let html = `<div class="lc-cards">
+    ${card("Entradas", lcR(entR), "lc-pos", `previsto para o mês: ${lcR(entT)}`, "lcIrParaLancamentos({tipo:'entrada'})")}
+    ${card("Saídas", lcR(saiR), "lc-neg", `previsto para o mês: ${lcR(saiT)}`, "lcIrParaLancamentos({tipo:'saida'})")}
+    ${card("Sobra realizada", lcR(entR - saiR), entR - saiR >= 0 ? "lc-pos" : "lc-neg", `sobra prevista: ${lcR(entT - saiT)}`, "lcIrParaLancamentos({status:'realizado'})")}
+    ${card("Ainda a pagar", lcR(aPagar.reduce((s,i)=>s + i.valor, 0)), "lc-azul", `${aPagar.length} conta(s) em aberto no mês`, "lcIrParaLancamentos({tipo:'saida', status:'previsto'})")}
+  </div>`;
+
+  // Para onde vai o dinheiro que entrou: deveria × passou, no mês e desde o começo do livro.
+  const gl = caixinhaDoBolso("Go Ladies"), ju = caixinhaDoBolso("Jú Motorista");
+  const { de, ate } = lcLimitesMes(mes, ano);
+  const d = lcDeveria(de, ate);
+  const linhaCx = (nome, conta, deveria, passou, detalhe) => {
+    const falta = deveria - passou;
+    const estado = Math.abs(falta) < 0.01 ? `<span class="lc-pos">em dia</span>`
+      : falta > 0 ? `falta passar <b>${lcR(falta)}</b>` : `passou <b>${lcR(-falta)}</b> a mais`;
+    return `<tr><td><b>${escapeHtml(nome)}</b><div class="lc-sub">${detalhe}</div></td>
+      <td style="text-align:right;">${lcR(deveria)}</td><td style="text-align:right;">${lcR(passou)}</td>
+      <td style="text-align:right;">${estado}${falta > 0.009 && conta ? `<div><button type="button" class="lc-ja" style="margin-top:4px;" onclick="abrirTransferencia(null, ${conta.id}, ${falta.toFixed(2)})">Transferir agora</button></div>` : ""}</td></tr>`;
+  };
+  let acumulado = "";
+  if(gl){
+    const desde = lcDiaSeguinte(String(gl.data_saldo_inicial || hojeLocalISO()).slice(0,10));
+    if(desde <= hojeLocalISO()){
+      const t = lcDeveria(desde, hojeLocalISO());
+      const fGl = t.gl - t.passouGl, fJu = t.ju - t.passouJu;
+      acumulado = `<p class="lc-sub" style="margin:10px 0 0;">Desde ${fmtDataBR(desde)} (quando o saldo das caixinhas foi informado): Go Ladies ${fGl > 0.009 ? `falta ${lcR(fGl)}` : "em dia"} · Jú Motorista ${fJu > 0.009 ? `falta ${lcR(fJu)}` : "em dia"}.</p>`;
+    }
+  }
+  html += `<div class="panel">
+    <div class="lc-sec"><div><h3><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Para onde vai o dinheiro que entrou</h3>
+      <p>O CRM só mostra; quem transfere é você. Viagem: a Go Ladies fica com o que caiu menos o repasse da motorista (a taxa que a própria viagem calcula).</p></div></div>
+    ${!finContas.length ? `<p class="lc-sub">Cadastre a conta e as caixinhas em <a href="#" onclick="lcAba('contas'); return false;">Contas e caixinhas</a>.</p>` : `
+    <table class="tbl lc-tbl"><thead><tr><th>Caixinha</th><th style="text-align:right;">Deveria receber</th><th style="text-align:right;">Você passou</th><th style="text-align:right;">Situação</th></tr></thead><tbody>
+      ${linhaCx(gl ? gl.nome : "Caixinha Go Ladies", gl, d.gl, d.passouGl, `viagens ${lcR(d.glViagens)}${d.glOutros ? ` + outros serviços ${lcR(d.glOutros)}` : ""} · <a href="#" onclick="lcAbrirConta${gl ? `(${gl.id})` : "s()"}; return false;">ver extrato</a>`)}
+      ${linhaCx(ju ? ju.nome : "Caixinha Jú Motorista", ju, d.ju, d.passouJu, `repasse das viagens que você dirigiu · <a href="#" onclick="lcAbrirConta${ju ? `(${ju.id})` : "s()"}; return false;">ver extrato</a>`)}
+    </tbody></table>
+    ${d.aDefinir.length ? `<p style="margin:10px 0 0; font-size:13px;"><span class="lc-selo definir" style="margin:0;">a definir</span> ${d.aDefinir.length} recebimento(s) sem a parte da Go Ladies: ${d.aDefinir.map(p=>{ const { lead, venda } = labelVendaParcela(p); return `<a href="#" onclick="openParcelaModal(${p.id}); return false;">${escapeHtml((venda ? venda.servico_produto : "venda") + " · " + (lead ? lead.nome : ""))} (${lcR(p.valor)})</a>`; }).join(", ")}</p>` : ""}
+    ${acumulado}`}
+  </div>`;
+
+  // Olha isso com carinho: contas vencidas ou que vencem em até 10 dias, e saldo negativo.
+  const hoje = hojeLocalISO();
+  const limite = lcIso(new Date(Date.now() + 10 * 86400000));
+  const hm = new Date();
+  const deAberto = lcColetar("2000-01-01", limite).filter(i=>i.tipo === "saida" && i.previsto && i.jaFoi);
+  const recorrHoje = lcItensDoMes(hm.getMonth() + 1, hm.getFullYear()).filter(i=>i.chave.startsWith("rc") && i.data <= limite);
+  const atencao = [...deAberto, ...recorrHoje].sort((a,b)=>a.data.localeCompare(b.data));
+  const negativos = finContas.filter(c=>c.ativa !== false).map(c=>({ c, s: lcSaldoConta(c) })).filter(x=>x.s < -0.009);
+  if(atencao.length || negativos.length){
+    html += `<div class="panel lc-carinho">
+      <h3><svg class=ic aria-hidden=true><use href=#i-alarm /></svg> Olha isso com carinho</h3>
+      <p class="lc-sub" style="margin:-6px 0 8px;">Nada aqui é cobrança, é só para nada passar batido.</p>
+      ${negativos.map(x=>`<div class="lc-item" onclick="lcAbrirConta(${x.c.id})"><div class="lc-ico"><svg class=ic aria-hidden=true><use href=#i-building /></svg></div>
+        <div class="lc-meio"><div class="lc-tit">Saldo negativo</div><div class="lc-sub">${escapeHtml(x.c.nome)} está com ${lcR(x.s)} aqui no CRM. Quase sempre falta registrar uma entrada ou o saldo inicial está desatualizado. Confira com o saldo do banco.</div></div>
+        <div class="lc-dir"><button type="button" class="lc-ja" onclick="event.stopPropagation(); abrirFinConta(${x.c.id})">ajustar saldo</button></div></div>`).join("")}
+      ${atencao.map(i=>{ const venc = i.data < hoje ? `venceu em ${fmtDataBR(i.data)}` : i.data === hoje ? "vence hoje" : `vence em ${fmtDataBR(i.data)}`;
+        return lcLinha({ ...i, sub: [venc, i.sub].filter(Boolean).join(" · "), previsto: false }); }).join("")}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderLcLancamentos(){
+  const { mes, ano } = lcMesAtual();
+  const itens = lcItensDoMes(mes, ano);
+  const selConta = document.getElementById("lc-f-conta"), selCat = document.getElementById("lc-f-cat");
+  const contaAtual = selConta.value, catAtual = selCat.value;
+  selConta.innerHTML = `<option value="">Todas as contas</option>` + finContas.map(c=>`<option value="${c.id}">${escapeHtml((c.tipo === "Caixinha" ? "↳ " : "") + c.nome)}</option>`).join("") + `<option value="sem">Conta não informada</option>`;
+  selConta.value = contaAtual;
+  const cats = [...new Set(itens.map(i=>i.categoria))].sort((a,b)=>a.localeCompare(b, "pt-BR"));
+  if(catAtual && !cats.includes(catAtual)) cats.push(catAtual);
+  selCat.innerHTML = `<option value="">Todas as categorias</option>` + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  selCat.value = catAtual;
+  const ft = document.getElementById("lc-f-tipo").value, fs = document.getElementById("lc-f-status").value;
+  const lista = itens.filter(i=>{
+    if(ft && i.tipo !== ft) return false;
+    if(fs === "previsto" && !i.previsto) return false;
+    if(fs === "realizado" && i.previsto) return false;
+    if(contaAtual === "sem" && (i.contaId || i.tipo === "transf")) return false;
+    if(contaAtual && contaAtual !== "sem"){ const id = Number(contaAtual); if(i.contaId !== id && i.deId !== id && i.paraId !== id) return false; }
+    if(catAtual && i.categoria !== catAtual) return false;
+    return true;
+  });
+  let html = "", diaAnterior = "";
+  lista.forEach(i=>{
+    if(i.data !== diaAnterior){ html += `<div class="lc-dia">${fmtDataBR(i.data)}</div>`; diaAnterior = i.data; }
+    html += lcLinha(i);
+  });
+  document.getElementById("lc-lista").innerHTML = html
+    ? `<div class="panel" style="padding-top:4px;">${html}</div>`
+    : `<div class="panel"><p class="empty">Nada neste mês com esses filtros.</p></div>`;
+}
+
+function lcAbrirConta(id){ lcIrParaLancamentos({ conta: String(id) }); }
+function lcAbrirContas(){ lcAba("contas"); }
+function renderLcContas(){
+  const el = document.getElementById("lc-pane-contas");
+  const ativas = finContas.filter(c=>c.ativa !== false);
+  const contas = ativas.filter(c=>c.tipo !== "Caixinha"), caixinhas = ativas.filter(c=>c.tipo === "Caixinha");
+  const saldos = new Map(finContas.map(c=>[c.id, lcSaldoConta(c)]));
+  const total = ativas.reduce((s,c)=>s + saldos.get(c.id), 0);
+  const cartao = c => {
+    const s = saldos.get(c.id);
+    const filhas = caixinhas.filter(x=>x.conta_mae_id === c.id);
+    const emCx = filhas.reduce((t,x)=>t + saldos.get(x.id), 0);
+    const mae = c.conta_mae_id ? finConta(c.conta_mae_id) : null;
+    const rodape = c.tipo === "Caixinha"
+      ? `${escapeHtml(c.bolso)}${mae ? " · dentro de " + escapeHtml(mae.nome) : ""}`
+      : filhas.length ? `fora das caixinhas · nas caixinhas: ${lcR(emCx)} · ao todo ${lcR(s + emCx)}` : "sem caixinhas aqui";
+    return `<div class="lc-conta" onclick="lcAbrirConta(${c.id})" title="Ver os lançamentos desta ${c.tipo === "Caixinha" ? "caixinha" : "conta"}">
+      <a href="#" class="ed" onclick="event.stopPropagation(); abrirFinConta(${c.id}); return false;">editar</a>
+      <div class="n"><svg class=ic aria-hidden=true><use href=#i-${c.tipo === "Caixinha" ? "coins" : "building"} /></svg> ${escapeHtml(c.nome)}</div>
+      <div class="k">${c.tipo === "Caixinha" ? "Caixinha" : "Conta"}${c.recebe_viagens ? " · as clientes pagam aqui" : ""}</div>
+      <div class="v ${s < -0.009 ? "lc-neg" : ""}">${lcR(s)}</div>
+      <div class="s">${rodape}</div>
+      <div class="s" style="margin-top:4px;">saldo informado: ${lcR(c.saldo_inicial)} em ${fmtDataBR(String(c.data_saldo_inicial || "").slice(0,10))}</div>
+    </div>`;
+  };
+  const inativas = finContas.filter(c=>c.ativa === false);
+  el.innerHTML = `
+    <div class="lc-sec"><div><h3>Suas contas</h3><p>Ao todo <b>${lcR(total)}</b> em ${contas.length} conta(s) e ${caixinhas.length} caixinha(s) · o saldo se atualiza sozinho com o que for sendo marcado como feito.</p></div>
+      <div class="lc-acoes"><button class="btn ghost" type="button" onclick="abrirTransferencia()"><svg class=ic aria-hidden=true><use href=#i-arrows-exchange /></svg> Transferir</button><button class="btn" type="button" onclick="abrirFinConta(null, 'Conta')">+ Nova conta</button></div></div>
+    <div class="lc-contas">${contas.map(cartao).join("") || `<p class="empty">Nenhuma conta cadastrada ainda.</p>`}</div>
+    <div class="lc-sec"><div><h3>Suas caixinhas</h3><p>Dinheiro separado dentro de uma conta: o da Go Ladies, o seu como motorista.</p></div>
+      <button class="btn" type="button" onclick="abrirFinConta(null, 'Caixinha')">+ Nova caixinha</button></div>
+    <div class="lc-contas">${caixinhas.map(cartao).join("") || `<p class="empty">Nenhuma caixinha cadastrada ainda.</p>`}</div>
+    ${inativas.length ? `<p class="lc-sub">Fora de uso: ${inativas.map(c=>`<a href="#" onclick="abrirFinConta(${c.id}); return false;">${escapeHtml(c.nome)}</a>`).join(", ")}</p>` : ""}`;
+}
+
+function renderLcCategorias(mes, ano){
+  const el = document.getElementById("lc-pane-categorias");
+  const itens = lcItensDoMes(mes, ano).filter(i=>i.tipo !== "transf");
+  const grupos = {};
+  itens.forEach(i=>{
+    const g = grupos[i.categoria] || (grupos[i.categoria] = { cat: i.categoria, tipo: i.tipo, real: 0, prev: 0, n: 0 });
+    g.n++; if(i.previsto) g.prev += i.valor; else g.real += i.valor;
+  });
+  const linhas = tipo => Object.values(grupos).filter(g=>g.tipo === tipo).sort((a,b)=>(b.real + b.prev) - (a.real + a.prev))
+    .map(g=>`<div class="lc-item" onclick="lcIrParaLancamentos({cat:${escapeHtml(JSON.stringify(g.cat))}})">
+      <div class="lc-ico ${tipo}"><svg class=ic aria-hidden=true><use href=#i-${lcIcone(g.cat, tipo)} /></svg></div>
+      <div class="lc-meio"><div class="lc-tit">${escapeHtml(g.cat)}</div><div class="lc-sub">${g.n} lançamento(s)${g.prev ? ` · ${lcR(g.prev)} previsto` : ""}</div></div>
+      <div class="lc-dir"><div class="lc-val ${tipo === "entrada" ? "lc-pos" : ""}">${lcR(g.real)}</div></div></div>`).join("") || `<p class="empty">Nada neste mês.</p>`;
+  el.innerHTML = `
+    <div class="panel"><h3>Entradas de ${LC_MESES[mes - 1]}</h3>${linhas("entrada")}</div>
+    <div class="panel"><h3>Saídas de ${LC_MESES[mes - 1]}</h3>${linhas("saida")}</div>
+    <div class="panel"><h3>Nomes de categoria</h3>
+      <p class="lc-sub" style="margin:-6px 0 10px;">A categoria é texto livre: escreva uma nova direto na despesa ou na entrada e ela aparece aqui. Estas são as sugestões que já vêm na lista.</p>
+      <p style="font-size:13px; margin:0 0 6px;"><b>Entradas:</b> Viagens, Serviços do ecossistema, ${LC_CATEGORIAS_ENTRADA.map(escapeHtml).join(", ")}</p>
+      ${Object.entries(PLANO_CONTAS).map(([tipo, cats])=>`<p style="font-size:13px; margin:0 0 6px;"><b>Saídas · ${escapeHtml(tipo)}:</b> ${cats.map(escapeHtml).join(", ")}</p>`).join("")}
+      <p style="font-size:13px; margin:0;"><b>Do app da motorista:</b> Gastos de motorista (combustível, manutenção e gastos da aba Carro)</p>
+    </div>`;
+}
+
+// ----- Ações do Livro-caixa -----
+function lcAvisoAppMotorista(){
+  showToast("Esse gasto foi lançado no app da motorista (aba Carro). Edite por lá.");
+}
+function lcNovaSaida(){
+  openContaPagarModal(null);
+  const gl = caixinhaDoBolso("Go Ladies");
+  if(gl) document.getElementById("cp-fin-conta").value = gl.id;
+  document.getElementById("cp-status").value = "Pago";
+  document.getElementById("cp-data-pagamento").value = hojeLocalISO();
+}
+async function lcJaFoiDespesa(id){
+  const c = contasPagar.find(x=>x.id === id);
+  if(!c) return;
+  // Valor que muda ou sem valor: abre para conferir o valor de verdade antes.
+  if(c.valor_muda || !(Number(c.valor) > 0)){
+    openContaPagarModal(id);
+    document.getElementById("cp-status").value = "Pago";
+    document.getElementById("cp-data-pagamento").value = hojeLocalISO();
+    showToast("Confira o valor e salve.");
+    return;
+  }
+  const { error } = await sb.from("contas_pagar").update({ status: "Pago", data_pagamento: hojeLocalISO() }).eq("id", id);
+  if(error){ alert("Erro ao marcar como pago: " + error.message); return; }
+  showToast("Marcado como pago hoje.");
+  await recarregarTabelas("contas_pagar");
+}
+async function lcJaFoiRecorrente(id, mes, ano){
+  const c = contasPagar.find(x=>x.id === id);
+  if(!c) return;
+  if(c.valor_muda || !(Number(c.valor) > 0)){
+    lancarRecorrente(id, mes, ano);
+    document.getElementById("cp-status").value = "Pago";
+    document.getElementById("cp-data-pagamento").value = hojeLocalISO();
+    showToast("Confira o valor e salve.");
+    return;
+  }
+  const origem = String(c.vencimento || c.data_pagamento || "").slice(0,10);
+  const novo = {
+    descricao: c.descricao, categoria: c.categoria, valor: c.valor, parceiro_id: c.parceiro_id,
+    vencimento: lcNoMesDia(origem, mes, ano), data_pagamento: hojeLocalISO(), status: "Pago",
+    tipo_custo: c.tipo_custo, linha_negocio: c.linha_negocio, conta_origem: c.conta_origem, recorrente: true,
+    fin_conta_id: c.fin_conta_id, valor_muda: !!c.valor_muda,
+  };
+  const { error } = await sb.from("contas_pagar").insert(novo);
+  if(error){ alert("Erro ao lançar: " + error.message); return; }
+  showToast(`${c.descricao} lançada como paga hoje.`);
+  await recarregarTabelas("contas_pagar");
+}
+async function lcJaFoiEntrada(id){
+  const { error } = await sb.from("fin_entradas").update({ status: "Recebido", data_recebimento: hojeLocalISO() }).eq("id", id);
+  if(error){ alert("Erro ao marcar como recebida: " + error.message); return; }
+  showToast("Marcada como recebida hoje.");
+  await recarregarTabelas("fin_entradas");
+}
+function lcPrecisaSql(){
+  if(!lcSqlFaltando) return false;
+  alert("Falta rodar o schema_livro_caixa.sql no Supabase (SQL Editor) antes.");
+  return true;
+}
+
+let editingFinContaId = null;
+function abrirFinConta(id, tipo){
+  if(lcPrecisaSql()) return;
+  editingFinContaId = id || null;
+  const c = finContas.find(x=>x.id === id) || {};
+  document.getElementById("fin-conta-modal-title").textContent = id ? "Editar " + (c.tipo === "Caixinha" ? "caixinha" : "conta") : (tipo === "Caixinha" ? "Nova caixinha" : "Nova conta");
+  document.getElementById("fc-nome").value = c.nome || "";
+  document.getElementById("fc-tipo").value = c.tipo || tipo || "Conta";
+  document.getElementById("fc-mae").innerHTML = `<option value="">-</option>` + finContas.filter(x=>x.tipo !== "Caixinha" && x.id !== id)
+    .map(x=>`<option value="${x.id}">${escapeHtml(x.nome)}</option>`).join("");
+  document.getElementById("fc-mae").value = c.conta_mae_id || (contaRecebeViagens() || {}).id || "";
+  document.getElementById("fc-bolso").value = c.bolso || "Go Ladies";
+  document.getElementById("fc-recebe").checked = !!c.recebe_viagens;
+  document.getElementById("fc-saldo").value = c.saldo_inicial ?? "";
+  document.getElementById("fc-data").value = String(c.data_saldo_inicial || hojeLocalISO()).slice(0,10);
+  document.getElementById("fc-ativa").checked = c.ativa !== false;
+  document.getElementById("btn-excluir-fin-conta").style.display = id ? "inline-block" : "none";
+  fcTipoMudou();
+  document.getElementById("fin-conta-modal").classList.add("open");
+}
+function fcTipoMudou(){
+  document.getElementById("fc-mae-wrap").style.display = document.getElementById("fc-tipo").value === "Caixinha" ? "" : "none";
+}
+async function salvarFinConta(){
+  const nome = document.getElementById("fc-nome").value.trim();
+  if(!nome){ alert("Dê um nome para a conta"); return; }
+  const tipo = document.getElementById("fc-tipo").value;
+  const payload = {
+    nome, tipo,
+    conta_mae_id: tipo === "Caixinha" ? (Number(document.getElementById("fc-mae").value) || null) : null,
+    bolso: document.getElementById("fc-bolso").value,
+    recebe_viagens: document.getElementById("fc-recebe").checked,
+    saldo_inicial: Number(document.getElementById("fc-saldo").value || 0),
+    data_saldo_inicial: document.getElementById("fc-data").value || hojeLocalISO(),
+    ativa: document.getElementById("fc-ativa").checked,
+  };
+  if(!editingFinContaId) payload.ordem = finContas.length + 1;
+  // Só uma conta recebe os pagamentos das clientes.
+  if(payload.recebe_viagens){
+    const outra = finContas.find(c=>c.recebe_viagens && c.id !== editingFinContaId);
+    if(outra){ const r = await sb.from("fin_contas").update({ recebe_viagens: false }).eq("id", outra.id); if(r.error){ alert("Erro: " + r.error.message); return; } }
+  }
+  const { error } = editingFinContaId
+    ? await sb.from("fin_contas").update(payload).eq("id", editingFinContaId)
+    : await sb.from("fin_contas").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  showToast("Salvo!");
+  closeModal("fin-conta-modal");
+  await recarregarTabelas("fin_contas");
+}
+async function excluirFinConta(){
+  if(!editingFinContaId) return;
+  const c = finConta(editingFinContaId);
+  const usada = contasPagar.some(x=>x.fin_conta_id === c.id) || finEntradas.some(x=>x.fin_conta_id === c.id) || vendaParcelas.some(x=>x.fin_conta_id === c.id);
+  if(!confirm(`Excluir "${c.nome}"?` + (usada ? "\n\nTem lançamentos ligados a ela: eles ficam como \"conta não informada\" e as transferências dela somem. Se ela só saiu de uso, desmarque \"Conta em uso\" em vez de excluir." : ""))) return;
+  const { error } = await sb.from("fin_contas").delete().eq("id", c.id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  closeModal("fin-conta-modal");
+  await recarregarTabelas("fin_contas", "fin_transferencias", "fin_entradas", "contas_pagar", "venda_parcelas");
+}
+
+let editingTransfId = null;
+// abrirTransferencia(id) edita; abrirTransferencia(null, paraId, valor) já vem preenchida.
+function abrirTransferencia(id, paraId, valor){
+  if(lcPrecisaSql()) return;
+  if(!finContas.length){ alert("Cadastre as contas e caixinhas primeiro."); lcAba("contas"); return; }
+  editingTransfId = id || null;
+  const t = finTransferencias.find(x=>x.id === id) || {};
+  const mp = contaRecebeViagens();
+  preencherSelectFinConta(document.getElementById("ft-de"), t.de_conta_id || (mp && mp.id));
+  preencherSelectFinConta(document.getElementById("ft-para"), t.para_conta_id || paraId || (caixinhaDoBolso("Go Ladies") || {}).id);
+  document.getElementById("ft-valor").value = t.valor ?? (valor || "");
+  document.getElementById("ft-data").value = String(t.data || hojeLocalISO()).slice(0,10);
+  document.getElementById("ft-obs").value = t.observacao || "";
+  document.getElementById("fin-transf-modal-title").textContent = id ? "Editar transferência" : "Transferir";
+  document.getElementById("btn-excluir-fin-transf").style.display = id ? "inline-block" : "none";
+  ftSugerirValor(true);
+  document.getElementById("fin-transf-modal").classList.add("open");
+}
+// Mostra quanto falta passar para a caixinha escolhida no mês (só mostra).
+function ftSugerirValor(soTexto){
+  const el = document.getElementById("ft-sugestao");
+  const para = finConta(Number(document.getElementById("ft-para").value));
+  if(!para || !["Go Ladies", "Jú Motorista"].includes(para.bolso)){ el.textContent = ""; return; }
+  const h = new Date(), { de, ate } = lcLimitesMes(h.getMonth() + 1, h.getFullYear());
+  const d = lcDeveria(de, ate);
+  const falta = para.bolso === "Go Ladies" ? d.gl - d.passouGl : d.ju - d.passouJu;
+  el.textContent = falta > 0.009 ? `Em ${LC_MESES[h.getMonth()]}, ainda falta passar ${lcR(falta)} para ${para.nome}.` : `${para.nome} está em dia em ${LC_MESES[h.getMonth()]}.`;
+  if(!soTexto && falta > 0.009 && !editingTransfId && !document.getElementById("ft-valor").value) document.getElementById("ft-valor").value = falta.toFixed(2);
+}
+async function salvarTransferencia(){
+  const payload = {
+    de_conta_id: Number(document.getElementById("ft-de").value) || null,
+    para_conta_id: Number(document.getElementById("ft-para").value) || null,
+    valor: Number(document.getElementById("ft-valor").value || 0),
+    data: document.getElementById("ft-data").value || hojeLocalISO(),
+    observacao: document.getElementById("ft-obs").value.trim() || null,
+  };
+  if(!payload.de_conta_id || !payload.para_conta_id || payload.de_conta_id === payload.para_conta_id){ alert("Escolha duas contas diferentes"); return; }
+  if(!(payload.valor > 0)){ alert("Informe o valor"); return; }
+  const { error } = editingTransfId
+    ? await sb.from("fin_transferencias").update(payload).eq("id", editingTransfId)
+    : await sb.from("fin_transferencias").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  showToast("Transferência salva!");
+  closeModal("fin-transf-modal");
+  await recarregarTabelas("fin_transferencias");
+}
+async function excluirTransferencia(){
+  if(!editingTransfId || !confirm("Excluir esta transferência?")) return;
+  const { error } = await sb.from("fin_transferencias").delete().eq("id", editingTransfId);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  closeModal("fin-transf-modal");
+  await recarregarTabelas("fin_transferencias");
+}
+
+let editingEntradaId = null;
+function abrirEntradaAvulsa(id){
+  if(lcPrecisaSql()) return;
+  editingEntradaId = id || null;
+  const e = finEntradas.find(x=>x.id === id) || {};
+  document.getElementById("fin-entrada-modal-title").textContent = id ? "Editar entrada" : "Nova entrada";
+  document.getElementById("fe-categorias-lista").innerHTML = LC_CATEGORIAS_ENTRADA.map(c=>`<option value="${escapeHtml(c)}">`).join("");
+  document.getElementById("fe-descricao").value = e.descricao || "";
+  document.getElementById("fe-categoria").value = e.categoria || "";
+  document.getElementById("fe-valor").value = e.valor ?? "";
+  document.getElementById("fe-status").value = e.status || "Recebido";
+  preencherSelectFinConta(document.getElementById("fe-conta"), e.fin_conta_id || (id ? null : (contaRecebeViagens() || {}).id), "Não sei / outra");
+  document.getElementById("fe-data-prevista").value = e.data_prevista || "";
+  document.getElementById("fe-data-recebimento").value = e.data_recebimento || (id ? "" : hojeLocalISO());
+  document.getElementById("fe-parte").value = e.parte_go_ladies ?? "";
+  document.getElementById("fe-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+  document.getElementById("fe-parceiro").value = e.parceiro_id || "";
+  document.getElementById("fe-obs").value = e.observacao || "";
+  document.getElementById("btn-excluir-fin-entrada").style.display = id ? "inline-block" : "none";
+  document.getElementById("fin-entrada-modal").classList.add("open");
+}
+async function salvarEntradaAvulsa(){
+  const descricao = document.getElementById("fe-descricao").value.trim();
+  const valor = Number(document.getElementById("fe-valor").value || 0);
+  if(!descricao){ alert("Descrição é obrigatória"); return; }
+  if(!(valor > 0)){ alert("Informe o valor"); return; }
+  const status = document.getElementById("fe-status").value;
+  const payload = {
+    descricao, valor, status,
+    categoria: document.getElementById("fe-categoria").value.trim() || null,
+    fin_conta_id: Number(document.getElementById("fe-conta").value) || null,
+    data_prevista: document.getElementById("fe-data-prevista").value || null,
+    data_recebimento: document.getElementById("fe-data-recebimento").value || (status === "Recebido" ? hojeLocalISO() : null),
+    parte_go_ladies: document.getElementById("fe-parte").value === "" ? null : Number(document.getElementById("fe-parte").value),
+    parceiro_id: Number(document.getElementById("fe-parceiro").value) || null,
+    observacao: document.getElementById("fe-obs").value.trim() || null,
+  };
+  if(status === "Previsto" && !payload.data_prevista){ alert("Informe a data prevista"); return; }
+  const { error } = editingEntradaId
+    ? await sb.from("fin_entradas").update(payload).eq("id", editingEntradaId)
+    : await sb.from("fin_entradas").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  showToast("Salvo!");
+  closeModal("fin-entrada-modal");
+  await recarregarTabelas("fin_entradas");
+}
+async function excluirEntradaAvulsa(){
+  if(!editingEntradaId || !confirm("Excluir esta entrada?")) return;
+  const { error } = await sb.from("fin_entradas").delete().eq("id", editingEntradaId);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  closeModal("fin-entrada-modal");
+  await recarregarTabelas("fin_entradas");
 }
 
 // ===== GESTÃO DO NEGÓCIO (só Go Ladies) =====
@@ -10936,7 +11835,8 @@ function gestaoMes(mes, ano){
   const t = financeiroTransporteMes(mes, ano);
   const vendasMes = vendaParcelas
     .filter(p=>p.status === "Pago" && dentroDoMes(p.data_realizada, mes, ano))
-    .reduce((s,p)=>s + Number(p.valor || 0), 0);
+    .reduce((s,p)=>s + Number(p.valor || 0), 0)
+    + entradasAvulsasMes(mes, ano).reduce((s,e)=>s + Number(e.valor || 0), 0);
   const despesas = despesasPagasNoMes(mes, ano);
   const somaTipo = tipo => despesas.filter(c=>tipoCustoDe(c) === tipo).reduce((s,c)=>s + Number(c.valor || 0), 0);
   const fixos = somaTipo("Fixo");
@@ -11111,6 +12011,8 @@ function lancarRecorrente(id, mes, ano){
   document.getElementById("cp-linha-negocio").value = c.linha_negocio || "Estrutura geral";
   document.getElementById("cp-conta-origem").value = c.conta_origem || "CPF Juliana";
   document.getElementById("cp-recorrente").checked = true;
+  document.getElementById("cp-valor-muda").checked = !!c.valor_muda;
+  document.getElementById("cp-fin-conta").value = c.fin_conta_id || "";
   const diaBase = Number(String(c.vencimento || c.data_pagamento || "").slice(8,10)) || 1;
   const dia = Math.min(diaBase, new Date(ano, mes, 0).getDate());
   document.getElementById("cp-vencimento").value = `${ano}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
