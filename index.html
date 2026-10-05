@@ -1447,6 +1447,7 @@ tr.tr-click{cursor:pointer;}
         </div>
         <h3 style="margin:4px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> IA (Claude)</h3>
         <div class="cards" id="custos-ia-cards"></div>
+        <div class="panel" id="custos-ia-detalhe" style="display:none;"></div>
         <div class="panel" id="custos-ia-limite"></div>
         <div class="panel">
           <h3>Por recurso (mês atual)</h3>
@@ -4072,14 +4073,17 @@ async function carregarCustosNuvem(){
   const emReal = v => (d.moeda && d.moeda !== "BRL") ? Number(v || 0) * cot : Number(v || 0);
   const liquido = emReal(Number(d.mes_bruto || 0) + Number(d.mes_creditos || 0));
   custosNuvemLiquido = liquido;
-  cards.innerHTML = `
-    <div class="card"><div class="num">${formatarMoedaBR(liquido)}</div><div class="label">Cobrado no mês</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(emReal(d.mes_bruto))}</div><div class="label">Uso bruto no mês (antes da cota grátis)</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(emReal(d.mes_anterior_liquido))}</div><div class="label">Cobrado no mês anterior</div></div>
-  `;
+  // O detalhe do Google mora na fatura do console dele, não no Supabase
+  const abreFatura = `window.open('${URL_FATURA_GOOGLE}', '_blank', 'noopener')`;
+  const cardNuvem = (num, label) => `<div class="card card-link" title="Abrir a fatura no Google Cloud" onclick="${abreFatura}"><div class="num">${num}</div><div class="label">${label} <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></div></div>`;
+  cards.innerHTML = [
+    cardNuvem(formatarMoedaBR(liquido), "Cobrado no mês"),
+    cardNuvem(formatarMoedaBR(emReal(d.mes_bruto)), "Uso bruto no mês (antes da cota grátis)"),
+    cardNuvem(formatarMoedaBR(emReal(d.mes_anterior_liquido)), "Cobrado no mês anterior"),
+  ].join("");
   const servicos = d.por_servico || [];
   document.getElementById("custos-nuvem-servicos").innerHTML = servicos.map(s=>`
-    <tr>
+    <tr class="tr-click" title="Abrir a fatura no Google Cloud" onclick="${abreFatura}">
       <td>${escapeHtml(s.servico)}</td>
       <td>${formatarMoedaBR(emReal(s.bruto))}</td>
       <td>${formatarMoedaBR(emReal(s.creditos))}</td>
@@ -4103,12 +4107,13 @@ function renderCustosIa(d){
   const diasMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
   const previsto = mesBrl / hoje.getDate() * diasMes;
 
-  document.getElementById("custos-ia-cards").innerHTML = `
-    <div class="card"><div class="num">${formatarMoedaBR(mesBrl)}</div><div class="label">Gasto no mês · US$ ${Number(d.mes_usd || 0).toFixed(2)}</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(previsto)}</div><div class="label">Previsão até o fim do mês</div></div>
-    <div class="card"><div class="num">${brl(d.mes_anterior_usd)}</div><div class="label">Mês anterior</div></div>
-    <div class="card"><div class="num">${chamadas.toLocaleString("pt-BR")}</div><div class="label">Chamadas no mês · ${formatarMoedaBR(chamadas ? mesBrl / chamadas : 0)} cada</div></div>
-  `;
+  const cardIa = (filtro, num, label) => `<div class="card card-link${custosIaDetalhe === filtro ? " card-ativo" : ""}" title="Ver chamada por chamada" onclick="abrirChamadasIa('${filtro}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+  document.getElementById("custos-ia-cards").innerHTML = [
+    cardIa("mes", formatarMoedaBR(mesBrl), `Gasto no mês · US$ ${Number(d.mes_usd || 0).toFixed(2)}`),
+    cardIa("previsao", formatarMoedaBR(previsto), "Previsão até o fim do mês"),
+    cardIa("anterior", brl(d.mes_anterior_usd), "Mês anterior"),
+    cardIa("chamadas", chamadas.toLocaleString("pt-BR"), `Chamadas no mês · ${formatarMoedaBR(chamadas ? mesBrl / chamadas : 0)} cada`),
+  ].join("");
 
   const pct = limite ? mesBrl / limite * 100 : 0;
   const cor = pct >= 85 ? "var(--c-red)" : pct >= 60 ? "var(--c-amber)" : "var(--c-green)";
@@ -4124,7 +4129,7 @@ function renderCustosIa(d){
 
   const recursos = d.por_recurso || [];
   document.getElementById("custos-ia-recursos").innerHTML = recursos.map(r=>`
-    <tr>
+    <tr class="tr-click" title="Ver as chamadas deste recurso" data-k="${escapeHtml("recurso|" + r.recurso)}" onclick="abrirChamadasIa(this.dataset.k)">
       <td>${escapeHtml(RECURSOS_IA[r.recurso] || r.recurso)}</td>
       <td>${Number(r.chamadas).toLocaleString("pt-BR")}</td>
       <td>${brl(r.custo_usd)}</td>
@@ -4158,12 +4163,66 @@ function renderCustosIa(d){
       responsive: true, maintainAspectRatio: false,
       plugins: { tooltip: { callbacks: { label: c=>`${c.dataset.label}: ${formatarMoedaBR(c.parsed.y)}` } } },
       scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v=>formatarMoedaBR(v) } } },
+      // Clicar numa barra abre as chamadas daquele dia
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+      onClick: (e, els) => { if(els.length){ custosIaDetalhe = null; abrirChamadasIa("dia|" + dias[els[0].index]); } },
     },
   });
 
   document.getElementById("custos-ia-cotacao").value = cot || "";
   document.getElementById("custos-ia-limite-input").value = limite || "";
 }
+// Cards, linhas por recurso e barras do gráfico abrem as chamadas que formam
+// o número (tabela uso_ia). Filtro: "mes", "previsao", "chamadas", "anterior",
+// "recurso|<nome>" (mês atual) ou "dia|AAAA-MM-DD". Clicar de novo fecha.
+let custosIaDetalhe = null;
+async function abrirChamadasIa(filtro){
+  custosIaDetalhe = custosIaDetalhe === filtro ? null : filtro;
+  if(custosIaCache) renderCustosIa(custosIaCache);
+  const el = document.getElementById("custos-ia-detalhe");
+  if(!custosIaDetalhe){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const hoje = new Date();
+  const iniMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const [tipo, valor] = filtro.split(/\|(.*)/s);
+  let de = iniMes, ate = null, titulo = "Chamadas do mês";
+  if(tipo === "anterior"){ de = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); ate = iniMes; titulo = "Chamadas do mês anterior"; }
+  if(tipo === "dia"){ de = new Date(valor + "T00:00:00"); ate = new Date(de.getTime() + 86400000); titulo = `Chamadas de ${fmtDataBR(valor)}`; }
+  if(tipo === "recurso") titulo = `${escapeHtml(RECURSOS_IA[valor] || valor)} no mês`;
+  el.style.display = "";
+  el.innerHTML = `<p style="margin:0; color:var(--muted);">Carregando...</p>`;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  let q = sb.from("uso_ia").select("criado_em, recurso, modelo, tokens_entrada, tokens_saida, tokens_cache_leitura, tokens_cache_escrita, custo_usd")
+    .gte("criado_em", de.toISOString()).order("criado_em", { ascending: false }).limit(300);
+  if(ate) q = q.lt("criado_em", ate.toISOString());
+  if(tipo === "recurso") q = q.eq("recurso", valor);
+  const { data, error } = await q;
+  if(custosIaDetalhe !== filtro) return;   // ela já clicou em outra coisa
+  const cot = Number((custosIaCache && custosIaCache.config && custosIaCache.config.cotacao_dolar) || 0);
+  const brl = usd => usd == null ? "sem preço" : formatarMoedaBR(Number(usd) * cot);
+  const itens = data || [];
+  const total = itens.reduce((s,i)=>s + Number(i.custo_usd || 0), 0);
+  const tok = n => Number(n || 0).toLocaleString("pt-BR");
+  let explica = "";
+  if(tipo === "previsao"){
+    const diasMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+    explica = `<p style="margin:0 0 10px;">${formatarMoedaBR(total * cot)} gastos até o dia ${hoje.getDate()} ÷ ${hoje.getDate()} dia(s) × ${diasMes} dias do mês = <strong>${formatarMoedaBR(total * cot / hoje.getDate() * diasMes)}</strong>. É o ritmo de hoje esticado até o fim do mês.</p>`;
+  }
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">Chamada por chamada · ${titulo}</h3>
+      <button class="icon-btn" type="button" onclick="abrirChamadasIa(custosIaDetalhe)" aria-label="Fechar">✕</button>
+    </div>${explica}
+    ${error ? `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}).</p>` : `
+    <table class="tbl"><thead><tr><th>Quando</th><th>Recurso</th><th>Modelo</th><th>Tokens de entrada</th><th>Tokens de saída</th><th>Custo</th></tr></thead><tbody>
+    ${itens.map(i=>`<tr><td>${new Date(i.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+      <td>${escapeHtml(RECURSOS_IA[i.recurso] || i.recurso)}</td><td style="color:var(--muted);">${escapeHtml(i.modelo || "-")}</td>
+      <td>${tok(Number(i.tokens_entrada || 0) + Number(i.tokens_cache_leitura || 0) + Number(i.tokens_cache_escrita || 0))}${Number(i.tokens_cache_leitura || 0) ? `<div style="color:var(--muted); font-size:11.5px;">${tok(i.tokens_cache_leitura)} do cache (mais barato)</div>` : ""}</td>
+      <td>${tok(i.tokens_saida)}</td><td>${brl(i.custo_usd)}</td></tr>`).join("")
+      || `<tr><td class="empty" colspan="6">Nenhuma chamada nesse período</td></tr>`}
+    ${itens.length ? `<tr style="font-weight:700;"><td colspan="5">Total (${itens.length} chamada${itens.length > 1 ? "s" : ""})</td><td>${formatarMoedaBR(total * cot)}</td></tr>` : ""}
+    </tbody></table>`}
+    <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Cada linha é uma vez que o recurso chamou o Claude. Saída custa 5 vezes a entrada; leitura do cache custa 1/10.${itens.length === 300 ? " Mostrando as 300 mais recentes." : ""}</p>`;
+}
+const URL_FATURA_GOOGLE = "https://console.cloud.google.com/billing/reports";
 // Custos lançados à mão (assinatura do Claude, créditos de uso, outras ferramentas)
 let custosNuvemLiquido = 0;
 const CATEGORIAS_CUSTO_MANUAL = { assinatura: "Assinatura", creditos: "Créditos de uso", outro: "Outro" };
@@ -4190,9 +4249,10 @@ async function carregarCustosManuais(){
   `).join("") || `<tr><td class="empty" colspan="4">Nada lançado neste mês ainda</td></tr>`;
   const manual = itens.reduce((t, i)=>t + Number(i.valor_brl || 0), 0);
   const ia = Number(custosIaCache && custosIaCache.mes_usd || 0) * Number(custosIaCache && custosIaCache.config && custosIaCache.config.cotacao_dolar || 0);
+  const rola = id => `document.getElementById('${id}').scrollIntoView({behavior:'smooth', block:'center'})`;
   document.getElementById("custos-total-cards").innerHTML = `
-    <div class="card"><div class="num">${formatarMoedaBR(ia + custosNuvemLiquido + manual)}</div><div class="label">Tecnologia no mês (IA da Go Ladies + Google + lançado à mão)</div></div>
-    <div class="card"><div class="num">${formatarMoedaBR(manual)}</div><div class="label">Lançado à mão no mês</div></div>
+    <div class="card card-link" title="Ver as três partes" onclick="${rola("custos-ia-cards")}"><div class="num">${formatarMoedaBR(ia + custosNuvemLiquido + manual)}</div><div class="label">Tecnologia no mês: IA ${formatarMoedaBR(ia)} + Google ${formatarMoedaBR(custosNuvemLiquido)} + à mão ${formatarMoedaBR(manual)}</div></div>
+    <div class="card card-link" title="Ver os lançamentos" onclick="${rola("custos-manuais-lista")}"><div class="num">${formatarMoedaBR(manual)}</div><div class="label">Lançado à mão no mês</div></div>
   `;
 }
 async function lancarCustoManual(){
