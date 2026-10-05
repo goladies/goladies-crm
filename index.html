@@ -10834,43 +10834,91 @@ function diasDesde(dataStr){
   const h = new Date(); h.setHours(0,0,0,0);
   return Math.round((h - d) / 86400000);
 }
+// Cada pendência leva ao lugar onde se resolve: `acao` é o clique na linha
+// inteira; os links do detalhe abrem um item específico.
+const linkGestao = (acao, texto) => `<a href="#" onclick="event.stopPropagation(); ${acao}; return false;">${texto}</a>`;
 function gestaoPendencias(mes, ano){
   const itens = [];
   const pagoDa = id => pagamentosCliente.some(p=>p.viagem_id === id && p.status === "Pago");
   const semPagamento = viagens.filter(v=>v.status === "Concluída" && Number(v.preco_cotado || 0) > 0 && !pagoDa(v.id));
   if(semPagamento.length) itens.push({
     nivel: "alta", texto: `${semPagamento.length} viagem(ns) concluída(s) sem pagamento registrado`,
-    detalhe: semPagamento.slice(0,5).map(v=>`<a href="#" onclick="abrirViagemDoPagamento(${v.id}); return false;">#${v.id}</a>`).join(", "),
+    detalhe: semPagamento.slice(0,5).map(v=>linkGestao(`abrirViagemDoPagamento(${v.id})`, `#${v.id}`)).join(", "),
+    acao: semPagamento.length === 1 ? `abrirViagemDoPagamento(${semPagamento[0].id})` : "irParaViagens()",
+    dica: semPagamento.length === 1 ? "Abrir a viagem" : "Ver viagens",
   });
   const semRepasse = viagens.filter(v=>pagoDa(v.id) && Number(v.preco_motorista || 0) > 0
     && !pagamentosMotorista.some(m=>m.viagem_id === v.id)
     && !idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))));
   if(semRepasse.length) itens.push({
     nivel: "media", texto: `${semRepasse.length} viagem(ns) paga(s) sem repasse lançado para outra motorista`,
-    detalhe: semRepasse.slice(0,5).map(v=>`<a href="#" onclick="abrirViagemDoPagamento(${v.id}); return false;">#${v.id}</a>`).join(", "),
+    detalhe: semRepasse.slice(0,5).map(v=>linkGestao(`abrirViagemDoPagamento(${v.id})`, `#${v.id}`)).join(", "),
+    acao: semRepasse.length === 1 ? `abrirViagemDoPagamento(${semRepasse[0].id})` : "irParaViagens()",
+    dica: semRepasse.length === 1 ? "Abrir a viagem" : "Ver viagens",
   });
   const hojeStr = new Date().toISOString().slice(0,10);
   const vencidas = contasPagar.filter(c=>c.status !== "Pago" && c.vencimento && c.vencimento < hojeStr);
   if(vencidas.length) itens.push({
     nivel: "alta", texto: `${vencidas.length} despesa(s) vencida(s) sem pagamento`,
-    detalhe: vencidas.slice(0,5).map(c=>`<a href="#" onclick="openContaPagarModal(${c.id}); return false;">${escapeHtml(c.descricao || "-")}</a>`).join(", "),
+    detalhe: vencidas.slice(0,5).map(c=>linkGestao(`openContaPagarModal(${c.id})`, escapeHtml(c.descricao || "-"))).join(", "),
+    acao: vencidas.length === 1 ? `openContaPagarModal(${vencidas[0].id})` : "irParaFinanceiro('pagar')",
+    dica: vencidas.length === 1 ? "Abrir a despesa" : "Ver Contas a Pagar",
   });
   const recorr = recorrentesNaoLancadas(mes, ano);
   if(recorr.length) itens.push({
     nivel: "media", texto: `${recorr.length} despesa(s) que repete(m) todo mês ainda não lançada(s) em ${nomeMes(mes)}`,
-    detalhe: recorr.slice(0,6).map(c=>`${escapeHtml(c.descricao || "-")} (${formatarMoedaBR(c.valor)})`).join(", "),
+    detalhe: "Clique para lançar já preenchida: " + recorr.slice(0,6).map(c=>linkGestao(`lancarRecorrente(${c.id}, ${mes}, ${ano})`, `${escapeHtml(c.descricao || "-")} (${formatarMoedaBR(c.valor)})`)).join(", "),
+    acao: `lancarRecorrente(${recorr[0].id}, ${mes}, ${ano})`,
+    dica: "Lançar",
   });
   if(!metasFinanceiras.some(m=>m.mes === mes && m.ano === ano)) itens.push({
     nivel: "baixa", texto: `Sem meta cadastrada para ${nomeMes(mes)}/${ano}`,
-    detalhe: `<a href="#" onclick="irParaFinanceiro('metas'); return false;">Cadastrar meta</a>`,
+    detalhe: "Abre Financeiro → Metas com o mês já escolhido.",
+    acao: `irParaMetaDoMes(${mes}, ${ano})`, dica: "Cadastrar meta",
   });
   const cx = caixaAtual();
   const dias = diasDesde(cx.maisAntigo);
-  if(!cx.lista.length) itens.push({ nivel: "media", texto: "Nenhum saldo de caixa informado ainda", detalhe: "Anote o saldo do Mercado Pago no fim desta página." });
-  else if(dias > 7) itens.push({ nivel: "baixa", texto: `Saldo de caixa sem atualizar há ${dias} dias`, detalhe: "Anote o saldo atual no fim desta página." });
-  const semTipo = contasPagar.filter(c=>!c.tipo_custo && !tipoCustoDaCategoria(c.categoria)).length;
-  if(semTipo) itens.push({ nivel: "baixa", texto: `${semTipo} despesa(s) sem tipo (fixo, variável ou investimento)`, detalhe: "Sem tipo, elas contam como gasto fixo. Abra em Financeiro → Contas a Pagar e escolha." });
+  if(!cx.lista.length) itens.push({ nivel: "media", texto: "Nenhum saldo de caixa informado ainda", detalhe: "Anote o saldo do Mercado Pago no fim desta página.", acao: "irParaSaldoCaixa()", dica: "Anotar saldo" });
+  else if(dias > 7) itens.push({ nivel: "baixa", texto: `Saldo de caixa sem atualizar há ${dias} dias`, detalhe: "Anote o saldo atual no fim desta página.", acao: "irParaSaldoCaixa()", dica: "Anotar saldo" });
+  const semTipo = contasPagar.filter(c=>!c.tipo_custo && !tipoCustoDaCategoria(c.categoria));
+  if(semTipo.length) itens.push({
+    nivel: "baixa", texto: `${semTipo.length} despesa(s) sem tipo (fixo, variável ou investimento)`,
+    detalhe: "Sem tipo, elas contam como gasto fixo. Abra e escolha: " + semTipo.slice(0,6).map(c=>linkGestao(`openContaPagarModal(${c.id})`, escapeHtml(c.descricao || "-"))).join(", "),
+    acao: semTipo.length === 1 ? `openContaPagarModal(${semTipo[0].id})` : "irParaFinanceiro('pagar')",
+    dica: semTipo.length === 1 ? "Abrir a despesa" : "Ver Contas a Pagar",
+  });
   return itens;
+}
+function irParaViagens(subtab){
+  document.querySelector('[data-tab="transporte"]').click();
+  mostrarSubTab(subtab || "viagens");
+}
+function irParaSaldoCaixa(){
+  document.getElementById("gestao-painel-caixa").scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(()=>document.getElementById("gs-saldo").focus({ preventScroll: true }), 400);
+}
+function irParaMetaDoMes(mes, ano){
+  irParaFinanceiro("metas");
+  renderMetas();
+  document.getElementById("mf-mes").value = mes;
+  document.getElementById("mf-ano").value = ano;
+  document.getElementById("mf-faturamento").focus();
+}
+// Despesa que repete todo mês: abre "Nova despesa" já com os dados da
+// última vez, vencendo no mesmo dia do mês escolhido na Gestão.
+function lancarRecorrente(id, mes, ano){
+  const c = contasPagar.find(x=>x.id === id);
+  if(!c) return;
+  openContaPagarModal(null);
+  ["descricao", "categoria", "valor"].forEach(k=>{ document.getElementById("cp-" + k).value = c[k] ?? ""; });
+  document.getElementById("cp-parceiro").value = c.parceiro_id || "";
+  document.getElementById("cp-tipo-custo").value = c.tipo_custo || "";
+  document.getElementById("cp-linha-negocio").value = c.linha_negocio || "Estrutura geral";
+  document.getElementById("cp-conta-origem").value = c.conta_origem || "CPF Juliana";
+  document.getElementById("cp-recorrente").checked = true;
+  const diaBase = Number(String(c.vencimento || c.data_pagamento || "").slice(8,10)) || 1;
+  const dia = Math.min(diaBase, new Date(ano, mes, 0).getDate());
+  document.getElementById("cp-vencimento").value = `${ano}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
 }
 function renderGestao(){
   const cardsEl = document.getElementById("gestao-cards");
@@ -10903,31 +10951,32 @@ function renderGestao(){
   const rotuloNivel = { alta: "Urgente", media: "Atenção", baixa: "Ajuste" };
   document.getElementById("gestao-pendencias").innerHTML = pend.length
     ? `<table class="tbl"><tbody>${pend.map(p=>`
-        <tr><td style="width:90px;"><span class="tag ${classeNivel[p.nivel]}">${rotuloNivel[p.nivel]}</span></td>
-        <td><strong>${p.texto}</strong>${p.detalhe ? `<div style="color:var(--muted); font-size:12.5px; margin-top:2px;">${p.detalhe}</div>` : ""}</td></tr>`).join("")}</tbody></table>`
+        <tr class="tr-click" onclick="${p.acao}" title="${p.dica}"><td style="width:90px;"><span class="tag ${classeNivel[p.nivel]}">${rotuloNivel[p.nivel]}</span></td>
+        <td><strong>${p.texto}</strong>${p.detalhe ? `<div style="color:var(--muted); font-size:12.5px; margin-top:2px;">${p.detalhe}</div>` : ""}</td>
+        <td style="text-align:right; white-space:nowrap; color:var(--rosa-texto); font-size:12.5px; font-weight:600;">${p.dica} ›</td></tr>`).join("")}</tbody></table>`
     : `<p style="margin:0;">Nada pendente. Os números acima estão completos.</p>`;
 
   // Para onde foi o dinheiro: taxa e repasse entram como linhas, senão a
   // maior saída do transporte some da lista.
   const linhasGasto = [
-    { nome: "Repasse às motoristas", tipo: "Variável", linha: "Transporte", valor: g.t.repassado },
-    { nome: "Taxa Mercado Pago", tipo: "Variável", linha: "Transporte", valor: g.t.taxaMp },
+    { nome: "Repasse às motoristas", tipo: "Variável", linha: "Transporte", valor: g.t.repassado, chave: "gasto|repasse" },
+    { nome: "Taxa Mercado Pago", tipo: "Variável", linha: "Transporte", valor: g.t.taxaMp, chave: "gasto|taxa" },
   ];
   const porCategoria = {};
   g.despesas.forEach(c=>{
-    const chave = (c.categoria || "Sem categoria") + "|" + tipoCustoDe(c) + "|" + (c.linha_negocio || "Estrutura geral");
+    const chave = chaveGastoGestao(c);
     porCategoria[chave] = (porCategoria[chave] || 0) + Number(c.valor || 0);
   });
   Object.entries(porCategoria).forEach(([k,v])=>{
-    const [nome, tipo, linha] = k.split("|");
-    linhasGasto.push({ nome, tipo, linha, valor: v });
+    const [, nome, tipo, linha] = k.split("|");
+    linhasGasto.push({ nome, tipo, linha, valor: v, chave: k });
   });
   const gastos = linhasGasto.filter(x=>x.valor > 0).sort((a,b)=>b.valor - a.valor);
   const totalGastos = gastos.reduce((s,x)=>s + x.valor, 0);
   let acumulado = 0;
   document.getElementById("gestao-gastos").innerHTML = gastos.map(x=>{
     acumulado += x.valor;
-    return `<tr><td>${escapeHtml(x.nome)}</td><td>${escapeHtml(x.tipo)}</td><td>${escapeHtml(x.linha)}</td>
+    return `<tr class="tr-click" title="Ver de onde vem" data-k="${escapeHtml(x.chave)}" onclick="abrirDetalheGestao(this.dataset.k)"><td>${escapeHtml(x.nome)}</td><td>${escapeHtml(x.tipo)}</td><td>${escapeHtml(x.linha)}</td>
       <td>${formatarMoedaBR(x.valor)}</td><td>${Math.round(x.valor / totalGastos * 100)}%</td><td>${Math.round(acumulado / totalGastos * 100)}%</td></tr>`;
   }).join("") + (gastos.length
     ? `<tr style="font-weight:700;"><td colspan="3">Total</td><td>${formatarMoedaBR(totalGastos)}</td><td colspan="2"></td></tr>`
@@ -10939,7 +10988,7 @@ function renderGestao(){
     return { linha, receita, gasto, resultado: receita - gasto };
   }).filter(l=>l.receita || l.gasto);
   document.getElementById("gestao-linhas").innerHTML = resultadoLinha.map(l=>`
-    <tr><td>${escapeHtml(l.linha)}</td><td>${formatarMoedaBR(l.receita)}</td><td>${formatarMoedaBR(l.gasto)}</td>
+    <tr class="tr-click" title="Ver de onde vem" data-k="${escapeHtml("linha|" + l.linha)}" onclick="abrirDetalheGestao(this.dataset.k)"><td>${escapeHtml(l.linha)}</td><td>${formatarMoedaBR(l.receita)}</td><td>${formatarMoedaBR(l.gasto)}</td>
     <td style="color:${corValor(l.resultado)};">${formatarMoedaBR(l.resultado)}</td></tr>`).join("")
     || `<tr><td class="empty" colspan="4">Sem movimento em ${nomeMes(mes)}</td></tr>`;
 
@@ -10983,9 +11032,22 @@ function renderGestao(){
           { label: "Lucro", data: meses.map(m=>m.lucro), type: "line", borderColor: corCss("--c-green") || "#1FAA72", backgroundColor: corCss("--c-green") || "#1FAA72", tension: .3 },
         ]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+      // Clicar num mês do gráfico troca a página inteira para aquele mês.
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } },
+        onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        onClick: (e, els) => {
+          if(!els.length) return;
+          const m = meses[els[0].index];
+          document.getElementById("gestao-mes").value = `${m.ano}-${String(m.mes).padStart(2,"0")}`;
+          gestaoDetalheAberto = null;
+          renderGestao();
+          document.getElementById("gestao-cards").scrollIntoView({ behavior: "smooth", block: "start" });
+        } }
     });
   }
+}
+function chaveGastoGestao(c){
+  return "gasto|" + (c.categoria || "Sem categoria") + "|" + tipoCustoDe(c) + "|" + (c.linha_negocio || "Estrutura geral");
 }
 // "Como chegamos nesse número": clicar num card abre a conta linha a linha
 // logo abaixo dos cards; clicar de novo no mesmo card fecha.
@@ -11093,10 +11155,51 @@ function renderDetalheGestao(ctx){
     ${doAno.length ? `<tr style="font-weight:700;"><td colspan="2">Total</td><td>${R(cpf.bruto)}</td><td></td><td></td><td>${R(cpf.parte)}</td></tr>` : ""}</tbody></table>
     <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Estimativa para levar ao contador, não é cálculo de imposto. Nas viagens de outra motorista, sua parte é o que sobra depois do repasse.</p>`;
   }
+  else if(gestaoDetalheAberto === "gasto|repasse"){
+    titulo = `Repasse às motoristas em ${nomeMes(mes)}/${ano}`;
+    corpo = conta([
+      ...pagos.filter(x=>x.repasse > 0).map(x=>({ s: "+", t: linkViagem(x.v), d: `${x.ela ? "você dirigiu" : escapeHtml(x.v ? nomesMotoristasViagem(x.v) || "-" : "-")} · cliente pagou em ${fmtDataBR(x.p.data_pagamento)}${pagamentosMotorista.some(m=>m.viagem_id === x.p.viagem_id) ? "" : " · repasse ainda não lançado, usa o previsto"}`, v: x.repasse })),
+      { s: "=", t: "Total repassado", v: g.t.repassado },
+    ]) + `<p style="margin:10px 0 0;">${linkGestao("irParaFinanceiro('pagar')", "Ver em Financeiro → Contas a Pagar")}</p>`;
+  }
+  else if(gestaoDetalheAberto === "gasto|taxa"){
+    titulo = `Taxa Mercado Pago em ${nomeMes(mes)}/${ano}`;
+    corpo = conta([
+      ...pagos.filter(x=>x.taxa > 0).map(x=>({ s: "+", t: linkViagem(x.v), d: `pago em ${fmtDataBR(x.p.data_pagamento)}${x.p.forma_pagamento ? " · " + escapeHtml(x.p.forma_pagamento) : ""} · ${R(x.recebido)} recebido`, v: x.taxa })),
+      { s: "=", t: "Total de taxa", v: g.t.taxaMp },
+    ]) + `<p style="margin:10px 0 0;">${linkGestao("irParaViagens('financeiro-transporte')","Ver no Financeiro do transporte")}</p>`;
+  }
+  else if(gestaoDetalheAberto.startsWith("gasto|")){
+    const [, nome, tipo, linha] = gestaoDetalheAberto.split("|");
+    const itens = g.despesas.filter(c=>chaveGastoGestao(c) === gestaoDetalheAberto);
+    titulo = `${escapeHtml(nome)} em ${nomeMes(mes)}/${ano}`;
+    corpo = conta([
+      ...itens.map(c=>({ s: "+", t: linkDespesa(c), d: `${escapeHtml(tipo)} · ${escapeHtml(linha)} · pago em ${fmtDataBR(c.data_pagamento || c.vencimento)}`, v: Number(c.valor || 0) })),
+      { s: "=", t: "Total", v: itens.reduce((s,c)=>s + Number(c.valor || 0), 0) },
+    ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa despesa para abrir e corrigir categoria, tipo ou negócio.</p>`;
+  }
+  else if(gestaoDetalheAberto.startsWith("linha|")){
+    const linha = gestaoDetalheAberto.slice(6);
+    titulo = `${escapeHtml(linha)} em ${nomeMes(mes)}/${ano}`;
+    const ehTransporte = linha === "Transporte", ehVendas = linha === "Parceiras (os) e vendas";
+    const despesasLinha = g.despesas.filter(c=>(c.linha_negocio || "Estrutura geral") === linha);
+    const total = (ehTransporte ? g.t.recebido - g.t.taxaMp - g.t.repassado : ehVendas ? g.vendasMes : 0)
+      - despesasLinha.reduce((s,c)=>s + Number(c.valor || 0), 0);
+    corpo = conta([
+      ...(ehTransporte ? [
+        ...pagos.map(x=>({ s: "+", t: linkViagem(x.v), d: `cliente pagou em ${fmtDataBR(x.p.data_pagamento)}`, v: x.recebido })),
+        { s: "−", t: linkGestao("abrirDetalheGestao('gasto|taxa')", "Taxa Mercado Pago"), v: g.t.taxaMp },
+        { s: "−", t: linkGestao("abrirDetalheGestao('gasto|repasse')", "Repasse às motoristas"), v: g.t.repassado },
+      ] : []),
+      ...(ehVendas ? vendas.map(p=>({ s: "+", t: linkGestao("irParaFinanceiro('receber')", "Parcela de venda"), d: `recebida em ${fmtDataBR(p.data_realizada)}`, v: Number(p.valor || 0) })) : []),
+      ...despesasLinha.map(c=>({ s: "−", t: linkDespesa(c), d: `${tipoCustoDe(c)} · pago em ${fmtDataBR(c.data_pagamento || c.vencimento)}`, v: Number(c.valor || 0) })),
+      { s: "=", t: "Resultado", v: total, cor: corV(total) },
+    ]);
+  }
   el.style.display = "";
   el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h3 style="margin:0;">Como chegamos nesse número · ${titulo}</h3>
-      <button class="icon-btn" type="button" onclick="abrirDetalheGestao('${gestaoDetalheAberto}')" aria-label="Fechar">✕</button>
+      <button class="icon-btn" type="button" onclick="abrirDetalheGestao(gestaoDetalheAberto)" aria-label="Fechar">✕</button>
     </div>${corpo}`;
 }
 function aportesResumo(){
