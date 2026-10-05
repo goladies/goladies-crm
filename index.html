@@ -2343,13 +2343,6 @@ tr.tr-click{cursor:pointer;}
         <div><label class="vg-check"><input type="checkbox" id="vg-saida"> Saída do veículo confirmada</label></div>
         <div id="vg-liberar-manual-wrap" class="full" style="display:none;"><button type="button" class="btn secondary small" onclick="liberarViagemManualmente()">Liberar viagem manualmente</button></div>
         <div class="automatico"><label>Código de início <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-codigo-inicio" readonly tabindex="-1"><span class="dica">Gerado quando a motorista confirma.</span></div>
-        <div class="automatico"><label>Link de acompanhamento <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label>
-          <div style="display:flex; gap:6px;">
-            <input type="text" id="vg-link" readonly tabindex="-1" style="flex:1;">
-            <button type="button" class="btn ghost small" onclick="copiarLinkAcompanhamento()">Copiar</button>
-          </div>
-          <span class="dica">Gerado sozinho; aparece depois de salvar.</span>
-        </div>
         <div class="full" id="vg-reenvio-wrap" style="display:none;">
           <div id="vg-reenvio-codigo" style="display:none; margin-bottom:8px;">
             <button type="button" class="btn secondary small" onclick="reenviarCodigoCliente()"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Reenviar código pra cliente</button>
@@ -2737,7 +2730,8 @@ const VIAGEM_STATUS_CLASS = {"Solicitada":"pink","Cotando preço":"pink","Aguard
 // funções e nos apps que já o usam).
 const VIAGEM_STATUS_ROTULO = {"Preço recusado pela cliente":"Revisando preço"};
 function rotuloStatusViagem(s){ return VIAGEM_STATUS_ROTULO[s] || s; }
-const LINK_ACOMPANHAMENTO_BASE = "https://www.goladies.com.br/acompanhar.html?t=";
+// O link de acompanhar.html saiu em 05/10/2026: a cliente acompanha a viagem
+// pelo app (app.goladies.com.br). Versão antiga na tag acompanhar-ate-2026-10-05.
 // Tarifas sugeridas pra calcular preço a partir da distância (km).
 // Tabela decidida em 18/09/2026 a partir do estudo de precificação
 // (GoLadies_Estudo_Precificacao_e_Lucro_Motorista_v1.docx): a taxa fixa cobre
@@ -8054,11 +8048,6 @@ async function gravarParadasViagem(viagemId){
     if(ins.error){ alert("Erro ao salvar paradas: " + ins.error.message); return; }
   }
 }
-function copiarLinkAcompanhamento(){
-  const val = document.getElementById("vg-link").value;
-  if(!val) return;
-  navigator.clipboard.writeText(val).then(()=> showToast("Link copiado!"));
-}
 function recalcularHorarioChegada(){
   const partida = document.getElementById("vg-horario-partida").value;
   const duracaoStr = document.getElementById("vg-duracao-min").value;
@@ -8732,7 +8721,6 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-destino-retorno").value = v.destino_retorno_endereco || "";
   const diasMarcados = (v.dias_semana||"").split(",").map(d=>d.trim()).filter(Boolean);
   document.querySelectorAll("#vg-dias-semana-wrap input[type=checkbox]").forEach(cb=>{ cb.checked = diasMarcados.includes(cb.value); });
-  document.getElementById("vg-link").value = v.tracking_token ? (LINK_ACOMPANHAMENTO_BASE + v.tracking_token) : "";
   document.getElementById("vg-codigo-inicio").value = v.codigo_inicio || "(ainda não gerado)";
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
@@ -8958,7 +8946,6 @@ async function saveViagem(){
     origem_retorno_endereco: document.getElementById("vg-origem-retorno").value || null,
     destino_retorno_endereco: document.getElementById("vg-destino-retorno").value || null,
     dias_semana: [...document.querySelectorAll("#vg-dias-semana-wrap input[type=checkbox]:checked")].map(cb=>cb.value).join(", "),
-    link_acompanhamento: document.getElementById("vg-link").value,
     distancia_km: document.getElementById("vg-distancia-km").value === "" ? null : Number(document.getElementById("vg-distancia-km").value),
     tarifa_fixa: document.getElementById("vg-tarifa-fixa").value === "" ? null : Number(document.getElementById("vg-tarifa-fixa").value),
     valor_km: document.getElementById("vg-valor-km").value === "" ? null : Number(document.getElementById("vg-valor-km").value),
