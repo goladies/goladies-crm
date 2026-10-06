@@ -5838,6 +5838,12 @@ function ajustarLocalDivulgacao(){
 async function saveDivulgacao(){
   const titulo = document.getElementById("dv-titulo").value.trim();
   if(!titulo){ alert("Título é obrigatório"); return; }
+  // Site marcado + status que o site não mostra (divulgacoes_do_site): pergunta antes de salvar
+  const statusEl = document.getElementById("dv-status");
+  const marcouSite = document.querySelector('#dv-publico-alvo-wrap input[value="Site"]').checked;
+  if(marcouSite && statusEl.value==="Planejado"){
+    if(confirm(`Com o status "${statusEl.value}" isso não aparece no site.\n\nMudar para "Divulgado" e salvar?\n(Cancelar salva do jeito que está.)`)) statusEl.value = "Divulgado";
+  }
   const payload = {
     titulo,
     formato: document.getElementById("dv-formato").value,
