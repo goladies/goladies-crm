@@ -1909,11 +1909,12 @@ tr.tr-click{cursor:pointer;}
       <div><label>Parceira (o) ligada</label><select id="dv-parceiro"><option value="">-</option></select></div>
       <div><label>Status</label><select id="dv-status"></select></div>
       <div class="full">
-        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel; pode marcar mais de um)</span></label>
+        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel ou no site; pode marcar mais de um)</span></label>
         <div id="dv-publico-alvo-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
           <label class="chip-check"><input type="checkbox" value="Motoristas"> Motoristas</label>
           <label class="chip-check"><input type="checkbox" value="Clientes"> Clientes</label>
           <label class="chip-check"><input type="checkbox" value="Parceiras (os)"> Parceiras (os)</label>
+          <label class="chip-check" title="Aparece em goladies.com.br, na Comunidade, com status Divulgado, Inscrições abertas ou Em andamento"><input type="checkbox" value="Site"> Site (público)</label>
         </div>
       </div>
       <div><label>Data início</label><input type="date" id="dv-data-inicio"></div>
