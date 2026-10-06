@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — Histórico de ofertas de viagem por motorista.
 -- Hoje, quando uma corrida é oferecida a várias motoristas e uma aceita, o
 -- campo viagens.motorista_ids é SOBRESCRITO só com a vencedora — o registro
@@ -20,8 +25,8 @@ create table public.viagem_ofertas (
 alter table public.viagem_ofertas enable row level security;
 
 create policy "Staff podem tudo - viagem_ofertas" on public.viagem_ofertas
-  for all using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for all using (public.eh_staff())
+  with check (public.eh_staff());
 
 -- Toda vez que uma motorista nova entra em viagens.motorista_ids (viagem
 -- criada ou editada oferecendo pra mais gente), gera a oferta sozinha.

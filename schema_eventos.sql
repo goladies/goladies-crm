@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — Agenda de Eventos (Transporte → Eventos)
 -- Rodar uma vez em: Supabase → SQL Editor → New query → colar tudo → Run
 -- Pode rodar de novo sem problema (tudo é "if not exists" / "drop if exists").
@@ -92,7 +97,7 @@ begin
   foreach tbl in array array['eventos','evento_contatos','evento_links','evento_interacoes','evento_arquivos'] loop
     execute format('drop policy if exists %I on public.%I', 'Staff podem tudo - ' || tbl, tbl);
     execute format(
-      'create policy %I on public.%I for all using (auth.role() = ''authenticated'' and public.motorista_id_atual() is null) with check (auth.role() = ''authenticated'' and public.motorista_id_atual() is null)',
+      'create policy %I on public.%I for all using (public.eh_staff()) with check (public.eh_staff())',
       'Staff podem tudo - ' || tbl, tbl
     );
   end loop;
@@ -105,15 +110,15 @@ on conflict (id) do nothing;
 
 drop policy if exists "Staff le eventos-arquivos" on storage.objects;
 create policy "Staff le eventos-arquivos" on storage.objects
-  for select using (bucket_id = 'eventos-arquivos' and auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for select using (bucket_id = 'eventos-arquivos' and public.eh_staff());
 
 drop policy if exists "Staff envia eventos-arquivos" on storage.objects;
 create policy "Staff envia eventos-arquivos" on storage.objects
-  for insert with check (bucket_id = 'eventos-arquivos' and auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for insert with check (bucket_id = 'eventos-arquivos' and public.eh_staff());
 
 drop policy if exists "Staff apaga eventos-arquivos" on storage.objects;
 create policy "Staff apaga eventos-arquivos" on storage.objects
-  for delete using (bucket_id = 'eventos-arquivos' and auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for delete using (bucket_id = 'eventos-arquivos' and public.eh_staff());
 
 -- ── Lembretes pro n8n ───────────────────────────────────────────────────
 -- Devolve os eventos cujo "Lembrar em" já chegou (data de Porto Alegre, não

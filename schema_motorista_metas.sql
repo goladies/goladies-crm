@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies · Painel da motorista v3, Fase 2: Metas
 -- Rodar no Supabase → SQL Editor (projeto go-ladies-crm). Idempotente.
 --
@@ -24,8 +29,8 @@ alter table public.motorista_metas enable row level security;
 drop policy if exists "Staff podem tudo - motorista_metas" on public.motorista_metas;
 create policy "Staff podem tudo - motorista_metas" on public.motorista_metas
   for all
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff())
+  with check (public.eh_staff());
 
 drop policy if exists "Motorista gerencia as proprias metas" on public.motorista_metas;
 create policy "Motorista gerencia as proprias metas" on public.motorista_metas

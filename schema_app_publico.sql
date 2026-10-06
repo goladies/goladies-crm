@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — App público de transporte: pedido de viagem sem login,
 -- rastreio por link, preço no momento do despacho, e painel da motorista.
 -- Rodar uma vez em: Supabase → SQL Editor → New query → colar tudo → Run
@@ -155,8 +160,8 @@ $$;
 drop policy if exists "Autenticados podem tudo - motoristas" on public.motoristas;
 create policy "Staff podem tudo - motoristas" on public.motoristas
   for all
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff())
+  with check (public.eh_staff());
 
 create policy "Motorista ve a propria linha" on public.motoristas
   for select using (id = public.motorista_id_atual());
@@ -167,8 +172,8 @@ create policy "Motorista atualiza a propria linha" on public.motoristas
 drop policy if exists "Autenticados podem tudo - viagens" on public.viagens;
 create policy "Staff podem tudo - viagens" on public.viagens
   for all
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff())
+  with check (public.eh_staff());
 
 create policy "Motorista ve as proprias viagens" on public.viagens
   for select using (public.motorista_id_atual() = any(motorista_ids));

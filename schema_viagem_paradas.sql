@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies · Viagem com paradas (modelo garupa), Fase 5 do painel da motorista
 -- Rodar no Supabase → SQL Editor (projeto go-ladies-crm). Idempotente.
 --
@@ -25,8 +30,8 @@ alter table public.viagem_paradas enable row level security;
 drop policy if exists "Staff podem tudo - viagem_paradas" on public.viagem_paradas;
 create policy "Staff podem tudo - viagem_paradas" on public.viagem_paradas
   for all
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff())
+  with check (public.eh_staff());
 
 -- Motorista lê as paradas das viagens que foram ofertadas a ela
 -- ATENÇÃO (26/09/2026): esta versão não funciona pra motorista (ela não lê

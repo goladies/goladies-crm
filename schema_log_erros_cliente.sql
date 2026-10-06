@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — registro automático de erros do navegador (login
 -- travando, ações travando, exceções JS não tratadas) direto no Supabase,
 -- pra dar pra investigar depois sem precisar pegar o problema acontecendo
@@ -23,4 +28,4 @@ create policy "Qualquer um pode registrar erro" on public.crm_erros_cliente
 
 create policy "Staff pode ver erros registrados" on public.crm_erros_cliente
   for select
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff());

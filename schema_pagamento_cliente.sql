@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — Pagamento da cliente diretamente à Go Ladies
 -- Fluxo real: a cliente paga a LID, e a LID repassa à motorista a cada
 -- 15 dias (inicialmente). Espelha a estrutura de pagamentos_motorista,
@@ -19,5 +24,5 @@ create table if not exists public.pagamentos_cliente (
 alter table public.pagamentos_cliente enable row level security;
 
 create policy "Staff podem tudo - pagamentos_cliente" on public.pagamentos_cliente
-  for all using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for all using (public.eh_staff())
+  with check (public.eh_staff());

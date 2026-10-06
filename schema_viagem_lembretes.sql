@@ -1,3 +1,8 @@
+-- ATENÇÃO: as policies de equipe deste arquivo usam public.eh_staff(),
+-- criada em schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — log de lembretes de viagem enviados por WhatsApp
 -- (n8n), pra não mandar o mesmo alerta duas vezes. Usado pelos workflows
 -- de aviso 1h/30min/15min antes da partida e pelo alerta crítico de
@@ -17,5 +22,5 @@ create table public.viagem_lembretes (
 alter table public.viagem_lembretes enable row level security;
 
 create policy "Staff podem tudo - viagem_lembretes" on public.viagem_lembretes
-  for all using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  for all using (public.eh_staff())
+  with check (public.eh_staff());
