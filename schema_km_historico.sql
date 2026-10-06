@@ -32,8 +32,8 @@ alter table public.motorista_km_historico enable row level security;
 drop policy if exists "Staff podem tudo - motorista_km_historico" on public.motorista_km_historico;
 create policy "Staff podem tudo - motorista_km_historico" on public.motorista_km_historico
   for all
-  using (auth.role() = 'authenticated' and public.motorista_id_atual() is null)
-  with check (auth.role() = 'authenticated' and public.motorista_id_atual() is null);
+  using (public.eh_staff())
+  with check (public.eh_staff());
 
 drop policy if exists "Motorista ve o proprio historico de km" on public.motorista_km_historico;
 create policy "Motorista ve o proprio historico de km" on public.motorista_km_historico
