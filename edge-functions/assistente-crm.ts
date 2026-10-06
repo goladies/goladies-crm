@@ -37,7 +37,7 @@ function montarCors(req: Request) {
 // Anota os tokens de cada chamada em uso_ia (custo de IA por recurso no CRM).
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já existem em toda Edge Function.
 // Nunca deixa o registro de custo quebrar a resposta.
-async function registrarUsoIa(recurso: string, response: Anthropic.Message) {
+async function registrarUsoIa(recurso: string, response: { model: string; usage: unknown }) {
   try {
     const chave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/registrar_uso_ia`, {
@@ -336,19 +336,32 @@ Deno.serve(async (req) => {
 
     const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
 
-    const response = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 4000,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "medium" },
+    // Opus 5.5 (05/10/2026): não aceita mais "forçar ferramenta" (any), então
+    // vai "auto" com a instrução "chame exatamente uma ferramenta" no pedido.
+    // Como "auto" não garante a chamada, se vier só texto pede de novo uma
+    // vez. Se a IA recusar por segurança, a API tenta num modelo reserva.
+    const pedido = {
+      model: "claude-opus-5-5",
+      max_tokens: 8000,
+      thinking: { type: "adaptive" as const },
+      output_config: { effort: "medium" as const },
       system: SYSTEM,
       tools: TOOLS,
-      tool_choice: { type: "any", disable_parallel_tool_use: true },
-      messages: [{ role: "user", content: conteudo }],
-    });
+      tool_choice: { type: "auto" as const, disable_parallel_tool_use: true },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default" as const,
+    };
+    const mensagens: Anthropic.Beta.Messages.BetaMessageParam[] = [{ role: "user", content: conteudo }];
+    let response = await client.beta.messages.create({ ...pedido, messages: mensagens });
     await registrarUsoIa("assistente-crm", response);
-
-    const toolUse = response.content.find((b) => b.type === "tool_use");
+    let toolUse = response.content.find((b) => b.type === "tool_use");
+    if (!toolUse && response.stop_reason === "end_turn") {
+      mensagens.push({ role: "assistant", content: response.content });
+      mensagens.push({ role: "user", content: "Responda chamando exatamente uma das ferramentas." });
+      response = await client.beta.messages.create({ ...pedido, messages: mensagens });
+      await registrarUsoIa("assistente-crm", response);
+      toolUse = response.content.find((b) => b.type === "tool_use");
+    }
     if (!toolUse || toolUse.type !== "tool_use") {
       throw new Error("Não consegui interpretar. Tente descrever de outro jeito ou mandar outra foto.");
     }

@@ -38,7 +38,7 @@ function montarCors(req: Request) {
 // Anota os tokens de cada chamada em uso_ia (custo de IA por recurso no CRM).
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY já existem em toda Edge Function.
 // Nunca deixa o registro de custo quebrar a resposta.
-async function registrarUsoIa(recurso: string, response: Anthropic.Message) {
+async function registrarUsoIa(recurso: string, response: { model: string; usage: unknown }) {
   try {
     const chave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/registrar_uso_ia`, {
@@ -85,22 +85,23 @@ Deno.serve(async (req) => {
     const base64 = btoa(binary);
 
     const documentoBlock = mediaType === "application/pdf"
-      ? { type: "document" as const, source: { type: "base64" as const, media_type: mediaType, data: base64 } }
-      : { type: "image" as const, source: { type: "base64" as const, media_type: mediaType, data: base64 } };
+      ? { type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: base64 } }
+      : { type: "image" as const, source: { type: "base64" as const, media_type: mediaType as "image/jpeg" | "image/png" | "image/webp", data: base64 } };
 
     const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
 
-    const response = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 1500,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "low" },
-      tools: [
-        {
-          name: "extrair_dados_cnh",
-          description: "Registra os dados lidos na Carteira Nacional de Habilitação (CNH).",
-          strict: true,
-          input_schema: {
+    // Opus 5.5 (05/10/2026): não aceita mais "forçar ferramenta", então a
+    // leitura sai em JSON pelo formato estruturado (output_config.format),
+    // que garante o formato do schema. Se a IA recusar por segurança, a
+    // própria API tenta de novo num modelo reserva (fallbacks: "default").
+    const response = await client.beta.messages.create({
+      model: "claude-opus-5-5",
+      max_tokens: 4000,
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
             type: "object",
             properties: {
               nome_completo: { type: "string", description: "Nome completo do condutor, como impresso no documento. Vazio se ilegível." },
@@ -109,32 +110,37 @@ Deno.serve(async (req) => {
               numero_registro: { type: "string", description: "Número de registro da CNH. Vazio se ilegível." },
               categoria: { type: "string", description: "Categoria da habilitação. Use o campo rotulado 'CAT HAB' (ou 'Categoria') na frente do documento — NÃO use o campo 'ACC', que é outra informação. Se o verso do documento também estiver na imagem, confira a grade de categorias (colunas 9-12): a(s) categoria(s) com uma data preenchida na linha são as válidas, use isso pra confirmar ou corrigir o que leu na frente. Ex: 'B', 'AB', 'D'. Vazio se ilegível." },
               validade: { type: "string", description: "Data de validade no formato AAAA-MM-DD. Vazio se ilegível." },
-              tem_ear: { type: "boolean", description: "true se o campo de observações do documento contém 'EAR' (Exerce Atividade Remunerada), false se as observações estão visíveis e não contêm EAR, null se não foi possível ler o campo de observações." },
+              tem_ear: { anyOf: [{ type: "boolean" }, { type: "null" }], description: "true se o campo de observações do documento contém 'EAR' (Exerce Atividade Remunerada), false se as observações estão visíveis e não contêm EAR, null se não foi possível ler o campo de observações." },
             },
             required: ["nome_completo", "data_nascimento", "cpf", "numero_registro", "categoria", "validade", "tem_ear"],
             additionalProperties: false,
           },
         },
-      ],
-      tool_choice: { type: "tool", name: "extrair_dados_cnh" },
+      },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
       messages: [
         {
           role: "user",
           content: [
             documentoBlock,
-            { type: "text", text: "Extraia os dados desta CNH (Carteira Nacional de Habilitação) brasileira usando a ferramenta extrair_dados_cnh. Se algum campo não estiver legível ou não existir no documento, devolva string vazia (ou null em tem_ear)." },
+            { type: "text", text: "Extraia os dados desta CNH (Carteira Nacional de Habilitação) brasileira. Se algum campo não estiver legível ou não existir no documento, devolva string vazia (ou null em tem_ear)." },
           ],
         },
       ],
     });
     await registrarUsoIa("ler-cnh", response);
 
-    const toolUse = response.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
+    const bloco = response.content.find((b) => b.type === "text");
+    let dados: unknown = null;
+    if (response.stop_reason !== "refusal" && response.stop_reason !== "max_tokens" && bloco && bloco.type === "text") {
+      try { dados = JSON.parse(bloco.text); } catch { dados = null; }
+    }
+    if (!dados) {
       throw new Error("A IA não conseguiu ler o documento. Tente outra foto.");
     }
 
-    return new Response(JSON.stringify({ dados: toolUse.input }), {
+    return new Response(JSON.stringify({ dados }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
