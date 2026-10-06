@@ -1,3 +1,8 @@
+-- ATENÇÃO: este arquivo usa public.eh_staff(), criada em
+-- schema_painel_cliente.sql. Precisa do schema_painel_cliente.sql
+-- rodado antes (no banco atual ele já foi rodado). A regra antiga
+-- "motorista_id_atual() is not null" deixava cliente logada passar como equipe.
+
 -- Go Ladies — correção de segurança encontrada testando
 -- schema_confirmacao_codigo_avaliacao.sql: "liberar_viagem_manualmente"
 -- só checava "não é motorista", e um pedido sem login nenhum (anon) também
@@ -24,7 +29,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if auth.role() <> 'authenticated' or public.motorista_id_atual() is not null then
+  if auth.role() <> 'authenticated' or not public.eh_staff() then
     raise exception 'Só a equipe Go Ladies logada pode liberar viagem manualmente.';
   end if;
 

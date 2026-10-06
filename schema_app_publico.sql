@@ -41,8 +41,10 @@ create table if not exists public.solicitacoes_motorista (
 
 alter table public.solicitacoes_motorista enable row level security;
 
-create policy "Autenticados podem tudo - solicitacoes_motorista" on public.solicitacoes_motorista
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+drop policy if exists "Autenticados podem tudo - solicitacoes_motorista" on public.solicitacoes_motorista;
+drop policy if exists "Staff podem tudo - solicitacoes_motorista" on public.solicitacoes_motorista;
+create policy "Staff podem tudo - solicitacoes_motorista" on public.solicitacoes_motorista
+  for all using (public.eh_staff()) with check (public.eh_staff());
 
 -- ── Pedido público de viagem (formulário do site, sem login) ───────────────
 -- Em vez de abrir policy de insert direto nas tabelas pro papel anônimo,
