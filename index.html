@@ -1928,6 +1928,15 @@ tr.tr-click{cursor:pointer;}
       <div><label>Preço (R$)</label><input type="number" id="dv-preco"></div>
       <div><label>% comissão</label><input type="number" id="dv-comissao" placeholder="Só se Tipo = Terceiro com comissão"></div>
       <div class="full"><label>Descrição</label><textarea id="dv-descricao" rows="2"></textarea></div>
+      <div class="full">
+        <label>Arte do card <span style="font-weight:400; color:var(--muted);">(aparece só no site, em cima das informações)</span></label>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <img id="dv-arte-preview" alt="" style="display:none; max-width:120px; max-height:120px; border-radius:8px; border:1px solid var(--border);">
+          <input type="file" id="dv-arte-file" accept="image/*" style="display:none;" onchange="escolherArteDivulgacao(this)">
+          <button type="button" class="act act-edit" onclick="document.getElementById('dv-arte-file').click()"><svg class=ic aria-hidden=true><use href=#i-photo /></svg> <span id="dv-arte-botao">Escolher arte</span></button>
+          <button type="button" class="act act-del" id="dv-arte-remover" onclick="removerArteDivulgacao()" style="display:none;">Remover</button>
+        </div>
+      </div>
       <div class="full"><label>Notas</label><textarea id="dv-notas" rows="2"></textarea></div>
     </div>
     <div class="modal-actions">
@@ -5826,6 +5835,9 @@ function openDivulgacaoModal(id){
   document.getElementById("dv-comissao").value = d.comissao_percentual??"";
   document.getElementById("dv-descricao").value = d.descricao||"";
   document.getElementById("dv-notas").value = d.notas||"";
+  arteDivulgacaoPendente = null;
+  document.getElementById("dv-arte-file").value = "";
+  mostrarArteDivulgacao(urlArteDivulgacao(d.arte_path));
   document.getElementById("btn-excluir-divulgacao").style.display = id ? "block" : "none";
   document.getElementById("divulgacao-modal").classList.add("open");
 }
@@ -5864,19 +5876,77 @@ async function saveDivulgacao(){
     descricao: document.getElementById("dv-descricao").value,
     notas: document.getElementById("dv-notas").value,
   };
-  const { error } = editingDivulgacaoId
-    ? await sb.from("divulgacoes").update(payload).eq("id", editingDivulgacaoId)
-    : await sb.from("divulgacoes").insert(payload);
+  const { data: salvo, error } = editingDivulgacaoId
+    ? await sb.from("divulgacoes").update(payload).eq("id", editingDivulgacaoId).select("id").single()
+    : await sb.from("divulgacoes").insert(payload).select("id").single();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
+  await salvarArteDivulgacao(salvo.id, divulgacoes.find(x=>x.id===salvo.id)?.arte_path);
   showToast("Salvo!");
   await recarregarTabelas("divulgacoes");
   closeModal("divulgacao-modal");
 }
+// Arte do card: só o site mostra (divulgacoes_do_site). Bucket público
+// divulgacoes-artes; sobe depois do Salvar, já com o id (schema_divulgacao_arte.sql).
+let arteDivulgacaoPendente = null; // File novo, "remover" ou null (sem mudança)
+function urlArteDivulgacao(path){
+  return path ? `${SUPABASE_URL}/storage/v1/object/public/divulgacoes-artes/${path}` : null;
+}
+function mostrarArteDivulgacao(url){
+  const img = document.getElementById("dv-arte-preview");
+  img.src = url || "";
+  img.style.display = url ? "" : "none";
+  document.getElementById("dv-arte-remover").style.display = url ? "" : "none";
+  document.getElementById("dv-arte-botao").textContent = url ? "Trocar arte" : "Escolher arte";
+}
+// Mantém a proporção da arte (quadrada, retrato ou story) e reduz a 1080px no lado maior, JPEG.
+async function prepararArteDivulgacao(arquivo){
+  let bitmap;
+  try{ bitmap = await createImageBitmap(arquivo, { imageOrientation: "from-image" }); }
+  catch(e){ bitmap = await createImageBitmap(arquivo); }
+  const escala = Math.min(1, 1080 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * escala); canvas.height = Math.round(bitmap.height * escala);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); // PNG transparente não fica preto
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(res=>canvas.toBlob(res, "image/jpeg", 0.88));
+  return new File([blob], "arte.jpg", { type: "image/jpeg" });
+}
+async function escolherArteDivulgacao(input){
+  const arquivo = input.files && input.files[0];
+  if(!arquivo) return;
+  if(!arquivo.type.startsWith("image/")){ alert("Escolha uma imagem (JPG, PNG ou WEBP)."); input.value = ""; return; }
+  try{
+    arteDivulgacaoPendente = await prepararArteDivulgacao(arquivo);
+    mostrarArteDivulgacao(URL.createObjectURL(arteDivulgacaoPendente));
+  }catch(e){ alert("Não consegui ler essa imagem. Tente outra."); }
+  input.value = "";
+}
+function removerArteDivulgacao(){
+  arteDivulgacaoPendente = "remover";
+  mostrarArteDivulgacao(null);
+}
+async function salvarArteDivulgacao(id, pathAtual){
+  const pend = arteDivulgacaoPendente;
+  if(!pend) return;
+  let novoPath = null;
+  if(pend !== "remover"){
+    novoPath = `${id}/${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}.jpg`;
+    const { error: ue } = await sb.storage.from("divulgacoes-artes").upload(novoPath, pend, { contentType: "image/jpeg" });
+    if(ue){ alert("A divulgação foi salva, mas a arte não subiu: " + ue.message); return; }
+  }
+  const { error } = await sb.from("divulgacoes").update({ arte_path: novoPath }).eq("id", id);
+  if(error){ alert("Erro ao gravar a arte: " + error.message); return; }
+  if(pathAtual && pathAtual !== novoPath) await sb.storage.from("divulgacoes-artes").remove([pathAtual]);
+  arteDivulgacaoPendente = null;
+}
 async function deleteDivulgacao(id){
   id = id || editingDivulgacaoId;
   if(!confirm("Excluir esta divulgação?")) return;
+  const arte = divulgacoes.find(x=>x.id===id)?.arte_path;
   const { error } = await sb.from("divulgacoes").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
+  if(arte) await sb.storage.from("divulgacoes-artes").remove([arte]);
   await recarregarTabelas("divulgacoes");
   closeModal("divulgacao-modal");
 }
