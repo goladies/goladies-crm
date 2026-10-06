@@ -1918,8 +1918,11 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div><label>Data início</label><input type="date" id="dv-data-inicio"></div>
       <div><label>Data fim</label><input type="date" id="dv-data-fim"></div>
+      <div><label>Horário início</label><input type="time" id="dv-hora-inicio"></div>
+      <div><label>Horário fim</label><input type="time" id="dv-hora-fim"></div>
+      <div><label>Modalidade</label><select id="dv-modalidade" onchange="ajustarLocalDivulgacao()"></select></div>
       <div><label>Carga horária</label><input type="text" id="dv-carga-horaria"></div>
-      <div><label>Local</label><input type="text" id="dv-local" placeholder="Endereço ou 'Online'"></div>
+      <div class="full"><label id="dv-local-label">Local</label><input type="text" id="dv-local" placeholder="Endereço"></div>
       <div><label>Link de inscrição</label><input type="text" id="dv-link"></div>
       <div><label>Preço (R$)</label><input type="number" id="dv-preco"></div>
       <div><label>% comissão</label><input type="number" id="dv-comissao" placeholder="Só se Tipo = Terceiro com comissão"></div>
@@ -2985,8 +2988,14 @@ const STATUS_PECA_CLASS = {"Aberto":"indigo","Em busca":"amber","Encontrado":"gr
 const TIPO_PARCERIA = ["Mensalidade","Patrocínio","Embaixadora"];
 const TIPO_PARCERIA_CLASS = {"Mensalidade":"tipo-mensalidade","Patrocínio":"tipo-patrocinio","Embaixadora":"tipo-embaixadora"};
 
-const DIVULGACAO_FORMATOS = ["Evento","Curso"];
-const DIVULGACAO_TIPOS = ["Próprio Ladies","Terceiro - divulgação","Terceiro - com comissão"];
+// Formato agrupado: o grupo diz em que aba do site entra (Eventos ou Cursos).
+const DIVULGACAO_FORMATOS_GRUPOS = {
+  "Eventos": ["Live","Podcast","Palestra","Painel / debate","Roda de conversa","Workshop / oficina","Webinar","Encontro / meetup","Feira / exposição","Lançamento","Evento"],
+  "Cursos": ["Curso","Treinamento","Mentoria"]
+};
+const DIVULGACAO_FORMATOS = Object.values(DIVULGACAO_FORMATOS_GRUPOS).flat();
+const DIVULGACAO_MODALIDADES = ["Presencial","Online","Híbrido"];
+const DIVULGACAO_TIPOS = ["Próprio Go Ladies","Go Ladies convidada","Parceria (co-realização)","Terceiro - divulgação","Terceiro - com comissão"];
 const DIVULGACAO_STATUS = ["Planejado","Divulgado","Inscrições abertas","Em andamento","Concluído","Cancelado"];
 const DIVULGACAO_STATUS_CLASS = {"Planejado":"indigo","Divulgado":"amber","Inscrições abertas":"pink","Em andamento":"teal","Concluído":"green","Cancelado":"red"};
 
@@ -5763,7 +5772,7 @@ function renderDivulgacoes(){
   const ff = document.getElementById("filter-formato-divulgacao");
   const ft = document.getElementById("filter-tipo-divulgacao");
   const fs = document.getElementById("filter-status-divulgacao");
-  if(!ff.dataset.filled){ fillSelect(ff, ["",...DIVULGACAO_FORMATOS], ""); ff.querySelector("option").textContent="Todos os formatos"; ff.dataset.filled=1; }
+  if(!ff.dataset.filled){ fillSelectGrupos(ff, DIVULGACAO_FORMATOS_GRUPOS, "", "Todos os formatos"); ff.dataset.filled=1; }
   if(!ft.dataset.filled){ fillSelect(ft, ["",...DIVULGACAO_TIPOS], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
   if(!fs.dataset.filled){ fillSelect(fs, ["",...DIVULGACAO_STATUS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
   const formatoF = ff.value, tipoF = ft.value, statusF = fs.value;
@@ -5778,10 +5787,10 @@ function renderDivulgacoes(){
     const parceiro = parceiros.find(p=>p.id===d.parceiro_id);
     return `<tr class="tr-click" onclick="openDivulgacaoModal(${d.id})">
       <td><strong>${escapeHtml(d.titulo)}</strong></td>
-      <td>${escapeHtml(d.formato)}</td>
+      <td>${escapeHtml(d.formato)}${d.modalidade?` <span style="color:var(--muted);">· ${escapeHtml(d.modalidade)}</span>`:""}</td>
       <td>${escapeHtml(d.tipo)}</td>
       <td>${escapeHtml(parceiro?parceiro.nome:"-")}</td>
-      <td>${d.data_inicio||"-"}</td>
+      <td>${d.data_inicio?d.data_inicio.split("-").reverse().join("/"):"-"}${d.hora_inicio?" "+d.hora_inicio.slice(0,5).replace(":00","h").replace(":","h"):""}</td>
       <td><span class="status-badge ${DIVULGACAO_STATUS_CLASS[d.status]||''}">${escapeHtml(d.status)}</span></td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openDivulgacaoModal(${d.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteDivulgacao(${d.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
@@ -5789,7 +5798,8 @@ function renderDivulgacoes(){
 }
 function openDivulgacaoModal(id){
   editingDivulgacaoId = id || null;
-  fillSelect(document.getElementById("dv-formato"), DIVULGACAO_FORMATOS, "Evento");
+  fillSelectGrupos(document.getElementById("dv-formato"), DIVULGACAO_FORMATOS_GRUPOS, "Evento");
+  fillSelect(document.getElementById("dv-modalidade"), DIVULGACAO_MODALIDADES, "Presencial");
   fillSelect(document.getElementById("dv-tipo"), DIVULGACAO_TIPOS, "Terceiro - divulgação");
   fillSelect(document.getElementById("dv-status"), DIVULGACAO_STATUS, "Planejado");
   document.getElementById("dv-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
@@ -5804,8 +5814,12 @@ function openDivulgacaoModal(id){
   document.querySelectorAll("#dv-publico-alvo-wrap input[type=checkbox]").forEach(cb=>{ cb.checked = publicoMarcado.includes(cb.value); });
   document.getElementById("dv-data-inicio").value = d.data_inicio||"";
   document.getElementById("dv-data-fim").value = d.data_fim||"";
+  document.getElementById("dv-hora-inicio").value = (d.hora_inicio||"").slice(0,5);
+  document.getElementById("dv-hora-fim").value = (d.hora_fim||"").slice(0,5);
+  document.getElementById("dv-modalidade").value = d.modalidade||"Presencial";
   document.getElementById("dv-carga-horaria").value = d.carga_horaria||"";
   document.getElementById("dv-local").value = d.local||"";
+  ajustarLocalDivulgacao();
   document.getElementById("dv-link").value = d.link_inscricao||"";
   document.getElementById("dv-preco").value = d.preco??"";
   document.getElementById("dv-comissao").value = d.comissao_percentual??"";
@@ -5813,6 +5827,12 @@ function openDivulgacaoModal(id){
   document.getElementById("dv-notas").value = d.notas||"";
   document.getElementById("btn-excluir-divulgacao").style.display = id ? "block" : "none";
   document.getElementById("divulgacao-modal").classList.add("open");
+}
+// Online pede plataforma e link; presencial pede endereço; híbrido, os dois.
+function ajustarLocalDivulgacao(){
+  const m = document.getElementById("dv-modalidade").value;
+  document.getElementById("dv-local-label").textContent = m==="Online" ? "Plataforma" : m==="Híbrido" ? "Endereço e plataforma" : "Endereço";
+  document.getElementById("dv-local").placeholder = m==="Online" ? "Ex.: Instagram @crispiuga, YouTube, Zoom" : m==="Híbrido" ? "Endereço + onde transmite" : "Rua, número, bairro, cidade";
 }
 async function saveDivulgacao(){
   const titulo = document.getElementById("dv-titulo").value.trim();
@@ -5826,6 +5846,9 @@ async function saveDivulgacao(){
     publico_alvo: [...document.querySelectorAll("#dv-publico-alvo-wrap input[type=checkbox]:checked")].map(cb=>cb.value).join(","),
     data_inicio: document.getElementById("dv-data-inicio").value || null,
     data_fim: document.getElementById("dv-data-fim").value || null,
+    hora_inicio: document.getElementById("dv-hora-inicio").value || null,
+    hora_fim: document.getElementById("dv-hora-fim").value || null,
+    modalidade: document.getElementById("dv-modalidade").value,
     carga_horaria: document.getElementById("dv-carga-horaria").value,
     local: document.getElementById("dv-local").value,
     link_inscricao: document.getElementById("dv-link").value,
