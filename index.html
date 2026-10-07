@@ -1101,6 +1101,7 @@ tr.tr-click{cursor:pointer;}
           <option value="confirmar">Critério mulher a confirmar</option>
           <option value="cert">Elegíveis à certificação</option>
         </select>
+        <button type="button" class="btn secondary small" onclick="exportarParceirosCsv()" title="Baixa a lista como está na tela (com os filtros), para abrir no Excel ou anexar no Gem Carol"><svg class=ic aria-hidden=true><use href=#i-download /></svg> Exportar CSV</button>
       </div>
       <div class="panel">
         <table class="tbl">
@@ -4902,6 +4903,33 @@ function ultimoContatoParceiro(parceiroId){
   if(!datas.length) return null;
   return datas.sort().slice(-1)[0];
 }
+// Exporta Parceiras (os) como está na tela (filtros e ordenação aplicados),
+// com telefones, links, endereço e a análise da Carol. Serve para Excel e
+// para anexar no Gem Carol (consultora), que não acessa o CRM.
+let parceirosNaTela = [];
+function exportarParceirosCsv(){
+  const doParceiro = (lista, id) => lista.filter(x=>x.parceiro_id===id);
+  const comentarios = p => (Array.isArray(p.comentarios_google) ? p.comentarios_google : [])
+    .map(c=>`${c.nota!=null?c.nota+"★ ":""}${c.quando?"("+c.quando+") ":""}${c.texto||""}`).join(" | ");
+  const cols = [
+    ["Nome", p=>p.nome], ["Tipo", p=>p.tipo_pessoa], ["Categorias", p=>p.categoria], ["Região", p=>p.regiao], ["Status", p=>p.status],
+    ["Classe Carol", p=>p.classe_carol], ["Nota Google", p=>p.nota_google!=null ? String(p.nota_google).replace(".",",") : ""], ["Avaliações Google", p=>p.avaliacoes_google],
+    ["Situação do site", p=>p.site_situacao], ["Site e redes", p=>doParceiro(parceiroLinks, p.id).map(l=>`${l.tipo}: ${l.url}`).join(" | ")],
+    ["Telefones", p=>doParceiro(parceiroContatos, p.id).map(c=>`${c.tipo}: ${c.numero}`).join(" | ")],
+    ["Endereço", p=>doParceiro(parceiroEnderecos, p.id).map(e=>e.endereco).join(" | ")], ["Link do Maps", p=>p.link_maps],
+    ["Critério mulher", p=>p.criterio_mulher], ["Como foi confirmado", p=>p.criterio_mulher_fonte], ["Elegível à certificação", p=>p.elegivel_certificacao ? "Sim" : ""],
+    ["Motivo da Carol", p=>p.motivo_carol], ["Comentários do Google", comentarios], ["Último contato", p=>ultimoContatoParceiro(p.id)||""],
+    ["Selo Go Ladies", p=>p.selo==="sim" ? "Sim" : ""], ["Tipo de parceria", p=>p.tipo_parceria], ["Notas", p=>p.notas]
+  ];
+  const cel = v => { const s = (v??"").toString(); return /[";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const linhas = [cols.map(c=>c[0]).join(";"), ...parceirosNaTela.map(p=>cols.map(c=>cel(c[1](p))).join(";"))];
+  const blob = new Blob(["﻿" + linhas.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `parceiras-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 function renderParceiros(){
   const ft = document.getElementById("filter-tipo-parceria");
   if(!ft.dataset.filled){ fillSelect(ft, ["",...TIPO_PARCERIA], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
@@ -4920,6 +4948,7 @@ function renderParceiros(){
     {label:"Selo Go Ladies", campo:"selo"}, {label:"Status", campo:"status"}, {label:"Último contato", campo:null}, {label:"", campo:null}
   ], "parceiros");
   const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p)));
+  parceirosNaTela = lista;
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
