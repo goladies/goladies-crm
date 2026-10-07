@@ -858,6 +858,10 @@ tr.tr-click{cursor:pointer;}
 .sede-org .no.voce{background:var(--rosa); border-color:var(--rosa); color:#fff; cursor:default;}
 .sede-org .no.chefe{border-color:var(--rosa-borda); color:var(--rosa-texto);}
 .sede-org .no.lado{border-style:dashed;}
+.sede-org .no.pessoa{border-color:var(--rosa-borda);}
+.sede-org .no.voce{cursor:pointer;}
+.sede-org .no.voce img{border-color:#fff;}
+.sede-pessoa{background:var(--rosa-bg); color:var(--rosa-texto);}
 .sede-org .seta{color:var(--muted); font-size:12px;}
 .sede-equipe{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px;}
 .sede-agente{border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; background:var(--bg-card); cursor:pointer; text-align:left; font:inherit; color:inherit; box-shadow:var(--sombra);}
@@ -1718,7 +1722,7 @@ tr.tr-click{cursor:pointer;}
 
     <div id="tab-sede" style="display:none;">
       <div class="pagehead">
-        <div><h2>Sede</h2><p>Sua equipe de IA. Elas trabalham e trazem o que precisa de decisão; quem decide é você.</p></div>
+        <div><h2>Sede</h2><p>A equipe da Go Ladies: pessoas e IA. As agentes trabalham e trazem o que precisa de decisão; quem decide são a Jú e a Rafaela.</p></div>
         <button class="btn" type="button" onclick="abrirPedidoSede()">+ Novo pedido</button>
       </div>
       <div class="subnav">
@@ -5798,7 +5802,7 @@ function mostrarSubTabFinanceiro(nome){
 // Pedidos, resumos, pendências e decisões vêm do schema_sede.sql; a Gabi lê e
 // grava por sede_gabi_ler / sede_gabi_gravar com chave própria.
 const SEDE_AGENTES = [
-  { id:"gabi", nome:"Gabi", cargo:"Chief of Staff", titulo:"Chief of Staff da CEO", cor:"pink", ia:"Claude", responde:"Jú", nivel:"chefe",
+  { id:"gabi", nome:"Gabi", cargo:"Chief of Staff", titulo:"Chief of Staff da CEO", cor:"pink", ia:"Claude", responde:"Jú e Rafaela", nivel:"chefe",
     jeito:"Direta e calma. Traz no máximo 3 coisas por dia e diz de onde tirou cada uma.",
     missao:"Garantir que nada importante fique esquecido e que você só gaste energia com o que precisa de você.",
     faz:["Lê o CRM: viagens do mês, parceiras (os) novas da Carol, eventos e contas a vencer",
@@ -5818,7 +5822,7 @@ const SEDE_AGENTES = [
     escreve:"Sede: Hoje, Pendências, Decisões e o recado nos Pedidos",
     custo:"Incluído no seu plano do Claude (não usa API paga)",
     rotina:"Todo dia às 9h15", status:["Ainda não começou","gray"], aba:"sede:hoje", abaRotulo:"Ver o resumo dela" },
-  { id:"vera", nome:"Vera", cargo:"QA & Compliance", titulo:"Quality Assurance e Compliance", cor:"amber", ia:"Claude + Gemini (2ª opinião)", responde:"Jú e Gabi", nivel:"lado",
+  { id:"vera", nome:"Vera", cargo:"QA & Compliance", titulo:"Quality Assurance e Compliance", cor:"amber", ia:"Claude + Gemini (2ª opinião)", responde:"Jú, Rafaela e Gabi", nivel:"lado",
     jeito:"Desconfiada por ofício e educada. A pergunta preferida dela é \"de onde veio esse número?\".",
     missao:"Nenhuma proposta chega até você sem ser conferida.",
     faz:["Confere os números de cada proposta contra o CRM e o plano de negócio",
@@ -5916,11 +5920,38 @@ const SEDE_AGENTES = [
     le:"Seu Google Workspace", escreve:"Rascunhos para você revisar", custo:"Incluído no Workspace",
     rotina:"Sob pedido", status:["Opcional","gray"] },
 ];
+// Pessoas da equipe (07/10/2026): mesma ficha das agentes, com selo "Pessoa".
+// As agentes de IA respondem às duas (Gabi e Vera citam "Jú" e "Rafaela").
+const SEDE_PESSOAS = [
+  { id:"ju", pessoa:true, nome:"Jú", nomeCompleto:"Juliana Castilhos", cargo:"CEO", titulo:"Fundadora e CEO", cor:"pink", responde:"", nivel:"ceo",
+    missao:"Construir o ecossistema Go Ladies: mobilidade, parcerias, eventos e certificação, com segurança para mulheres.",
+    faz:["Define a estratégia e o plano de negócio em 5 fases",
+         "Decide preços, metas, parcerias e o que vai para o ar",
+         "Conduz parcerias, eventos e a certificação de motoristas",
+         "Dirige corridas na Fase 2 (meta: no máximo 50% delas)",
+         "Constrói site, apps, CRM e automações junto com o Claude"],
+    formacao:["Pedagogia Multimeios e Informática Educativa",
+              "Pós em Gestão Estratégica de TI",
+              "Mestre em PNL, Hipnose, Comunicação Generativa e Coaching",
+              "Empreendedorismo Sistêmico e Marketing Digital"],
+    trajetoria:["6 anos em cooperativismo de TI, liderando equipe",
+                "11 anos sócia da casa de festas Estrela Mágica",
+                "Diretora de Capacitação na AMICRO",
+                "Mentora no Instituto Gema"],
+    acesso:"CRM completo", desde:"Fundadora" },
+  { id:"rafaela", pessoa:true, nome:"Rafaela", nomeCompleto:"Rafaela de Castilhos", cargo:"Founder's Associate", titulo:"Founder's Associate", cor:"indigo", responde:"Jú", nivel:"associate",
+    missao:"Trabalhar ao lado da CEO em todas as áreas enquanto a função dela é definida.",
+    faz:["Ajuda em tudo: transporte, parcerias, marketing, financeiro e atendimento",
+         "Faz pedidos às agentes de IA e recebe o que elas trazem, junto com a Jú",
+         "Também é motorista da Go Ladies"],
+    acesso:"CRM completo (rafaela@goladies.com.br)", desde:"Outubro de 2026" },
+];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
   green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
 const SEDE_ABAS = ["equipe","hoje","pedidos","decisoes","pendencias"];
 
 function sedeAgente(id){ return SEDE_AGENTES.find(a=>a.id===id); }
+function sedeMembro(id){ return SEDE_PESSOAS.find(a=>a.id===id) || sedeAgente(id); }
 function sedeNome(id){ const a = sedeAgente(id); return a ? `${a.nome} · ${a.cargo}` : (id || "Equipe"); }
 function sedeHojeISO(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function sedeData(iso){ if(!iso) return ""; const [y,m,d] = String(iso).slice(0,10).split("-"); return `${d}/${m}/${y}`; }
@@ -5950,16 +5981,32 @@ function renderSede(){
   document.getElementById("sede-sql-aviso").style.display = sedeSqlFaltando ? "block" : "none";
   const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirFichaAgente('${a.id}')"><img src="images/sede/${a.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
   const nivel = (...n) => SEDE_AGENTES.filter(a=>n.includes(a.nivel)).map(no).join("");
+  const pessoa = p => `<button type="button" class="no pessoa${p.nivel==="ceo"?" voce":""}" onclick="abrirFichaAgente('${p.id}')"><img src="images/sede/${p.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(p.nome)} · ${escapeHtml(p.cargo)}</button>`;
   org.innerHTML = `
-    <div class="nivel"><span class="no voce">Jú · CEO</span></div>
-    <span class="seta">▲ decisões sobem · tarefas descem ▼</span>
+    <div class="nivel">${SEDE_PESSOAS.filter(p=>p.nivel==="ceo").map(pessoa).join("")}</div>
+    <span class="seta">▲</span>
+    <div class="nivel">${SEDE_PESSOAS.filter(p=>p.nivel!=="ceo").map(pessoa).join("")}</div>
+    <span class="seta">▲ decisões sobem para a Jú e a Rafaela · tarefas descem ▼</span>
     <div class="nivel">${nivel("chefe","lado")}</div>
     <span class="seta">▲</span>
     <div class="nivel">${nivel("estrategia")}</div>
     <span class="seta">▲</span>
     <div class="nivel">${nivel("area")}</div>
     <div class="nivel" style="margin-top:4px;">${nivel("apoio")}</div>`;
-  document.getElementById("sede-cards").innerHTML = SEDE_AGENTES.map(a=>{
+  document.getElementById("sede-cards").innerHTML = SEDE_PESSOAS.map(p=>{
+    const [cor, fundo] = SEDE_COR[p.cor]||SEDE_COR.gray;
+    return `<div class="sede-agente" data-agente="${p.id}" role="button" tabindex="0"
+        onclick="abrirFichaAgente('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirFichaAgente('${p.id}');}">
+      <div class="cab">
+        <span class="sede-avatar" style="color:${cor}; background:${fundo};">${sedeFoto(p)}</span>
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:600;">${escapeHtml(p.nome)} <span class="sede-ia sede-pessoa">Pessoa</span></div>
+          <div style="font-size:12.5px; color:var(--text2);">${escapeHtml(p.cargo)}</div>
+        </div>
+      </div>
+      <dl><dt>Nome</dt><dd>${escapeHtml(p.nomeCompleto)}</dd><dt>Responde a</dt><dd>${escapeHtml(p.responde||"Ninguém: é a fundadora")}</dd><dt>Acesso</dt><dd>${escapeHtml(p.acesso)}</dd></dl>
+    </div>`;
+  }).join("") + SEDE_AGENTES.map(a=>{
     const [cor, fundo] = SEDE_COR[a.cor]||SEDE_COR.gray;
     const st = sedeStatus(a), np = sedePedidosAbertos(a.id).length;
     return `<div class="sede-agente" data-agente="${a.id}" role="button" tabindex="0"
@@ -5985,14 +6032,40 @@ function renderSede(){
 
 // ── Ficha completa ──
 function abrirFichaAgente(id){
-  const a = sedeAgente(id); if(!a) return;
+  const a = sedeMembro(id); if(!a) return;
   const [cor, fundo] = SEDE_COR[a.cor]||SEDE_COR.gray;
-  const st = sedeStatus(a);
   const lista = arr => `<ul>${(arr||[]).map(t=>`<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
-  const chefes = SEDE_AGENTES.filter(b=>a.responde.includes(b.nome));
-  const time = SEDE_AGENTES.filter(b=>b.id!==a.id && b.responde.includes(a.nome));
+  const todos = [...SEDE_PESSOAS, ...SEDE_AGENTES];
+  const chefes = todos.filter(b=>a.responde.includes(b.nome));
+  const time = todos.filter(b=>b.id!==a.id && b.responde.includes(a.nome));
   const vinc = arr => arr.length ? `<span class="vinc">${arr.map(b=>`<button type="button" onclick="abrirFichaAgente('${b.id}')">${escapeHtml(b.nome)} · ${escapeHtml(b.cargo)}</button>`).join("")}</span>` : "";
-  const sobe = (a.responde.includes("Jú") ? `<span class="vinc"><button type="button" disabled>Jú · CEO</button></span> ` : "") + vinc(chefes);
+  if(a.pessoa){
+    document.getElementById("sede-ficha-corpo").innerHTML = `
+      <div class="sede-ficha-cab">
+        <span class="foto" style="color:${cor}; background:${fundo};">${sedeFoto(a)}</span>
+        <div style="min-width:0;">
+          <h3>${escapeHtml(a.nomeCompleto)} <span class="sede-ia sede-pessoa">Pessoa</span></h3>
+          <div style="color:var(--text2);">${escapeHtml(a.titulo)}</div>
+          <div class="missao">${escapeHtml(a.missao)}</div>
+        </div>
+      </div>
+      <div class="sede-ficha-sec"><h4>O que faz</h4>${lista(a.faz)}</div>
+      ${a.formacao?`<div class="sede-ficha-sec"><h4>Formação</h4>${lista(a.formacao)}</div>`:""}
+      ${a.trajetoria?`<div class="sede-ficha-sec"><h4>Trajetória</h4>${lista(a.trajetoria)}</div>`:""}
+      <div class="sede-ficha-sec"><h4>Hierarquia</h4>
+        <dl><dt>Responde a</dt><dd>${chefes.length ? vinc(chefes) : "Ninguém: é a fundadora"}</dd>
+        ${time.length?`<dt>Respondem a ela</dt><dd>${vinc(time)}</dd>`:""}</dl>
+      </div>
+      <div class="sede-ficha-sec"><h4>Na Go Ladies</h4>
+        <dl><dt>Desde</dt><dd>${escapeHtml(a.desde)}</dd><dt>Acesso</dt><dd>${escapeHtml(a.acesso)}</dd></dl>
+      </div>`;
+    document.getElementById("sede-ficha-pedir").style.display = "none";
+    document.getElementById("sede-ficha-modal").classList.add("open");
+    return;
+  }
+  document.getElementById("sede-ficha-pedir").style.display = "";
+  const st = sedeStatus(a);
+  const sobe = vinc(chefes);
   const pedidos = sedePedidosAbertos(a.id);
   const feitos = sedePedidos.filter(p=>p.agente===a.id && p.status==="Feito").slice(0,3);
   let ultimos = "";
