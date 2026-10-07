@@ -874,6 +874,39 @@ tr.tr-click{cursor:pointer;}
 .sede-agente.aberta .mais{display:flex;}
 .sede-vazio{color:var(--muted); font-size:13px; padding:8px 0;}
 .sede-vazio b{color:var(--text2);}
+.sede-conta{display:inline-block; min-width:18px; padding:0 5px; border-radius:999px; background:var(--rosa); color:#fff; font-size:10.5px; font-weight:700; line-height:16px; text-align:center;}
+.sede-conta:empty{display:none;}
+.sede-agente .linha-status{font-size:12px; color:var(--muted);}
+#sede-ficha-modal .modal{width:720px;}
+.sede-ficha-cab{display:flex; gap:16px; align-items:center; margin-bottom:14px;}
+.sede-ficha-cab .foto{width:96px; height:96px; border-radius:20px; overflow:hidden; flex:none; display:grid; place-items:center; font-weight:700; font-size:28px;}
+.sede-ficha-cab .foto img{width:100%; height:100%; object-fit:cover;}
+.sede-ficha-cab h3{margin:0 0 2px; font-size:22px;}
+.sede-ficha-cab .missao{font-size:13.5px; color:var(--text2); margin-top:6px;}
+.sede-ficha-sec{border-top:1px solid var(--border); padding:12px 0;}
+.sede-ficha-sec h4{margin:0 0 8px; font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);}
+.sede-ficha-sec ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:13.5px; color:var(--text2);}
+.sede-ficha-sec dl{margin:0; display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; font-size:13.5px;}
+.sede-ficha-sec dt{color:var(--muted);}
+.sede-ficha-sec dd{margin:0; color:var(--text2);}
+.sede-ficha-sec .vinc{display:inline-flex; gap:6px; flex-wrap:wrap;}
+.sede-ficha-sec .vinc button{border:1px solid var(--border2); background:var(--bg-card2); color:var(--text1); border-radius:999px; padding:2px 10px; font:inherit; font-size:12.5px; cursor:pointer;}
+.sede-item{border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; gap:10px; align-items:flex-start; background:var(--bg-card); margin-bottom:8px;}
+.sede-item .txt{flex:1; min-width:0; font-size:13.5px;}
+.sede-item .txt .meta{font-size:12px; color:var(--muted); margin-top:3px;}
+.sede-item .txt .det{font-size:12.5px; color:var(--text2); margin-top:4px; white-space:pre-wrap;}
+.sede-item .acoes{display:flex; gap:6px; flex-wrap:wrap; flex:none;}
+.sede-item.clicavel{cursor:pointer;}
+.sede-item.clicavel:hover{border-color:var(--border2);}
+.sede-item img.mini{width:28px; height:28px; border-radius:50%; object-fit:cover; flex:none;}
+.sede-grupo{font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:14px 0 6px;}
+.sede-resumo{font-size:14px; line-height:1.6; color:var(--text1); white-space:pre-wrap;}
+.sede-destaques{display:flex; flex-direction:column; gap:8px; margin:12px 0;}
+.sede-destaques button{display:flex; gap:10px; align-items:center; text-align:left; border:1px solid var(--rosa-borda); background:var(--rosa-bg); color:var(--text1); border-radius:10px; padding:10px 12px; font:inherit; font-size:13.5px; cursor:pointer;}
+.sede-destaques button b{color:var(--rosa-texto); font-size:16px;}
+.sede-agenda{font-size:13px; color:var(--text2); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
+.sede-decisao textarea{width:100%; margin-top:8px;}
+@media (max-width:700px){ .sede-item{flex-direction:column;} .sede-ficha-cab .foto{width:72px; height:72px;} }
 </style>
 <script src="icones.js"></script>
 </head>
@@ -1684,18 +1717,23 @@ tr.tr-click{cursor:pointer;}
     </div>
 
     <div id="tab-sede" style="display:none;">
-      <div class="pagehead"><div><h2>Sede</h2><p>Sua equipe de IA. Elas trabalham e trazem o que precisa de decisão; quem decide é você.</p></div></div>
+      <div class="pagehead">
+        <div><h2>Sede</h2><p>Sua equipe de IA. Elas trabalham e trazem o que precisa de decisão; quem decide é você.</p></div>
+        <button class="btn" type="button" onclick="abrirPedidoSede()">+ Novo pedido</button>
+      </div>
       <div class="subnav">
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
-        <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões</button>
-        <button type="button" class="subnav-item" data-sede="pendencias" onclick="mostrarSubSede('pendencias')"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências</button>
+        <button type="button" class="subnav-item" data-sede="pedidos" onclick="mostrarSubSede('pedidos')"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Pedidos <span class="sede-conta" id="sede-conta-pedidos"></span></button>
+        <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões <span class="sede-conta" id="sede-conta-decisoes"></span></button>
+        <button type="button" class="subnav-item" data-sede="pendencias" onclick="mostrarSubSede('pendencias')"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências <span class="sede-conta" id="sede-conta-pendencias"></span></button>
       </div>
+      <div class="sede-vazio" id="sede-sql-aviso" style="display:none; border:1px dashed var(--c-amber); border-radius:10px; padding:10px 12px; margin-bottom:12px;">Para os pedidos, o resumo da Gabi, as pendências e as decisões funcionarem, falta rodar o <b>crm/schema_sede.sql</b> no SQL Editor do Supabase.</div>
 
       <div id="sede-equipe">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-users /></svg> Quem responde a quem</h3>
-          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Decisões sobem, tarefas descem. Tracejado: apoio, sem chefia. Clique num nome para ver o cartão dela.</p>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Decisões sobem, tarefas descem. Tracejado: apoio, sem chefia. Clique num nome para abrir a ficha completa dela.</p>
           <div class="sede-org" id="sede-org"></div>
         </div>
         <div class="sede-equipe" id="sede-cards"></div>
@@ -1704,21 +1742,48 @@ tr.tr-click{cursor:pointer;}
       <div id="sede-hoje" style="display:none;">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Resumo da Gabi</h3>
-          <div class="sede-vazio">Ainda não tem resumo. Quando a Gabi estiver ligada, ela escreve aqui todo dia às <b>9h15</b>: como está o mês, o que cada agente entregou e o que espera você.</div>
+          <div id="sede-hoje-corpo"><div class="sede-vazio">Ainda não tem resumo. Quando a Gabi estiver ligada, ela escreve aqui todo dia às <b>9h15</b>: como está o mês, o que cada agente entregou e o que espera você.</div></div>
+        </div>
+        <div class="panel" id="sede-hoje-anteriores-wrap" style="display:none;">
+          <h3><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Resumos anteriores</h3>
+          <div id="sede-hoje-anteriores"></div>
+        </div>
+      </div>
+
+      <div id="sede-pedidos" style="display:none;">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-send /></svg> Lembretes e tarefas que você passou</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;"><b>Lembrete:</b> a Gabi te lembra na data. <b>Tarefa:</b> vai para a agente escolhida; se ela ainda não começou, fica na fila e a Gabi avisa. Clique num pedido para editar.</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <select id="sede-filtro-pedidos" onchange="renderSedePedidos()" style="max-width:220px;">
+              <option value="abertos">Abertos e em andamento</option>
+              <option value="feitos">Feitos e cancelados</option>
+              <option value="todos">Todos</option>
+            </select>
+          </div>
+          <div id="sede-pedidos-lista"></div>
         </div>
       </div>
 
       <div id="sede-decisoes" style="display:none;">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Esperando você e já decididas</h3>
-          <div class="sede-vazio">Nenhuma decisão ainda. Cada pedido de uma agente vai chegar aqui com a opinião da <b>Vera</b> (revisora), e você aprova, recusa ou pede mais dados. As agentes leem esta lista antes de trabalhar.</div>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Cada decisão chega com o contexto e a recomendação de quem trouxe. Quando a <b>Vera</b> existir, a opinião dela aparece junto. As agentes leem sua resposta antes de trabalhar.</p>
+          <div id="sede-decisoes-lista"><div class="sede-vazio">Nenhuma decisão ainda.</div></div>
         </div>
       </div>
 
       <div id="sede-pendencias" style="display:none;">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> O que a equipe não consegue fazer sem você</h3>
-          <div class="sede-vazio">Nenhuma pendência registrada pelas agentes ainda.</div>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">A Gabi junta aqui tudo que está parado esperando você. Marque <b>Feita</b> e ela não traz de novo; <b>Ignorar</b> tira da lista sem fazer.</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <select id="sede-filtro-pendencias" onchange="renderSedePendencias()" style="max-width:220px;">
+              <option value="Aberta">Abertas</option>
+              <option value="fechadas">Feitas e ignoradas</option>
+            </select>
+          </div>
+          <div id="sede-pendencias-lista"><div class="sede-vazio">Nenhuma pendência registrada pelas agentes ainda.</div></div>
         </div>
       </div>
     </div>
@@ -2024,6 +2089,50 @@ tr.tr-click{cursor:pointer;}
       <button class="btn ghost" id="btn-excluir-divulgacao" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteDivulgacao()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('divulgacao-modal')">Sair</button>
       <button class="btn" onclick="saveDivulgacao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="sede-ficha-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="icon-btn" type="button" onclick="closeModal('sede-ficha-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div id="sede-ficha-corpo"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" onclick="closeModal('sede-ficha-modal')">Fechar</button>
+      <button class="btn" type="button" id="sede-ficha-pedir">+ Pedido para ela</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="sede-pedido-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="sede-pedido-titulo" style="margin:0;">Novo pedido</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('sede-pedido-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid">
+      <div class="full">
+        <label>Tipo</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <label class="chip-check"><input type="radio" name="sp-tipo" value="Lembrete" checked onchange="ajustarPedidoSede()"> Lembrete (a Gabi me lembra)</label>
+          <label class="chip-check"><input type="radio" name="sp-tipo" value="Tarefa" onchange="ajustarPedidoSede()"> Tarefa (uma agente faz)</label>
+        </div>
+      </div>
+      <div class="full"><label>O quê *</label><textarea id="sp-texto" rows="3" placeholder="Ex.: Ligar para a Eva Paiva sobre o workshop"></textarea></div>
+      <div><label>Para quem</label><select id="sp-agente" onchange="ajustarPedidoSede()"></select></div>
+      <div><label id="sp-data-rotulo">Lembrar em</label><input type="date" id="sp-data"></div>
+      <div class="full dica" id="sp-dica" style="font-size:12.5px; color:var(--muted);"></div>
+      <div class="full" id="sp-status-wrap" style="display:none;"><label>Situação</label>
+        <select id="sp-status"><option>Aberto</option><option>Em andamento</option><option>Feito</option><option>Cancelado</option></select>
+      </div>
+      <div class="full" id="sp-resposta-wrap" style="display:none;"><label>Recado da agente</label><div id="sp-resposta" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="sp-excluir" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirPedidoSede()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('sede-pedido-modal')">Sair</button>
+      <button class="btn" onclick="salvarPedidoSede()">Salvar</button>
     </div>
   </div>
 </div>
@@ -3255,6 +3364,8 @@ let finTransferencias = [];
 let finEntradas = [];
 let finConferencias = [];
 let lcSqlFaltando = false;
+let sedePedidos = [], sedeResumos = [], sedePendencias = [], sedeDecisoes = [];
+let sedeSqlFaltando = false;
 // Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
 // saem da Caixinha Jú Motorista.
 let gastosJuMotorista = [];
@@ -3875,6 +3986,18 @@ async function carregarDadosInterno(){
   const rfcf = await sb.from("fin_conferencias").select("*").order("id");
   if(!rfcf.error) finConferencias = rfcf.data || [];
   await carregarGastosJuMotorista();
+  // Sede (schema_sede.sql): também tolerante; sem o SQL a Sede mostra o aviso.
+  const [rsp, rsr, rspe, rsd] = await Promise.all([
+    sb.from("sede_pedidos").select("*").order("id", { ascending: false }),
+    sb.from("sede_resumos").select("*").order("data", { ascending: false }).limit(15),
+    sb.from("sede_pendencias").select("*").order("id"),
+    sb.from("sede_decisoes").select("*").order("id", { ascending: false }),
+  ]);
+  sedeSqlFaltando = !!rsp.error;
+  if(!rsp.error) sedePedidos = rsp.data || [];
+  if(!rsr.error) sedeResumos = rsr.data || [];
+  if(!rspe.error) sedePendencias = rspe.data || [];
+  if(!rsd.error) sedeDecisoes = rsd.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -5671,56 +5794,161 @@ function mostrarSubTabFinanceiro(nome){
 // Estrutura decidida em 06/10/2026: sempre nome + cargo + selo IA. Status é o
 // real (quem ainda não trabalha aparece como "Ainda não começou").
 // Foto de cada agente em images/sede/<id>.jpg (256px; originais em G:\Meu Drive\Sede\Avatares).
+// Ficha completa (07/10): tudo que se sabe de cada agente. "planejado" = ainda não existe.
+// Pedidos, resumos, pendências e decisões vêm do schema_sede.sql; a Gabi lê e
+// grava por sede_gabi_ler / sede_gabi_gravar com chave própria.
 const SEDE_AGENTES = [
-  { id:"gabi",   nome:"Gabi",   cargo:"Chefe de Gabinete", cor:"pink",   ia:"Claude", responde:"Jú", nivel:"chefe",
-    faz:"Lê o trabalho de todas, monta sua pauta do dia e traz só o que precisa de você.",
-    rotina:"Todo dia às 9h15, depois que você liga o notebook", status:["Ainda não começou","gray"], aba:"sede:hoje", abaRotulo:"Ver o resumo dela" },
-  { id:"vera",   nome:"Vera",   cargo:"Revisora", cor:"amber",  ia:"Claude + Gemini (2ª opinião)", responde:"Jú e Gabi", nivel:"lado",
-    faz:"Confere toda proposta antes de chegar em você: números, regras já decididas e riscos.",
+  { id:"gabi", nome:"Gabi", cargo:"Chief of Staff", titulo:"Chief of Staff da CEO", cor:"pink", ia:"Claude", responde:"Jú", nivel:"chefe",
+    jeito:"Direta e calma. Traz no máximo 3 coisas por dia e diz de onde tirou cada uma.",
+    missao:"Garantir que nada importante fique esquecido e que você só gaste energia com o que precisa de você.",
+    faz:["Lê o CRM: viagens do mês, parceiras (os) novas da Carol, eventos e contas a vencer",
+         "Lê as anotações do Claude sobre o que ficou pendente (testes reais, SQL para rodar, decisões em aberto)",
+         "Lê sua Google Agenda do dia",
+         "Escreve o resumo de Hoje com as 3 coisas que esperam você",
+         "Mantém as listas de Pendências e Decisões, sem repetir o que você já fechou",
+         "Lembra seus lembretes na data e repassa as tarefas; avisa quando a agente ainda não começou"],
+    naoFaz:["Não altera viagem, cliente, motorista nem financeiro",
+            "Não manda mensagem para ninguém",
+            "Não decide por você",
+            "Não inventa número: sem dado, ela diz que não sabe"],
+    horarios:["Todo dia às 9h15, como tarefa agendada no app do Claude, no seu notebook",
+              "Se o notebook estiver desligado às 9h15, roda quando você abrir o app"],
+    onde:"Tarefa agendada \"Gabi · resumo das 9h15\" no app do Claude (aba Code). Modelo Claude Opus 5.5. Chave própria, guardada só no notebook.",
+    le:"CRM (só números e nomes curtos, sem telefone nem endereço), anotações do Claude, Google Agenda",
+    escreve:"Sede: Hoje, Pendências, Decisões e o recado nos Pedidos",
+    custo:"Incluído no seu plano do Claude (não usa API paga)",
+    rotina:"Todo dia às 9h15", status:["Ainda não começou","gray"], aba:"sede:hoje", abaRotulo:"Ver o resumo dela" },
+  { id:"vera", nome:"Vera", cargo:"QA & Compliance", titulo:"Quality Assurance e Compliance", cor:"amber", ia:"Claude + Gemini (2ª opinião)", responde:"Jú e Gabi", nivel:"lado",
+    jeito:"Desconfiada por ofício e educada. A pergunta preferida dela é \"de onde veio esse número?\".",
+    missao:"Nenhuma proposta chega até você sem ser conferida.",
+    faz:["Confere os números de cada proposta contra o CRM e o plano de negócio",
+         "Confere se a proposta respeita regras que você já decidiu",
+         "Aponta riscos e o que falta saber",
+         "Em decisão grande, pede uma 2ª opinião ao Gemini e mostra onde as duas discordam"],
+    naoFaz:["Não aprova nem recusa nada: só opina", "Não reescreve a proposta de outra agente"],
+    horarios:["Antes de toda decisão (planejado)"],
+    onde:"Ainda não montada. Plano: Claude na mesma base da Gabi + Gem Revisora no Gemini (conta ju@jucastilhos.com.br).",
+    le:"Decisões esperando você, CRM, plano de negócio", escreve:"Campo \"Opinião da Vera\" em Decisões",
+    custo:"A definir",
     rotina:"Antes de toda decisão", status:["Ainda não começou","gray"], aba:"sede:decisoes", abaRotulo:"Ver as decisões" },
-  { id:"ester",  nome:"Ester",  cargo:"Estratégia", cor:"indigo", ia:"Claude", responde:"Gabi", nivel:"estrategia",
-    faz:"Compara o mês com o plano de negócio e as metas da fase, e propõe o rumo.",
+  { id:"ester", nome:"Ester", cargo:"Head de Estratégia", titulo:"Head de Estratégia e Planejamento", cor:"indigo", ia:"Claude", responde:"Gabi", nivel:"estrategia",
+    jeito:"Olha o mapa inteiro. Fala em fases, metas e portões.",
+    missao:"Manter a Go Ladies no caminho do plano de negócio.",
+    faz:["Compara o mês com as metas da Fase 2 (out a dez/2026): 30 corridas/mês, 15 clientes sendo 5 recorrentes, 3 motoristas certificadas, você dirigindo no máximo 50%",
+         "Acompanha o ecossistema da fase: 5 parceiras fundadoras e o evento de formatura com 1 cota Prata",
+         "Acompanha a estrela-guia: receita recorrente do mês",
+         "Junta o que Rica, Carol, Tati e Mari trazem e propõe o rumo da semana"],
+    naoFaz:["Não muda meta nem fase sem decisão sua"],
+    horarios:["Segunda de manhã (planejado)"],
+    onde:"Ainda não montada. Base: Plano de negócio Go Ladies (Claude Docs) e aba Gestão.",
+    le:"Gestão, Financeiro, Transporte, Parceiras (os), plano de negócio", escreve:"Decisões e pendências de estratégia",
+    custo:"A definir",
     rotina:"Segunda de manhã", status:["Ainda não começou","gray"], aba:"gestao", abaRotulo:"Abrir Gestão" },
-  { id:"rica",   nome:"Rica",   cargo:"Financeiro", cor:"green",  ia:"Claude", responde:"Ester", nivel:"area",
-    faz:"Lê o livro-caixa, contas e custos; avisa o que falta lançar e o que está fora do previsto.",
+  { id:"rica", nome:"Rica", cargo:"Head de Finanças", titulo:"Head de Finanças (FP&A)", cor:"green", ia:"Claude", responde:"Ester", nivel:"area",
+    jeito:"Cuidadosa com cada centavo. Fala Ganhei, Gastei e Sobrou.",
+    missao:"Você sempre saber quanto entrou, quanto saiu e quanto sobrou.",
+    faz:["Lê o livro-caixa, contas a pagar e a receber",
+         "Avisa conta a vencer e o que falta lançar",
+         "Confere custo real por km (R$ 1,42) e a taxa da Go Ladies em cada viagem",
+         "Prepara o fechamento do mês no dia 1"],
+    naoFaz:["Não paga, não transfere, não lança nada sem você conferir"],
+    horarios:["Segunda e dia 1 do mês (planejado)"],
+    onde:"Ainda não montada.",
+    le:"Financeiro, livro-caixa, Gestão", escreve:"Pendências e decisões de financeiro",
+    custo:"A definir",
     rotina:"Segunda e dia 1 do mês", status:["Ainda não começou","gray"], aba:"financeiro", abaRotulo:"Abrir Financeiro" },
-  { id:"carol",  nome:"Carol",  cargo:"Comercial", cor:"pink",   ia:"n8n + Claude (prospecção); Gemini (consultora)", responde:"Ester", nivel:"area",
-    faz:"Busca parceiras (os) no Google, classifica A/B/C só com dados reais e prepara a proposta.",
+  { id:"carol", nome:"Carol", cargo:"BizDev", titulo:"Business Development: Parcerias", cor:"pink", ia:"n8n + Claude (prospecção); Gemini (consultora)", responde:"Ester", nivel:"area",
+    jeito:"Animada e pé no chão: só classifica com dado real e mostra o trecho que comprova.",
+    missao:"Achar e qualificar parceiras (os) para a rede.",
+    faz:["Busca oficinas no Google (Zona Leste de POA, por bairro) e grava em Parceiras (os), etapa Prospecção",
+         "Classe A: nota 4,5 ou mais e 30 avaliações ou mais. B: nota de 4,2 a 4,4, poucas avaliações, ou falta de transparência citada em 2 comentários ou mais. C: abaixo de 4,2 ou descaso",
+         "Informa a situação do site (tem, não abre, só rede social, não tem)",
+         "Critério mulher só com fonte que comprove; sem fonte fica \"A confirmar\"",
+         "Como consultora no Gemini, ajuda a preparar abordagem e proposta a partir do CSV exportado"],
+    naoFaz:["Não deduz gênero pelo nome",
+            "Não inventa empresa, nota ou comentário: todo trecho citado é conferido e o inventado é apagado",
+            "Não generaliza a partir dos 5 comentários que o Google entrega (amostra enviesada)",
+            "Não aborda ninguém sozinha"],
+    horarios:["Quando você dispara o workflow no n8n (manual)"],
+    onde:"n8n: workflow \"Carol prospecção\" com Claude Opus 5.5. Gemini: Gem \"Carol · Comercial Go Ladies\" (conta contato@goladies.com.br).",
+    le:"Google Places e a página inicial do site da empresa", escreve:"Parceiras (os): classe, motivo, critério mulher, site",
+    custo:"Cerca de R$ 0,25 por empresa analisada. Google com orçamento \"Go Ladies mensal\" de R$ 50 (só alerta).",
     rotina:"Quando você disparar a busca", status:["Em montagem","amber"], aba:"parceiros", abaRotulo:"Abrir Parceiras (os)" },
-  { id:"tati",   nome:"Tati",   cargo:"Transporte", cor:"teal",   ia:"Claude", responde:"Rica e Ester", nivel:"area",
-    faz:"Acompanha viagens, motoristas, preços e avaliações do transporte.",
+  { id:"tati", nome:"Tati", cargo:"Head de Operações", titulo:"Head de Operações: Mobilidade", cor:"teal", ia:"Claude", responde:"Rica e Ester", nivel:"area",
+    jeito:"Prática, de olho no relógio e na segurança.",
+    missao:"Cada viagem sair certa, e o transporte crescer sem depender só de você ao volante.",
+    faz:["Acompanha viagens, motoristas, preços (R$ 25 + R$ 4/km, taxa de 25%) e avaliações",
+         "Avisa viagem sem motorista, pagamento pendente e avaliação baixa",
+         "Acompanha a meta de você dirigir no máximo 50% das corridas"],
+    naoFaz:["Não aceita, cancela nem muda preço de viagem", "Não fala com cliente nem motorista"],
+    horarios:["Segunda (planejado)"],
+    onde:"Ainda não montada.",
+    le:"Transporte (viagens, motoristas, avaliações)", escreve:"Pendências e decisões de transporte",
+    custo:"A definir",
     rotina:"Segunda", status:["Ainda não começou","gray"], aba:"transporte", abaRotulo:"Abrir Transporte" },
-  { id:"mari",   nome:"Mari",   cargo:"Marketing", cor:"pink",   ia:"Gemini (criação) + Claude (post)", responde:"Carol", nivel:"area",
-    faz:"Cria o post do dia do Instagram e Facebook seguindo a voz da marca e o calendário.",
+  { id:"mari", nome:"Mari", cargo:"Social Media Lead", titulo:"Content & Social Media Lead", cor:"pink", ia:"Gemini (criação) + Claude (post)", responde:"Ester", nivel:"area",
+    jeito:"Calorosa, fala \"tu\", com a voz da marca.",
+    missao:"Um post por dia sem você precisar lembrar.",
+    faz:["Prepara o post do dia: legenda, arte 1080x1350 e prévia",
+         "Segue o calendário semanal de 7 pilares e o banco de ideias",
+         "Salva cada post numa pasta própria no Drive (MKT/Posts)",
+         "Ideias e imagens de apoio no Gemini"],
+    naoFaz:["Não publica sem a sua aprovação", "Não usa a IA do Canva para modelos", "Nunca coloca o endereço do CRM em post"],
+    horarios:["Todo dia às 8h (tarefa agendada post-do-dia-go-ladies; roda com o app do Claude aberto)"],
+    onde:"Claude: skill post-go-ladies. Gemini: Gem Marketing.",
+    le:"Calendário, banco de ideias, fotos em MKT/Entrada", escreve:"G:\\Meu Drive\\MKT\\Posts",
+    custo:"Incluído no seu plano do Claude",
     rotina:"Todo dia às 8h", status:["Trabalhando","green"], aba:"divulgacao", abaRotulo:"Abrir Divulgação" },
-  { id:"pietra", nome:"Pietra", cargo:"Pesquisadora", cor:"gray",   ia:"Gemini + NotebookLM", responde:"Ester", nivel:"apoio",
-    faz:"Pesquisa mercado, concorrentes e editais quando alguém da equipe pedir.",
+  { id:"pietra", nome:"Pietra", cargo:"Research Lead", titulo:"Research Lead: Mercado e Editais", cor:"gray", ia:"Gemini + NotebookLM", responde:"Ester", nivel:"apoio",
+    jeito:"Curiosa e organizada: sempre traz a fonte.",
+    missao:"Responder perguntas de mercado com fonte confiável.",
+    faz:["Pesquisa mercado, concorrentes e editais quando alguém da equipe pede"],
+    naoFaz:["Não traz dado sem fonte"],
+    horarios:["Sob pedido"], onde:"Opcional. Gemini + NotebookLM.",
+    le:"Web e documentos que você der", escreve:"Respostas nos Pedidos", custo:"Incluído no Gemini",
     rotina:"Sob pedido", status:["Opcional","gray"] },
-  { id:"sol",    nome:"Sol",    cargo:"Secretária", cor:"gray",   ia:"Gemini no Workspace", responde:"Gabi", nivel:"apoio",
-    faz:"Agenda, e-mails e documentos do Google Workspace.",
+  { id:"sol", nome:"Sol", cargo:"Executive Assistant", titulo:"Executive Assistant", cor:"gray", ia:"Gemini no Workspace", responde:"Gabi", nivel:"apoio",
+    jeito:"Discreta e pontual.",
+    missao:"Agenda, e-mails e documentos em ordem.",
+    faz:["Ajuda com agenda, e-mails e documentos do Google Workspace"],
+    naoFaz:["Não envia e-mail nem aceita convite sem você"],
+    horarios:["Sob pedido"], onde:"Opcional. Gemini dentro do Gmail, Agenda e Docs.",
+    le:"Seu Google Workspace", escreve:"Rascunhos para você revisar", custo:"Incluído no Workspace",
     rotina:"Sob pedido", status:["Opcional","gray"] },
 ];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
   green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
-let sedeAberta = null;
+const SEDE_ABAS = ["equipe","hoje","pedidos","decisoes","pendencias"];
+
+function sedeAgente(id){ return SEDE_AGENTES.find(a=>a.id===id); }
+function sedeNome(id){ const a = sedeAgente(id); return a ? `${a.nome} · ${a.cargo}` : (id || "Equipe"); }
+function sedeHojeISO(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function sedeData(iso){ if(!iso) return ""; const [y,m,d] = String(iso).slice(0,10).split("-"); return `${d}/${m}/${y}`; }
+function sedeFoto(a, cls){ return `<img ${cls?`class="${cls}"`:""} src="images/sede/${a.id}.jpg" alt="" onerror="this.replaceWith(document.createTextNode('${a.nome.slice(0,2).toUpperCase()}'))">`; }
+// Status real da Gabi: vem do último resumo que ela escreveu.
+function sedeStatus(a){
+  if(a.id==="gabi" && sedeResumos.length){
+    const ult = sedeResumos[0];
+    return ult.data===sedeHojeISO() ? ["Trabalhando","green"] : ["Último resumo " + sedeData(ult.data).slice(0,5),"amber"];
+  }
+  return a.status;
+}
+function sedePedidosAbertos(id){ return sedePedidos.filter(p=>p.agente===id && ["Aberto","Em andamento"].includes(p.status)); }
 
 function mostrarSubSede(nome){
   document.querySelectorAll("#tab-sede .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.sede===nome));
-  ["equipe","hoje","decisoes","pendencias"].forEach(n=>document.getElementById("sede-"+n).style.display = n===nome ? "block" : "none");
-}
-function abrirAgenteSede(id){
-  sedeAberta = sedeAberta===id ? null : id;
-  renderSede();
-  if(sedeAberta) document.querySelector(`.sede-agente[data-agente="${id}"]`).scrollIntoView({ behavior:"smooth", block:"nearest" });
+  SEDE_ABAS.forEach(n=>document.getElementById("sede-"+n).style.display = n===nome ? "block" : "none");
 }
 function irAreaAgente(destino){
-  if(destino.startsWith("sede:")) { mostrarSubSede(destino.slice(5)); return; }
+  closeModal("sede-ficha-modal");
+  if(destino.startsWith("sede:")) { irParaAba("sede"); mostrarSubSede(destino.slice(5)); return; }
   irParaAba(destino);
 }
 function renderSede(){
   const org = document.getElementById("sede-org");
   if(!org) return;
-  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirAgenteSede('${a.id}')"><img src="images/sede/${a.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
+  document.getElementById("sede-sql-aviso").style.display = sedeSqlFaltando ? "block" : "none";
+  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirFichaAgente('${a.id}')"><img src="images/sede/${a.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
   const nivel = (...n) => SEDE_AGENTES.filter(a=>n.includes(a.nivel)).map(no).join("");
   org.innerHTML = `
     <div class="nivel"><span class="no voce">Jú · CEO</span></div>
@@ -5733,24 +5961,261 @@ function renderSede(){
     <div class="nivel" style="margin-top:4px;">${nivel("apoio")}</div>`;
   document.getElementById("sede-cards").innerHTML = SEDE_AGENTES.map(a=>{
     const [cor, fundo] = SEDE_COR[a.cor]||SEDE_COR.gray;
-    const avatar = `<img src="images/sede/${a.id}.jpg" alt="" onerror="this.replaceWith(document.createTextNode('${a.nome.slice(0,2).toUpperCase()}'))">`;
-    return `<div class="sede-agente${sedeAberta===a.id?" aberta":""}" data-agente="${a.id}" role="button" tabindex="0" aria-expanded="${sedeAberta===a.id}"
-        onclick="abrirAgenteSede('${a.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirAgenteSede('${a.id}');}">
+    const st = sedeStatus(a), np = sedePedidosAbertos(a.id).length;
+    return `<div class="sede-agente" data-agente="${a.id}" role="button" tabindex="0"
+        onclick="abrirFichaAgente('${a.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirFichaAgente('${a.id}');}">
       <div class="cab">
-        <span class="sede-avatar" style="color:${cor}; background:${fundo};">${avatar}</span>
+        <span class="sede-avatar" style="color:${cor}; background:${fundo};">${sedeFoto(a)}</span>
         <div style="min-width:0; flex:1;">
           <div style="font-weight:600;">${escapeHtml(a.nome)} <span class="sede-ia">IA</span></div>
           <div style="font-size:12.5px; color:var(--text2);">${escapeHtml(a.cargo)}</div>
         </div>
-        <span class="status-badge ${a.status[1]}">${escapeHtml(a.status[0])}</span>
+        <span class="status-badge ${st[1]}">${escapeHtml(st[0])}</span>
       </div>
       <dl><dt>Usa</dt><dd>${escapeHtml(a.ia)}</dd><dt>Responde a</dt><dd>${escapeHtml(a.responde)}</dd><dt>Quando</dt><dd>${escapeHtml(a.rotina)}</dd></dl>
-      <div class="mais">
-        <div>${escapeHtml(a.faz)}</div>
-        ${a.aba?`<div><button class="btn secondary small" type="button" onclick="event.stopPropagation(); irAreaAgente('${a.aba}')">${escapeHtml(a.abaRotulo)} <svg class=ic aria-hidden=true><use href=#i-arrow-right /></svg></button></div>`:""}
-      </div>
+      ${np?`<div class="linha-status">${np} pedido${np>1?"s":""} na fila dela</div>`:""}
     </div>`;
   }).join("");
+  renderSedeHoje(); renderSedePedidos(); renderSedeDecisoes(); renderSedePendencias();
+  const conta = (id, n) => { const el = document.getElementById(id); if(el) el.textContent = n ? n : ""; };
+  conta("sede-conta-pedidos", sedePedidos.filter(p=>["Aberto","Em andamento"].includes(p.status)).length);
+  conta("sede-conta-decisoes", sedeDecisoes.filter(d=>d.status==="Esperando você").length);
+  conta("sede-conta-pendencias", sedePendencias.filter(p=>p.status==="Aberta").length);
+}
+
+// ── Ficha completa ──
+function abrirFichaAgente(id){
+  const a = sedeAgente(id); if(!a) return;
+  const [cor, fundo] = SEDE_COR[a.cor]||SEDE_COR.gray;
+  const st = sedeStatus(a);
+  const lista = arr => `<ul>${(arr||[]).map(t=>`<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
+  const chefes = SEDE_AGENTES.filter(b=>a.responde.includes(b.nome));
+  const time = SEDE_AGENTES.filter(b=>b.id!==a.id && b.responde.includes(a.nome));
+  const vinc = arr => arr.length ? `<span class="vinc">${arr.map(b=>`<button type="button" onclick="abrirFichaAgente('${b.id}')">${escapeHtml(b.nome)} · ${escapeHtml(b.cargo)}</button>`).join("")}</span>` : "";
+  const sobe = (a.responde.includes("Jú") ? `<span class="vinc"><button type="button" disabled>Jú · CEO</button></span> ` : "") + vinc(chefes);
+  const pedidos = sedePedidosAbertos(a.id);
+  const feitos = sedePedidos.filter(p=>p.agente===a.id && p.status==="Feito").slice(0,3);
+  let ultimos = "";
+  if(a.id==="gabi" && sedeResumos.length) ultimos = `<li>Resumo de ${sedeData(sedeResumos[0].data)} <a href="#" onclick="event.preventDefault(); irAreaAgente('sede:hoje')">ver</a></li>`;
+  ultimos += feitos.map(p=>`<li>${escapeHtml(p.texto)} <span style="color:var(--muted);">(feito${p.feito_em?" em "+sedeData(p.feito_em):""})</span></li>`).join("");
+  document.getElementById("sede-ficha-corpo").innerHTML = `
+    <div class="sede-ficha-cab">
+      <span class="foto" style="color:${cor}; background:${fundo};">${sedeFoto(a)}</span>
+      <div style="min-width:0;">
+        <h3>${escapeHtml(a.nome)} <span class="sede-ia">IA</span></h3>
+        <div style="color:var(--text2);">${escapeHtml(a.titulo||a.cargo)} · <span class="status-badge ${st[1]}">${escapeHtml(st[0])}</span></div>
+        <div class="missao">${escapeHtml(a.missao||a.faz)}</div>
+      </div>
+    </div>
+    <div class="sede-ficha-sec"><h4>Perfil</h4>
+      <dl><dt>Jeito</dt><dd>${escapeHtml(a.jeito||"-")}</dd><dt>Usa</dt><dd>${escapeHtml(a.ia)}</dd><dt>Onde trabalha</dt><dd>${escapeHtml(a.onde||"-")}</dd></dl>
+    </div>
+    <div class="sede-ficha-sec"><h4>O que faz</h4>${lista(a.faz)}</div>
+    <div class="sede-ficha-sec"><h4>O que não faz</h4>${lista(a.naoFaz)}</div>
+    <div class="sede-ficha-sec"><h4>Horários</h4>${lista(a.horarios)}</div>
+    <div class="sede-ficha-sec"><h4>Hierarquia</h4>
+      <dl><dt>Responde a</dt><dd>${sobe || escapeHtml(a.responde)}</dd>
+      ${time.length?`<dt>Respondem a ela</dt><dd>${vinc(time)}</dd>`:""}</dl>
+    </div>
+    <div class="sede-ficha-sec"><h4>Dados</h4>
+      <dl><dt>Lê</dt><dd>${escapeHtml(a.le||"-")}</dd><dt>Escreve</dt><dd>${escapeHtml(a.escreve||"-")}</dd><dt>Custo</dt><dd>${escapeHtml(a.custo||"-")}</dd></dl>
+    </div>
+    <div class="sede-ficha-sec"><h4>Pedidos na fila (${pedidos.length})</h4>
+      ${pedidos.length ? `<ul>${pedidos.map(p=>`<li><a href="#" onclick="event.preventDefault(); closeModal('sede-ficha-modal'); abrirPedidoSede(${p.id})">${escapeHtml(p.texto)}</a> <span style="color:var(--muted);">(${escapeHtml(p.tipo)}${p.data_alvo?", "+sedeData(p.data_alvo):""})</span></li>`).join("")}</ul>` : `<div class="sede-vazio">Nada na fila.</div>`}
+    </div>
+    <div class="sede-ficha-sec"><h4>Últimos trabalhos</h4>${ultimos ? `<ul>${ultimos}</ul>` : `<div class="sede-vazio">Nada registrado na Sede ainda.</div>`}</div>
+    ${a.aba?`<div class="sede-ficha-sec"><button class="btn secondary small" type="button" onclick="irAreaAgente('${a.aba}')">${escapeHtml(a.abaRotulo)} <svg class=ic aria-hidden=true><use href=#i-arrow-right /></svg></button></div>`:""}`;
+  document.getElementById("sede-ficha-pedir").onclick = () => { closeModal("sede-ficha-modal"); abrirPedidoSede(null, a.id); };
+  document.getElementById("sede-ficha-modal").classList.add("open");
+}
+
+// ── Pedidos ──
+let sedePedidoEditando = null;
+function abrirPedidoSede(id, agente){
+  if(sedeSqlFaltando){ showToast("Falta rodar o schema_sede.sql no Supabase", true); return; }
+  const p = id ? sedePedidos.find(x=>x.id===id) : null;
+  sedePedidoEditando = p ? p.id : null;
+  document.getElementById("sp-agente").innerHTML = SEDE_AGENTES.map(a=>`<option value="${a.id}">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</option>`).join("");
+  document.getElementById("sede-pedido-titulo").textContent = p ? "Pedido" : "Novo pedido";
+  const tipo = p ? p.tipo : "Lembrete";
+  document.querySelectorAll('input[name="sp-tipo"]').forEach(r=>r.checked = r.value===tipo);
+  document.getElementById("sp-texto").value = p ? p.texto : "";
+  document.getElementById("sp-agente").value = p ? p.agente : (agente || "gabi");
+  document.getElementById("sp-data").value = p && p.data_alvo ? p.data_alvo : "";
+  document.getElementById("sp-status").value = p ? p.status : "Aberto";
+  document.getElementById("sp-status-wrap").style.display = p ? "block" : "none";
+  document.getElementById("sp-resposta-wrap").style.display = p && p.resposta ? "block" : "none";
+  document.getElementById("sp-resposta").textContent = p && p.resposta ? p.resposta : "";
+  document.getElementById("sp-excluir").style.display = p ? "inline-flex" : "none";
+  if(!p && agente && agente!=="gabi") document.querySelector('input[name="sp-tipo"][value="Tarefa"]').checked = true;
+  ajustarPedidoSede();
+  document.getElementById("sede-pedido-modal").classList.add("open");
+  setTimeout(()=>document.getElementById("sp-texto").focus(), 50);
+}
+function ajustarPedidoSede(){
+  const tipo = document.querySelector('input[name="sp-tipo"]:checked').value;
+  const sel = document.getElementById("sp-agente");
+  if(tipo==="Lembrete") sel.value = "gabi";
+  sel.disabled = tipo==="Lembrete";
+  document.getElementById("sp-data-rotulo").textContent = tipo==="Lembrete" ? "Lembrar em" : "Prazo (opcional)";
+  const a = sedeAgente(sel.value), st = a ? sedeStatus(a) : ["",""];
+  let dica = tipo==="Lembrete"
+    ? "A Gabi coloca este lembrete nas 3 coisas de hoje quando chegar a data. Sem data, ela lembra no próximo resumo."
+    : `Vai para a fila de ${a ? a.nome : "-"}.`;
+  if(tipo==="Tarefa" && a && st[0]!=="Trabalhando" && a.id!=="gabi") dica += ` Ela ainda não trabalha sozinha (${st[0].toLowerCase()}); a tarefa fica na fila e a Gabi te avisa.`;
+  document.getElementById("sp-dica").textContent = dica;
+}
+async function salvarPedidoSede(){
+  const texto = document.getElementById("sp-texto").value.trim();
+  if(!texto){ showToast("Escreva o pedido", true); return; }
+  const tipo = document.querySelector('input[name="sp-tipo"]:checked').value;
+  const status = sedePedidoEditando ? document.getElementById("sp-status").value : "Aberto";
+  const reg = { tipo, texto, agente: tipo==="Lembrete" ? "gabi" : document.getElementById("sp-agente").value,
+    data_alvo: document.getElementById("sp-data").value || null, status, atualizado_em: new Date().toISOString() };
+  const antes = sedePedidoEditando ? sedePedidos.find(x=>x.id===sedePedidoEditando) : null;
+  if(status==="Feito" && (!antes || antes.status!=="Feito")) reg.feito_em = new Date().toISOString();
+  const r = sedePedidoEditando
+    ? await sb.from("sede_pedidos").update(reg).eq("id", sedePedidoEditando).select().single()
+    : await sb.from("sede_pedidos").insert(reg).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  if(sedePedidoEditando) sedePedidos = sedePedidos.map(x=>x.id===r.data.id ? r.data : x);
+  else sedePedidos.unshift(r.data);
+  closeModal("sede-pedido-modal");
+  showToast("Salvo!");
+  renderSede();
+}
+async function excluirPedidoSede(){
+  if(!sedePedidoEditando || !confirm("Excluir este pedido?")) return;
+  const r = await sb.from("sede_pedidos").delete().eq("id", sedePedidoEditando);
+  if(r.error){ showToast("Não excluiu: " + r.error.message, true); return; }
+  sedePedidos = sedePedidos.filter(x=>x.id!==sedePedidoEditando);
+  closeModal("sede-pedido-modal");
+  renderSede();
+}
+async function marcarPedidoSede(id, status){
+  const reg = { status, atualizado_em: new Date().toISOString(), feito_em: status==="Feito" ? new Date().toISOString() : null };
+  const r = await sb.from("sede_pedidos").update(reg).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedePedidos = sedePedidos.map(x=>x.id===id ? r.data : x);
+  renderSede();
+}
+function renderSedePedidos(){
+  const box = document.getElementById("sede-pedidos-lista"); if(!box) return;
+  const f = document.getElementById("sede-filtro-pedidos").value;
+  const lista = sedePedidos.filter(p => f==="todos" ? true : f==="abertos" ? ["Aberto","Em andamento"].includes(p.status) : ["Feito","Cancelado"].includes(p.status))
+    .sort((a,b)=> (a.data_alvo||"9999") < (b.data_alvo||"9999") ? -1 : (a.data_alvo||"9999") > (b.data_alvo||"9999") ? 1 : b.id - a.id);
+  if(!lista.length){ box.innerHTML = `<div class="sede-vazio">${f==="abertos" ? "Nenhum pedido aberto. Use <b>+ Novo pedido</b> no topo." : "Nada aqui."}</div>`; return; }
+  const hoje = sedeHojeISO();
+  box.innerHTML = lista.map(p=>{
+    const a = sedeAgente(p.agente) || { id:p.agente, nome:p.agente, cargo:"" };
+    const venceu = p.data_alvo && p.data_alvo <= hoje && ["Aberto","Em andamento"].includes(p.status);
+    const cls = { "Aberto":"amber", "Em andamento":"blue", "Feito":"green", "Cancelado":"gray" }[p.status] || "gray";
+    return `<div class="sede-item clicavel" onclick="abrirPedidoSede(${p.id})">
+      <img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">
+      <div class="txt">
+        <div>${escapeHtml(p.texto)}</div>
+        <div class="meta">${escapeHtml(p.tipo)} · ${escapeHtml(sedeNome(p.agente))}${p.data_alvo?` · <span style="${venceu?"color:var(--rosa-texto); font-weight:600;":""}">${p.tipo==="Lembrete"?"lembrar em":"prazo"} ${sedeData(p.data_alvo)}</span>`:""} · <span class="status-badge ${cls}">${escapeHtml(p.status)}</span></div>
+        ${p.resposta?`<div class="det">${escapeHtml(a.nome)}: ${escapeHtml(p.resposta)}</div>`:""}
+      </div>
+      <div class="acoes">${["Aberto","Em andamento"].includes(p.status)?`<button class="btn secondary small" type="button" onclick="event.stopPropagation(); marcarPedidoSede(${p.id},'Feito')"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Feito</button>`:""}</div>
+    </div>`;
+  }).join("");
+}
+
+// ── Hoje (resumo da Gabi) ──
+function renderSedeHoje(){
+  const box = document.getElementById("sede-hoje-corpo"); if(!box) return;
+  const r = sedeResumos[0];
+  if(!r){ return; }
+  const hoje = r.data===sedeHojeISO();
+  const dest = Array.isArray(r.destaques) ? r.destaques : [];
+  const ag = Array.isArray(r.agenda) ? r.agenda : [];
+  box.innerHTML = `
+    <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">${hoje ? "Hoje" : "Último resumo"}, ${sedeData(r.data)}${hoje ? "" : " · a Gabi ainda não escreveu o de hoje"}</div>
+    ${dest.length?`<div style="font-weight:600; margin-bottom:4px;">O que espera você</div><div class="sede-destaques">${dest.map((d,i)=>`<button type="button" ${d.aba?`onclick="irAreaAgente('${escapeHtml(String(d.aba).replace(/'/g,""))}')"`:"disabled"}><b>${i+1}</b><span>${escapeHtml(d.texto||"")}</span></button>`).join("")}</div>`:""}
+    ${ag.length?`<div style="font-weight:600; margin-bottom:4px;">Sua agenda</div><div class="sede-agenda">${ag.map(e=>`<div><b>${escapeHtml(e.hora||"")}</b> ${escapeHtml(e.titulo||"")}</div>`).join("")}</div>`:""}
+    <div class="sede-resumo">${escapeHtml(r.texto)}</div>`;
+  const ant = sedeResumos.slice(1);
+  document.getElementById("sede-hoje-anteriores-wrap").style.display = ant.length ? "block" : "none";
+  document.getElementById("sede-hoje-anteriores").innerHTML = ant.map(x=>`<details style="margin-bottom:6px;"><summary style="cursor:pointer;">${sedeData(x.data)}</summary><div class="sede-resumo" style="margin-top:6px;">${escapeHtml(x.texto)}</div></details>`).join("");
+}
+
+// ── Pendências ──
+async function fecharPendenciaSede(id, status){
+  const reg = status==="Aberta"
+    ? { status, fechada_em:null, fechada_por:null, atualizado_em:new Date().toISOString() }
+    : { status, fechada_em:new Date().toISOString(), fechada_por:"Jú", atualizado_em:new Date().toISOString() };
+  const r = await sb.from("sede_pendencias").update(reg).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
+  renderSede();
+}
+function renderSedePendencias(){
+  const box = document.getElementById("sede-pendencias-lista"); if(!box) return;
+  const f = document.getElementById("sede-filtro-pendencias").value;
+  const lista = sedePendencias.filter(p => f==="Aberta" ? p.status==="Aberta" : p.status!=="Aberta");
+  if(!lista.length){ box.innerHTML = `<div class="sede-vazio">${f==="Aberta" ? "Nenhuma pendência aberta." : "Nada fechado ainda."}</div>`; return; }
+  const ordem = SEDE_AGENTES.map(a=>a.id);
+  const grupos = {};
+  lista.forEach(p => { const k = p.agente && sedeAgente(p.agente) ? p.agente : "_"; (grupos[k] = grupos[k] || []).push(p); });
+  box.innerHTML = Object.keys(grupos).sort((a,b)=>(ordem.indexOf(a)+99*(a==="_")) - (ordem.indexOf(b)+99*(b==="_"))).map(k=>{
+    const a = sedeAgente(k);
+    return `<div class="sede-grupo">${a ? `Área de ${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}` : "Geral"}</div>` + grupos[k].map(p=>`
+      <div class="sede-item${p.aba?" clicavel":""}" ${p.aba?`onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')"`:""}>
+        <div class="txt">
+          <div>${escapeHtml(p.titulo)}</div>
+          ${p.detalhe?`<div class="det">${escapeHtml(p.detalhe)}</div>`:""}
+          <div class="meta">desde ${sedeData(p.criado_em)}${p.origem?` · ${escapeHtml(p.origem)}`:""}${p.status!=="Aberta"?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeData(p.fechada_em)}`:""}</div>
+        </div>
+        <div class="acoes">${p.status==="Aberta"
+          ? `<button class="btn secondary small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Feita')"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Feita</button>
+             <button class="btn ghost small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Ignorada')">Ignorar</button>`
+          : `<button class="btn ghost small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Aberta')">Reabrir</button>`}</div>
+      </div>`).join("");
+  }).join("");
+}
+
+// ── Decisões ──
+async function decidirSede(id, status){
+  const resp = (document.getElementById("sd-resp-"+id)||{}).value || "";
+  if(status==="Mais dados" && !resp.trim()){ showToast("Escreva o que falta saber", true); return; }
+  const reg = status==="Esperando você"
+    ? { status, decidido_em:null }
+    : { status, resposta: resp.trim() || null, decidido_em: new Date().toISOString() };
+  const r = await sb.from("sede_decisoes").update(reg).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedeDecisoes = sedeDecisoes.map(x=>x.id===id ? r.data : x);
+  showToast("Salvo!");
+  renderSede();
+}
+function renderSedeDecisoes(){
+  const box = document.getElementById("sede-decisoes-lista"); if(!box) return;
+  if(!sedeDecisoes.length){ box.innerHTML = `<div class="sede-vazio">Nenhuma decisão ainda.</div>`; return; }
+  const esperando = sedeDecisoes.filter(d=>d.status==="Esperando você");
+  const outras = sedeDecisoes.filter(d=>d.status!=="Esperando você");
+  const cls = { "Aprovada":"green", "Recusada":"red", "Mais dados":"amber", "Esperando você":"pink" };
+  const card = d => `<div class="sede-item sede-decisao" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <b style="flex:1; min-width:0;">${escapeHtml(d.titulo)}</b>
+        <span class="status-badge ${cls[d.status]||"gray"}">${escapeHtml(d.status)}</span>
+      </div>
+      <div class="meta" style="font-size:12px; color:var(--muted);">Trouxe: ${escapeHtml(sedeNome(d.agente))} · ${sedeData(d.criado_em)}${d.decidido_em?` · respondida em ${sedeData(d.decidido_em)}`:""}</div>
+      ${d.contexto?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Contexto:</b> ${escapeHtml(d.contexto)}</div>`:""}
+      ${d.opcoes?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Caminhos:</b> ${escapeHtml(d.opcoes)}</div>`:""}
+      ${d.recomendacao?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Recomendação:</b> ${escapeHtml(d.recomendacao)}</div>`:""}
+      <div class="det" style="font-size:13px; color:var(--text2);"><b>Opinião da Vera:</b> ${d.opiniao_vera ? escapeHtml(d.opiniao_vera) : `<span style="color:var(--muted);">a Vera ainda não começou</span>`}</div>
+      ${d.status==="Esperando você"
+        ? `<textarea id="sd-resp-${d.id}" rows="2" placeholder="Sua resposta (opcional para aprovar ou recusar; obrigatória para pedir mais dados)"></textarea>
+           <div style="display:flex; gap:6px; flex-wrap:wrap;">
+             <button class="btn small" type="button" onclick="decidirSede(${d.id},'Aprovada')">Aprovar</button>
+             <button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Recusada')">Recusar</button>
+             <button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Mais dados')">Pedir mais dados</button>
+           </div>`
+        : `${d.resposta?`<div class="det" style="font-size:13px; white-space:pre-wrap;"><b>Sua resposta:</b> ${escapeHtml(d.resposta)}</div>`:""}
+           <div><button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Esperando você')">Reabrir</button></div>`}
+    </div>`;
+  box.innerHTML = (esperando.length ? `<div class="sede-grupo">Esperando você</div>` + esperando.map(card).join("") : `<div class="sede-vazio">Nada esperando você agora.</div>`)
+    + (outras.length ? `<div class="sede-grupo">Já respondidas</div>` + outras.map(card).join("") : "");
 }
 
 // Lead modal
