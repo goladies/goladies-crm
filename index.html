@@ -852,6 +852,9 @@ tr.tr-click{cursor:pointer;}
 .sede-org .nivel{display:flex; gap:8px; flex-wrap:wrap; justify-content:center;}
 .sede-org .no{border:1px solid var(--border2); border-radius:10px; padding:6px 12px; font-size:12.5px; font-weight:600; background:var(--bg-card2); cursor:pointer; color:var(--text1); font-family:inherit;}
 .sede-org .no:hover{border-color:var(--rosa-borda);}
+.sede-org button.no{display:inline-flex; align-items:center; gap:7px; padding-left:5px;}
+.sede-org .no img{width:26px; height:26px; border-radius:50%; object-fit:cover; flex:none; border:1px solid var(--border2);}
+.sede-org .no.chefe img{border-color:var(--rosa);}
 .sede-org .no.voce{background:var(--rosa); border-color:var(--rosa); color:#fff; cursor:default;}
 .sede-org .no.chefe{border-color:var(--rosa-borda); color:var(--rosa-texto);}
 .sede-org .no.lado{border-style:dashed;}
@@ -5688,7 +5691,7 @@ function irAreaAgente(destino){
 function renderSede(){
   const org = document.getElementById("sede-org");
   if(!org) return;
-  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirAgenteSede('${a.id}')">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
+  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirAgenteSede('${a.id}')"><img src="images/sede/${a.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
   const nivel = (...n) => SEDE_AGENTES.filter(a=>n.includes(a.nivel)).map(no).join("");
   org.innerHTML = `
     <div class="nivel"><span class="no voce">Jú · CEO</span></div>
