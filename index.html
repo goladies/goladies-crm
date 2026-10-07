@@ -846,6 +846,31 @@ tr.tr-click{cursor:pointer;}
 @media (max-width:700px){
   #ft-sim .sim-cols{grid-template-columns:1fr;}
 }
+
+/* ===== Sede: equipe de IA ===== */
+.sede-org{display:flex; flex-direction:column; align-items:center; gap:8px; padding:6px 0;}
+.sede-org .nivel{display:flex; gap:8px; flex-wrap:wrap; justify-content:center;}
+.sede-org .no{border:1px solid var(--border2); border-radius:10px; padding:6px 12px; font-size:12.5px; font-weight:600; background:var(--bg-card2); cursor:pointer; color:var(--text1); font-family:inherit;}
+.sede-org .no:hover{border-color:var(--rosa-borda);}
+.sede-org .no.voce{background:var(--rosa); border-color:var(--rosa); color:#fff; cursor:default;}
+.sede-org .no.chefe{border-color:var(--rosa-borda); color:var(--rosa-texto);}
+.sede-org .no.lado{border-style:dashed;}
+.sede-org .seta{color:var(--muted); font-size:12px;}
+.sede-equipe{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px;}
+.sede-agente{border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; background:var(--bg-card); cursor:pointer; text-align:left; font:inherit; color:inherit; box-shadow:var(--sombra);}
+.sede-agente:hover{border-color:var(--border2);}
+.sede-agente.aberta{border-color:var(--rosa-borda);}
+.sede-agente .cab{display:flex; gap:10px; align-items:center;}
+.sede-avatar{width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-weight:700; font-size:14px; flex:none; overflow:hidden;}
+.sede-avatar img{width:100%; height:100%; object-fit:cover;}
+.sede-ia{font-size:10.5px; font-weight:700; letter-spacing:.04em; border-radius:999px; padding:1px 7px; background:var(--c-gray-bg); color:var(--c-gray); vertical-align:middle;}
+.sede-agente dl{margin:0; display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 10px; font-size:12.5px;}
+.sede-agente dt{color:var(--muted);}
+.sede-agente dd{margin:0; color:var(--text2);}
+.sede-agente .mais{display:none; font-size:12.5px; color:var(--text2); border-top:1px solid var(--border); padding-top:10px; flex-direction:column; gap:8px;}
+.sede-agente.aberta .mais{display:flex;}
+.sede-vazio{color:var(--muted); font-size:13px; padding:8px 0;}
+.sede-vazio b{color:var(--text2);}
 </style>
 <script src="icones.js"></script>
 </head>
@@ -907,6 +932,7 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
       <div class="nav-item" data-tab="gestao" data-titulo="Gestão do negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.2"/></svg><span>Gestão</span></div>
+      <div class="nav-item" data-tab="sede" data-titulo="Sede"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01M12 10h.01"/></svg><span>Sede</span></div>
       <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
       <div class="nav-item" data-tab="servicos" data-titulo="Catálogo de serviços"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços</span></div>
       <div class="nav-item" data-tab="config" data-titulo="Dados do painel"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></svg><span>Dados</span></div>
@@ -1065,6 +1091,13 @@ tr.tr-click{cursor:pointer;}
       <div class="filters">
         <select id="filter-tipo-parceria" onchange="renderParceiros()"><option value="">Todos os tipos</option></select>
         <select id="filter-pessoa-parceiros" onchange="renderParceiros()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
+        <select id="filter-status-parceiros" onchange="renderParceiros()"><option value="">Todos os status</option></select>
+        <select id="filter-carol-parceiros" onchange="renderParceiros()">
+          <option value="">Carol: todas</option>
+          <option value="A">Classe A</option><option value="B">Classe B</option><option value="C">Classe C</option>
+          <option value="confirmar">Critério mulher a confirmar</option>
+          <option value="cert">Elegíveis à certificação</option>
+        </select>
       </div>
       <div class="panel">
         <table class="tbl">
@@ -1646,6 +1679,46 @@ tr.tr-click{cursor:pointer;}
       </div>
     </div>
 
+    <div id="tab-sede" style="display:none;">
+      <div class="pagehead"><div><h2>Sede</h2><p>Sua equipe de IA. Elas trabalham e trazem o que precisa de decisão; quem decide é você.</p></div></div>
+      <div class="subnav">
+        <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
+        <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
+        <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões</button>
+        <button type="button" class="subnav-item" data-sede="pendencias" onclick="mostrarSubSede('pendencias')"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências</button>
+      </div>
+
+      <div id="sede-equipe">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-users /></svg> Quem responde a quem</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Decisões sobem, tarefas descem. Tracejado: apoio, sem chefia. Clique num nome para ver o cartão dela.</p>
+          <div class="sede-org" id="sede-org"></div>
+        </div>
+        <div class="sede-equipe" id="sede-cards"></div>
+      </div>
+
+      <div id="sede-hoje" style="display:none;">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Resumo da Gabi</h3>
+          <div class="sede-vazio">Ainda não tem resumo. Quando a Gabi estiver ligada, ela escreve aqui todo dia às <b>9h15</b>: como está o mês, o que cada agente entregou e o que espera você.</div>
+        </div>
+      </div>
+
+      <div id="sede-decisoes" style="display:none;">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Esperando você e já decididas</h3>
+          <div class="sede-vazio">Nenhuma decisão ainda. Cada pedido de uma agente vai chegar aqui com a opinião da <b>Vera</b> (revisora), e você aprova, recusa ou pede mais dados. As agentes leem esta lista antes de trabalhar.</div>
+        </div>
+      </div>
+
+      <div id="sede-pendencias" style="display:none;">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> O que a equipe não consegue fazer sem você</h3>
+          <div class="sede-vazio">Nenhuma pendência registrada pelas agentes ainda.</div>
+        </div>
+      </div>
+    </div>
+
     <div id="tab-servicos" style="display:none;">
       <div class="pagehead"><div><h2>Catálogo de serviços</h2><p>Serviços oferecidos, quantas vezes foram pedidos e ticket médio</p></div></div>
       <div class="panel">
@@ -1832,6 +1905,10 @@ tr.tr-click{cursor:pointer;}
       <div><label>Região atendida</label><input type="text" id="p-regiao"></div>
       <div><label>Selo Go Ladies</label><select id="p-selo"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
       <div><label>Status</label><select id="p-status"></select></div>
+      <div class="full" id="p-prospeccao" style="display:none;"></div>
+      <div><label title="A empresa é de mulher, tem gestão feminina ou equipe com mulheres?">Critério mulher</label><select id="p-criterio-mulher"></select></div>
+      <div style="display:flex; align-items:flex-end;"><label class="chip-check" title="Passa nos outros critérios, mas não é de mulher nem tem equipe feminina: pode entrar pela certificação"><input type="checkbox" id="p-elegivel-cert"> Elegível à certificação</label></div>
+      <div class="full"><label>Como você confirmou <span style="font-weight:400; color:var(--muted);">(trecho do site, conversa, visita; nunca pelo nome)</span></label><input type="text" id="p-criterio-fonte" placeholder="Ex: site diz &quot;oficina fundada por duas mecânicas&quot;"></div>
       <div class="full">
         <label>Tipo de parceria <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
         <div id="p-tipo-parceria-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
@@ -2990,8 +3067,11 @@ const EVENTO_TIPOS_GRUPOS = {
 const EVENTO_TIPOS = Object.values(EVENTO_TIPOS_GRUPOS).flat();
 const EVENTO_ORIGENS = ["Instagram","Facebook","Grupo de WhatsApp","Indicação","Site / Sympla","Jornal / TV","Rua / Cartaz","Outro"];
 const ESTADOS_BR = ["RS","SC","PR","SP","RJ","MG","ES","BA","SE","AL","PE","PB","RN","CE","PI","MA","PA","AP","AM","RR","RO","AC","TO","GO","DF","MT","MS"];
-const PARCEIRO_ETAPAS = ["Prospecto","Qualificado","Abordado","Em negociação","Parceiro ativo","Descartado"];
-const PARCEIRO_ETAPA_CLASS = {"Prospecto":"indigo","Qualificado":"amber","Abordado":"pink","Em negociação":"teal","Parceiro ativo":"green","Descartado":"red"};
+const PARCEIRO_ETAPAS = ["Prospecção","Qualificação","Abordagem","Apresentação","Proposta","Parceria ativa","Fora da rede"];
+const PARCEIRO_ETAPA_CLASS = {"Prospecção":"indigo","Qualificação":"amber","Abordagem":"pink","Apresentação":"teal","Proposta":"teal","Parceria ativa":"green","Fora da rede":"red"};
+// Classe que a Carol automática (n8n + Google Places) dá na prospecção
+const CLASSE_CAROL_CLASS = {"A":"green","B":"amber","C":"red"};
+const CRITERIO_MULHER = ["A confirmar","Sim","Não"];
 const STATUS_PECA = ["Aberto","Em busca","Encontrado","Não encontrado","Encerrado"];
 const STATUS_PECA_CLASS = {"Aberto":"indigo","Em busca":"amber","Encontrado":"green","Não encontrado":"red","Encerrado":"green"};
 
@@ -3962,14 +4042,14 @@ function renderDashboard(){
   const cards = document.getElementById("dash-cards");
   const totalLeads = leads.length;
   const totalClientes = leads.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)).length;
-  const parceirosAtivos = parceiros.filter(p=>p.status==="Parceiro ativo").length;
+  const parceirosAtivos = parceiros.filter(p=>p.status==="Parceria ativa").length;
   const orcAbertos = orcamentos.filter(o=>["Solicitado","Enviado"].includes(o.status)).length;
   const coracao = document.getElementById("bv-coracao-num");
   if(coracao) coracao.textContent = leads.filter(l=>l.etapa==="Novo lead").length;
   cards.innerHTML = `
     <div class="card card-link" title="Abrir a lista de leads" onclick="irParaLeads('')"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
     <div class="card card-link" title="Abrir a lista de clientes" onclick="irParaAba('clientes')"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
-    <div class="card card-link" title="Abrir a rede de parceiras (os)" onclick="irParaAba('parceiros')"><div class="num">${parceirosAtivos}</div><div class="label">Parceiros ativos</div></div>
+    <div class="card card-link" title="Abrir a rede de parceiras (os)" onclick="irParaAba('parceiros')"><div class="num">${parceirosAtivos}</div><div class="label">Parcerias ativas</div></div>
     <div class="card card-link" title="Abrir os orçamentos" onclick="irParaAba('orcamentos')"><div class="num">${orcAbertos}</div><div class="label">Orçamentos em aberto</div></div>
   `;
   document.getElementById("funnel-head").innerHTML = ETAPAS.map(e=>`<th>${e}</th>`).join("");
@@ -4823,12 +4903,20 @@ function renderParceiros(){
   const ft = document.getElementById("filter-tipo-parceria");
   if(!ft.dataset.filled){ fillSelect(ft, ["",...TIPO_PARCERIA], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
   const tipoF = ft.value;
+  const fs = document.getElementById("filter-status-parceiros");
+  if(!fs.dataset.filled){ fillSelect(fs, ["",...PARCEIRO_ETAPAS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
+  const statusF = fs.value;
+  const carolF = document.getElementById("filter-carol-parceiros").value;
+  const carolOk = p => !carolF
+    || (carolF==="cert" ? !!p.elegivel_certificacao
+      : carolF==="confirmar" ? (p.criterio_mulher||"A confirmar")==="A confirmar"
+      : p.classe_carol===carolF);
   renderCabecalho("thead-parceiros", [
     {label:"Nome", campo:"nome"}, {label:"Categorias", campo:"categoria"}, {label:"Região", campo:"regiao"},
-    {label:"Tipo de parceria", campo:"tipo_parceria"},
+    {label:"Carol · Google", campo:"classe_carol"}, {label:"Tipo de parceria", campo:"tipo_parceria"},
     {label:"Selo Go Ladies", campo:"selo"}, {label:"Status", campo:"status"}, {label:"Último contato", campo:null}, {label:"", campo:null}
   ], "parceiros");
-  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p)));
+  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p)));
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
@@ -4836,13 +4924,14 @@ function renderParceiros(){
       <td>${escapeHtml(p.nome)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}</td>
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
+      <td>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">${escapeHtml(p.classe_carol)}</span> `:""}${p.nota_google!=null?`<span style="font-size:12px;">${escapeHtml(String(p.nota_google).replace(".",","))} ★ <span style="color:var(--muted);">(${p.avaliacoes_google||0})</span></span>`:""}${p.elegivel_certificacao?'<br><span class="tag" style="font-size:11px;">Elegível à certificação</span>':""}${!p.classe_carol&&p.nota_google==null&&!p.elegivel_certificacao?"-":""}</td>
       <td>${(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`).join(" ")||"-"}</td>
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
       <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
       <td>${ultimoContato||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="openParceiroModal(${p.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="8">Nenhuma parceira (o) cadastrada ainda</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="9">Nenhuma parceira (o) encontrada</td></tr>`;
 }
 
 function renderOrcamentos(){
@@ -4924,7 +5013,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -5544,6 +5633,92 @@ function mostrarSubTabFinanceiro(nome){
   document.querySelectorAll("#tab-financeiro .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-financeiro [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
+}
+
+// ===== SEDE: equipe de IA =====
+// Estrutura decidida em 06/10/2026: sempre nome + cargo + selo IA. Status é o
+// real (quem ainda não trabalha aparece como "Ainda não começou").
+// foto: quando a imagem existir, salvar em images/sede/<id>.png e preencher aqui.
+const SEDE_AGENTES = [
+  { id:"gabi",   nome:"Gabi",   cargo:"Chefe de Gabinete", cor:"pink",   ia:"Claude", responde:"Jú", nivel:"chefe",
+    faz:"Lê o trabalho de todas, monta sua pauta do dia e traz só o que precisa de você.",
+    rotina:"Todo dia às 9h15, depois que você liga o notebook", status:["Ainda não começou","gray"], aba:"sede:hoje", abaRotulo:"Ver o resumo dela" },
+  { id:"vera",   nome:"Vera",   cargo:"Revisora", cor:"amber",  ia:"Claude + Gemini (2ª opinião)", responde:"Jú e Gabi", nivel:"lado",
+    faz:"Confere toda proposta antes de chegar em você: números, regras já decididas e riscos.",
+    rotina:"Antes de toda decisão", status:["Ainda não começou","gray"], aba:"sede:decisoes", abaRotulo:"Ver as decisões" },
+  { id:"ester",  nome:"Ester",  cargo:"Estratégia", cor:"indigo", ia:"Claude", responde:"Gabi", nivel:"estrategia",
+    faz:"Compara o mês com o plano de negócio e as metas da fase, e propõe o rumo.",
+    rotina:"Segunda de manhã", status:["Ainda não começou","gray"], aba:"gestao", abaRotulo:"Abrir Gestão" },
+  { id:"rica",   nome:"Rica",   cargo:"Financeiro", cor:"green",  ia:"Claude", responde:"Ester", nivel:"area",
+    faz:"Lê o livro-caixa, contas e custos; avisa o que falta lançar e o que está fora do previsto.",
+    rotina:"Segunda e dia 1 do mês", status:["Ainda não começou","gray"], aba:"financeiro", abaRotulo:"Abrir Financeiro" },
+  { id:"carol",  nome:"Carol",  cargo:"Comercial", cor:"pink",   ia:"n8n + Claude (prospecção); Gemini (consultora)", responde:"Ester", nivel:"area",
+    faz:"Busca parceiras (os) no Google, classifica A/B/C só com dados reais e prepara a proposta.",
+    rotina:"Quando você disparar a busca", status:["Em montagem","amber"], aba:"parceiros", abaRotulo:"Abrir Parceiras (os)" },
+  { id:"tati",   nome:"Tati",   cargo:"Transporte", cor:"teal",   ia:"Claude", responde:"Rica e Ester", nivel:"area",
+    faz:"Acompanha viagens, motoristas, preços e avaliações do transporte.",
+    rotina:"Segunda", status:["Ainda não começou","gray"], aba:"transporte", abaRotulo:"Abrir Transporte" },
+  { id:"mari",   nome:"Mari",   cargo:"Marketing", cor:"pink",   ia:"Gemini (criação) + Claude (post)", responde:"Carol", nivel:"area",
+    faz:"Cria o post do dia do Instagram e Facebook seguindo a voz da marca e o calendário.",
+    rotina:"Todo dia às 8h", status:["Trabalhando","green"], aba:"divulgacao", abaRotulo:"Abrir Divulgação" },
+  { id:"pietra", nome:"Pietra", cargo:"Pesquisadora", cor:"gray",   ia:"Gemini + NotebookLM", responde:"Ester", nivel:"apoio",
+    faz:"Pesquisa mercado, concorrentes e editais quando alguém da equipe pedir.",
+    rotina:"Sob pedido", status:["Opcional","gray"] },
+  { id:"sol",    nome:"Sol",    cargo:"Secretária", cor:"gray",   ia:"Gemini no Workspace", responde:"Gabi", nivel:"apoio",
+    faz:"Agenda, e-mails e documentos do Google Workspace.",
+    rotina:"Sob pedido", status:["Opcional","gray"] },
+];
+const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
+  green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
+let sedeAberta = null;
+
+function mostrarSubSede(nome){
+  document.querySelectorAll("#tab-sede .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.sede===nome));
+  ["equipe","hoje","decisoes","pendencias"].forEach(n=>document.getElementById("sede-"+n).style.display = n===nome ? "block" : "none");
+}
+function abrirAgenteSede(id){
+  sedeAberta = sedeAberta===id ? null : id;
+  renderSede();
+  if(sedeAberta) document.querySelector(`.sede-agente[data-agente="${id}"]`).scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+function irAreaAgente(destino){
+  if(destino.startsWith("sede:")) { mostrarSubSede(destino.slice(5)); return; }
+  irParaAba(destino);
+}
+function renderSede(){
+  const org = document.getElementById("sede-org");
+  if(!org) return;
+  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirAgenteSede('${a.id}')">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
+  const nivel = (...n) => SEDE_AGENTES.filter(a=>n.includes(a.nivel)).map(no).join("");
+  org.innerHTML = `
+    <div class="nivel"><span class="no voce">Jú · CEO</span></div>
+    <span class="seta">▲ decisões sobem · tarefas descem ▼</span>
+    <div class="nivel">${nivel("chefe","lado")}</div>
+    <span class="seta">▲</span>
+    <div class="nivel">${nivel("estrategia")}</div>
+    <span class="seta">▲</span>
+    <div class="nivel">${nivel("area")}</div>
+    <div class="nivel" style="margin-top:4px;">${nivel("apoio")}</div>`;
+  document.getElementById("sede-cards").innerHTML = SEDE_AGENTES.map(a=>{
+    const [cor, fundo] = SEDE_COR[a.cor]||SEDE_COR.gray;
+    const avatar = a.foto ? `<img src="${escapeHtml(a.foto)}" alt="">` : escapeHtml(a.nome.slice(0,2).toUpperCase());
+    return `<div class="sede-agente${sedeAberta===a.id?" aberta":""}" data-agente="${a.id}" role="button" tabindex="0" aria-expanded="${sedeAberta===a.id}"
+        onclick="abrirAgenteSede('${a.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirAgenteSede('${a.id}');}">
+      <div class="cab">
+        <span class="sede-avatar" style="color:${cor}; background:${fundo};">${avatar}</span>
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:600;">${escapeHtml(a.nome)} <span class="sede-ia">IA</span></div>
+          <div style="font-size:12.5px; color:var(--text2);">${escapeHtml(a.cargo)}</div>
+        </div>
+        <span class="status-badge ${a.status[1]}">${escapeHtml(a.status[0])}</span>
+      </div>
+      <dl><dt>Usa</dt><dd>${escapeHtml(a.ia)}</dd><dt>Responde a</dt><dd>${escapeHtml(a.responde)}</dd><dt>Quando</dt><dd>${escapeHtml(a.rotina)}</dd></dl>
+      <div class="mais">
+        <div>${escapeHtml(a.faz)}</div>
+        ${a.aba?`<div><button class="btn secondary small" type="button" onclick="event.stopPropagation(); irAreaAgente('${a.aba}')">${escapeHtml(a.abaRotulo)} <svg class=ic aria-hidden=true><use href=#i-arrow-right /></svg></button></div>`:""}
+      </div>
+    </div>`;
+  }).join("");
 }
 
 // Lead modal
@@ -6395,10 +6570,32 @@ function puxarDadosLead(){
     document.getElementById("p-notas").value = atual ? atual + "\n" + notaEmail : notaEmail;
   }
 }
+// Bloco "Prospecção" do modal: só aparece em quem veio do Google Places.
+// Tudo aqui é o que o Google devolveu; a Carol só classifica, não inventa.
+function renderProspeccaoParceiro(p){
+  const box = document.getElementById("p-prospeccao");
+  if(!p.google_place_id && !p.classe_carol){ box.style.display = "none"; box.innerHTML = ""; return; }
+  const nota = p.nota_google!=null ? `${String(p.nota_google).replace(".",",")} ★ (${p.avaliacoes_google||0} avaliações)` : "sem nota";
+  const comentarios = Array.isArray(p.comentarios_google) ? p.comentarios_google : [];
+  box.style.display = "block";
+  box.innerHTML = `
+    <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+        <strong style="font-size:13px;"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Prospecção da Carol</strong>
+        <span>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">Classe ${escapeHtml(p.classe_carol)}</span>`:""}
+          ${p.link_maps?` <a href="${escapeHtml(normalizarLink(p.link_maps))}" target="_blank" rel="noopener" style="font-size:12.5px;">Abrir no Maps <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></a>`:""}</span>
+      </div>
+      <div style="font-size:12.5px; color:var(--muted);">Google: ${escapeHtml(nota)} · Site: ${escapeHtml(p.site_situacao||"não verificado")}${p.prospectado_em?` · encontrada em ${escapeHtml(new Date(p.prospectado_em).toLocaleDateString("pt-BR"))}`:""}</div>
+      ${p.motivo_carol?`<div style="font-size:13px; white-space:pre-line;">${escapeHtml(p.motivo_carol)}</div>`:""}
+      ${comentarios.length?`<details><summary style="cursor:pointer; font-size:12.5px;">Comentários do Google (${comentarios.length})</summary>
+        ${comentarios.map(c=>`<div style="font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--border);">${c.nota!=null?`<strong>${escapeHtml(c.nota)} ★</strong> `:""}${c.quando?`<span style="color:var(--muted);">${escapeHtml(c.quando)}</span> · `:""}${escapeHtml(c.texto||"")}</div>`).join("")}
+      </details>`:""}
+    </div>`;
+}
 function openParceiroModal(id){
   editingParceiroId = id || null;
   parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
-  fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecto");
+  fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
   document.getElementById("parceiro-modal-title").textContent = id ? "Editar parceira (o)" : "Nova parceira (o)";
   document.getElementById("p-puxar-lead-wrap").style.display = id ? "none" : "block";
   document.getElementById("p-puxar-lead").innerHTML = `<option value="">- Selecionar -</option>` +
@@ -6412,7 +6609,12 @@ function openParceiroModal(id){
   });
   document.getElementById("p-regiao").value = p.regiao||"";
   document.getElementById("p-selo").value = p.selo||"nao";
-  document.getElementById("p-status").value = p.status||"Prospecto";
+  document.getElementById("p-status").value = p.status||"Prospecção";
+  fillSelect(document.getElementById("p-criterio-mulher"), CRITERIO_MULHER, "A confirmar");
+  document.getElementById("p-criterio-mulher").value = p.criterio_mulher||"A confirmar";
+  document.getElementById("p-criterio-fonte").value = p.criterio_mulher_fonte||"";
+  document.getElementById("p-elegivel-cert").checked = !!p.elegivel_certificacao;
+  renderProspeccaoParceiro(p);
   const tiposMarcados = (p.tipo_parceria||"").split(",").map(t=>t.trim()).filter(Boolean);
   document.querySelectorAll("#p-tipo-parceria-wrap input[type=checkbox]").forEach(cb=>{
     cb.checked = tiposMarcados.includes(cb.value);
@@ -6447,6 +6649,9 @@ async function saveParceiro(){
     regiao: document.getElementById("p-regiao").value,
     selo: document.getElementById("p-selo").value,
     status: document.getElementById("p-status").value,
+    criterio_mulher: document.getElementById("p-criterio-mulher").value,
+    criterio_mulher_fonte: document.getElementById("p-criterio-fonte").value.trim() || null,
+    elegivel_certificacao: document.getElementById("p-elegivel-cert").checked,
     tipo_parceria: tiposParceria.join(", "),
     aniversario: document.getElementById("p-aniversario").value || null,
     comissao: document.getElementById("p-comissao").value,
