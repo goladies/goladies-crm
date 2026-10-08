@@ -534,6 +534,16 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .vg-sec.vg-sec-fechada{padding-bottom:0;}
 .vg-sec.vg-sec-fechada .vg-sec-tit{margin-bottom:0; border-bottom:none;}
 .vg-sec-tit .vg-check{color:var(--text1); font-weight:600;}
+.vg-ajuste-cliente{margin:0 0 14px; padding:12px 14px; border-radius:10px; border:1px solid var(--c-red); border-left-width:4px; background:var(--c-red-bg); font-size:13.5px; line-height:1.45;}
+.vg-ajuste-cliente .aj-tit{display:flex; align-items:center; gap:6px; font-weight:700; color:var(--c-red); font-size:14px; margin-bottom:8px;}
+.vg-ajuste-cliente .aj-tit small{font-weight:400; color:var(--muted); font-size:12px;}
+.vg-ajuste-cliente .aj-valores{display:flex; flex-wrap:wrap; gap:8px 22px; margin-bottom:8px;}
+.vg-ajuste-cliente .aj-valores span{display:block; font-size:11.5px; color:var(--muted);}
+.vg-ajuste-cliente .aj-valores b{font-size:20px; color:var(--text1);}
+.vg-ajuste-cliente .aj-valores .aj-pede b{color:var(--c-red);}
+.vg-ajuste-cliente ul{margin:2px 0 6px 18px; padding:0;}
+.vg-ajuste-cliente .aj-obs{margin:4px 0 0; padding:7px 10px; border-radius:8px; background:var(--bg-input, rgba(255,255,255,.05)); font-style:italic;}
+.vg-ajuste-cliente .aj-acoes{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:10px; font-size:12px; color:var(--muted);}
 .formgrid .dica{display:block; font-size:11.5px; color:var(--text3); margin-top:4px; line-height:1.35;}
 .formgrid .destaque>label{font-size:13px;}
 .formgrid .destaque>input,.formgrid .destaque>select,.formgrid .destaque .campo-moeda>input,.formgrid .destaque .campo-endereco>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
@@ -2720,6 +2730,8 @@ tr.tr-click{cursor:pointer;}
     <!-- ── 4. Preço ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-tag"/></svg>4. Preço</span><span class="vg-pend"></span></div>
+      <!-- Pedido de ajuste da cliente (app), em destaque no topo do Preço -->
+      <div id="vg-ajuste-cliente" class="vg-ajuste-cliente" style="display:none;"></div>
       <div class="formgrid">
         <div class="sugerido"><label>Tarifa fixa por trecho <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
         <div class="sugerido"><label>Valor por km <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
@@ -10158,6 +10170,50 @@ function atualizarAlertaMargem(){
   box.style.background = `var(--c-${nivel}-bg)`;
   box.style.display = "";
 }
+// ── Pedido de ajuste da cliente, em destaque no topo do 4. Preço ──
+// O app manda "Pode pagar: R$ 48,00 · Motivo: A, B · texto livre" em
+// preco_recusado_motivo (desde 08/10/2026). Pedidos antigos (texto solto ou
+// pelo WhatsApp) aparecem como estão.
+function renderAjusteCliente(v){
+  const box = document.getElementById("vg-ajuste-cliente");
+  if(!box) return;
+  if(v.preco_confirmado_cliente || !v.preco_recusado_em){ box.style.display = "none"; box.innerHTML = ""; return; }
+  const txt = v.preco_recusado_motivo || "";
+  const partes = txt.split(" · ");
+  let pode = null, motivos = [], obs = [];
+  partes.forEach(p => {
+    if(/^Pode pagar:/i.test(p)){
+      const n = p.replace(/^Pode pagar:\s*/i, "").replace(/[^\d,]/g, "").replace(",", ".");
+      if(Number(n)) pode = Number(n);
+    } else if(/^Motivo:/i.test(p)) motivos = p.replace(/^Motivo:\s*/i, "").split(", ").filter(Boolean);
+    else if(p.trim()) obs.push(p.trim());
+  });
+  const cotado = Number(v.preco_cotado) || 0;
+  const quando = new Date(v.preco_recusado_em).toLocaleString("pt-BR", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+  let html = `<div class="aj-tit"><svg class=ic aria-hidden=true><use href=#i-hand-stop /></svg> A cliente pediu ajuste no valor <small>${quando}${v.preco_resposta_origem === "app" ? " · pelo app" : ""}</small></div>`;
+  if(pode){
+    const dif = cotado - pode;
+    html += `<div class="aj-valores"><div><span>Cotado</span><b>${formatarMoedaBR(cotado)}</b></div><div class="aj-pede"><span>Ela pode pagar</span><b>${formatarMoedaBR(pode)}</b></div>${dif > 0 ? `<div><span>Diferença</span><b>${formatarMoedaBR(dif)}</b> <small style="color:var(--muted)">(${cotado ? Math.round(dif / cotado * 100) : 0}%)</small></div>` : ""}</div>`;
+  }
+  if(motivos.length) html += `<div><b>O que pesou pra ela:</b><ul>${motivos.map(m => `<li>${escapeHtml(m)}</li>`).join("")}</ul></div>`;
+  if(obs.length) html += `<div class="aj-obs">"${escapeHtml(obs.join(" · "))}"</div>`;
+  if(!pode && !motivos.length && !obs.length) html += `<div style="color:var(--muted)">Ela não deixou valor nem motivo.</div>`;
+  html += `<div class="aj-acoes">${pode ? `<button type="button" class="btn small" onclick="usarValorAjusteCliente(${pode})">Aceitar ${formatarMoedaBR(pode)}</button>` : ""}<span>Ou digite outro valor no Preço cobrado. Depois mude o status pra 'Aguardando cliente confirmar preço' e salve pra reenviar.</span></div>`;
+  box.innerHTML = html;
+  box.style.display = "";
+}
+function usarValorAjusteCliente(valor){
+  const campo = document.getElementById("vg-preco-cotado");
+  campo.value = Number(valor).toFixed(2);
+  cotadoEditado();
+  const st = document.getElementById("vg-viagem-status");
+  if(st && st.value !== "Aguardando cliente confirmar preço"){
+    st.value = "Aguardando cliente confirmar preço";
+    st.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  campo.focus();
+  showToast("Preço e status ajustados. Confira e clique em Salvar pra reenviar pra cliente.");
+}
 // Taxa do Mercado Pago: recebido (bruto, o que a cliente pagou) − líquido (o
 // que efetivamente caiu na conta). Pix Mercado Pago preenche o líquido
 // sozinho (webhook); dinheiro/transferência não tem taxa, então fica igual
@@ -10650,12 +10706,14 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
   document.getElementById("vg-liberar-sem-pgto").checked = !!v.liberar_sem_pagamento;
   const statusPreco = document.getElementById("vg-status-preco-cliente");
+  renderAjusteCliente(v);
   if(v.preco_confirmado_cliente){
     statusPreco.style.display = "block";
     statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "");
   } else if(v.preco_recusado_em){
-    statusPreco.style.display = "block";
-    statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hand-stop /></svg> Cliente pediu ajuste no preço em " + new Date(v.preco_recusado_em).toLocaleString("pt-BR") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "") + (v.preco_recusado_motivo ? ". Motivo dela: \"" + escapeHtml(v.preco_recusado_motivo) + "\"" : "") + ". Ajuste o valor acima e mude o status pra 'Aguardando cliente confirmar preço' de novo pra reenviar.";
+    // O pedido completo aparece em destaque no topo da seção (renderAjusteCliente)
+    statusPreco.style.display = "none";
+    statusPreco.textContent = "";
   } else if(v.preco_confirmacao_enviada_em){
     statusPreco.style.display = "block";
     statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Confirmação de preço enviada pra cliente em " + new Date(v.preco_confirmacao_enviada_em).toLocaleString("pt-BR") + ", aguardando resposta.";
