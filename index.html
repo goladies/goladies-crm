@@ -367,8 +367,7 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .nav-conta.verm{background:#E5484D; color:#fff;}
 .nav-conta:hover{filter:brightness(1.1);}
 .nav-conta:empty{display:none;}
-.conv-bandeira{color:#F2B705;}
-.conv-item .conv-nota{color:var(--c-amber); font-style:italic;}
+.conv-bandeira{color:#D9A300; flex-shrink:0;}
 .atencao-pop{position:fixed; z-index:1000; background:var(--bg-card); border:1px solid var(--border2); border-radius:12px; padding:12px; box-shadow:0 12px 32px rgba(0,0,0,.35);}
 .atencao-pop-topo{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:13.5px;}
 .atencao-pop-lista{max-height:50vh; overflow-y:auto;}
@@ -376,50 +375,104 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .atencao-item:hover{background:var(--bg-hover);}
 .atencao-ponto{width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:5px; background:#F2B705;}
 .atencao-ponto.vermelho{background:#E5484D;}
-.atencao-card .atencao-grade{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;}
-.atencao-bloco{border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-card2);}
-.atencao-bloco-topo{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:4px; cursor:pointer;}
+.atencao-card-topo{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+.atencao-card-topo h3{margin:0; display:flex; gap:7px; align-items:center;}
+.atencao-card-topo > span{display:flex; gap:6px;}
+.atencao-card .atencao-grade{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; align-items:start;}
+.atencao-bloco{border:1px solid var(--border2); border-radius:12px; padding:10px 10px 6px; background:var(--bg-card2);}
+.atencao-bloco.tem-urgente{border-color:rgba(229,72,77,.45);}
+.atencao-bloco-topo{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:0 0 4px; padding:2px 4px 6px; border-bottom:1px solid var(--border); cursor:pointer;}
+.atencao-bloco-topo b{font-size:14px; margin-right:2px;}
+.atencao-bloco-topo .atencao-seta{margin-left:auto; color:var(--text3);}
+.atencao-bloco-topo:hover .atencao-seta, .atencao-bloco-topo:hover b{color:var(--rosa-texto);}
 .atencao-chip{font-size:11px; font-weight:700; padding:1px 8px; border-radius:10px;}
 .atencao-chip.vermelho{background:#E5484D; color:#fff;}
 .atencao-chip.amarelo{background:#F2B705; color:#2B1D00;}
 .atencao-mais{font-size:12px; color:var(--rosa-texto); cursor:pointer; padding:4px 6px;}
-.atencao-card.tudo-ok{color:var(--c-green); display:flex; gap:8px; align-items:center;}
-.conv-layout{display:grid; grid-template-columns:300px minmax(0,1fr); background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; min-height:480px; box-shadow:var(--sombra);}
-.conv-lista{border-right:1px solid var(--border); overflow-y:auto; max-height:max(360px, calc(100vh - 250px));}
-.conv-item{padding:11px 14px; border-bottom:1px solid var(--border); cursor:pointer;}
+.atencao-card.tudo-ok{display:flex; gap:12px; align-items:center; border-color:rgba(61,220,151,.4); background:var(--c-green-bg);}
+.atencao-card.tudo-ok > .ic{font-size:26px; color:var(--c-green); flex-shrink:0;}
+.atencao-card.tudo-ok b{color:var(--c-green); font-size:15px;}
+.atencao-card.tudo-ok span{color:var(--text2); font-size:13px;}
+.conv-layout{display:grid; grid-template-columns:320px minmax(0,1fr); background:var(--bg-card); border:1px solid var(--border2); border-radius:14px; overflow:hidden; min-height:520px; box-shadow:var(--sombra);}
+.conv-lista{border-right:1px solid var(--border2); overflow-y:auto; max-height:max(380px, calc(100vh - 250px)); background:var(--bg-card);}
+.conv-item{display:flex; gap:11px; padding:12px 14px 12px 11px; border-bottom:1px solid var(--border); border-left:3px solid transparent; cursor:pointer; transition:background .12s;}
 .conv-item:hover{background:var(--bg-hover);}
-.conv-item.ativa{background:var(--rosa-bg);}
-.conv-item .linha1{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
-.conv-item .nome{font-weight:600; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-item.ativa{background:var(--rosa-bg); border-left-color:var(--rosa);}
+.conv-corpo{flex:1; min-width:0;}
+.conv-item .linha1{display:flex; justify-content:space-between; gap:8px; align-items:center;}
+.conv-item .nome{font-weight:600; font-size:13.5px; color:var(--text1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:5px;}
 .conv-item .hora{font-size:11px; color:var(--text3); flex-shrink:0;}
-.conv-item .linha2{font-size:12px; color:var(--text3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.conv-item .esperando{color:var(--rosa-texto); font-weight:600;}
-.conv-conversa{display:flex; flex-direction:column; min-width:0;}
-.conv-topo{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-.conv-topo .quem{flex:1; min-width:160px;}
-.conv-topo .quem b{font-size:15px;}
-.conv-topo .quem small{display:block; color:var(--text3); font-size:12px;}
-.conv-voltar{display:none;}
-.conv-ligacoes{padding:10px 16px 0; display:flex; gap:8px; flex-wrap:wrap;}
-.conv-ligacao{display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border2); border-radius:8px; padding:6px 10px; font-size:12.5px; cursor:pointer; background:var(--bg-card2);}
-.conv-ligacao:hover{border-color:var(--rosa);}
-.conv-msgs{flex:1; display:flex; flex-direction:column; gap:8px; padding:14px 16px; overflow-y:auto; max-height:max(300px, calc(100vh - 400px));}
-.conv-msg{max-width:78%; padding:8px 11px; border-radius:12px; font-size:13px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; background:var(--bg-input);}
-.conv-msg small{display:block; font-size:11px; color:var(--text3); margin-top:3px;}
-.conv-msg.contato{align-self:flex-start;}
-.conv-msg.bot{align-self:flex-end; background:var(--rosa-bg);}
-.conv-msg.equipe{align-self:flex-end; background:var(--c-teal-bg);}
-.conv-aviso{align-self:center; font-size:12px; color:var(--rosa-texto); display:flex; gap:6px; align-items:center; cursor:default;}
-.conv-aviso.clicavel{cursor:pointer; text-decoration:underline;}
-.conv-dia{align-self:center; font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
-.conv-vazia{padding:40px 20px; text-align:center; color:var(--text3); font-size:13px;}
+.conv-item .etiquetas{display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;}
+.conv-item .previa{font-size:12.5px; color:var(--text2); margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-item .previa b{font-weight:600; color:var(--text3);}
+.conv-item .conv-nota{font-size:12px; color:var(--c-amber); margin-top:5px; display:flex; gap:5px; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-avatar{width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; letter-spacing:.02em; background:var(--c-gray-bg); color:var(--text2);}
+.conv-avatar.cliente{background:var(--c-teal-bg); color:var(--c-teal);}
+.conv-avatar.motorista{background:var(--c-blue-bg); color:var(--c-blue);}
+.conv-avatar.novo{background:var(--rosa-bg); color:var(--rosa-texto);}
+.conv-avatar.grande{width:44px; height:44px; font-size:15px;}
+.conv-pill{display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; line-height:1.4; white-space:nowrap; background:var(--c-gray-bg); color:var(--text2);}
+.conv-pill.rosa{background:var(--rosa); color:#fff;}
+.conv-pill.verm{background:#E5484D; color:#fff;}
+.conv-pill.amar{background:rgba(242,183,5,.18); color:var(--c-amber);}
+.conv-conversa{display:flex; flex-direction:column; min-width:0; background:var(--bg-card);}
+.conv-topo{padding:14px 18px; display:flex; gap:12px; align-items:center;}
+.conv-topo .quem{flex:1; min-width:0;}
+.conv-topo .quem b{font-size:16px; color:var(--text1); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-topo .quem small{display:flex; gap:6px; align-items:center; flex-wrap:wrap; color:var(--text3); font-size:12.5px; margin-top:3px;}
+.conv-acao.conv-voltar{display:none; padding:0 9px;}
+.conv-acoes{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 18px 14px; border-bottom:1px solid var(--border2);}
+.conv-acao{display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--border2); background:var(--bg-card2); color:var(--text1); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;}
+.conv-acao:hover{border-color:var(--rosa); color:var(--rosa-texto);}
+.conv-acao .ic{font-size:15px;}
+.conv-pausa{display:inline-flex; align-items:stretch; height:32px; border:1px solid var(--border2); border-radius:8px; overflow:hidden; background:var(--bg-card2);}
+.conv-pausa:hover{border-color:var(--rosa);}
+.conv-pausa select{border:none; border-right:1px solid var(--border2); border-radius:0; background:transparent; height:100%; padding:0 6px 0 10px; font-size:12.5px; color:var(--text1); width:auto; min-width:0; margin:0;}
+.conv-pausa .conv-acao{border:none; border-radius:0; height:100%; background:transparent;}
+.conv-faixa{display:flex; gap:10px; align-items:center; margin:12px 18px 0; padding:9px 12px; border-radius:10px; font-size:13px; line-height:1.4; color:var(--text1);}
+.conv-faixa .ic{font-size:16px; flex-shrink:0;}
+.conv-faixa span{flex:1; min-width:0;}
+.conv-faixa.amar{background:rgba(242,183,5,.12); border:1px solid rgba(242,183,5,.5);}
+.conv-faixa.amar > .ic{color:#D9A300;}
+.conv-faixa.azul{background:var(--c-blue-bg); border:1px solid rgba(91,157,255,.45);}
+.conv-faixa.azul > .ic{color:var(--c-blue);}
+.conv-faixa-btn{flex-shrink:0; height:28px; padding:0 10px; border-radius:7px; border:1px solid var(--border2); background:var(--bg-card); color:var(--text1); font:inherit; font-size:12px; font-weight:600; cursor:pointer;}
+.conv-faixa-btn:hover{border-color:var(--rosa); color:var(--rosa-texto);}
+.conv-ligacoes{padding:12px 18px 0; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.conv-ligacoes-rotulo{font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text3); margin-right:2px;}
+.conv-ligacao{display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border2); border-radius:999px; padding:4px 11px; font-size:12.5px; cursor:pointer; background:var(--bg-card2); color:var(--text1);}
+.conv-ligacao:hover{border-color:var(--rosa); color:var(--rosa-texto);}
+.conv-ligacao .ic{color:var(--text3);}
+.conv-msgs{flex:1; display:flex; flex-direction:column; gap:10px; padding:16px 18px 20px; overflow-y:auto; max-height:max(320px, calc(100vh - 430px));}
+.conv-msg{max-width:72%; padding:9px 12px 7px; border-radius:14px; font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; color:var(--text1); border:1px solid var(--border2); background:var(--bg-card2);}
+.conv-msg small{display:block; font-size:11px; color:var(--text3); margin-top:4px; white-space:normal;}
+.conv-msg small b{font-weight:700; color:var(--text2);}
+.conv-msg.contato{align-self:flex-start; border-bottom-left-radius:4px;}
+.conv-msg.bot{align-self:flex-end; border-bottom-right-radius:4px; background:var(--rosa-bg); border-color:var(--rosa-borda);}
+.conv-msg.bot small b{color:var(--rosa-texto);}
+.conv-msg.equipe{align-self:flex-end; border-bottom-right-radius:4px; background:var(--c-teal-bg); border-color:rgba(62,211,200,.45);}
+.conv-msg.equipe small b{color:var(--c-teal);}
+.conv-msg .midia{display:inline-flex; gap:6px; align-items:center; color:var(--text2); font-style:italic;}
+.conv-aviso{align-self:center; display:inline-flex; gap:6px; align-items:center; font-size:12px; font-weight:600; padding:4px 12px; border-radius:999px; color:var(--rosa-texto); background:var(--bg-card); border:1px dashed var(--rosa-borda);}
+.conv-aviso.clicavel{cursor:pointer; border-style:solid; background:var(--rosa-bg);}
+.conv-aviso.clicavel:hover{border-color:var(--rosa);}
+.conv-dia{align-self:center; font-size:10.5px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin:6px 0 2px; padding:3px 12px; border-radius:999px; background:var(--bg-card2); border:1px solid var(--border);}
+.conv-vazia{padding:48px 24px; text-align:center; color:var(--text3); font-size:13.5px; line-height:1.6;}
+.conv-vazia > .ic{display:block; margin:0 auto 10px; font-size:34px; color:var(--rosa-borda);}
 @media (max-width:800px){
   .conv-layout{grid-template-columns:1fr;}
   .conv-lista{border-right:none; max-height:none;}
   .conv-layout .conv-conversa{display:none;}
   .conv-layout.aberta .conv-lista{display:none;}
   .conv-layout.aberta .conv-conversa{display:flex;}
-  .conv-voltar{display:inline-flex;}
+  .conv-acao.conv-voltar{display:inline-flex;}
+  .conv-topo{flex-wrap:wrap; padding:12px 14px;}
+  .conv-topo > .btn{order:5; width:100%; justify-content:center;}
+  .conv-acoes, .conv-ligacoes{padding-left:14px; padding-right:14px;}
+  .conv-faixa{margin-left:14px; margin-right:14px;}
+  .conv-msgs{padding:14px 12px 18px;}
+  .conv-msg{max-width:86%;}
+  #conv-busca{margin-left:0 !important; max-width:none !important; width:100%;}
 }
 .vg-chat-escrever input{flex:1;}
 .formgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
@@ -5245,20 +5298,31 @@ document.addEventListener("keydown", ev=>{ if(ev.key === "Escape") fecharAtencao
 function renderPrecisaDeVoce(){
   const el = document.getElementById("dash-atencao");
   if(!el) return;
-  const menus = ATENCAO_MENUS.filter(m=>(atencaoAtual[m]||[]).length);
+  const urgentes = m => (atencaoAtual[m]||[]).filter(i=>i.nivel==="vermelho").length;
+  // Quem tem urgência vem primeiro; depois, quem tem mais coisa. Gestão
+  // sempre no fim: repete itens de Transporte e Financeiro.
+  const menus = ATENCAO_MENUS.filter(m=>(atencaoAtual[m]||[]).length)
+    .sort((a,b)=>((a==="gestao") - (b==="gestao")) || (urgentes(b) - urgentes(a)) || (atencaoAtual[b].length - atencaoAtual[a].length));
   if(!menus.length){
-    el.innerHTML = `<div class="panel atencao-card tudo-ok"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> <b>Tudo em dia.</b> Nada esperando você agora.</div>`;
+    el.innerHTML = `<div class="panel atencao-card tudo-ok"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg><div><b>Tudo em dia.</b><br><span>Nada esperando você agora.</span></div></div>`;
     return;
   }
+  const semGestao = menus.filter(m=>m!=="gestao");
+  const totVerm = semGestao.reduce((s,m)=>s + urgentes(m), 0);
+  const totAmar = semGestao.reduce((s,m)=>s + atencaoAtual[m].length, 0) - totVerm;
   el.innerHTML = `<div class="panel atencao-card">
-    <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-alarm /></svg> Precisa de você hoje</h3>
+    <div class="atencao-card-topo">
+      <h3><svg class=ic aria-hidden=true><use href=#i-alarm /></svg> Precisa de você hoje</h3>
+      <span>${totVerm ? `<span class="atencao-chip vermelho">${totVerm} urgente${totVerm>1?"s":""}</span>` : ""}${totAmar ? `<span class="atencao-chip amarelo">${totAmar} pra ver</span>` : ""}</span>
+    </div>
     <div class="atencao-grade">${menus.map(m=>{
       const lista = atencaoAtual[m];
-      const verm = lista.filter(i=>i.nivel==="vermelho").length, amar = lista.length - verm;
-      return `<div class="atencao-bloco">
-        <div class="atencao-bloco-topo" onclick="irParaAba('${m}')"><b>${escapeHtml(ATENCAO_ROTULOS[m])}</b>
+      const verm = urgentes(m), amar = lista.length - verm;
+      return `<div class="atencao-bloco${verm ? " tem-urgente" : ""}">
+        <div class="atencao-bloco-topo" onclick="irParaAba('${m}')" title="Abrir ${escapeHtml(ATENCAO_ROTULOS[m])}"><b>${escapeHtml(ATENCAO_ROTULOS[m])}</b>
           ${verm ? `<span class="atencao-chip vermelho">${verm} urgente${verm>1?"s":""}</span>` : ""}
-          ${amar ? `<span class="atencao-chip amarelo">${amar} pra ver</span>` : ""}</div>
+          ${amar ? `<span class="atencao-chip amarelo">${amar} pra ver</span>` : ""}
+          <svg class="ic atencao-seta" aria-hidden=true><use href=#i-chevron-right /></svg></div>
         ${lista.slice(0,3).map(itemAtencaoHtml).join("")}
         ${lista.length > 3 ? `<div class="atencao-mais" onclick="abrirAtencao('${m}', this)">+ ${lista.length - 3} mais</div>` : ""}
       </div>`;
@@ -5301,6 +5365,26 @@ const CONV_PERFIS = { cliente:"Cliente", motorista_ativa:"Motorista certificada"
 const CONV_TIPOS = { audio:"áudio", imagem:"foto", documento:"documento", outro:"arquivo" };
 
 function convPausada(c){ return !!(c.pausado_ate && new Date(c.pausado_ate) > new Date()); }
+function convIniciais(nome){
+  const p = String(nome||"").replace(/[^\p{L}\s]/gu, "").trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return "#";
+  return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : "")).toUpperCase();
+}
+function convClasseAvatar(perfil){
+  if(perfil==="cliente") return "cliente";
+  if(perfil && perfil.startsWith("motorista") || perfil==="cliente_e_motorista") return "motorista";
+  return "novo";
+}
+function convHorasDesde(iso){ return iso ? (Date.now() - new Date(iso).getTime()) / 3600000 : 0; }
+function convHaQuanto(iso){
+  const h = convHorasDesde(iso);
+  if(h < 1) return "";
+  if(h < 24) return ` · ${Math.floor(h)}h`;
+  return ` · ${Math.floor(h/24)}d`;
+}
+function convMidiaRotulo(tipo){
+  return { audio:"Mandou um áudio", imagem:"Mandou uma foto", documento:"Mandou um documento" }[tipo] || "Mandou um arquivo";
+}
 function convCadastros(tel){
   const f = convFim8(tel);
   return {
@@ -5360,18 +5444,33 @@ function desenharConversas(){
   if(!conversasCarregadoEm && conversasCarregando){
     lista.innerHTML = `<div class="conv-vazia">Buscando as conversas…</div>`;
   }else if(!filtradas.length){
-    const vazio = { esperando:"Nenhuma conversa esperando você. A assistente está dando conta 🩷", atencao:"Nenhuma conversa marcada com atenção.", pausadas:"A assistente não está pausada em nenhuma conversa.", todas:"Nenhuma conversa ainda." };
-    lista.innerHTML = `<div class="conv-vazia">${busca ? "Nada encontrado nessa busca." : vazio[convFiltro]}</div>`;
+    const vazio = {
+      esperando: ["circle-check", "Nada esperando você.", "A assistente está dando conta 🩷"],
+      atencao: ["flag", "Nenhuma conversa com atenção.", "Use “Marcar atenção” numa conversa pra lembrar dela."],
+      pausadas: ["player-play", "A assistente está ligada em todas.", ""],
+      todas: ["message-circle", "Nenhuma conversa ainda.", ""]
+    }[convFiltro];
+    lista.innerHTML = busca
+      ? `<div class="conv-vazia"><svg class=ic aria-hidden=true><use href=#i-search /></svg>Nada encontrado nessa busca.</div>`
+      : `<div class="conv-vazia"><svg class=ic aria-hidden=true><use href=#i-${vazio[0]} /></svg><b>${vazio[1]}</b><br>${vazio[2]}</div>`;
   }else{
     lista.innerHTML = filtradas.map(c=>{
+      const nome = c.nome || convFormatarTel(c.telefone);
       const quem = c.ultima_autor==="bot" ? "Assistente: " : c.ultima_autor==="equipe" ? "Você: " : "";
-      const texto = c.ultima_tipo && c.ultima_tipo!=="texto" ? `[${CONV_TIPOS[c.ultima_tipo]||c.ultima_tipo}] ${c.ultima_msg||""}` : (c.ultima_msg||"");
-      const status = c.esperando ? `<span class="esperando">Passou pra você</span> · ` : convPausada(c) ? `<svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> pausada · ` : "";
+      const texto = c.ultima_tipo && c.ultima_tipo!=="texto" ? `${convMidiaRotulo(c.ultima_tipo)} ${c.ultima_msg||""}` : (c.ultima_msg||"");
+      const etiquetas = [
+        c.esperando ? `<span class="conv-pill ${convHorasDesde(c.passou_em) > 4 ? "verm" : "rosa"}">Passou pra você${convHaQuanto(c.passou_em)}</span>` : "",
+        convPausada(c) ? `<span class="conv-pill"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausada</span>` : "",
+        `<span class="conv-pill">${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</span>`
+      ].join("");
       return `<div class="conv-item${c.telefone===convAberta?" ativa":""}" onclick="abrirConversa('${escapeHtml(c.telefone)}')">
-        <div class="linha1"><span class="nome">${c.atencao ? `<svg class="ic conv-bandeira" aria-label="Com atenção"><use href=#i-flag /></svg> ` : ""}${escapeHtml(c.nome || convFormatarTel(c.telefone))}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
-        ${c.atencao && c.atencao_nota ? `<div class="linha2 conv-nota">${escapeHtml(c.atencao_nota)}</div>` : ""}
-        <div class="linha2">${status}${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</div>
-        <div class="linha2">${escapeHtml(quem + texto)}</div>
+        <div class="conv-avatar ${convClasseAvatar(c.perfil)}" aria-hidden="true">${escapeHtml(convIniciais(c.nome))}</div>
+        <div class="conv-corpo">
+          <div class="linha1"><span class="nome">${c.atencao ? `<svg class="ic conv-bandeira" aria-label="Com atenção"><use href=#i-flag /></svg>` : ""}${escapeHtml(nome)}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
+          <div class="etiquetas">${etiquetas}</div>
+          ${c.atencao && c.atencao_nota ? `<div class="conv-nota"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> ${escapeHtml(c.atencao_nota)}</div>` : ""}
+          <div class="previa">${quem ? `<b>${quem}</b>` : ""}${escapeHtml(texto)}</div>
+        </div>
       </div>`;
     }).join("");
   }
@@ -5405,16 +5504,22 @@ function desenharConversaAberta(){
   if(!area) return;
   const c = conversas.find(x=>x.telefone===convAberta);
   if(!convAberta || !c){
-    area.innerHTML = `<div class="conv-vazia">Escolha uma conversa na lista.</div>`;
+    area.innerHTML = `<div class="conv-vazia" style="margin:auto;"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg><b>Escolha uma conversa na lista</b><br>pra ver as mensagens e o que a assistente respondeu.</div>`;
     return;
   }
   const cad = convCadastros(c.telefone);
   const pausada = convPausada(c);
   const telFmt = convFormatarTel(c.telefone);
+  const tel = escapeHtml(c.telefone);
   const ligacoes = [
-    cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Cadastro de cliente</span>` : "",
-    cad.motorista ? `<span class="conv-ligacao" onclick="openMotoristaModal(${cad.motorista.id})"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Cadastro de motorista</span>` : "",
-    ...cad.leads.slice(0,4).map(l=>`<span class="conv-ligacao" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Lead: ${escapeHtml(l.servico||l.categoria||"sem serviço")} · ${escapeHtml(l.etapa||"")}</span>`)
+    cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente</span>` : "",
+    cad.motorista ? `<span class="conv-ligacao" onclick="openMotoristaModal(${cad.motorista.id})"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motorista</span>` : "",
+    ...cad.leads.slice(0,4).map(l=>`<span class="conv-ligacao" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> ${escapeHtml(l.servico||l.categoria||"Lead")} <span class="conv-pill">${escapeHtml(l.etapa||"")}</span></span>`)
+  ].join("");
+  const ateTxt = d => new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",", " às");
+  const faixas = [
+    c.atencao ? `<div class="conv-faixa amar"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span><b>Atenção:</b> ${escapeHtml(c.atencao_nota || "conversa marcada pra você olhar")}</span><button type="button" class="conv-faixa-btn" onclick="marcarAtencao('${tel}', false)">Tirar atenção</button></div>` : "",
+    pausada ? `<div class="conv-faixa azul"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg><span>Assistente pausada nessa conversa até <b>${ateTxt(c.pausado_ate)}</b>${c.pausado_motivo ? ` (${escapeHtml(c.pausado_motivo.toLowerCase())})` : ""}.</span><button type="button" class="conv-faixa-btn" onclick="pausarAssistente('${tel}', 0)">Retomar agora</button></div>` : ""
   ].join("");
 
   let diaAnterior = "";
@@ -5425,14 +5530,14 @@ function desenharConversaAberta(){
     diaAnterior = dia;
     const hora = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     const autor = m.autor==="bot" ? "Assistente" : m.autor==="equipe" ? "Você" : (c.nome ? c.nome.split(" ")[0] : "Contato");
-    const tipo = m.tipo && m.tipo!=="texto" ? `[mandou ${CONV_TIPOS[m.tipo]||m.tipo}] ` : "";
-    let html = `${sepDia}<div class="conv-msg ${escapeHtml(m.autor)}">${escapeHtml(tipo + (m.texto||""))}<small>${autor} · ${hora}</small></div>`;
+    const midia = m.tipo && m.tipo!=="texto" ? `<span class="midia"><svg class=ic aria-hidden=true><use href=#i-${{audio:"microphone", imagem:"photo", documento:"paperclip"}[m.tipo] || "paperclip"} /></svg>${convMidiaRotulo(m.tipo)}</span>${m.texto ? "\n" : ""}` : "";
+    let html = `${sepDia}<div class="conv-msg ${escapeHtml(m.autor)}">${midia}${escapeHtml(m.texto||"")}<small><b>${escapeHtml(autor)}</b> · ${hora}</small></div>`;
     if(m.acao==="passar_equipe"){
       html += `<div class="conv-aviso"><svg class=ic aria-hidden=true><use href=#i-arrow-back-up /></svg> Assistente passou pra você</div>`;
     }
     if(m.lead_id){
       const l = (leads||[]).find(x=>x.id===m.lead_id);
-      html += `<div class="conv-aviso clicavel" onclick="openLeadModal(${m.lead_id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Virou lead${l ? ": " + escapeHtml(l.servico||"") : ""}</div>`;
+      html += `<div class="conv-aviso clicavel" onclick="openLeadModal(${m.lead_id})" title="Abrir o lead"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Virou lead${l ? ": " + escapeHtml(l.servico||"") : ""} <svg class=ic aria-hidden=true><use href=#i-chevron-right /></svg></div>`;
     }
     return html;
   }).join("");
@@ -5443,19 +5548,21 @@ function desenharConversaAberta(){
   const rolagem = boxAntes ? { topo: boxAntes.scrollTop, noFim: boxAntes.scrollHeight - boxAntes.scrollTop - boxAntes.clientHeight < 40 } : null;
   area.innerHTML = `
     <div class="conv-topo">
-      <button type="button" class="btn secondary conv-voltar" onclick="fecharConversa()"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
-      <div class="quem"><b>${escapeHtml(c.nome || telFmt)}</b><small>${escapeHtml(telFmt)} · ${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}${pausada ? " · assistente pausada até " + new Date(c.pausado_ate).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""}</small></div>
-      ${c.atencao
-        ? `<button type="button" class="btn secondary" onclick="marcarAtencao('${escapeHtml(c.telefone)}', false)" title="${escapeHtml(c.atencao_nota || "Com atenção")}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Tirar atenção</button>`
-        : `<button type="button" class="btn secondary" onclick="marcarAtencao('${escapeHtml(c.telefone)}', true)"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Marcar atenção</button>`}
-      ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${escapeHtml(c.telefone)}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
-      ${pausada
-        ? `<button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', 0)"><svg class=ic aria-hidden=true><use href=#i-player-play /></svg> Retomar assistente</button>`
-        : `<select id="conv-pausa-horas" title="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
-           <button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', Number(document.getElementById('conv-pausa-horas').value))"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausar assistente</button>`}
-      <a class="btn secondary" style="text-decoration:none;" href="https://wa.me/${escapeHtml(String(c.telefone).replace(/\D/g,""))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
+      <button type="button" class="conv-acao conv-voltar" onclick="fecharConversa()" aria-label="Voltar pra lista"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
+      <div class="conv-avatar grande ${convClasseAvatar(c.perfil)}" aria-hidden="true">${escapeHtml(convIniciais(c.nome))}</div>
+      <div class="quem"><b>${escapeHtml(c.nome || telFmt)}</b><small>${escapeHtml(telFmt)} <span class="conv-pill">${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</span></small></div>
+      ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${tel}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
     </div>
-    ${ligacoes ? `<div class="conv-ligacoes">${ligacoes}</div>` : ""}
+    <div class="conv-acoes">
+      <a class="conv-acao" href="https://wa.me/${escapeHtml(String(c.telefone).replace(/\D/g,""))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
+      ${c.atencao ? "" : `<button type="button" class="conv-acao" onclick="marcarAtencao('${tel}', true)"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Marcar atenção</button>`}
+      ${pausada ? "" : `<span class="conv-pausa" title="Deixar a assistente calada nessa conversa">
+          <select id="conv-pausa-horas" aria-label="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
+          <button type="button" class="conv-acao" onclick="pausarAssistente('${tel}', Number(document.getElementById('conv-pausa-horas').value))"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausar assistente</button>
+        </span>`}
+    </div>
+    ${faixas}
+    ${ligacoes ? `<div class="conv-ligacoes"><span class="conv-ligacoes-rotulo">Ligado a</span>${ligacoes}</div>` : ""}
     <div class="conv-msgs" id="conv-msgs">${msgs || `<div class="conv-vazia">Buscando as mensagens…</div>`}</div>`;
   const box = document.getElementById("conv-msgs");
   if(box && rolagem) box.scrollTop = rolagem.noFim ? box.scrollHeight : rolagem.topo;
