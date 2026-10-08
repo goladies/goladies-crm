@@ -361,6 +361,46 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .vg-chat-msg.cliente{align-self:flex-end;background:rgba(255,45,156,.12);}
 .vg-chat-msg.equipe{align-self:center;background:rgba(91,157,255,.14);}
 .vg-chat-escrever{display:flex;gap:8px;}
+/* Aba Conversas (WhatsApp da Go Ladies) */
+.nav-conta{margin-left:auto; background:var(--rosa); color:#fff; border-radius:10px; font-size:11px; font-weight:700; padding:1px 7px; line-height:1.5;}
+.nav-conta:empty{display:none;}
+.conv-layout{display:grid; grid-template-columns:300px minmax(0,1fr); background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; min-height:480px; box-shadow:var(--sombra);}
+.conv-lista{border-right:1px solid var(--border); overflow-y:auto; max-height:max(360px, calc(100vh - 250px));}
+.conv-item{padding:11px 14px; border-bottom:1px solid var(--border); cursor:pointer;}
+.conv-item:hover{background:var(--bg-hover);}
+.conv-item.ativa{background:var(--rosa-bg);}
+.conv-item .linha1{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+.conv-item .nome{font-weight:600; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-item .hora{font-size:11px; color:var(--text3); flex-shrink:0;}
+.conv-item .linha2{font-size:12px; color:var(--text3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conv-item .esperando{color:var(--rosa-texto); font-weight:600;}
+.conv-conversa{display:flex; flex-direction:column; min-width:0;}
+.conv-topo{padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.conv-topo .quem{flex:1; min-width:160px;}
+.conv-topo .quem b{font-size:15px;}
+.conv-topo .quem small{display:block; color:var(--text3); font-size:12px;}
+.conv-voltar{display:none;}
+.conv-ligacoes{padding:10px 16px 0; display:flex; gap:8px; flex-wrap:wrap;}
+.conv-ligacao{display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border2); border-radius:8px; padding:6px 10px; font-size:12.5px; cursor:pointer; background:var(--bg-card2);}
+.conv-ligacao:hover{border-color:var(--rosa);}
+.conv-msgs{flex:1; display:flex; flex-direction:column; gap:8px; padding:14px 16px; overflow-y:auto; max-height:max(300px, calc(100vh - 400px));}
+.conv-msg{max-width:78%; padding:8px 11px; border-radius:12px; font-size:13px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; background:var(--bg-input);}
+.conv-msg small{display:block; font-size:11px; color:var(--text3); margin-top:3px;}
+.conv-msg.contato{align-self:flex-start;}
+.conv-msg.bot{align-self:flex-end; background:var(--rosa-bg);}
+.conv-msg.equipe{align-self:flex-end; background:var(--c-teal-bg);}
+.conv-aviso{align-self:center; font-size:12px; color:var(--rosa-texto); display:flex; gap:6px; align-items:center; cursor:default;}
+.conv-aviso.clicavel{cursor:pointer; text-decoration:underline;}
+.conv-dia{align-self:center; font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
+.conv-vazia{padding:40px 20px; text-align:center; color:var(--text3); font-size:13px;}
+@media (max-width:800px){
+  .conv-layout{grid-template-columns:1fr;}
+  .conv-lista{border-right:none; max-height:none;}
+  .conv-layout .conv-conversa{display:none;}
+  .conv-layout.aberta .conv-lista{display:none;}
+  .conv-layout.aberta .conv-conversa{display:flex;}
+  .conv-voltar{display:inline-flex;}
+}
 .vg-chat-escrever input{flex:1;}
 .formgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
 .formgrid>*{min-width:0;}
@@ -962,6 +1002,7 @@ tr.tr-click{cursor:pointer;}
     <div class="sidebar-nav">
       <div class="nav-item active" data-tab="dashboard" data-titulo="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></div>
       <div class="nav-item" data-tab="leads" data-titulo="Leads"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h4v7H6zM14 3h4v7h-4z"/></svg><span>Leads</span></div>
+      <div class="nav-item" data-tab="conversas" data-titulo="Conversas do WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l1.3-3.9A9 9 0 1 1 7.7 19.3L3 20"/><path d="M8 10h8M8 14h5"/></svg><span>Conversas</span><b class="nav-conta" id="nav-conta-conversas" title="Conversas esperando você"></b></div>
       <div class="nav-item" data-tab="clientes" data-titulo="Clientes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span>Clientes</span></div>
       <div class="nav-item" data-tab="parceiros" data-titulo="Rede de Parceiras (os)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Parceiras (os)</span></div>
       <div class="nav-item nav-destaque" data-tab="transporte" data-titulo="Transporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H3v-5l2-5h12l3 5v5h-2"/><path d="M5 12h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg><span>Transporte</span></div>
@@ -1234,6 +1275,23 @@ tr.tr-click{cursor:pointer;}
           <thead><tr id="thead-vagas"></tr></thead>
           <tbody id="vagas-body"></tbody>
         </table>
+      </div>
+    </div>
+
+    <div id="tab-conversas" style="display:none;">
+      <div class="pagehead">
+        <div><h2>Conversas</h2><p>WhatsApp da Go Ladies: o que a assistente respondeu e o que está esperando você</p></div>
+        <button class="btn secondary" onclick="carregarConversas(true)"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg> Atualizar conversas</button>
+      </div>
+      <div class="filters">
+        <button type="button" class="subnav-item" data-conv-filtro="esperando" onclick="filtrarConversas('esperando')"><svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Esperando você <span class="sede-conta" id="conv-conta-esperando"></span></button>
+        <button type="button" class="subnav-item" data-conv-filtro="todas" onclick="filtrarConversas('todas')"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Todas <span class="sede-conta" id="conv-conta-todas"></span></button>
+        <button type="button" class="subnav-item" data-conv-filtro="pausadas" onclick="filtrarConversas('pausadas')"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Assistente pausada <span class="sede-conta" id="conv-conta-pausadas"></span></button>
+        <input type="search" id="conv-busca" placeholder="Buscar nome ou número" oninput="desenharConversas()" style="margin-left:auto; max-width:220px;">
+      </div>
+      <div class="conv-layout" id="conv-layout">
+        <div class="conv-lista" id="conv-lista"></div>
+        <div class="conv-conversa" id="conv-conversa"></div>
       </div>
     </div>
 
@@ -3092,6 +3150,11 @@ const SERVICOS = [
   {nome:"Venda do meu carro", categoria:"Compra e Venda"},
   {nome:"Viagem sob demanda", categoria:"Viagem"},
   {nome:"Análise de orçamento", categoria:"Consultoria"},
+  // Desde 08/10/2026: a assistente do WhatsApp cria lead também pra parceria
+  // e patrocínio (lista igual em whatsapp_criar_lead no Supabase).
+  {nome:"Quero ser parceira (o) da rede", categoria:"Parcerias e Patrocínio"},
+  {nome:"Patrocínio", categoria:"Parcerias e Patrocínio"},
+  {nome:"Imprensa e outras propostas", categoria:"Parcerias e Patrocínio"},
   {nome:"Outro serviço", categoria:"Outros"},
 ];
 const CATEGORIAS = [...new Set(SERVICOS.map(s=>s.categoria))];
@@ -4994,12 +5057,214 @@ function renderLeads(){
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
       <td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td>
-      <td>${escapeHtml(l.origem||"-")}</td>
+      <td>${escapeHtml(l.origem||"-")}${l.canal?`<br><span style="color:var(--muted); font-size:12px;"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> ${escapeHtml(l.canal)}</span>`:""}</td>
       <td>${l.data||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhum lead encontrado</td></tr>`;
   aplicarRotulos();
+}
+
+// ===== CONVERSAS (WhatsApp da Go Ladies) =====
+// Lista vem de whatsapp_lista_conversas() (schema_whatsapp_conversas_leads.sql);
+// as mensagens, de whatsapp_mensagens (só equipe lê). Não entra na carga
+// geral do CRM: busca quando a aba abre e a cada atualização, no máximo
+// 1x por minuto (o botão "Atualizar conversas" força).
+let conversas = [];
+let conversasCarregadoEm = 0;
+let conversasCarregando = false;
+let conversasErro = "";
+let convFiltro = "esperando";
+let convAberta = null;           // telefone da conversa aberta
+let convMensagens = [];
+let convMensagensTel = null;
+
+function convFim8(numero){ return String(numero||"").replace(/\D/g,"").slice(-8); }
+function convFormatarTel(tel){
+  let d = String(tel||"").replace(/\D/g,"");
+  if((d.length===12 || d.length===13) && d.startsWith("55")) d = d.slice(2);
+  if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return tel || "";
+}
+function convHora(iso){
+  if(!iso) return "";
+  const d = new Date(iso), hoje = new Date();
+  const ontem = new Date(); ontem.setDate(hoje.getDate()-1);
+  const hm = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  if(d.toDateString()===hoje.toDateString()) return hm;
+  if(d.toDateString()===ontem.toDateString()) return "ontem";
+  return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+}
+const CONV_PERFIS = { cliente:"Cliente", motorista_ativa:"Motorista certificada", motorista_cadastro:"Motorista em cadastro", cliente_e_motorista:"Cliente e motorista", novo:"Contato novo" };
+const CONV_TIPOS = { audio:"áudio", imagem:"foto", documento:"documento", outro:"arquivo" };
+
+function convPausada(c){ return !!(c.pausado_ate && new Date(c.pausado_ate) > new Date()); }
+function convCadastros(tel){
+  const f = convFim8(tel);
+  return {
+    cliente: (clientesTransporte||[]).find(c=>convFim8(c.whatsapp)===f),
+    motorista: (motoristas||[]).find(m=>convFim8(m.whatsapp)===f),
+    leads: (leads||[]).filter(l=>convFim8(l.whatsapp)===f).sort((a,b)=>b.id-a.id)
+  };
+}
+
+async function carregarConversas(forcar){
+  if(conversasCarregando) return;
+  if(!forcar && Date.now()-conversasCarregadoEm < 60000) return;
+  conversasCarregando = true;
+  try{
+    const { data, error } = await sb.rpc("whatsapp_lista_conversas");
+    if(error) throw error;
+    conversas = data || [];
+    conversasErro = "";
+    conversasCarregadoEm = Date.now();
+  }catch(e){
+    conversasErro = (e && e.message) || String(e);
+  }finally{
+    conversasCarregando = false;
+  }
+  desenharConversas();
+  if(forcar && convAberta) abrirConversa(convAberta, true);
+}
+
+function renderConversas(){
+  desenharConversas();
+  carregarConversas(false);
+}
+
+function filtrarConversas(f){ convFiltro = f; desenharConversas(); }
+
+function desenharConversas(){
+  const esperando = conversas.filter(c=>c.esperando).length;
+  const nav = document.getElementById("nav-conta-conversas");
+  if(nav) nav.textContent = esperando || "";
+  const lista = document.getElementById("conv-lista");
+  if(!lista) return;
+  document.getElementById("conv-conta-esperando").textContent = esperando || "";
+  document.getElementById("conv-conta-todas").textContent = conversas.length || "";
+  document.getElementById("conv-conta-pausadas").textContent = conversas.filter(convPausada).length || "";
+  document.querySelectorAll("#tab-conversas .subnav-item[data-conv-filtro]").forEach(b=>b.classList.toggle("active", b.dataset.convFiltro===convFiltro));
+
+  if(conversasErro){
+    lista.innerHTML = `<div class="conv-vazia">Não consegui buscar as conversas.<br><small>${escapeHtml(conversasErro)}</small><br><br>Se o erro fala em whatsapp_lista_conversas, falta rodar o schema_whatsapp_conversas_leads.sql no Supabase.</div>`;
+    return;
+  }
+  const busca = (document.getElementById("conv-busca").value||"").toLowerCase().trim();
+  const buscaDig = busca.replace(/\D/g,"");
+  const filtradas = conversas.filter(c=>
+    (convFiltro==="todas" || (convFiltro==="esperando" && c.esperando) || (convFiltro==="pausadas" && convPausada(c))) &&
+    (!busca || (c.nome||"").toLowerCase().includes(busca) || (buscaDig.length>=3 && String(c.telefone).includes(buscaDig)))
+  );
+  if(!conversasCarregadoEm && conversasCarregando){
+    lista.innerHTML = `<div class="conv-vazia">Buscando as conversas…</div>`;
+  }else if(!filtradas.length){
+    const vazio = { esperando:"Nenhuma conversa esperando você. A assistente está dando conta 🩷", pausadas:"A assistente não está pausada em nenhuma conversa.", todas:"Nenhuma conversa ainda." };
+    lista.innerHTML = `<div class="conv-vazia">${busca ? "Nada encontrado nessa busca." : vazio[convFiltro]}</div>`;
+  }else{
+    lista.innerHTML = filtradas.map(c=>{
+      const quem = c.ultima_autor==="bot" ? "Assistente: " : c.ultima_autor==="equipe" ? "Você: " : "";
+      const texto = c.ultima_tipo && c.ultima_tipo!=="texto" ? `[${CONV_TIPOS[c.ultima_tipo]||c.ultima_tipo}] ${c.ultima_msg||""}` : (c.ultima_msg||"");
+      const status = c.esperando ? `<span class="esperando">Passou pra você</span> · ` : convPausada(c) ? `<svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> pausada · ` : "";
+      return `<div class="conv-item${c.telefone===convAberta?" ativa":""}" onclick="abrirConversa('${escapeHtml(c.telefone)}')">
+        <div class="linha1"><span class="nome">${escapeHtml(c.nome || convFormatarTel(c.telefone))}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
+        <div class="linha2">${status}${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</div>
+        <div class="linha2">${escapeHtml(quem + texto)}</div>
+      </div>`;
+    }).join("");
+  }
+  desenharConversaAberta();
+}
+
+async function abrirConversa(tel, silencioso){
+  convAberta = tel;
+  document.getElementById("conv-layout").classList.add("aberta");
+  if(convMensagensTel !== tel){ convMensagens = []; convMensagensTel = tel; }
+  if(!silencioso) desenharConversas();
+  const { data, error } = await sb.from("whatsapp_mensagens")
+    .select("id,direcao,autor,tipo,texto,acao,lead_id,criado_em")
+    .eq("telefone", tel).order("id", { ascending:false }).limit(300);
+  if(convAberta !== tel) return;   // trocou de conversa enquanto buscava
+  if(error){ showToast("Não consegui abrir a conversa: " + error.message, true); return; }
+  convMensagens = (data||[]).reverse();
+  desenharConversaAberta();
+  const box = document.getElementById("conv-msgs");
+  if(box) box.scrollTop = box.scrollHeight;
+}
+
+function fecharConversa(){
+  convAberta = null;
+  document.getElementById("conv-layout").classList.remove("aberta");
+  desenharConversas();
+}
+
+function desenharConversaAberta(){
+  const area = document.getElementById("conv-conversa");
+  if(!area) return;
+  const c = conversas.find(x=>x.telefone===convAberta);
+  if(!convAberta || !c){
+    area.innerHTML = `<div class="conv-vazia">Escolha uma conversa na lista.</div>`;
+    return;
+  }
+  const cad = convCadastros(c.telefone);
+  const pausada = convPausada(c);
+  const telFmt = convFormatarTel(c.telefone);
+  const ligacoes = [
+    cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Cadastro de cliente</span>` : "",
+    cad.motorista ? `<span class="conv-ligacao" onclick="openMotoristaModal(${cad.motorista.id})"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Cadastro de motorista</span>` : "",
+    ...cad.leads.slice(0,4).map(l=>`<span class="conv-ligacao" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Lead: ${escapeHtml(l.servico||l.categoria||"sem serviço")} · ${escapeHtml(l.etapa||"")}</span>`)
+  ].join("");
+
+  let diaAnterior = "";
+  const msgs = convMensagens.map(m=>{
+    const d = new Date(m.criado_em);
+    const dia = d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"2-digit"});
+    const sepDia = dia!==diaAnterior ? `<div class="conv-dia">${escapeHtml(dia)}</div>` : "";
+    diaAnterior = dia;
+    const hora = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    const autor = m.autor==="bot" ? "Assistente" : m.autor==="equipe" ? "Você" : (c.nome ? c.nome.split(" ")[0] : "Contato");
+    const tipo = m.tipo && m.tipo!=="texto" ? `[mandou ${CONV_TIPOS[m.tipo]||m.tipo}] ` : "";
+    let html = `${sepDia}<div class="conv-msg ${escapeHtml(m.autor)}">${escapeHtml(tipo + (m.texto||""))}<small>${autor} · ${hora}</small></div>`;
+    if(m.acao==="passar_equipe"){
+      html += `<div class="conv-aviso"><svg class=ic aria-hidden=true><use href=#i-arrow-back-up /></svg> Assistente passou pra você</div>`;
+    }
+    if(m.lead_id){
+      const l = (leads||[]).find(x=>x.id===m.lead_id);
+      html += `<div class="conv-aviso clicavel" onclick="openLeadModal(${m.lead_id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Virou lead${l ? ": " + escapeHtml(l.servico||"") : ""}</div>`;
+    }
+    return html;
+  }).join("");
+
+  // Redesenho automático (a cada atualização do CRM) não pode tirar a
+  // rolagem do lugar: guarda onde estava, ou se estava no fim.
+  const boxAntes = document.getElementById("conv-msgs");
+  const rolagem = boxAntes ? { topo: boxAntes.scrollTop, noFim: boxAntes.scrollHeight - boxAntes.scrollTop - boxAntes.clientHeight < 40 } : null;
+  area.innerHTML = `
+    <div class="conv-topo">
+      <button type="button" class="btn secondary conv-voltar" onclick="fecharConversa()"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
+      <div class="quem"><b>${escapeHtml(c.nome || telFmt)}</b><small>${escapeHtml(telFmt)} · ${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}${pausada ? " · assistente pausada até " + new Date(c.pausado_ate).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""}</small></div>
+      ${pausada
+        ? `<button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', 0)"><svg class=ic aria-hidden=true><use href=#i-player-play /></svg> Retomar assistente</button>`
+        : `<select id="conv-pausa-horas" title="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
+           <button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', Number(document.getElementById('conv-pausa-horas').value))"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausar assistente</button>`}
+      <a class="btn secondary" style="text-decoration:none;" href="https://wa.me/${escapeHtml(String(c.telefone).replace(/\D/g,""))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
+    </div>
+    ${ligacoes ? `<div class="conv-ligacoes">${ligacoes}</div>` : ""}
+    <div class="conv-msgs" id="conv-msgs">${msgs || `<div class="conv-vazia">Buscando as mensagens…</div>`}</div>`;
+  const box = document.getElementById("conv-msgs");
+  if(box && rolagem) box.scrollTop = rolagem.noFim ? box.scrollHeight : rolagem.topo;
+}
+
+async function pausarAssistente(tel, horas){
+  const ate = horas > 0 ? new Date(Date.now() + horas*3600000).toISOString() : null;
+  const { error } = await sb.from("whatsapp_conversas").upsert({
+    telefone: tel, bot_pausado_ate: ate, pausado_motivo: horas > 0 ? "Pausado pelo CRM" : null
+  }, { onConflict: "telefone" });
+  if(error){ showToast("Não consegui " + (horas>0?"pausar":"retomar") + ": " + error.message, true); return; }
+  const c = conversas.find(x=>x.telefone===tel);
+  if(c){ c.pausado_ate = ate; c.pausado_motivo = horas>0 ? "Pausado pelo CRM" : null; }
+  showToast(horas > 0 ? "Assistente pausada nessa conversa" : "Assistente de volta nessa conversa");
+  desenharConversas();
 }
 
 function renderClientes(){
@@ -5172,7 +5437,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
