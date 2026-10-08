@@ -134,18 +134,19 @@ begin
                     select coalesce(m.status, '?') status, count(*) n from public.motoristas m
                      where not public.sede_eh_motorista_ju(m.id) group by 1) s), '{}'),
       -- Funil de motoristas: uma linha por candidata (só id, etapa e datas; sem nome nem contato).
+      -- Colunas opcionais lidas por to_jsonb: se não existirem no banco, vêm vazias em vez de dar erro.
       'motoristas', coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'status', m.status,
                     'dias_desde_cadastro', v_hoje - (m.criado_em at time zone 'America/Sao_Paulo')::date,
-                    'certificada_ate', m.certificada_ate, 'cnh_validade', m.cnh_validade,
-                    'antecedentes', m.antecedentes_status, 'origem', m.origem) order by m.id)
+                    'certificada_ate', to_jsonb(m)->'certificada_ate', 'cnh_validade', to_jsonb(m)->'cnh_validade',
+                    'antecedentes', to_jsonb(m)->'antecedentes_status', 'origem', to_jsonb(m)->'origem') order by m.id)
                     from public.motoristas m where not public.sede_eh_motorista_ju(m.id)), '[]'),
       -- Pedidos e cotações dos últimos 30 dias, pela data do pedido (inclui perdidas e o motivo).
       'pedidos_30_dias', coalesce((select jsonb_agg(jsonb_build_object('id', vi.id,
                     'pedido_em', (vi.criado_em at time zone 'America/Sao_Paulo')::date,
                     'dia', coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date),
-                    'status', vi.status, 'canal', vi.canal_recepcao, 'tipo', vi.tipo_servico,
-                    'preco', coalesce(vi.preco_final, vi.preco_cotado), 'desconto', vi.desconto_valor,
-                    'motivo_perda', vi.motivo_perda) order by vi.id)
+                    'status', vi.status, 'canal', to_jsonb(vi)->'canal_recepcao', 'tipo', vi.tipo_servico,
+                    'preco', coalesce(vi.preco_final, vi.preco_cotado), 'desconto', to_jsonb(vi)->'desconto_valor',
+                    'motivo_perda', to_jsonb(vi)->'motivo_perda') order by vi.id)
                     from public.viagens vi where vi.criado_em > now() - interval '30 days'), '[]'),
       'certificadas_validas', (select count(*) from public.motoristas m
                     where m.status = 'Ativa' and coalesce(m.certificada_ate, v_hoje) >= v_hoje
