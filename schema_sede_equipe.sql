@@ -4,6 +4,8 @@
 -- Comentário de avaliação vem cortado em 300 letras, para a Tati entender nota baixa.
 -- Rodar uma vez em: Supabase (go-ladies-crm) → SQL Editor → New query → colar tudo → Run
 -- Pode rodar de novo sem estragar nada. Precisa do schema_sede.sql já rodado.
+-- 07/10 (2ª versão): + transferências entre contas (Rica), funil de motoristas e pedidos
+-- dos últimos 30 dias com motivo de perda (Tati). Rodar o arquivo inteiro de novo.
 
 -- Reconhece a motorista Juliana (mesma regra do CRM: ehMotoristaJuliana).
 create or replace function public.sede_eh_motorista_ju(p_id bigint)
@@ -95,6 +97,12 @@ begin
                     from public.fin_entradas e
                    where coalesce(e.data_recebimento, e.data_prevista) between v_ini and v_fim
                       or e.status = 'Previsto'), '[]'),
+      -- Transferências entre contas desde o saldo informado (para "deveria × passou" das caixinhas).
+      'transferencias', coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'data', t.data, 'valor', t.valor,
+                    'de', (select c.nome from public.fin_contas c where c.id = t.de_conta_id),
+                    'para', (select c.nome from public.fin_contas c where c.id = t.para_conta_id)) order by t.data, t.id)
+                    from public.fin_transferencias t
+                   where t.data >= least(v_ini, coalesce((select min(c.data_saldo_inicial) from public.fin_contas c where c.ativa), v_ini))), '[]'),
       'concluidas_sem_pagamento', coalesce((select jsonb_agg(jsonb_build_object('viagem_id', v.id, 'dia', v.dia, 'preco', v.preco) order by v.dia)
                     from v where v.status = 'Concluída' and v.dia >= v_fase2
                      and not exists (select 1 from public.pagamentos_cliente pc where pc.viagem_id = v.id and pc.status = 'Pago')), '[]'),
@@ -125,6 +133,20 @@ begin
       'motoristas_por_status', coalesce((select jsonb_object_agg(s.status, s.n) from (
                     select coalesce(m.status, '?') status, count(*) n from public.motoristas m
                      where not public.sede_eh_motorista_ju(m.id) group by 1) s), '{}'),
+      -- Funil de motoristas: uma linha por candidata (só id, etapa e datas; sem nome nem contato).
+      'motoristas', coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'status', m.status,
+                    'dias_desde_cadastro', v_hoje - (m.criado_em at time zone 'America/Sao_Paulo')::date,
+                    'certificada_ate', m.certificada_ate, 'cnh_validade', m.cnh_validade,
+                    'antecedentes', m.antecedentes_status, 'origem', m.origem) order by m.id)
+                    from public.motoristas m where not public.sede_eh_motorista_ju(m.id)), '[]'),
+      -- Pedidos e cotações dos últimos 30 dias, pela data do pedido (inclui perdidas e o motivo).
+      'pedidos_30_dias', coalesce((select jsonb_agg(jsonb_build_object('id', vi.id,
+                    'pedido_em', (vi.criado_em at time zone 'America/Sao_Paulo')::date,
+                    'dia', coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date),
+                    'status', vi.status, 'canal', vi.canal_recepcao, 'tipo', vi.tipo_servico,
+                    'preco', coalesce(vi.preco_final, vi.preco_cotado), 'desconto', vi.desconto_valor,
+                    'motivo_perda', vi.motivo_perda) order by vi.id)
+                    from public.viagens vi where vi.criado_em > now() - interval '30 days'), '[]'),
       'certificadas_validas', (select count(*) from public.motoristas m
                     where m.status = 'Ativa' and coalesce(m.certificada_ate, v_hoje) >= v_hoje
                       and not public.sede_eh_motorista_ju(m.id)),
