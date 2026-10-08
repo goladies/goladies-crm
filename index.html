@@ -362,8 +362,28 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .vg-chat-msg.equipe{align-self:center;background:rgba(91,157,255,.14);}
 .vg-chat-escrever{display:flex;gap:8px;}
 /* Aba Conversas (WhatsApp da Go Ladies) */
-.nav-conta{margin-left:auto; background:var(--rosa); color:#fff; border-radius:10px; font-size:11px; font-weight:700; padding:1px 7px; line-height:1.5;}
+/* Números do menu (sinaleira): amarelo = precisa de você, vermelho = urgente */
+.nav-conta{margin-left:auto; background:#F2B705; color:#2B1D00; border-radius:10px; font-size:11px; font-weight:700; padding:1px 7px; line-height:1.5; cursor:pointer;}
+.nav-conta.verm{background:#E5484D; color:#fff;}
+.nav-conta:hover{filter:brightness(1.1);}
 .nav-conta:empty{display:none;}
+.conv-bandeira{color:#F2B705;}
+.conv-item .conv-nota{color:var(--c-amber); font-style:italic;}
+.atencao-pop{position:fixed; z-index:1000; background:var(--bg-card); border:1px solid var(--border2); border-radius:12px; padding:12px; box-shadow:0 12px 32px rgba(0,0,0,.35);}
+.atencao-pop-topo{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:13.5px;}
+.atencao-pop-lista{max-height:50vh; overflow-y:auto;}
+.atencao-item{display:flex; gap:8px; align-items:flex-start; padding:7px 6px; border-radius:8px; font-size:13px; cursor:pointer; line-height:1.4;}
+.atencao-item:hover{background:var(--bg-hover);}
+.atencao-ponto{width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:5px; background:#F2B705;}
+.atencao-ponto.vermelho{background:#E5484D;}
+.atencao-card .atencao-grade{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;}
+.atencao-bloco{border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-card2);}
+.atencao-bloco-topo{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:4px; cursor:pointer;}
+.atencao-chip{font-size:11px; font-weight:700; padding:1px 8px; border-radius:10px;}
+.atencao-chip.vermelho{background:#E5484D; color:#fff;}
+.atencao-chip.amarelo{background:#F2B705; color:#2B1D00;}
+.atencao-mais{font-size:12px; color:var(--rosa-texto); cursor:pointer; padding:4px 6px;}
+.atencao-card.tudo-ok{color:var(--c-green); display:flex; gap:8px; align-items:center;}
 .conv-layout{display:grid; grid-template-columns:300px minmax(0,1fr); background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; min-height:480px; box-shadow:var(--sombra);}
 .conv-lista{border-right:1px solid var(--border); overflow-y:auto; max-height:max(360px, calc(100vh - 250px));}
 .conv-item{padding:11px 14px; border-bottom:1px solid var(--border); cursor:pointer;}
@@ -1053,6 +1073,7 @@ tr.tr-click{cursor:pointer;}
 
     <div id="tab-dashboard">
       <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
+      <div id="dash-atencao"></div>
       <div class="cards" id="dash-cards"></div>
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
@@ -1285,6 +1306,7 @@ tr.tr-click{cursor:pointer;}
       </div>
       <div class="filters">
         <button type="button" class="subnav-item" data-conv-filtro="esperando" onclick="filtrarConversas('esperando')"><svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Esperando você <span class="sede-conta" id="conv-conta-esperando"></span></button>
+        <button type="button" class="subnav-item" data-conv-filtro="atencao" onclick="filtrarConversas('atencao')"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Com atenção <span class="sede-conta" id="conv-conta-atencao"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="todas" onclick="filtrarConversas('todas')"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Todas <span class="sede-conta" id="conv-conta-todas"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="pausadas" onclick="filtrarConversas('pausadas')"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Assistente pausada <span class="sede-conta" id="conv-conta-pausadas"></span></button>
         <input type="text" id="conv-busca" placeholder="Buscar nome ou número" oninput="desenharConversas()" style="margin-left:auto; max-width:220px;">
@@ -5065,6 +5087,185 @@ function renderLeads(){
   aplicarRotulos();
 }
 
+// ===== PRECISA DE VOCÊ (números do menu, card do Dashboard e título) =====
+// Sinaleira: vermelho = urgente, resolver hoje; amarelo = precisa de você,
+// sem pressa. Verde só no Dashboard ("tudo em dia"), nunca no menu.
+// Cada número é clicável: abre a lista do que está esperando, e cada item
+// leva pra origem. Tudo sai do que o CRM já carrega (sem SQL próprio).
+const ATENCAO_MENUS = ["conversas","leads","transporte","orcamentos","financeiro","gestao","sede","vagas"];
+const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Leads", transporte:"Transporte", orcamentos:"Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
+const VIAGEM_BOLA_GO_LADIES = ["Solicitada","Cotando preço","Escolher motoristas","Preço recusado pela cliente"];
+let atencaoAtual = {};
+
+function irParaConversa(tel){ irParaAba("conversas"); abrirConversa(tel); }
+function irParaSede(sub){ irParaAba("sede"); mostrarSubSede(sub); }
+
+function itensAtencao(){
+  const r = {};
+  const add = (menu, nivel, texto, acao) => (r[menu] = r[menu] || []).push({ nivel, texto, acao });
+  const hoje = hojeLocalISO();
+  const agora = Date.now();
+  const fmtData = d => d ? d.split("-").reverse().slice(0,2).join("/") : "";
+
+  // Conversas: esperando você (vermelho depois de 4h) ou marcada com atenção.
+  (conversas||[]).forEach(c=>{
+    const nome = c.nome || convFormatarTel(c.telefone);
+    const acao = `irParaConversa('${String(c.telefone).replace(/\D/g,"")}')`;
+    if(c.esperando){
+      const h = c.passou_em ? (agora - new Date(c.passou_em).getTime()) / 3600000 : 0;
+      add("conversas", h > 4 ? "vermelho" : "amarelo", `${nome}: esperando você${h >= 1 ? ` há ${Math.floor(h)}h` : ""}`, acao);
+    }else if(c.atencao){
+      add("conversas", "amarelo", `${nome}: ${c.atencao_nota || "marcada com atenção"}`, acao);
+    }
+  });
+
+  // Leads novos, ainda sem contato (urgente = vermelho).
+  (leads||[]).filter(l=>l.etapa==="Novo lead" && !l.exemplo).forEach(l=>{
+    const urg = l.urgencia === "Urgente";
+    add("leads", urg ? "vermelho" : "amarelo", `${l.nome}: ${l.servico || l.categoria || "lead novo"}${urg ? " (urgente)" : ""}`, `openLeadModal(${l.id})`);
+  });
+
+  // Transporte: viagem nas próximas 24h sem motorista (vermelho); bola com a
+  // Go Ladies e concluída sem pagamento (amarelo).
+  (viagens||[]).forEach(v=>{
+    const cli = (clientesTransporte||[]).find(c=>c.id===v.cliente_id);
+    const nome = `#${v.id} ${cli ? cli.nome.split(" ")[0] : (v.cliente_nome || "")}`.trim();
+    const hora = v.horario_partida ? v.horario_partida.slice(0,5) : "";
+    const quando = v.data ? new Date(`${v.data}T${hora || "00:00"}:00`).getTime() : null;
+    const horas = quando ? (quando - agora) / 3600000 : null;
+    const aberta = !["Cancelada","Concluída","Em andamento"].includes(v.status);
+    if(aberta && !v.motorista_id_confirmada && horas !== null && horas <= 24 && horas > -3){
+      add("transporte", "vermelho", `${nome}: ${fmtData(v.data)} ${hora} sem motorista confirmada`, `openViagemModal(${v.id})`);
+    }else if(VIAGEM_BOLA_GO_LADIES.includes(v.status)){
+      add("transporte", "amarelo", `${nome}: ${rotuloStatusViagem(v.status)}`, `openViagemModal(${v.id})`);
+    }else if(v.status === "Concluída" && Number(v.preco_cotado || 0) > 0
+             && !(pagamentosCliente||[]).some(p=>p.viagem_id===v.id && p.status==="Pago")){
+      add("transporte", "amarelo", `${nome}: concluída sem pagamento registrado`, `openViagemModal(${v.id})`);
+    }
+  });
+
+  // Orçamentos pedidos, esperando você montar.
+  (orcamentos||[]).filter(o=>o.status==="Solicitado" && !o.exemplo).forEach(o=>{
+    const l = (leads||[]).find(x=>x.id===o.lead_id);
+    add("orcamentos", "amarelo", `Orçamento #${o.id}: ${[l && l.nome, o.servico].filter(Boolean).join(" · ") || "sem detalhe"}`, `openOrcamentoModal(${o.id})`);
+  });
+
+  // Financeiro: despesa vencida (vermelho) ou vencendo hoje (amarelo);
+  // recebimento de venda atrasado (vermelho).
+  (contasPagar||[]).filter(c=>c.status !== "Pago" && c.vencimento && c.vencimento <= hoje).forEach(c=>{
+    const venceu = c.vencimento < hoje;
+    add("financeiro", venceu ? "vermelho" : "amarelo", `${c.descricao || "Despesa"}: ${venceu ? "venceu em " + fmtData(c.vencimento) : "vence hoje"} (${formatarMoedaBR(c.valor)})`, `openContaPagarModal(${c.id})`);
+  });
+  (vendaParcelas||[]).filter(p=>!["Pago","Recebido"].includes(p.status || "Pendente") && p.data_prevista && p.data_prevista < hoje).forEach(p=>{
+    const { lead, venda } = labelVendaParcela(p);
+    add("financeiro", "vermelho", `A receber atrasado: ${[venda && venda.servico_produto, lead && lead.nome].filter(Boolean).join(" · ") || "venda"} (${formatarMoedaBR(p.valor)})`, `openParcelaModal(${p.id})`);
+  });
+
+  // Gestão: o que o "Olha isso com carinho" da aba já aponta (alta e média).
+  try{
+    const d = new Date();
+    gestaoPendencias(d.getMonth() + 1, d.getFullYear()).forEach(i=>{
+      if(i.nivel === "alta") add("gestao", "vermelho", i.texto, i.acao);
+      else if(i.nivel === "media") add("gestao", "amarelo", i.texto, i.acao);
+    });
+  }catch(e){ console.warn("atenção da Gestão:", e); }
+
+  // Sede: decisões esperando você e pendências abertas.
+  (sedeDecisoes||[]).filter(d=>d.status==="Esperando você").forEach(d=>add("sede", "amarelo", `Decisão: ${d.titulo}`, `irParaSede('decisoes')`));
+  (sedePendencias||[]).filter(p=>p.status==="Aberta").forEach(p=>add("sede", "amarelo", `Pendência: ${p.titulo}`, `irParaSede('pendencias')`));
+
+  // Vagas enviadas pelo site, esperando curadoria.
+  (vagas||[]).filter(v=>v.status==="Em triagem").forEach(v=>add("vagas", "amarelo", `Vaga em triagem: ${[v.titulo, v.empresa_nome].filter(Boolean).join(" · ")}`, `openVagaModal(${v.id})`));
+
+  // Vermelho primeiro em cada menu.
+  Object.values(r).forEach(lista=>lista.sort((a,b)=>(a.nivel==="vermelho"?0:1)-(b.nivel==="vermelho"?0:1)));
+  return r;
+}
+
+function atualizarAtencao(){
+  let itens;
+  try{ itens = itensAtencao(); }catch(e){ console.warn("atenção:", e); return; }
+  atencaoAtual = itens;
+  ATENCAO_MENUS.forEach(menu=>{
+    const nav = document.querySelector(`.nav-item[data-tab="${menu}"]`);
+    if(!nav) return;
+    let b = nav.querySelector(".nav-conta");
+    if(!b){ b = document.createElement("b"); b.className = "nav-conta"; nav.appendChild(b); }
+    if(!b.dataset.ligado){
+      b.dataset.ligado = "1";
+      b.addEventListener("click", ev=>{ ev.stopPropagation(); abrirAtencao(menu, b); });
+    }
+    const lista = itens[menu] || [];
+    const verm = lista.filter(i=>i.nivel==="vermelho").length;
+    b.textContent = lista.length || "";
+    b.classList.toggle("verm", verm > 0);
+    b.title = lista.length ? [verm ? `${verm} urgente(s)` : "", lista.length - verm ? `${lista.length - verm} pra ver` : ""].filter(Boolean).join(" · ") + ". Clique pra ver a lista." : "";
+  });
+  // Título da aba do navegador. Gestão fica de fora: repete itens de
+  // Transporte e Financeiro.
+  const total = ATENCAO_MENUS.filter(m=>m!=="gestao").reduce((s,m)=>s + (itens[m]||[]).length, 0);
+  document.title = (total ? `(${total}) ` : "") + "CRM Go Ladies";
+  renderPrecisaDeVoce();
+}
+
+function itemAtencaoHtml(i){
+  return `<div class="atencao-item" onclick="fecharAtencao(); ${escapeHtml(i.acao)}"><span class="atencao-ponto ${i.nivel}"></span><span>${escapeHtml(i.texto)}</span></div>`;
+}
+
+function abrirAtencao(menu, ancora){
+  fecharAtencao();
+  const lista = atencaoAtual[menu] || [];
+  if(!lista.length) return;
+  const pop = document.createElement("div");
+  pop.id = "atencao-pop";
+  pop.className = "atencao-pop";
+  pop.innerHTML = `<div class="atencao-pop-topo"><b>Precisa de você em ${escapeHtml(ATENCAO_ROTULOS[menu])}</b><button type="button" class="icon-btn" aria-label="Fechar" onclick="fecharAtencao()"><svg class=ic aria-hidden=true><use href=#i-x /></svg></button></div>
+    <div class="atencao-pop-lista">${lista.map(itemAtencaoHtml).join("")}</div>
+    <button type="button" class="btn secondary" style="width:100%; margin-top:8px;" onclick="fecharAtencao(); irParaAba('${menu}')">Abrir ${escapeHtml(ATENCAO_ROTULOS[menu])}</button>`;
+  document.body.appendChild(pop);
+  const r = ancora.getBoundingClientRect();
+  const larg = Math.min(340, window.innerWidth - 16);
+  pop.style.width = larg + "px";
+  pop.style.left = Math.max(8, Math.min(r.right + 8, window.innerWidth - larg - 8)) + "px";
+  pop.style.top = Math.max(8, Math.min(r.top - 10, window.innerHeight - pop.offsetHeight - 8)) + "px";
+  setTimeout(()=>document.addEventListener("click", fecharAtencaoFora), 0);
+}
+function fecharAtencaoFora(ev){
+  const pop = document.getElementById("atencao-pop");
+  if(pop && !pop.contains(ev.target)) fecharAtencao();
+}
+function fecharAtencao(){
+  const pop = document.getElementById("atencao-pop");
+  if(pop) pop.remove();
+  document.removeEventListener("click", fecharAtencaoFora);
+}
+document.addEventListener("keydown", ev=>{ if(ev.key === "Escape") fecharAtencao(); });
+
+// Card "Precisa de você hoje" no topo do Dashboard.
+function renderPrecisaDeVoce(){
+  const el = document.getElementById("dash-atencao");
+  if(!el) return;
+  const menus = ATENCAO_MENUS.filter(m=>(atencaoAtual[m]||[]).length);
+  if(!menus.length){
+    el.innerHTML = `<div class="panel atencao-card tudo-ok"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> <b>Tudo em dia.</b> Nada esperando você agora.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="panel atencao-card">
+    <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-alarm /></svg> Precisa de você hoje</h3>
+    <div class="atencao-grade">${menus.map(m=>{
+      const lista = atencaoAtual[m];
+      const verm = lista.filter(i=>i.nivel==="vermelho").length, amar = lista.length - verm;
+      return `<div class="atencao-bloco">
+        <div class="atencao-bloco-topo" onclick="irParaAba('${m}')"><b>${escapeHtml(ATENCAO_ROTULOS[m])}</b>
+          ${verm ? `<span class="atencao-chip vermelho">${verm} urgente${verm>1?"s":""}</span>` : ""}
+          ${amar ? `<span class="atencao-chip amarelo">${amar} pra ver</span>` : ""}</div>
+        ${lista.slice(0,3).map(itemAtencaoHtml).join("")}
+        ${lista.length > 3 ? `<div class="atencao-mais" onclick="abrirAtencao('${m}', this)">+ ${lista.length - 3} mais</div>` : ""}
+      </div>`;
+    }).join("")}</div>
+  </div>`;
+}
+
 // ===== CONVERSAS (WhatsApp da Go Ladies) =====
 // Lista vem de whatsapp_lista_conversas() (schema_whatsapp_conversas_leads.sql);
 // as mensagens, de whatsapp_mensagens (só equipe lê). Não entra na carga
@@ -5137,11 +5338,11 @@ function filtrarConversas(f){ convFiltro = f; desenharConversas(); }
 
 function desenharConversas(){
   const esperando = conversas.filter(c=>c.esperando).length;
-  const nav = document.getElementById("nav-conta-conversas");
-  if(nav) nav.textContent = esperando || "";
+  atualizarAtencao();
   const lista = document.getElementById("conv-lista");
   if(!lista) return;
   document.getElementById("conv-conta-esperando").textContent = esperando || "";
+  document.getElementById("conv-conta-atencao").textContent = conversas.filter(c=>c.atencao).length || "";
   document.getElementById("conv-conta-todas").textContent = conversas.length || "";
   document.getElementById("conv-conta-pausadas").textContent = conversas.filter(convPausada).length || "";
   document.querySelectorAll("#tab-conversas .subnav-item[data-conv-filtro]").forEach(b=>b.classList.toggle("active", b.dataset.convFiltro===convFiltro));
@@ -5153,13 +5354,13 @@ function desenharConversas(){
   const busca = (document.getElementById("conv-busca").value||"").toLowerCase().trim();
   const buscaDig = busca.replace(/\D/g,"");
   const filtradas = conversas.filter(c=>
-    (convFiltro==="todas" || (convFiltro==="esperando" && c.esperando) || (convFiltro==="pausadas" && convPausada(c))) &&
+    (convFiltro==="todas" || (convFiltro==="esperando" && c.esperando) || (convFiltro==="atencao" && c.atencao) || (convFiltro==="pausadas" && convPausada(c))) &&
     (!busca || (c.nome||"").toLowerCase().includes(busca) || (buscaDig.length>=3 && String(c.telefone).includes(buscaDig)))
   );
   if(!conversasCarregadoEm && conversasCarregando){
     lista.innerHTML = `<div class="conv-vazia">Buscando as conversas…</div>`;
   }else if(!filtradas.length){
-    const vazio = { esperando:"Nenhuma conversa esperando você. A assistente está dando conta 🩷", pausadas:"A assistente não está pausada em nenhuma conversa.", todas:"Nenhuma conversa ainda." };
+    const vazio = { esperando:"Nenhuma conversa esperando você. A assistente está dando conta 🩷", atencao:"Nenhuma conversa marcada com atenção.", pausadas:"A assistente não está pausada em nenhuma conversa.", todas:"Nenhuma conversa ainda." };
     lista.innerHTML = `<div class="conv-vazia">${busca ? "Nada encontrado nessa busca." : vazio[convFiltro]}</div>`;
   }else{
     lista.innerHTML = filtradas.map(c=>{
@@ -5167,7 +5368,8 @@ function desenharConversas(){
       const texto = c.ultima_tipo && c.ultima_tipo!=="texto" ? `[${CONV_TIPOS[c.ultima_tipo]||c.ultima_tipo}] ${c.ultima_msg||""}` : (c.ultima_msg||"");
       const status = c.esperando ? `<span class="esperando">Passou pra você</span> · ` : convPausada(c) ? `<svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> pausada · ` : "";
       return `<div class="conv-item${c.telefone===convAberta?" ativa":""}" onclick="abrirConversa('${escapeHtml(c.telefone)}')">
-        <div class="linha1"><span class="nome">${escapeHtml(c.nome || convFormatarTel(c.telefone))}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
+        <div class="linha1"><span class="nome">${c.atencao ? `<svg class="ic conv-bandeira" aria-label="Com atenção"><use href=#i-flag /></svg> ` : ""}${escapeHtml(c.nome || convFormatarTel(c.telefone))}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
+        ${c.atencao && c.atencao_nota ? `<div class="linha2 conv-nota">${escapeHtml(c.atencao_nota)}</div>` : ""}
         <div class="linha2">${status}${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</div>
         <div class="linha2">${escapeHtml(quem + texto)}</div>
       </div>`;
@@ -5243,6 +5445,9 @@ function desenharConversaAberta(){
     <div class="conv-topo">
       <button type="button" class="btn secondary conv-voltar" onclick="fecharConversa()"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
       <div class="quem"><b>${escapeHtml(c.nome || telFmt)}</b><small>${escapeHtml(telFmt)} · ${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}${pausada ? " · assistente pausada até " + new Date(c.pausado_ate).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""}</small></div>
+      ${c.atencao
+        ? `<button type="button" class="btn secondary" onclick="marcarAtencao('${escapeHtml(c.telefone)}', false)" title="${escapeHtml(c.atencao_nota || "Com atenção")}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Tirar atenção</button>`
+        : `<button type="button" class="btn secondary" onclick="marcarAtencao('${escapeHtml(c.telefone)}', true)"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Marcar atenção</button>`}
       ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${escapeHtml(c.telefone)}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
       ${pausada
         ? `<button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', 0)"><svg class=ic aria-hidden=true><use href=#i-player-play /></svg> Retomar assistente</button>`
@@ -5269,6 +5474,29 @@ async function marcarRespondida(tel){
   const c = conversas.find(x=>x.telefone===tel);
   if(c) c.esperando = false;
   showToast("Conversa marcada como respondida");
+  desenharConversas();
+}
+
+// Bandeira de atenção com nota (schema_whatsapp_conversa_atencao.sql). Fica
+// até a Jú tirar; entra no número do menu Conversas.
+async function marcarAtencao(tel, liga){
+  let nota = null;
+  if(liga){
+    nota = prompt("Nota pra lembrar por que precisa de atenção (opcional):", "");
+    if(nota === null) return;   // cancelou
+    nota = nota.trim() || null;
+  }
+  const { error } = await sb.from("whatsapp_conversas").upsert(
+    { telefone: tel, atencao: liga, atencao_nota: liga ? nota : null, atencao_em: liga ? new Date().toISOString() : null },
+    { onConflict: "telefone" });
+  if(error){
+    const falta = /atencao/.test(error.message) ? " (falta rodar o schema_whatsapp_conversa_atencao.sql no Supabase)" : "";
+    showToast("Não consegui marcar: " + error.message + falta, true);
+    return;
+  }
+  const c = conversas.find(x=>x.telefone===tel);
+  if(c){ c.atencao = liga; c.atencao_nota = liga ? nota : null; c.atencao_em = liga ? new Date().toISOString() : null; }
+  showToast(liga ? "Conversa marcada com atenção" : "Atenção tirada");
   desenharConversas();
 }
 
@@ -5454,7 +5682,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); atualizarAtencao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
