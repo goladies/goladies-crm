@@ -1287,7 +1287,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-conv-filtro="esperando" onclick="filtrarConversas('esperando')"><svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Esperando você <span class="sede-conta" id="conv-conta-esperando"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="todas" onclick="filtrarConversas('todas')"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Todas <span class="sede-conta" id="conv-conta-todas"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="pausadas" onclick="filtrarConversas('pausadas')"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Assistente pausada <span class="sede-conta" id="conv-conta-pausadas"></span></button>
-        <input type="search" id="conv-busca" placeholder="Buscar nome ou número" oninput="desenharConversas()" style="margin-left:auto; max-width:220px;">
+        <input type="text" id="conv-busca" placeholder="Buscar nome ou número" oninput="desenharConversas()" style="margin-left:auto; max-width:220px;">
       </div>
       <div class="conv-layout" id="conv-layout">
         <div class="conv-lista" id="conv-lista"></div>
@@ -5243,6 +5243,7 @@ function desenharConversaAberta(){
     <div class="conv-topo">
       <button type="button" class="btn secondary conv-voltar" onclick="fecharConversa()"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
       <div class="quem"><b>${escapeHtml(c.nome || telFmt)}</b><small>${escapeHtml(telFmt)} · ${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}${pausada ? " · assistente pausada até " + new Date(c.pausado_ate).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""}</small></div>
+      ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${escapeHtml(c.telefone)}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
       ${pausada
         ? `<button type="button" class="btn secondary" onclick="pausarAssistente('${escapeHtml(c.telefone)}', 0)"><svg class=ic aria-hidden=true><use href=#i-player-play /></svg> Retomar assistente</button>`
         : `<select id="conv-pausa-horas" title="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
@@ -5253,6 +5254,22 @@ function desenharConversaAberta(){
     <div class="conv-msgs" id="conv-msgs">${msgs || `<div class="conv-vazia">Buscando as mensagens…</div>`}</div>`;
   const box = document.getElementById("conv-msgs");
   if(box && rolagem) box.scrollTop = rolagem.noFim ? box.scrollHeight : rolagem.topo;
+}
+
+// Respondeu pelo WhatsApp Web, resolveu de outro jeito ou era teste: sai de
+// "Esperando você" (whatsapp_conversas.resolvido_em, schema_whatsapp_conversa_resolvida.sql).
+async function marcarRespondida(tel){
+  const { error } = await sb.from("whatsapp_conversas").upsert(
+    { telefone: tel, resolvido_em: new Date().toISOString() }, { onConflict: "telefone" });
+  if(error){
+    const falta = /resolvido_em/.test(error.message) ? " (falta rodar o schema_whatsapp_conversa_resolvida.sql no Supabase)" : "";
+    showToast("Não consegui marcar: " + error.message + falta, true);
+    return;
+  }
+  const c = conversas.find(x=>x.telefone===tel);
+  if(c) c.esperando = false;
+  showToast("Conversa marcada como respondida");
+  desenharConversas();
 }
 
 async function pausarAssistente(tel, horas){
