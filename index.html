@@ -2760,7 +2760,7 @@ tr.tr-click{cursor:pointer;}
         <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
              do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
         <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
-        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-preco-confirmado" onchange="atualizarStatusOferta()"> Preço já acertado com a cliente <span style="color:var(--muted);">(libera a oferta pras motoristas sem esperar a resposta no WhatsApp)</span></label></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-preco-confirmado" onchange="confirmarPrecoAcertado(this)"> Preço já acertado com a cliente <span style="color:var(--muted);">(conta como se ela tivesse aceitado: ao salvar, ela recebe o pedido de pagamento no WhatsApp)</span></label></div>
         <div class="full"><label class="vg-check"><input type="checkbox" id="vg-liberar-sem-pgto" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
         <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
       </div>
@@ -10170,6 +10170,68 @@ function atualizarAlertaMargem(){
   box.style.background = `var(--c-${nivel}-bg)`;
   box.style.display = "";
 }
+// ── Confirmação do que o Salvar vai disparar ──
+// O CRM grava e o n8n (a cada 1 min) manda WhatsApp, cria cobrança no
+// Mercado Pago ou abre oferta pras motoristas. Mensagem enviada não volta,
+// então tudo que sai pra fora passa por aqui antes de gravar.
+function efeitosAoSalvarViagem(payload){
+  const antes = viagens.find(x=>x.id===editingViagemId) || {};
+  const pgAntes = editingViagemId ? pagamentosCliente.find(p=>p.viagem_id===editingViagemId) : null;
+  const cli = clientesTransporte.find(c=>c.id===payload.cliente_id);
+  const posPago = !!(cli && cli.pos_pago);
+  const valor = Number(payload.preco_cotado) || 0;
+  const v$ = formatarMoedaBR(valor);
+  const st = payload.status, stAntes = antes.status;
+  const efeitos = [];
+  if(st === "Aguardando cliente confirmar preço" && valor > 0
+     && (stAntes !== st || Number(antes.preco_cotado) !== valor)){
+    efeitos.push(`A cliente recebe o valor de ${v$} pra confirmar (WhatsApp e app).`);
+  }
+  if(payload.preco_confirmado_cliente && !antes.preco_confirmado_cliente && valor > 0){
+    efeitos.push(posPago || payload.liberar_sem_pagamento
+      ? `O preço de ${v$} fica dado como aceito pela cliente, sem ela confirmar.`
+      : `O preço de ${v$} fica dado como aceito e a cliente recebe AGORA o pedido de pagamento (Pix e cartão) no WhatsApp.`);
+  }
+  if(payload.liberar_sem_pagamento && !antes.liberar_sem_pagamento){
+    efeitos.push("A oferta abre pras motoristas sem esperar o Pix. A cliente recebe o Pix quando a viagem terminar.");
+  }
+  const idsAntes = antes.motorista_ids || [];
+  const novas = (payload.motorista_ids || []).filter(id => !idsAntes.includes(id));
+  if(novas.length && ["Escolher motoristas","Aguardando aceite de motorista"].includes(st)){
+    efeitos.push(novas.length === 1 ? "A motorista marcada agora recebe a oferta no WhatsApp." : `As ${novas.length} motoristas marcadas agora recebem a oferta no WhatsApp.`);
+  }
+  const pgAgora = document.getElementById("vg-lid-status").value;
+  if(pgAgora === "Pago" && (!pgAntes || pgAntes.status !== "Pago")){
+    efeitos.push("O pagamento fica como Pago e a cliente recebe a mensagem de pagamento confirmado.");
+  }
+  if(st === "Cancelada" && stAntes && stAntes !== "Cancelada"){
+    efeitos.push("A viagem é cancelada e sai das ofertas das motoristas.");
+  }
+  if(st === "Concluída" && stAntes && stAntes !== "Concluída" && (posPago || payload.liberar_sem_pagamento) && valor > 0 && pgAgora !== "Pago"){
+    efeitos.push(`A viagem é concluída e a cliente recebe o pedido de pagamento de ${v$}.`);
+  }
+  return efeitos;
+}
+function confirmarEfeitosViagem(payload){
+  const efeitos = efeitosAoSalvarViagem(payload);
+  if(!efeitos.length) return true;
+  return confirm("Ao salvar:\n\n• " + efeitos.join("\n• ") + "\n\nMensagem enviada não tem como desfazer. Confirmar?");
+}
+// Marcar "Preço já acertado" avisa na hora o que vai acontecer (o envio só
+// sai no Salvar, mas o aviso aqui evita o clique sem querer).
+function confirmarPrecoAcertado(cb){
+  if(cb.checked){
+    const valor = Number(document.getElementById("vg-preco-cotado").value) || 0;
+    const liberar = document.getElementById("vg-liberar-sem-pgto").checked;
+    const cli = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
+    const posPago = !!(cli && cli.pos_pago);
+    const msg = (posPago || liberar)
+      ? `Marcar o preço de ${formatarMoedaBR(valor)} como já aceito pela cliente, sem ela confirmar?`
+      : `Marcar o preço de ${formatarMoedaBR(valor)} como já aceito pela cliente?\n\nAo salvar, ela recebe na hora o pedido de pagamento (Pix e cartão) no WhatsApp. Só marque se ela já topou o valor.`;
+    if(!confirm(msg)){ cb.checked = false; }
+  }
+  atualizarStatusOferta();
+}
 // ── Pedido de ajuste da cliente, em destaque no topo do 4. Preço ──
 // O app manda "Pode pagar: R$ 48,00 · Motivo: A, B · texto livre" em
 // preco_recusado_motivo (desde 08/10/2026). Pedidos antigos (texto solto ou
@@ -10984,6 +11046,10 @@ async function saveViagem(){
     payload.silenciar_cobranca = feita.cobranca === "nao";
     if(feita.cobranca === "enviar") payload.liberar_sem_pagamento = true;
   }
+
+  // Antes de gravar: se salvar vai mandar algo pra cliente ou pras
+  // motoristas (ou mexer em dinheiro), mostra o que vai acontecer e pede ok.
+  if(!feita && !confirmarEfeitosViagem(payload)) return;
 
   let viagemId = editingViagemId;
   if(viagemId){
@@ -12385,6 +12451,8 @@ function renderContasReceber(){
     </tr>` : `<tr><td class="empty" colspan="11">Nada a receber registrado ainda</td></tr>`);
 }
 async function marcarParcelaPaga(id){
+  const parc = vendaParcelas.find(x=>x.id===id);
+  if(!confirm(`Marcar a parcela${parc && parc.valor ? " de " + formatarMoedaBR(parc.valor) : ""} como paga hoje?`)) return;
   const hoje = new Date().toISOString().slice(0,10);
   const { error } = await sb.from("venda_parcelas").update({status:"Pago", data_realizada:hoje}).eq("id", id);
   if(error){ alert("Erro ao marcar como pago: " + error.message); return; }
