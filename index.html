@@ -10239,7 +10239,9 @@ function confirmarPrecoAcertado(cb){
 function renderAjusteCliente(v){
   const box = document.getElementById("vg-ajuste-cliente");
   if(!box) return;
-  if(v.preco_confirmado_cliente || !v.preco_recusado_em){ box.style.display = "none"; box.innerHTML = ""; return; }
+  // Só enquanto o pedido está aberto: depois de reenviar/aceitar, a data do
+  // pedido antigo fica no banco, mas o aviso não faz mais sentido.
+  if(v.preco_confirmado_cliente || !v.preco_recusado_em || v.status !== "Preço recusado pela cliente"){ box.style.display = "none"; box.innerHTML = ""; return; }
   const txt = v.preco_recusado_motivo || "";
   const partes = txt.split(" · ");
   let pode = null, motivos = [], obs = [];
@@ -10772,7 +10774,7 @@ function openViagemModal(id, opcoes){
   if(v.preco_confirmado_cliente){
     statusPreco.style.display = "block";
     statusPreco.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Preço confirmado pela cliente" + (v.preco_confirmado_em ? " em " + new Date(v.preco_confirmado_em).toLocaleString("pt-BR") : "") + (v.preco_resposta_origem === "app" ? " (pelo app)" : "");
-  } else if(v.preco_recusado_em){
+  } else if(v.preco_recusado_em && v.status === "Preço recusado pela cliente"){
     // O pedido completo aparece em destaque no topo da seção (renderAjusteCliente)
     statusPreco.style.display = "none";
     statusPreco.textContent = "";
