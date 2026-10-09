@@ -2642,7 +2642,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
       <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
       <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
-      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Pode pagar depois (pós-pago) <span style="color:var(--muted);">(cliente de confiança: a oferta abre pras motoristas sem esperar o Pix, e o Pix é pedido quando a viagem termina)</span></label></div>
+      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Normalmente paga depois da viagem (pós-pago) <span style="color:var(--muted);">(é só o padrão: as viagens novas dela já vêm com "cobrar depois", e dá pra trocar em cada viagem. Mudar aqui não mexe nas viagens que já existem)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
       <!-- Login do painel da cliente (app.goladies.com.br): ela cria
            sozinha, então aqui é só leitura. Se houver outra cliente com o
@@ -2687,7 +2687,7 @@ tr.tr-click{cursor:pointer;}
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg>1. Pedido</span><span class="vg-pend"></span></div>
       <div class="formgrid">
-        <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="atualizarStatusOferta(); atualizarFotoClienteViagem()"></select>
+        <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemMudou(); atualizarFotoClienteViagem()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
         <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
         <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento()"></select></div>
@@ -2794,8 +2794,15 @@ tr.tr-click{cursor:pointer;}
         <!-- Alerta de margem: o repasse paga a motorista? Mesma conta do semáforo
              do painel dela, com custo de referência (não sabemos qual motorista vai aceitar). -->
         <div class="full" id="vg-margem" style="display:none; font-size:12.5px; padding:8px 10px; border-radius:8px; border-left:4px solid var(--border);"></div>
-        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-preco-confirmado" onchange="confirmarPrecoAcertado(this)"> Preço já acertado com a cliente <span style="color:var(--muted);">(conta como se ela tivesse aceitado: ao salvar, ela recebe o pedido de pagamento no WhatsApp)</span></label></div>
-        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-liberar-sem-pgto" onchange="atualizarStatusOferta()"> Liberar oferta sem esperar o Pix <span style="color:var(--muted);">(só esta viagem; o Pix é pedido quando ela terminar)</span></label></div>
+        <!-- Quando cobrar: decidido por viagem (schema_cobranca_por_viagem.sql).
+             Grava em viagens.liberar_sem_pagamento (true = depois). Vem com o
+             padrão do cadastro da cliente. -->
+        <div class="full" id="vg-cobrar-wrap"><label>Quando cobrar esta viagem</label>
+          <label class="vg-check" style="display:flex;"><input type="radio" name="vg-cobrar" value="antes" onchange="cobrancaViagemMudou()"> Antes <span style="color:var(--muted); margin-left:4px;">(Pix ao confirmar o preço; a oferta vai pras motoristas depois que ela pagar)</span></label>
+          <label class="vg-check" style="display:flex;"><input type="radio" name="vg-cobrar" value="depois" onchange="cobrancaViagemMudou()"> Depois, pós-pago <span style="color:var(--muted); margin-left:4px;">(a oferta vai pras motoristas logo; o Pix sai quando a viagem for concluída)</span></label>
+          <span class="dica" id="vg-cobrar-dica"></span>
+        </div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-preco-confirmado" onchange="confirmarPrecoAcertado(this)"> Preço já acertado com a cliente <span style="color:var(--muted);" id="vg-preco-confirmado-dica"></span></label></div>
         <div class="full" id="vg-status-preco-cliente" style="display:none; font-size:12.5px; color:var(--muted);"></div>
       </div>
     </section>
@@ -10297,37 +10304,41 @@ function atualizarAlertaMargem(){
 function efeitosAoSalvarViagem(payload){
   const antes = viagens.find(x=>x.id===editingViagemId) || {};
   const pgAntes = editingViagemId ? pagamentosCliente.find(p=>p.viagem_id===editingViagemId) : null;
-  const cli = clientesTransporte.find(c=>c.id===payload.cliente_id);
-  const posPago = !!(cli && cli.pos_pago);
+  const posPago = !!payload.liberar_sem_pagamento;
   const valor = Number(payload.preco_cotado) || 0;
   const v$ = formatarMoedaBR(valor);
   const st = payload.status, stAntes = antes.status;
+  const pgAgora = document.getElementById("vg-lid-status").value;
   const efeitos = [];
   if(st === "Aguardando cliente confirmar preço" && valor > 0
      && (stAntes !== st || Number(antes.preco_cotado) !== valor)){
     efeitos.push(`A cliente recebe o valor de ${v$} pra confirmar (WhatsApp e app).`);
   }
   if(payload.preco_confirmado_cliente && !antes.preco_confirmado_cliente && valor > 0){
-    efeitos.push(posPago || payload.liberar_sem_pagamento
-      ? `O preço de ${v$} fica dado como aceito pela cliente, sem ela confirmar.`
+    efeitos.push(posPago
+      ? `O preço de ${v$} fica dado como aceito pela cliente, sem ela confirmar (pós-pago: o Pix só sai quando a viagem for concluída).`
       : `O preço de ${v$} fica dado como aceito e a cliente recebe AGORA o pedido de pagamento (Pix e cartão) no WhatsApp.`);
   }
-  if(payload.liberar_sem_pagamento && !antes.liberar_sem_pagamento){
-    efeitos.push("A oferta abre pras motoristas sem esperar o Pix. A cliente recebe o Pix quando a viagem terminar.");
+  // Viagem já existente que troca o momento da cobrança (na nova, o
+  // padrão da cliente já aparece na tela, não precisa avisar)
+  if(editingViagemId && posPago && !antes.liberar_sem_pagamento){
+    efeitos.push("Esta viagem passa a ser pós-pago: a oferta abre pras motoristas sem esperar o Pix, e a cliente recebe o Pix quando a viagem terminar.");
+  }
+  if(editingViagemId && !posPago && antes.liberar_sem_pagamento && valor > 0 && payload.preco_confirmado_cliente && pgAgora !== "Pago"){
+    efeitos.push(`Esta viagem passa a ser cobrada antes: a cliente recebe AGORA o pedido de pagamento de ${v$}, e a oferta só abre pras motoristas depois que ela pagar.`);
   }
   const idsAntes = antes.motorista_ids || [];
   const novas = (payload.motorista_ids || []).filter(id => !idsAntes.includes(id));
   if(novas.length && ["Escolher motoristas","Aguardando aceite de motorista"].includes(st)){
     efeitos.push(novas.length === 1 ? "A motorista marcada agora recebe a oferta no WhatsApp." : `As ${novas.length} motoristas marcadas agora recebem a oferta no WhatsApp.`);
   }
-  const pgAgora = document.getElementById("vg-lid-status").value;
   if(pgAgora === "Pago" && (!pgAntes || pgAntes.status !== "Pago")){
     efeitos.push("O pagamento fica como Pago e a cliente recebe a mensagem de pagamento confirmado.");
   }
   if(st === "Cancelada" && stAntes && stAntes !== "Cancelada"){
     efeitos.push("A viagem é cancelada e sai das ofertas das motoristas.");
   }
-  if(st === "Concluída" && stAntes && stAntes !== "Concluída" && (posPago || payload.liberar_sem_pagamento) && valor > 0 && pgAgora !== "Pago"){
+  if(st === "Concluída" && stAntes && stAntes !== "Concluída" && posPago && valor > 0 && pgAgora !== "Pago"){
     efeitos.push(`A viagem é concluída e a cliente recebe o pedido de pagamento de ${v$}.`);
   }
   return efeitos;
@@ -10342,14 +10353,51 @@ function confirmarEfeitosViagem(payload){
 function confirmarPrecoAcertado(cb){
   if(cb.checked){
     const valor = Number(document.getElementById("vg-preco-cotado").value) || 0;
-    const liberar = document.getElementById("vg-liberar-sem-pgto").checked;
-    const cli = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
-    const posPago = !!(cli && cli.pos_pago);
-    const msg = (posPago || liberar)
-      ? `Marcar o preço de ${formatarMoedaBR(valor)} como já aceito pela cliente, sem ela confirmar?`
+    const msg = cobrarDepoisSel()
+      ? `Marcar o preço de ${formatarMoedaBR(valor)} como já aceito pela cliente, sem ela confirmar?\n\nEsta viagem é pós-pago: o Pix só é pedido quando ela for concluída.`
       : `Marcar o preço de ${formatarMoedaBR(valor)} como já aceito pela cliente?\n\nAo salvar, ela recebe na hora o pedido de pagamento (Pix e cartão) no WhatsApp. Só marque se ela já topou o valor.`;
     if(!confirm(msg)){ cb.checked = false; }
   }
+  atualizarStatusOferta();
+}
+// ── Quando cobrar: antes ou depois (pós-pago), decidido em cada viagem ──
+// Grava em viagens.liberar_sem_pagamento (true = depois). Viagem nova vem
+// com o padrão do cadastro da cliente (clientes_transporte.pos_pago); o
+// banco faz o mesmo pros pedidos do app/site (schema_cobranca_por_viagem.sql).
+// Depois que uma motorista aceitou, a escolha trava.
+const STATUS_COBRANCA_TRAVADA = ["Confirmada","Em andamento","Concluída","Cancelada"];
+function cobrarDepoisSel(){
+  const r = document.querySelector('input[name="vg-cobrar"]:checked');
+  return !!(r && r.value === "depois");
+}
+function marcarCobrarDepois(depois){
+  document.querySelectorAll('input[name="vg-cobrar"]').forEach(r=>{ r.checked = (r.value === "depois") === !!depois; });
+}
+function clienteDaViagemNoModal(){
+  return clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value)) || null;
+}
+// Viagem nova: trocar a cliente traz o padrão dela.
+function clienteViagemMudou(){
+  if(!editingViagemId){
+    const cli = clienteDaViagemNoModal();
+    marcarCobrarDepois(!!(cli && cli.pos_pago));
+  }
+  cobrancaViagemMudou();
+}
+function cobrancaViagemMudou(){
+  const depois = cobrarDepoisSel();
+  const atual = viagens.find(x=>x.id===editingViagemId);
+  const travada = !!(atual && STATUS_COBRANCA_TRAVADA.includes(atual.status));
+  document.querySelectorAll('input[name="vg-cobrar"]').forEach(r=>{ r.disabled = travada || lancandoViagemFeita; });
+  document.getElementById("vg-cobrar-wrap").style.display = lancandoViagemFeita ? "none" : "";
+  const cli = clienteDaViagemNoModal();
+  let dica = "";
+  if(travada) dica = "Travado: a viagem já foi aceita por uma motorista.";
+  else if(cli) dica = `Padrão do cadastro de ${cli.nome}: ${cli.pos_pago ? "depois (pós-pago)" : "antes"}. Mudar aqui vale só pra esta viagem.`;
+  document.getElementById("vg-cobrar-dica").textContent = dica;
+  document.getElementById("vg-preco-confirmado-dica").textContent = depois
+    ? "(conta como se ela tivesse aceitado; viagem pós-pago: o Pix só é pedido quando a viagem for concluída)"
+    : "(conta como se ela tivesse aceitado: ao salvar, ela recebe o pedido de pagamento no WhatsApp)";
   atualizarStatusOferta();
 }
 // ── Pedido de ajuste da cliente, em destaque no topo do 4. Preço ──
@@ -10469,14 +10517,13 @@ function marcarMotoristaDaCliente(){
 }
 // Espelha no CRM a regra "pagamento_cliente_ok" do banco
 // (schema_pagamento_pix_cliente.sql): viagem sem preço não precisa de
-// pagamento; pós-pago (cliente ou viagem) libera; senão precisa de um
+// pagamento; viagem pós-pago libera (desde schema_cobranca_por_viagem.sql
+// só a viagem decide, o cadastro é o padrão); senão precisa de um
 // pagamento da cliente marcado como Pago.
 function pagamentoClienteOk(v){
   if(!v) return true;
   if(v.preco_cotado == null || Number(v.preco_cotado) <= 0) return true;
   if(v.liberar_sem_pagamento) return true;
-  const c = clientesTransporte.find(x=>x.id===v.cliente_id);
-  if(c && c.pos_pago) return true;
   return pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
 }
 // Espelha no CRM a regra "oferta_liberada_para_motoristas" do banco
@@ -10493,10 +10540,8 @@ function atualizarStatusOferta(){
   const marcadas = document.querySelectorAll("#vg-motoristas-wrap input[type=checkbox]:checked").length;
   // Estado do pagamento lido dos campos do próprio modal (o que ela está
   // vendo agora), não do banco, pra refletir a mudança antes de salvar.
-  const clienteSel = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
   const pagoOk = cotado === "" || Number(cotado) <= 0
-    || document.getElementById("vg-liberar-sem-pgto").checked
-    || !!(clienteSel && clienteSel.pos_pago)
+    || cobrarDepoisSel()
     || document.getElementById("vg-lid-status").value === "Pago";
   if(status === "Cotando preço"){
     el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Preço calculado pela tabela com a rota medida no app; a cliente ainda não vê o valor. Confira (ou ajuste) e mude o status pra 'Aguardando cliente confirmar preço', ou use o botão 'Enviar pra cliente' no cartão.";
@@ -10517,7 +10562,7 @@ function atualizarStatusOferta(){
   } else if(cotado !== "" && !confirmado){
     el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-lock /></svg> Oferta fechada: tem preço cotado e a cliente ainda não confirmou. Se o valor já foi acertado por fora, marque 'Preço já acertado com a cliente' na seção 4. Preço pra liberar agora.";
   } else if(!pagoOk){
-    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, marque 'Liberar oferta sem esperar o Pix'.";
+    el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Oferta fechada: esperando o Pix da cliente (o pedido vai sozinho pelo WhatsApp). Quando cair, marque o pagamento como Pago na seção 'Pagamento da cliente' e salve: a oferta abre na hora. Pra abrir sem esperar, escolha 'Depois, pós-pago' em 'Quando cobrar esta viagem'.";
   } else if(status === "Aguardando aceite de motorista"){
     el.innerHTML = "<svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Oferta aberta: " + (marcadas > 1 ? marcadas + " motoristas já foram avisadas e" : "a motorista marcada já foi avisada e") + " a corrida está esperando alguém clicar em Aceitar. Quando isso acontecer o status vira 'Confirmada' sozinho.";
   } else if(marcadas){
@@ -10653,7 +10698,7 @@ function renderTransporteViagens(){
         if(v.status === "Escolher motoristas" && !pix){
           const pagou = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
           const semCobranca = !v.preco_cotado || Number(v.preco_cotado) <= 0;
-          pix = `<span class="kc-pix">${pagou ? "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Paga" : semCobranca ? "<svg class=ic aria-hidden=true><use href=#i-ticket /></svg> Sem cobrança" : v.liberar_sem_pagamento ? "<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberada sem Pix" : "<svg class=ic aria-hidden=true><use href=#i-clock /></svg> Pós-pago"}</span>`;
+          pix = `<span class="kc-pix">${pagou ? "<svg class=ic aria-hidden=true><use href=#i-cash /></svg> Paga" : semCobranca ? "<svg class=ic aria-hidden=true><use href=#i-ticket /></svg> Sem cobrança" : "<svg class=ic aria-hidden=true><use href=#i-clock /></svg> Pós-pago"}</span>`;
         }
         // Coluna "Aguardando pagamento": um clique registra o Pix e a viagem
         // segue sozinha (trigger no banco) pra aceite da motorista.
@@ -10888,7 +10933,10 @@ function openViagemModal(id, opcoes){
   if(!viagemJaPaga()) preencherTabelaSeVazia();
   atualizarDesconto();
   document.getElementById("vg-preco-confirmado").checked = !!v.preco_confirmado_cliente;
-  document.getElementById("vg-liberar-sem-pgto").checked = !!v.liberar_sem_pagamento;
+  // Viagem nova: padrão do cadastro da cliente (se já veio escolhida)
+  if(id) marcarCobrarDepois(!!v.liberar_sem_pagamento);
+  else { const cliN = clienteDaViagemNoModal(); marcarCobrarDepois(!!(cliN && cliN.pos_pago)); }
+  cobrancaViagemMudou();
   const statusPreco = document.getElementById("vg-status-preco-cliente");
   renderAjusteCliente(v);
   if(v.preco_confirmado_cliente){
@@ -11100,7 +11148,7 @@ async function saveViagem(){
     preco_cotado: document.getElementById("vg-preco-cotado").value === "" ? null : Number(document.getElementById("vg-preco-cotado").value),
     preco_motorista: document.getElementById("vg-preco-motorista").value === "" ? null : Number(document.getElementById("vg-preco-motorista").value),
     preco_confirmado_cliente: document.getElementById("vg-preco-confirmado").checked,
-    liberar_sem_pagamento: document.getElementById("vg-liberar-sem-pgto").checked,
+    liberar_sem_pagamento: cobrarDepoisSel(),
     // Marcar na mão libera a oferta na hora; desmarcar volta a travar. Se a
     // cliente já tinha confirmado pelo WhatsApp, preserva a data original.
     preco_confirmado_em: (()=>{
@@ -11168,6 +11216,15 @@ async function saveViagem(){
     payload.silenciar_cobranca = feita.cobranca === "nao";
     if(feita.cobranca === "enviar") payload.liberar_sem_pagamento = true;
   }
+  // Pós-pago virou "cobrar antes" com a oferta já aberta e sem motorista
+  // aceita: volta pra coluna de pagamento (a oferta fecha até o Pix cair).
+  const antesSalvar = viagens.find(x=>x.id===editingViagemId);
+  if(!feita && antesSalvar && antesSalvar.liberar_sem_pagamento && !payload.liberar_sem_pagamento
+     && ["Escolher motoristas","Aguardando aceite de motorista"].includes(payload.status)
+     && payload.preco_confirmado_cliente && Number(payload.preco_cotado) > 0
+     && document.getElementById("vg-lid-status").value !== "Pago"){
+    payload.status = "Aguardando pagamento";
+  }
 
   // Antes de gravar: se salvar vai mandar algo pra cliente ou pras
   // motoristas (ou mexer em dinheiro), mostra o que vai acontecer e pede ok.
@@ -11221,12 +11278,11 @@ async function saveViagem(){
       : await sb.from("pagamentos_cliente").insert(pgcPayload);
     if(error){ alert("Erro ao salvar pagamento da cliente: " + error.message); return; }
   }
-  // Marcou "liberar sem esperar o Pix" (ou a cliente é pós-paga) com a viagem
-  // na coluna de pagamento: ela segue pra oferta. O caso "Pago" o banco já
-  // resolve sozinho (trigger em pagamentos_cliente).
+  // Viagem pós-pago com a viagem na coluna de pagamento: ela segue pra
+  // oferta. O caso "Pago" o banco já resolve sozinho (trigger em
+  // pagamentos_cliente).
   if(payload.status === "Aguardando pagamento"){
-    const clienteSel = clientesTransporte.find(c=>c.id===payload.cliente_id);
-    if(payload.liberar_sem_pagamento || (clienteSel && clienteSel.pos_pago)){
+    if(payload.liberar_sem_pagamento){
       const proximo = payload.motorista_ids && payload.motorista_ids.length ? "Aguardando aceite de motorista" : "Escolher motoristas";
       await sb.from("viagens").update({ status: proximo }).eq("id", viagemId);
     }
@@ -11337,8 +11393,7 @@ function renderReenvios(id, v){
   // Pago. Descreve em que pé está o envio automático (mesmo padrão do código).
   const boxPix = document.getElementById("vg-reenvio-pix");
   const pago = pagamentosCliente.some(p=>p.viagem_id===id && p.status==="Pago");
-  const clienteV = clientesTransporte.find(c=>c.id===v.cliente_id);
-  const posPago = !!(v.liberar_sem_pagamento || (clienteV && clienteV.pos_pago));
+  const posPago = !!v.liberar_sem_pagamento;
   // Pré-paga: o pedido existe desde a confirmação do preço. Pós-paga: só
   // depois de concluída (antes disso o n8n não mandaria mesmo).
   const momentoPix = posPago ? v.status === "Concluída" : !!v.preco_confirmado_cliente;
@@ -11389,7 +11444,24 @@ async function liberarViagemManualmente(){
 }
 async function deleteViagem(){
   if(!editingViagemId) return;
-  if(!confirm("Excluir esta viagem? Isso também apaga o pagamento e as avaliações ligados a ela.")) return;
+  // Excluir não tem volta: mostra qual viagem é e pede o número dela
+  // digitado, pra não apagar a viagem errada nem por clique sem querer.
+  const v = viagens.find(x=>x.id===editingViagemId) || {};
+  const cli = clientesTransporte.find(c=>c.id===v.cliente_id);
+  const pago = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
+  const repasse = pagamentosMotorista.some(p=>p.viagem_id===v.id);
+  const linhas = [
+    `Viagem #${editingViagemId}` + (cli ? ` · ${cli.nome}` : ""),
+    [v.data ? formatarDataBR(v.data) : "", v.horario_partida ? v.horario_partida.slice(0,5) : "", v.status || ""].filter(Boolean).join(" · "),
+    v.preco_cotado ? `Valor: ${formatarMoedaBR(v.preco_cotado)}` + (pago ? " (já PAGO pela cliente)" : "") : "",
+  ].filter(Boolean);
+  const perde = ["o pagamento da cliente", repasse ? "o repasse da motorista" : "", "as avaliações", "as ofertas e o chat da viagem"].filter(Boolean).join(", ");
+  const digitado = prompt(`EXCLUIR DE VEZ esta viagem?\n\n${linhas.join("\n")}\n\nTambém apaga ${perde}. Não tem como desfazer.\nSe a viagem só não vai acontecer, use o status Cancelada.\n\nPra confirmar, digite o número da viagem (${editingViagemId}):`);
+  if(digitado === null) return;
+  if(digitado.trim().replace("#", "") !== String(editingViagemId)){
+    alert("Número diferente. Nada foi excluído.");
+    return;
+  }
   const { error } = await sb.from("viagens").delete().eq("id", editingViagemId);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   closeModal("viagem-modal");
