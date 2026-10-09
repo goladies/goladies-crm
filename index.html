@@ -1033,6 +1033,27 @@ tr.tr-click{cursor:pointer;}
 .sede-destaques button b{color:var(--rosa-texto); font-size:16px;}
 .sede-agenda{font-size:13px; color:var(--text2); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
 .sede-decisao textarea{width:100%; margin-top:8px;}
+.sede-trabalho{border:1px solid var(--border); border-radius:10px; background:var(--bg-card); margin-bottom:8px;}
+.sede-trabalho > summary{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; list-style:none;}
+.sede-trabalho > summary::-webkit-details-marker{display:none;}
+.sede-trabalho > summary .txt{flex:1; min-width:0; display:flex; flex-direction:column; font-size:13.5px;}
+.sede-trabalho > summary .meta{font-size:12px; color:var(--muted); margin-top:2px;}
+.sede-trabalho > summary img.mini{width:28px; height:28px; border-radius:50%; object-fit:cover; flex:none;}
+.sede-trabalho[open] > summary{border-bottom:1px solid var(--border);}
+.sede-md{padding:12px 14px 14px; font-size:13.5px; line-height:1.55; color:var(--text1);}
+.sede-md p{margin:0 0 10px;}
+.sede-md .md-h{font-weight:700; margin:14px 0 6px;}
+.sede-md .md-h1{font-size:17px; margin-top:0;}
+.sede-md .md-h2{font-size:14.5px; color:var(--rosa-texto);}
+.sede-md .md-h3, .sede-md .md-h4{font-size:13.5px;}
+.sede-md .md-vera{color:var(--c-amber); border-top:1px dashed var(--border2); padding-top:12px;}
+.sede-md .md-lista{margin:0 0 10px; padding-left:20px; display:flex; flex-direction:column; gap:4px;}
+.sede-md code{font-size:12px; background:var(--bg-card2); border-radius:4px; padding:0 4px;}
+.sede-md .md-tabela{overflow-x:auto; margin:0 0 10px;}
+.sede-md table{border-collapse:collapse; font-size:13px; min-width:100%;}
+.sede-md th, .sede-md td{border:1px solid var(--border); padding:5px 8px; text-align:left; vertical-align:top;}
+.sede-md th{background:var(--bg-card2); font-weight:600;}
+@media (max-width:700px){ .sede-trabalho > summary{flex-wrap:wrap;} .sede-trabalho > summary .txt{flex-basis:calc(100% - 40px);} .sede-md{padding:10px;} }
 @media (max-width:700px){ .sede-item{flex-direction:column;} .sede-ficha-cab .foto{width:72px; height:72px;} }
 </style>
 <script src="icones.js"></script>
@@ -1871,6 +1892,7 @@ tr.tr-click{cursor:pointer;}
       <div class="subnav">
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
+        <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file /></svg> Trabalhos</button>
         <button type="button" class="subnav-item" data-sede="pedidos" onclick="mostrarSubSede('pedidos')"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Pedidos <span class="sede-conta" id="sede-conta-pedidos"></span></button>
         <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões <span class="sede-conta" id="sede-conta-decisoes"></span></button>
         <button type="button" class="subnav-item" data-sede="pendencias" onclick="mostrarSubSede('pendencias')"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências <span class="sede-conta" id="sede-conta-pendencias"></span></button>
@@ -1894,6 +1916,18 @@ tr.tr-click{cursor:pointer;}
         <div class="panel" id="sede-hoje-anteriores-wrap" style="display:none;">
           <h3><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Resumos anteriores</h3>
           <div id="sede-hoje-anteriores"></div>
+        </div>
+      </div>
+
+      <div id="sede-trabalhos" style="display:none;">
+        <div class="panel">
+          <h3><svg class=ic aria-hidden=true><use href=#i-file /></svg> O que a equipe entregou</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O texto completo de cada entrega (Semana da Tati e da Rica, Rumo da Ester, fechamento do mês), com a <b>conferência da Vera</b> no fim. Clique para abrir. O original fica também no Drive, em Sede.</p>
+          <div class="sede-vazio" id="sede-trabalhos-aviso" style="display:none; border:1px dashed var(--c-amber); border-radius:10px; padding:10px 12px; margin-bottom:12px;">Para os trabalhos aparecerem aqui, falta rodar o <b>crm/schema_sede_trabalhos.sql</b> no SQL Editor do Supabase.</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <select id="sede-filtro-trabalhos" onchange="renderSedeTrabalhos()" style="max-width:240px;"><option value="">Todas as agentes</option></select>
+          </div>
+          <div id="sede-trabalhos-lista"><div class="sede-vazio">Nada ainda. A rotina "Segunda da equipe" grava aqui a cada segunda.</div></div>
         </div>
       </div>
 
@@ -3519,6 +3553,7 @@ let finEntradas = [];
 let finConferencias = [];
 let lcSqlFaltando = false;
 let sedePedidos = [], sedeResumos = [], sedePendencias = [], sedeDecisoes = [];
+let sedeTrabalhos = [], sedeTrabalhosSqlFaltando = false;
 let sedeSqlFaltando = false;
 // Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
 // saem da Caixinha Jú Motorista.
@@ -4152,6 +4187,10 @@ async function carregarDadosInterno(){
   if(!rsr.error) sedeResumos = rsr.data || [];
   if(!rspe.error) sedePendencias = rspe.data || [];
   if(!rsd.error) sedeDecisoes = rsd.data || [];
+  // Trabalhos (schema_sede_trabalhos.sql): texto completo das entregas; tolerante.
+  const rst = await sb.from("sede_trabalhos").select("*").order("data", { ascending: false }).order("id", { ascending: false }).limit(60);
+  sedeTrabalhosSqlFaltando = !!rst.error;
+  if(!rst.error) sedeTrabalhos = rst.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -6625,7 +6664,7 @@ const SEDE_PESSOAS = [
 ];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
   green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
-const SEDE_ABAS = ["equipe","hoje","pedidos","decisoes","pendencias"];
+const SEDE_ABAS = ["equipe","hoje","trabalhos","pedidos","decisoes","pendencias"];
 
 function sedeAgente(id){ return SEDE_AGENTES.find(a=>a.id===id); }
 function sedeMembro(id){ return SEDE_PESSOAS.find(a=>a.id===id) || sedeAgente(id); }
@@ -6700,7 +6739,7 @@ function renderSede(){
       ${np?`<div class="linha-status">${np} pedido${np>1?"s":""} na fila dela</div>`:""}
     </div>`;
   }).join("");
-  renderSedeHoje(); renderSedePedidos(); renderSedeDecisoes(); renderSedePendencias();
+  renderSedeHoje(); renderSedeTrabalhos(); renderSedePedidos(); renderSedeDecisoes(); renderSedePendencias();
   const conta = (id, n) => { const el = document.getElementById(id); if(el) el.textContent = n ? n : ""; };
   conta("sede-conta-pedidos", sedePedidos.filter(p=>["Aberto","Em andamento"].includes(p.status)).length);
   conta("sede-conta-decisoes", sedeDecisoes.filter(d=>d.status==="Esperando você").length);
@@ -6747,6 +6786,7 @@ function abrirFichaAgente(id){
   const feitos = sedePedidos.filter(p=>p.agente===a.id && p.status==="Feito").slice(0,3);
   let ultimos = "";
   if(a.id==="gabi" && sedeResumos.length) ultimos = `<li>Resumo de ${sedeData(sedeResumos[0].data)} <a href="#" onclick="event.preventDefault(); irAreaAgente('sede:hoje')">ver</a></li>`;
+  ultimos += sedeTrabalhos.filter(t=>t.agente===a.id).slice(0,3).map(t=>`<li>${escapeHtml(t.tipo)} de ${sedeData(t.data)} <a href="#" onclick="event.preventDefault(); closeModal('sede-ficha-modal'); abrirTrabalhoSede(${t.id})">ver</a></li>`).join("");
   ultimos += feitos.map(p=>`<li>${escapeHtml(p.texto)} <span style="color:var(--muted);">(feito${p.feito_em?" em "+sedeData(p.feito_em):""})</span></li>`).join("");
   document.getElementById("sede-ficha-corpo").innerHTML = `
     <div class="sede-ficha-cab">
@@ -6888,6 +6928,86 @@ function renderSedeHoje(){
   const ant = sedeResumos.slice(1);
   document.getElementById("sede-hoje-anteriores-wrap").style.display = ant.length ? "block" : "none";
   document.getElementById("sede-hoje-anteriores").innerHTML = ant.map(x=>`<details style="margin-bottom:6px;"><summary style="cursor:pointer;">${sedeData(x.data)}</summary><div class="sede-resumo" style="margin-top:6px;">${escapeHtml(x.texto)}</div></details>`).join("");
+}
+
+// ── Trabalhos (texto completo das entregas, schema_sede_trabalhos.sql) ──
+// O texto vem em markdown simples dos arquivos do Drive: títulos, tabelas, listas,
+// **negrito** e `código`. Escapa tudo antes e só depois monta as tags.
+function sedeMdInline(s){
+  return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/R\$ (?=[-−]?\d)/g, () => "R$&nbsp;");
+}
+function sedeMarkdown(md){
+  const linhas = String(md||"").replace(/\r/g, "").split("\n");
+  let html = "", i = 0;
+  while(i < linhas.length){
+    const l = linhas[i];
+    if(!l.trim()){ i++; continue; }
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
+    if(h){
+      const vera = /^Vera \(conferência\)/.test(h[2]);
+      html += `<div class="md-h md-h${h[1].length}${vera?" md-vera":""}">${sedeMdInline(h[2])}</div>`; i++; continue;
+    }
+    if(/^\s*\|/.test(l)){
+      const rows = [];
+      while(i < linhas.length && /^\s*\|/.test(linhas[i])){ rows.push(linhas[i]); i++; }
+      const cel = r => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c=>c.trim());
+      const corpo = rows.filter((r,k)=>!(k===1 && /^[\s|:-]+$/.test(r)));
+      html += `<div class="md-tabela"><table><thead><tr>${cel(corpo[0]).map(c=>`<th>${sedeMdInline(c)}</th>`).join("")}</tr></thead><tbody>${
+        corpo.slice(1).map(r=>`<tr>${cel(r).map(c=>`<td>${sedeMdInline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      continue;
+    }
+    const item = /^\s*(?:[-*]|\d+\.)\s+/;
+    if(item.test(l)){
+      const ord = /^\s*\d+\./.test(l), itens = [];
+      while(i < linhas.length && linhas[i].trim()){
+        if(item.test(linhas[i])) itens.push(linhas[i].replace(item, ""));
+        else if(itens.length) itens[itens.length-1] += " " + linhas[i].trim();
+        else break;
+        i++;
+      }
+      html += `<${ord?"ol":"ul"} class="md-lista">${itens.map(t=>`<li>${sedeMdInline(t)}</li>`).join("")}</${ord?"ol":"ul"}>`;
+      continue;
+    }
+    const par = [];
+    while(i < linhas.length && linhas[i].trim() && !/^(#{1,4}\s|\s*\||\s*(?:[-*]|\d+\.)\s+)/.test(linhas[i])){ par.push(linhas[i].trim()); i++; }
+    html += `<p>${sedeMdInline(par.join(" "))}</p>`;
+  }
+  return html;
+}
+function sedeVeraBadge(t){
+  const r = (t.vera_resultado||"").toLowerCase();
+  if(!r) return "";
+  const cls = r.startsWith("segurar") ? "red" : r.includes("ressalva") ? "amber" : "green";
+  return `<span class="status-badge ${cls}" title="Conferência da Vera">Vera: ${escapeHtml(r.replace(/\s*\(.*\)\s*$/, ""))}</span>`;
+}
+function renderSedeTrabalhos(){
+  const box = document.getElementById("sede-trabalhos-lista"); if(!box) return;
+  document.getElementById("sede-trabalhos-aviso").style.display = sedeTrabalhosSqlFaltando ? "block" : "none";
+  const sel = document.getElementById("sede-filtro-trabalhos");
+  const ids = [...new Set(sedeTrabalhos.map(t=>t.agente))];
+  const atual = sel.value;
+  sel.innerHTML = `<option value="">Todas as agentes</option>` + ids.map(id=>`<option value="${escapeHtml(id)}">${escapeHtml(sedeNome(id))}</option>`).join("");
+  sel.value = ids.includes(atual) ? atual : "";
+  const lista = sedeTrabalhos.filter(t => !sel.value || t.agente===sel.value);
+  if(!lista.length){ box.innerHTML = `<div class="sede-vazio">Nada ainda. A rotina "Segunda da equipe" grava aqui a cada segunda.</div>`; return; }
+  box.innerHTML = lista.map(t=>{
+    const a = sedeAgente(t.agente) || { id:t.agente, nome:t.agente };
+    return `<details class="sede-trabalho" id="sede-trabalho-${t.id}">
+      <summary>
+        <img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">
+        <span class="txt"><b>${escapeHtml(a.nome)} · ${escapeHtml(t.tipo)}</b><span class="meta">${t.titulo ? escapeHtml(t.titulo) : sedeData(t.data)}</span></span>
+        ${sedeVeraBadge(t)}
+      </summary>
+      <div class="sede-md">${sedeMarkdown(t.texto)}</div>
+    </details>`;
+  }).join("");
+}
+function abrirTrabalhoSede(id){
+  irParaSede("trabalhos");
+  const sel = document.getElementById("sede-filtro-trabalhos");
+  if(sel.value){ sel.value = ""; renderSedeTrabalhos(); }
+  const el = document.getElementById("sede-trabalho-"+id);
+  if(el){ el.open = true; el.scrollIntoView({ behavior:"smooth", block:"start" }); }
 }
 
 // ── Pendências ──
