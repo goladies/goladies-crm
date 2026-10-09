@@ -3737,18 +3737,24 @@ function buscaGlobal(texto){
   const q = (texto||"").trim().toLowerCase();
   const qDigitos = q.replace(/\D/g,"");
   if(q.length < 2){ box.classList.remove("open"); box.innerHTML=""; return; }
-  const bate = (...campos)=>campos.some(c=>{
+  // "#12" procura pelo código do cadastro (e da viagem), não por nome/telefone.
+  const mCodigo = /^#\s*(\d+)$/.exec(q);
+  const codigo = mCodigo ? Number(mCodigo[1]) : null;
+  const bateTexto = (...campos)=>campos.some(c=>{
     if(!c) return false;
     const v = String(c).toLowerCase();
     if(v.includes(q)) return true;
     return qDigitos.length >= 4 && v.replace(/\D/g,"").includes(qDigitos);
   });
   const contatosDe = pid => parceiroContatos.filter(c=>c.parceiro_id===pid).map(c=>c.numero).join(" ");
+  const porCodigo = (lista, ...campos) => codigo != null ? lista.filter(x=>x.id===codigo) : lista.filter(x=>bateTexto(...campos.map(f=>f(x))));
+  const nomeClienteViagem = v => (clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome || "Cliente não definido";
   const grupos = [
-    { titulo:"Leads e clientes", itens: leads.filter(l=>bate(l.nome,l.whatsapp,l.email)).map(l=>({nome:l.nome, sub:["#"+l.id,l.whatsapp,l.etapa].filter(Boolean).join(" · "), abrir:()=>openLeadModal(l.id)})) },
-    { titulo:"Parceiras (os)", itens: parceiros.filter(p=>bate(p.nome,contatosDe(p.id))).map(p=>({nome:p.nome, sub:["#"+p.id,p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>openParceiroModal(p.id)})) },
-    { titulo:"Motoristas", itens: motoristas.filter(m=>bate(m.nome,m.whatsapp,m.email)).map(m=>({nome:m.nome, sub:["#"+m.id,m.whatsapp,m.status].filter(Boolean).join(" · "), abrir:()=>openMotoristaModal(m.id)})) },
-    { titulo:"Clientes de viagem", itens: clientesTransporte.filter(c=>bate(c.nome,c.whatsapp,c.email)).map(c=>({nome:c.nome, sub:["#"+c.id,c.whatsapp,c.segmento].filter(Boolean).join(" · "), abrir:()=>openClienteTransporteModal(c.id)})) },
+    { titulo:"Viagens", itens: codigo == null ? [] : viagens.filter(v=>v.id===codigo).map(v=>({nome:`Viagem #${v.id} · ${nomeClienteViagem(v)}`, sub:[v.status, (v.data || v.data_hora) ? formatarDataBR(v.data || String(v.data_hora).slice(0,10)) : ""].filter(Boolean).join(" · "), abrir:()=>openViagemModal(v.id)})) },
+    { titulo:"Leads e clientes", itens: porCodigo(leads, l=>l.nome, l=>l.whatsapp, l=>l.email).map(l=>({nome:l.nome, sub:["#"+l.id,l.whatsapp,l.etapa].filter(Boolean).join(" · "), abrir:()=>openLeadModal(l.id)})) },
+    { titulo:"Parceiras (os)", itens: porCodigo(parceiros, p=>p.nome, p=>contatosDe(p.id)).map(p=>({nome:p.nome, sub:["#"+p.id,p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>openParceiroModal(p.id)})) },
+    { titulo:"Motoristas", itens: porCodigo(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email).map(m=>({nome:m.nome, sub:["#"+m.id,m.whatsapp,m.status].filter(Boolean).join(" · "), abrir:()=>openMotoristaModal(m.id)})) },
+    { titulo:"Clientes de viagem", itens: porCodigo(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email).map(c=>({nome:c.nome, sub:["#"+c.id,c.whatsapp,c.segmento].filter(Boolean).join(" · "), abrir:()=>openClienteTransporteModal(c.id)})) },
   ].filter(g=>g.itens.length);
   window._buscaGlobalAcoes = [];
   if(!grupos.length){ box.innerHTML = '<div class="sr-vazio">Nada encontrado</div>'; box.classList.add("open"); return; }
