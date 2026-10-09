@@ -2041,6 +2041,7 @@ tr.tr-click{cursor:pointer;}
       <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
       <div><label>Responsável</label><input type="text" id="f-responsavel" value="Jú"></div>
       <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
+      <div class="full"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="f-teste" style="width:auto;"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
     </div>
     <div class="ligacoes-wrap" id="f-ligacoes"></div>
 
@@ -3251,6 +3252,9 @@ window.addEventListener("unhandledrejection", (ev)=>{
 });
 
 const ETAPAS = ["Novo lead","Contato iniciado","Orçamento solicitado","Orçamento enviado","Negociação","Fechado - Ganho","Cliente ativo","Perdido"];
+// Lead de teste (schema_testes_marcados.sql): aparece na lista com a etiqueta
+// "Teste", mas fica fora de todas as contagens.
+const leadReal = l => !l.teste;
 const ETAPA_CLASS = {"Novo lead":"indigo","Contato iniciado":"amber","Orçamento solicitado":"pink","Orçamento enviado":"pink","Negociação":"teal","Fechado - Ganho":"green","Cliente ativo":"green","Perdido":"red"};
 const URG_CLASS = {"Urgente":"urg-alta","Essa semana":"urg-media","Sem pressa":"urg-baixa"};
 
@@ -4367,12 +4371,13 @@ function fillSelectGrupos(el, grupos, selected, primeiraOpcao){
 
 function renderDashboard(){
   const cards = document.getElementById("dash-cards");
-  const totalLeads = leads.length;
-  const totalClientes = leads.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)).length;
+  const reais = leads.filter(leadReal);
+  const totalLeads = reais.length;
+  const totalClientes = reais.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)).length;
   const parceirosAtivos = parceiros.filter(p=>p.status==="Parceria ativa").length;
   const orcAbertos = orcamentos.filter(o=>["Solicitado","Enviado"].includes(o.status)).length;
   const coracao = document.getElementById("bv-coracao-num");
-  if(coracao) coracao.textContent = leads.filter(l=>l.etapa==="Novo lead").length;
+  if(coracao) coracao.textContent = reais.filter(l=>l.etapa==="Novo lead").length;
   cards.innerHTML = `
     <div class="card card-link" title="Abrir a lista de leads" onclick="irParaLeads('')"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
     <div class="card card-link" title="Abrir a lista de clientes" onclick="irParaAba('clientes')"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
@@ -4381,16 +4386,16 @@ function renderDashboard(){
   `;
   document.getElementById("funnel-head").innerHTML = ETAPAS.map(e=>`<th>${e}</th>`).join("");
   document.getElementById("funnel-body").innerHTML = ETAPAS.map(e=>{
-    const n = leads.filter(l=>l.etapa===e).length;
+    const n = reais.filter(l=>l.etapa===e).length;
     return `<td class="card-link" title="Ver os leads em &quot;${e}&quot;" onclick="irParaLeads('${e}')" style="font-size:18px; font-weight:700; color:var(--pink);">${n}</td>`;
   }).join("");
-  const recentes = [...leads].sort((a,b)=> (b.data||"").localeCompare(a.data||"")).slice(0,6);
+  const recentes = [...reais].sort((a,b)=> (b.data||"").localeCompare(a.data||"")).slice(0,6);
   document.getElementById("dash-leads-recentes").innerHTML = recentes.map(l=>`
     <tr class="tr-click" onclick="openLeadModal(${l.id})"><td>${escapeHtml(l.nome)}</td><td>${escapeHtml(l.categoria||"-")}</td><td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td></tr>
   `).join("") || `<tr><td class="empty" colspan="3">Sem leads ainda</td></tr>`;
 
   const counts = {};
-  leads.forEach(l=>{ if(l.servico) counts[l.servico]=(counts[l.servico]||0)+1; });
+  reais.forEach(l=>{ if(l.servico) counts[l.servico]=(counts[l.servico]||0)+1; });
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const ctx = document.getElementById("chart-servicos");
   if(window._chart) window._chart.destroy();
@@ -5185,7 +5190,7 @@ function renderLeads(){
   ));
   document.getElementById("leads-body").innerHTML = filtered.map(l=>`
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td><strong>${escapeHtml(l.nome)}</strong>${etiquetaPJ(l)}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
+      <td><strong>${escapeHtml(l.nome)}</strong>${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
@@ -5231,7 +5236,7 @@ function itensAtencao(){
   });
 
   // Leads novos, ainda sem contato (urgente = vermelho).
-  (leads||[]).filter(l=>l.etapa==="Novo lead" && !l.exemplo).forEach(l=>{
+  (leads||[]).filter(l=>l.etapa==="Novo lead" && !l.exemplo && !l.teste).forEach(l=>{
     const urg = l.urgencia === "Urgente";
     add("leads", urg ? "vermelho" : "amarelo", `${l.nome}: ${l.servico || l.categoria || "lead novo"}${urg ? " (urgente)" : ""}`, `openLeadModal(${l.id})`);
   });
@@ -5682,7 +5687,7 @@ function renderClientes(){
     {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Cidade", campo:"cidade"},
     {label:"Serviços já solicitados", campo:null}, {label:"Etapa", campo:"etapa"}, {label:"", campo:null}
   ], "clientes");
-  const clientes = aplicarOrdenacao("clientes", leads.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)));
+  const clientes = aplicarOrdenacao("clientes", leads.filter(l=>leadReal(l) && ["Fechado - Ganho","Cliente ativo"].includes(l.etapa)));
   document.getElementById("clientes-body").innerHTML = clientes.map(l=>{
     const qtdServicos = orcamentos.filter(o=>o.lead_id===l.id).length;
     return `<tr class="tr-click" onclick="openLeadModal(${l.id})">
@@ -5821,7 +5826,7 @@ function renderServicos(){
   ], "servicos");
   const lista = aplicarOrdenacao("servicos", SERVICOS);
   document.getElementById("servicos-body").innerHTML = lista.map(s=>{
-    const qtd = leads.filter(l=>l.servico===s.nome).length;
+    const qtd = leads.filter(l=>l.servico===s.nome && leadReal(l)).length;
     const aceitos = orcamentos.filter(o=>o.servico===s.nome && o.status==="Aceito" && o.valor_final!=null);
     const media = aceitos.length ? (aceitos.reduce((a,o)=>a+Number(o.valor_final),0)/aceitos.length) : null;
     return `<tr><td>${s.nome}</td><td>${s.categoria}</td><td>${qtd}</td><td>${media?formatarMoedaBR(media):"-"}</td></tr>`;
@@ -7131,6 +7136,7 @@ function openLeadModal(id){
   carregarTipoPessoa("f", l);
   document.getElementById("f-responsavel").value = l.responsavel||"Jú";
   document.getElementById("f-notas").value = l.notas||"";
+  document.getElementById("f-teste").checked = !!l.teste;
   document.getElementById("fv-servico").value = "";
   document.getElementById("fv-preco-unitario").value = "";
   document.getElementById("fv-preco-total").value = "";
@@ -7178,6 +7184,8 @@ async function saveLead(){
     responsavel: document.getElementById("f-responsavel").value,
     notas: document.getElementById("f-notas").value,
   };
+  // Só manda "teste" se a coluna já existe (schema_testes_marcados.sql rodado)
+  if(leads.some(x=>"teste" in x)) payload.teste = document.getElementById("f-teste").checked;
   Object.assign(payload, camposPJ("f", leads.find(x=>x.id===editingLeadId)));
   const isNew = !editingLeadId;
   const { data, error } = editingLeadId
