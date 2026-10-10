@@ -191,6 +191,7 @@ a{color:var(--rosa-texto);}
 .sr-item{padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:center; font-size:13px;}
 .sr-item:hover{background:var(--bg-hover);}
 .sr-item small{color:var(--text3); font-size:11.5px; white-space:nowrap;}
+.busca-contato{width:100%; min-width:0;}
 .sr-vazio{padding:12px; color:var(--text3); font-size:12.5px; text-align:center;}
 .topbar-desk .user-avatar{cursor:default;}
 /* ── Assistente IA (voz / texto / foto → ação no CRM) ── */
@@ -2191,8 +2192,12 @@ tr.tr-click{cursor:pointer;}
     </div>
     <div class="formgrid">
       <div class="full" id="p-puxar-lead-wrap">
-        <label>Puxar dados de um lead/cliente já cadastrado <span style="font-weight:400; color:var(--muted);">(opcional, preenche nome, contato, aniversário e região)</span></label>
-        <select id="p-puxar-lead" onchange="puxarDadosLead()"><option value="">- Selecionar -</option></select>
+        <label>Buscar contato já cadastrado <span style="font-weight:400; color:var(--muted);">(opcional, preenche o que estiver vazio: nome, contato, aniversário e região)</span></label>
+        <div class="search-global busca-contato">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="p-busca-contato" placeholder="Nome, telefone, e-mail ou #código" autocomplete="off" oninput="buscarContatoParceiro(this.value)" onfocus="buscarContatoParceiro(this.value)">
+          <div class="search-results" id="p-busca-contato-resultados"></div>
+        </div>
       </div>
       <div><label>Tipo de cadastro</label><select id="p-tipo" onchange="aplicarTipoPessoa('p')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
       <div id="p-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
@@ -8353,25 +8358,81 @@ async function deleteInteracaoLead(id){
 
 // Parceiro modal
 let editingParceiroId = null;
-function puxarDadosLead(){
-  const leadId = Number(document.getElementById("p-puxar-lead").value);
-  if(!leadId) return;
-  const lead = leads.find(l=>l.id===leadId);
-  if(!lead) return;
-  document.getElementById("p-nome").value = lead.nome || "";
-  document.getElementById("p-aniversario").value = lead.aniversario || "";
-  const regiao = [lead.bairro, lead.cidade, lead.estado].filter(Boolean).join(", ");
-  if(regiao) document.getElementById("p-regiao").value = regiao;
-  if(lead.whatsapp){
-    document.getElementById("pc-tipo").value = "Celular";
-    document.getElementById("pc-numero").value = lead.whatsapp;
-  }
-  if(lead.email){
-    const atual = document.getElementById("p-notas").value;
-    const notaEmail = "E-mail: " + lead.email;
-    document.getElementById("p-notas").value = atual ? atual + "\n" + notaEmail : notaEmail;
-  }
+// Buscador de contatos do modal: procura em leads/clientes, clientes de viagem,
+// motoristas e contatos de outras parceiras (os); escolher preenche só o que está vazio.
+function buscarContatoParceiro(texto){
+  const box = document.getElementById("p-busca-contato-resultados");
+  const q = (texto||"").trim().toLowerCase();
+  const qDigitos = q.replace(/\D/g,"");
+  if(q.length < 2){ box.classList.remove("open"); box.innerHTML=""; return; }
+  const mCodigo = /^#\s*(\d+)$/.exec(q);
+  const codigo = mCodigo ? Number(mCodigo[1]) : null;
+  const bate = (...campos)=>campos.some(c=>{
+    if(!c) return false;
+    const v = String(c).toLowerCase();
+    if(v.includes(q)) return true;
+    return qDigitos.length >= 4 && v.replace(/\D/g,"").includes(qDigitos);
+  });
+  const filtra = (lista, ...campos) => codigo != null ? lista.filter(x=>x.id===codigo) : lista.filter(x=>bate(...campos.map(f=>f(x))));
+  const regiaoLead = l => [l.bairro, l.cidade, l.estado].filter(Boolean).join(", ");
+  const nomeParceiro = pid => (parceiros.find(p=>p.id===pid)||{}).nome || "";
+  const grupos = [
+    { titulo:"Leads e clientes", itens: filtra(leads, l=>l.nome, l=>l.whatsapp, l=>l.email)
+      .map(l=>({nome:l.nome, sub:["#"+l.id, l.whatsapp].filter(Boolean).join(" · "),
+        dados:{nome:l.nome, telefone:l.whatsapp, email:l.email, aniversario:l.aniversario, regiao:regiaoLead(l)}})) },
+    { titulo:"Clientes de viagem", itens: filtra(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email)
+      .map(c=>({nome:c.nome, sub:["#"+c.id, c.whatsapp].filter(Boolean).join(" · "),
+        dados:{nome:c.nome, telefone:c.whatsapp, email:c.email, aniversario:c.aniversario, regiao:c.regiao}})) },
+    { titulo:"Motoristas", itens: filtra(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email)
+      .map(m=>({nome:m.nome, sub:["#"+m.id, m.whatsapp].filter(Boolean).join(" · "),
+        dados:{nome:m.nome, telefone:m.whatsapp, email:m.email, aniversario:m.aniversario, regiao:m.regiao}})) },
+    { titulo:"Contatos de parceiras (os)", itens: codigo != null ? [] : parceiroContatos
+      .filter(c=>c.parceiro_id!==editingParceiroId && bate(c.descricao, c.numero))
+      .map(c=>({nome:c.descricao || c.numero, sub:[nomeParceiro(c.parceiro_id), c.numero].filter(Boolean).join(" · "),
+        dados:{telefone:c.numero, tipo:c.tipo, descricao:c.descricao}})) },
+  ].filter(g=>g.itens.length);
+  window._buscaContatoParceiro = [];
+  if(!grupos.length){ box.innerHTML = '<div class="sr-vazio">Nada encontrado</div>'; box.classList.add("open"); return; }
+  box.innerHTML = grupos.map(g=>`<div class="sr-grupo">${g.titulo}</div>` + g.itens.slice(0,8).map(it=>{
+    const idx = window._buscaContatoParceiro.push(it.dados) - 1;
+    return `<div class="sr-item" onclick="usarContatoParceiro(${idx})"><span>${escapeHtml(it.nome||"-")}</span><small>${escapeHtml(it.sub||"")}</small></div>`;
+  }).join("")).join("");
+  box.classList.add("open");
 }
+function fecharBuscaContatoParceiro(){
+  document.getElementById("p-busca-contato-resultados").classList.remove("open");
+  document.getElementById("p-busca-contato").value = "";
+}
+function usarContatoParceiro(idx){
+  const d = (window._buscaContatoParceiro||[])[idx];
+  fecharBuscaContatoParceiro();
+  if(!d) return;
+  const preencheVazio = (id, valor) => { const el = document.getElementById(id); if(valor && !el.value.trim()) el.value = valor; };
+  preencheVazio("p-nome", d.nome);
+  preencheVazio("p-aniversario", d.aniversario);
+  preencheVazio("p-regiao", d.regiao);
+  if(d.telefone){
+    // Não repete um número que esta parceira (o) já tem.
+    const jaTem = parceiroContatos.some(c=>c.parceiro_id===editingParceiroId && editingParceiroId && mesmoTelefone(c.numero, d.telefone))
+      || parceiroContatosPendentes.some(c=>mesmoTelefone(c.numero, d.telefone));
+    if(!jaTem){
+      document.getElementById("pc-tipo").value = d.tipo || "Celular";
+      document.getElementById("pc-numero").value = d.telefone;
+      document.getElementById("pc-descricao").value = d.descricao || d.nome || "";
+    }
+  }
+  if(d.email){
+    const notas = document.getElementById("p-notas");
+    if(!notas.value.toLowerCase().includes(d.email.toLowerCase())){
+      const notaEmail = "E-mail: " + d.email;
+      notas.value = notas.value ? notas.value + "\n" + notaEmail : notaEmail;
+    }
+  }
+  showToast("Dados puxados. Confira e clique em + Adicionar contato");
+}
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".busca-contato")) document.getElementById("p-busca-contato-resultados").classList.remove("open");
+});
 // Bloco "Prospecção" do modal: só aparece em quem veio do Google Places.
 // Tudo aqui é o que o Google devolveu; a Carol só classifica, não inventa.
 function renderProspeccaoParceiro(p){
@@ -8399,10 +8460,7 @@ function openParceiroModal(id){
   parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
   document.getElementById("parceiro-modal-title").textContent = id ? "Editar parceira (o)" : "Nova parceira (o)";
-  document.getElementById("p-puxar-lead-wrap").style.display = id ? "none" : "block";
-  document.getElementById("p-puxar-lead").innerHTML = `<option value="">- Selecionar -</option>` +
-    leads.map(l=>`<option value="${l.id}">${escapeHtml(l.nome)} (#${l.id})${l.whatsapp?" · "+escapeHtml(l.whatsapp):""}</option>`).join("");
-  document.getElementById("p-puxar-lead").value = "";
+  fecharBuscaContatoParceiro();
   const p = parceiros.find(x=>x.id===id) || {};
   document.getElementById("p-nome").value = p.nome||"";
   const categoriasMarcadas = (p.categoria||"").split(",").map(c=>c.trim()).filter(Boolean);
