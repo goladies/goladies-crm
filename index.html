@@ -10323,7 +10323,25 @@ function ehEmpresaNoModal(pre){
 function ligacoesDe(tabela, id){
   return vinculosCadastros.filter(v=>(v.a_tabela===tabela && v.a_id===id) || (v.b_tabela===tabela && v.b_id===id));
 }
+// Grupo "mesma pessoa" com as ligações indiretas: se A = B e B = C, então
+// A = C. Devolve Map "tabela:id" → por onde chegou (null = o próprio cadastro).
+function grupoMesmaPessoa(tabela, id){
+  const chave = (t, i) => t + ":" + i;
+  const grupo = new Map([[chave(tabela, id), null]]);
+  const fila = [[tabela, id]];
+  while(fila.length){
+    const [t, i] = fila.shift();
+    vinculosCadastros.filter(v=>v.tipo==="mesma_pessoa").forEach(v=>{
+      let outro = null;
+      if(v.a_tabela===t && v.a_id===i) outro = [v.b_tabela, v.b_id];
+      else if(v.b_tabela===t && v.b_id===i) outro = [v.a_tabela, v.a_id];
+      if(outro && !grupo.has(chave(...outro))){ grupo.set(chave(...outro), {tabela:t, id:i}); fila.push(outro); }
+    });
+  }
+  return grupo;
+}
 function jaLigados(tabela, id, tipo, tabela2, id2){
+  if(tipo === "mesma_pessoa") return grupoMesmaPessoa(tabela, id).has(tabela2 + ":" + id2);
   return vinculosCadastros.some(v=>v.tipo===tipo && (
     (v.a_tabela===tabela && v.a_id===id && v.b_tabela===tabela2 && v.b_id===id2) ||
     (v.b_tabela===tabela && v.b_id===id && v.a_tabela===tabela2 && v.a_id===id2)));
@@ -10372,6 +10390,22 @@ function renderLigacoes(pre){
       <button type="button" class="act act-del" title="Remover ligação" aria-label="Remover ligação" onclick="removerLigacao('${pre}',${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
   }).join("");
 
+  // Mesma pessoa por ligação indireta (A = B e B = C): aparece sem botão de
+  // remover, porque a ligação de verdade é a do cadastro do meio.
+  const diretos = new Set(ligacoesDe(c.tabela, id).filter(v=>v.tipo==="mesma_pessoa").map(v=>{
+    const souA = v.a_tabela===c.tabela && v.a_id===id;
+    return (souA ? v.b_tabela : v.a_tabela) + ":" + (souA ? v.b_id : v.a_id);
+  }));
+  const indiretos = [...grupoMesmaPessoa(c.tabela, id).entries()]
+    .filter(([k, via])=>via && !diretos.has(k))
+    .map(([k, via])=>{
+      const [t, i] = [k.split(":")[0], Number(k.split(":")[1])];
+      const cad = cadastroDaTabela(t), outro = cad && cad.lista().find(r=>r.id===i);
+      if(!outro) return "";
+      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">Mesma pessoa: ${escapeHtml(outro.nome)}</span>${numId(i)}<small>${cad.rotulo} · ligada pela ${cadastroDaTabela(via.tabela).rotulo.toLowerCase()} #${via.id}</small></div><div class="lig-acoes">
+        <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${t}',${i})">Abrir</button></div></div>`;
+    }).join("");
+
   // Possível mesma pessoa em outro cadastro (mesmo WhatsApp ou e-mail)
   let sugestoes = "";
   if(!empresa){
@@ -10406,7 +10440,7 @@ function renderLigacoes(pre){
         <div id="${pre}-lig-principal-wrap" style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; margin:0 0 10px; color:var(--text1); font-size:13px;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
         <div class="full lig-botao"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar</button></div>
       </div>`;
-  el.innerHTML = `<h4>Ligações</h4><p class="lig-sub">Outros cadastros desta mesma pessoa e as empresas a que ela está ligada.</p>${itens || `<p class="lig-vazio">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
+  el.innerHTML = `<h4>Ligações</h4><p class="lig-sub">Outros cadastros desta mesma pessoa e as empresas a que ela está ligada.</p>${(itens + indiretos) || `<p class="lig-vazio">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
   if(!empresa) trocarTipoLigacao(pre);
 }
 function trocarTipoLigacao(pre){
