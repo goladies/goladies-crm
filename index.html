@@ -292,6 +292,7 @@ td.acoes-cel .act{margin-right:3px;}
 
 /* ---------- CARDS, PAINÉIS, TABELAS ---------- */
 .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:20px;}
+.dash-grupo{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px;}
 .card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--sombra);}
 .card-link{cursor:pointer; transition:border-color .15s, transform .15s;}
 .card-link:hover{border-color:var(--pink); transform:translateY(-1px);}
@@ -1219,7 +1220,10 @@ tr.tr-click{cursor:pointer;}
     <div id="tab-dashboard">
       <div class="pagehead"><div><h2>Visão geral</h2><p>Resumo do funil de atendimento e da operação</p></div></div>
       <div id="dash-atencao"></div>
+      <h3 class="dash-grupo">Serviços automotivos</h3>
       <div class="cards" id="dash-cards"></div>
+      <h3 class="dash-grupo">Transporte</h3>
+      <div class="cards" id="dash-cards-transp-geral"></div>
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
           <div>
@@ -4581,6 +4585,26 @@ function renderDashboard(){
     <div class="card card-link" title="Abrir a rede de parceiras (os)" onclick="irParaAba('parceiros')"><div class="num">${parceirosAtivos}</div><div class="label">Parcerias ativas</div></div>
     <div class="card card-link" title="Abrir os orçamentos" onclick="irParaAba('orcamentos')"><div class="num">${orcAbertos}</div><div class="label">Orçamentos em aberto</div></div>
   `;
+  // Transporte: mesma lógica dos cartões acima (cadastro → quem já usou).
+  // Cliente marcada como teste e as viagens dela ficam de fora.
+  const cardsTransp = document.getElementById("dash-cards-transp-geral");
+  if(cardsTransp){
+    const cliReais = clientesTransporte.filter(c=>!c.teste);
+    const idsTeste = new Set(clientesTransporte.filter(c=>c.teste).map(c=>c.id));
+    const vgReais = viagens.filter(v=>!idsTeste.has(v.cliente_id));
+    const realizadas = vgReais.filter(v=>v.status==="Concluída");
+    const idsViajaram = new Set(realizadas.map(v=>v.cliente_id));
+    const viajaram = cliReais.filter(c=>idsViajaram.has(c.id)).length;
+    const pct = cliReais.length ? Math.round(viajaram / cliReais.length * 100) : 0;
+    const motAtivas = motoristas.filter(m=>m.status==="Ativa").length;
+    cardsTransp.innerHTML = `
+      <div class="card card-link" title="Abrir as clientes de viagem" onclick="irParaTransporte('clientes-transporte')"><div class="num">${cliReais.length}</div><div class="label">Clientes cadastradas</div></div>
+      <div class="card card-link" title="Abrir as clientes de viagem" onclick="irParaTransporte('clientes-transporte')"><div class="num">${viajaram}</div><div class="label">Clientes que já viajaram${cliReais.length ? ` (${pct}%)` : ""}</div></div>
+      <div class="card card-link" title="Abrir as motoristas" onclick="irParaTransporte('motoristas')"><div class="num">${motAtivas}</div><div class="label">Motoristas ativas</div></div>
+      <div class="card card-link" title="Abrir as viagens" onclick="irParaTransporte('viagens')"><div class="num">${vgReais.length}</div><div class="label">Viagens solicitadas</div></div>
+      <div class="card card-link" title="Abrir as viagens" onclick="irParaTransporte('viagens')"><div class="num">${realizadas.length}</div><div class="label">Viagens realizadas</div></div>
+    `;
+  }
   document.getElementById("funnel-head").innerHTML = ETAPAS.map(e=>`<th>${e}</th>`).join("");
   document.getElementById("funnel-body").innerHTML = ETAPAS.map(e=>{
     const n = reais.filter(l=>l.etapa===e).length;
