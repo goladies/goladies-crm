@@ -1034,6 +1034,21 @@ tr.tr-click{cursor:pointer;}
 .sede-destaques button b{color:var(--rosa-texto); font-size:16px;}
 .sede-agenda{font-size:13px; color:var(--text2); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
 .sede-decisao textarea{width:100%; margin-top:8px;}
+.sede-grupo-area{display:flex; align-items:center; gap:10px; margin:20px 0 8px; padding:8px 12px; border-left:4px solid var(--rosa); background:var(--bg-card); border-radius:8px; font-size:15px; font-weight:700; color:var(--text);}
+.sede-grupo-area small{font-size:13px; font-weight:500; color:var(--text2);}
+.sede-grupo-area img.mini{width:30px; height:30px; border-radius:50%; object-fit:cover;}
+.sede-grupo-area .qtd{margin-left:auto; font-size:12px; font-weight:700; background:var(--rosa); color:#fff; border-radius:999px; padding:1px 9px;}
+.sede-pend .num{flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:#fff; background:var(--c-gray);}
+.sede-pend .num.prio-1{background:var(--c-red);} .sede-pend .num.prio-2{background:var(--c-amber);}
+.sede-pend .tit{font-weight:600;}
+.sede-pend .tit .status-badge{margin-left:4px; vertical-align:1px;}
+.sede-pend .acoes{align-items:center;}
+.sede-prio-sel{width:auto; padding:5px 8px; font-size:12.5px;}
+.sede-pergunta{margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-blue-bg); font-size:12.5px; color:var(--text2); cursor:default;}
+.sede-pergunta .resp{margin-top:6px; padding-top:6px; border-top:1px solid var(--border);}
+.sede-pergunta .quando{font-size:11.5px; color:var(--muted);}
+.sede-pergunta-form{margin-top:8px; cursor:default;}
+.sede-pergunta-form textarea{width:100%;}
 .sede-trabalho{border:1px solid var(--border); border-radius:10px; background:var(--bg-card); margin-bottom:8px;}
 .sede-trabalho > summary{display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer; list-style:none;}
 .sede-trabalho > summary::-webkit-details-marker{display:none;}
@@ -1958,7 +1973,7 @@ tr.tr-click{cursor:pointer;}
       <div id="sede-pendencias" style="display:none;">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> O que a equipe não consegue fazer sem você</h3>
-          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">A Gabi junta aqui tudo que está parado esperando você. Marque <b>Feita</b> e ela não traz de novo; <b>Ignorar</b> tira da lista sem fazer.</p>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">A Gabi junta aqui tudo que está parado esperando você, da mais urgente para a menos. Troque a <b>prioridade</b> se discordar; <b>Pedir mais informações</b> manda sua pergunta para a agente (a resposta aparece aqui no dia seguinte). Marque <b>Feita</b> e ela não traz de novo; <b>Ignorar</b> tira da lista sem fazer.</p>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
             <select id="sede-filtro-pendencias" onchange="renderSedePendencias()" style="max-width:220px;">
               <option value="Aberta">Abertas</option>
@@ -7041,6 +7056,38 @@ async function fecharPendenciaSede(id, status){
   sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
   renderSede();
 }
+// Prioridade (schema_sede_pendencias_prioridade.sql): 1 Alta, 2 Média, 3 Baixa.
+// A agente sugere; se a Jú trocar aqui, prioridade_por = 'Jú' e a agente não sobrescreve.
+const SEDE_PRIORIDADES = { 1:["Alta","red"], 2:["Média","amber"], 3:["Baixa","gray"] };
+function sedePrio(p){ const n = Number(p.prioridade); return n>=1 && n<=3 ? n : 2; }
+function sedeDataHora(iso){
+  if(!iso) return "";
+  const d = new Date(iso); if(isNaN(d)) return sedeData(iso);
+  const z = n => String(n).padStart(2,"0");
+  return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} às ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+async function mudarPrioridadePendencia(id, valor){
+  const r = await sb.from("sede_pendencias").update({ prioridade:Number(valor), prioridade_por:"Jú", atualizado_em:new Date().toISOString() }).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
+  showToast("Prioridade salva!");
+  renderSede();
+}
+function abrirPerguntaPendencia(id){
+  const el = document.getElementById("sp-perg-"+id); if(!el) return;
+  el.style.display = el.style.display==="none" ? "block" : "none";
+  if(el.style.display==="block") el.querySelector("textarea").focus();
+}
+async function perguntarPendenciaSede(id){
+  const txt = (document.getElementById("sp-perg-txt-"+id)||{}).value || "";
+  if(!txt.trim()){ showToast("Escreva o que você quer saber", true); return; }
+  const agora = new Date().toISOString();
+  const r = await sb.from("sede_pendencias").update({ pergunta:txt.trim(), pergunta_em:agora, resposta_pergunta:null, respondida_em:null, atualizado_em:agora }).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
+  showToast("Pergunta enviada!");
+  renderSede();
+}
 function renderSedePendencias(){
   const box = document.getElementById("sede-pendencias-lista"); if(!box) return;
   const f = document.getElementById("sede-filtro-pendencias").value;
@@ -7049,20 +7096,54 @@ function renderSedePendencias(){
   const ordem = SEDE_AGENTES.map(a=>a.id);
   const grupos = {};
   lista.forEach(p => { const k = p.agente && sedeAgente(p.agente) ? p.agente : "_"; (grupos[k] = grupos[k] || []).push(p); });
-  box.innerHTML = Object.keys(grupos).sort((a,b)=>(ordem.indexOf(a)+99*(a==="_")) - (ordem.indexOf(b)+99*(b==="_"))).map(k=>{
+  Object.values(grupos).forEach(g => g.sort((a,b)=> sedePrio(a)-sedePrio(b) || String(a.criado_em).localeCompare(String(b.criado_em))));
+  // A área com a pendência mais urgente vem primeiro; empate segue a ordem da equipe.
+  const chaves = Object.keys(grupos).sort((a,b)=> sedePrio(grupos[a][0])-sedePrio(grupos[b][0])
+    || (ordem.indexOf(a)+99*(a==="_")) - (ordem.indexOf(b)+99*(b==="_")));
+  let n = 0;
+  box.innerHTML = chaves.map(k=>{
     const a = sedeAgente(k);
-    return `<div class="sede-grupo">${a ? `Área de ${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}` : "Geral"}</div>` + grupos[k].map(p=>`
-      <div class="sede-item${p.aba?" clicavel":""}" ${p.aba?`onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')"`:""}>
+    return `<div class="sede-grupo-area">
+        ${a ? `<img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">` : ""}
+        <span>${a ? `Área de ${escapeHtml(a.nome)} <small>· ${escapeHtml(a.cargo)}</small>` : "Geral"}</span>
+        <span class="qtd">${grupos[k].length}</span>
+      </div>` + grupos[k].map(p=>{
+      n++;
+      const pr = sedePrio(p), [prNome, prCls] = SEDE_PRIORIDADES[pr];
+      const aberta = p.status==="Aberta";
+      const quem = escapeHtml(a ? a.nome : "Gabi");
+      const perg = p.pergunta ? `<div class="sede-pergunta" onclick="event.stopPropagation()">
+          <div><b>Você perguntou</b> <span class="quando">${sedeDataHora(p.pergunta_em)}</span><br>${escapeHtml(p.pergunta)}</div>
+          ${p.resposta_pergunta
+            ? `<div class="resp"><b>${quem} respondeu</b> <span class="quando">${sedeDataHora(p.respondida_em)}</span><br>${escapeHtml(p.resposta_pergunta)}</div>`
+            : `<div class="quando">Esperando a resposta. A Gabi lê as perguntas no resumo das 9h15.</div>`}
+        </div>` : "";
+      return `
+      <div class="sede-item sede-pend${p.aba?" clicavel":""}" ${p.aba?`onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')"`:""}>
+        <div class="num prio-${pr}">${n}</div>
         <div class="txt">
-          <div>${escapeHtml(p.titulo)}</div>
+          <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span></div>
           ${p.detalhe?`<div class="det">${escapeHtml(p.detalhe)}</div>`:""}
-          <div class="meta">desde ${sedeData(p.criado_em)}${p.origem?` · ${escapeHtml(p.origem)}`:""}${p.status!=="Aberta"?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeData(p.fechada_em)}`:""}</div>
+          <div class="meta">criada em ${sedeDataHora(p.criado_em)}${p.atualizado_em && p.atualizado_em!==p.criado_em ? ` · atualizada em ${sedeDataHora(p.atualizado_em)}` : ""}${p.origem?` · ${escapeHtml(p.origem)}`:""}${!aberta?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeDataHora(p.fechada_em)}`:""}</div>
+          ${perg}
+          ${aberta ? `<div id="sp-perg-${p.id}" class="sede-pergunta-form" style="display:none;" onclick="event.stopPropagation()">
+              <textarea id="sp-perg-txt-${p.id}" rows="2" placeholder="O que você quer saber? Ex.: o que é esse workflow, onde fica, quanto tempo leva"></textarea>
+              <div style="display:flex; gap:6px; margin-top:6px;">
+                <button class="btn small" type="button" onclick="perguntarPendenciaSede(${p.id})">Enviar pergunta</button>
+                <button class="btn ghost small" type="button" onclick="abrirPerguntaPendencia(${p.id})">Cancelar</button>
+              </div>
+            </div>` : ""}
         </div>
-        <div class="acoes">${p.status==="Aberta"
-          ? `<button class="btn secondary small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Feita')"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Feita</button>
-             <button class="btn ghost small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Ignorada')">Ignorar</button>`
-          : `<button class="btn ghost small" type="button" onclick="event.stopPropagation(); fecharPendenciaSede(${p.id},'Aberta')">Reabrir</button>`}</div>
-      </div>`).join("");
+        <div class="acoes" onclick="event.stopPropagation()">${aberta
+          ? `<select class="sede-prio-sel" title="Prioridade" onchange="mudarPrioridadePendencia(${p.id}, this.value)">
+               ${[1,2,3].map(v=>`<option value="${v}"${v===pr?" selected":""}>Prioridade ${SEDE_PRIORIDADES[v][0]}</option>`).join("")}
+             </select>
+             <button class="btn ghost small" type="button" onclick="abrirPerguntaPendencia(${p.id})">Pedir mais informações</button>
+             <button class="btn secondary small" type="button" onclick="fecharPendenciaSede(${p.id},'Feita')"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Feita</button>
+             <button class="btn ghost small" type="button" onclick="fecharPendenciaSede(${p.id},'Ignorada')">Ignorar</button>`
+          : `<button class="btn ghost small" type="button" onclick="fecharPendenciaSede(${p.id},'Aberta')">Reabrir</button>`}</div>
+      </div>`;
+    }).join("");
   }).join("");
 }
 
