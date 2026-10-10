@@ -1496,6 +1496,15 @@ tr.tr-click{cursor:pointer;}
             <tbody id="motoristas-body"></tbody>
           </table>
         </div>
+        <div class="panel" id="candidaturas-site-wrap">
+          <h3 style="margin:0 0 4px; font-size:15px;">Candidaturas do site</h3>
+          <p style="margin:0 0 10px; color:var(--muted); font-size:12.5px;">Quem preencheu "Quero ser motorista" no site. A candidatura continua aqui mesmo se a ficha for apagada ou juntada a outra.</p>
+          <div id="candidaturas-site-meses" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+          <table class="tbl">
+            <thead><tr><th>Quando</th><th>Nome</th><th>Contato</th><th>Por que quer fazer parte</th><th>Ficha</th></tr></thead>
+            <tbody id="candidaturas-site-body"></tbody>
+          </table>
+        </div>
       </div>
 
       <div id="subtab-clientes-transporte" style="display:none;">
@@ -2501,6 +2510,7 @@ tr.tr-click{cursor:pointer;}
       <h3 id="motorista-modal-title" style="margin:0;">Nova motorista</h3>
       <button class="icon-btn" type="button" onclick="closeModal('motorista-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
+    <div id="mt-candidatura" style="display:none; font-size:12.5px; color:var(--muted); margin:4px 0 12px;"></div>
     <div id="ia-cnh-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
       <div style="font-size:13px; font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com a CNH</div>
       <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF da CNH e a IA preenche os campos abaixo.</div>
@@ -3635,6 +3645,7 @@ let parceiros = [];
 let vinculosCadastros = [];
 let orcamentos = [];
 let motoristas = [];
+let candidaturasSite = [];
 let documentosMotorista = [];
 let motoristaObservacoes = [];
 let clientesTransporte = [];
@@ -4176,7 +4187,7 @@ async function carregarDadosInterno(){
 
   // Módulo de Transporte — tolerante a erro (ex: SQL ainda não rodado),
   // pra não travar o resto do painel enquanto isso.
-  const [rm, rd, rc, rv, ra, rp, rpay, rpc, rpi, rpe, rli, rvd, rvp, rcp, rmf, rpp, rpt, rpl, rdv, rvg, rvc, rmo, rvo] = await Promise.all([
+  const [rm, rd, rc, rv, ra, rp, rpay, rpc, rpi, rpe, rli, rvd, rvp, rcp, rmf, rpp, rpt, rpl, rdv, rvg, rvc, rmo, rvo, rcand] = await Promise.all([
     sb.from("motoristas").select("*").order("id"),
     sb.from("documentos_motorista").select("*").order("id"),
     sb.from("clientes_transporte").select("*").order("id"),
@@ -4200,8 +4211,10 @@ async function carregarDadosInterno(){
     sb.from("vagas_candidatas").select("*").order("id"),
     sb.from("motorista_observacoes").select("*").order("id"),
     sb.from("viagem_ofertas").select("*").order("id"),
+    sb.from("candidatas").select("*").order("id", { ascending: false }),
   ]);
   motoristas = aplicarConsulta("motoristas", rm, motoristas);
+  candidaturasSite = aplicarConsulta("candidatas", rcand, candidaturasSite);
   documentosMotorista = aplicarConsulta("documentos_motorista", rd, documentosMotorista);
   clientesTransporte = aplicarConsulta("clientes_transporte", rc, clientesTransporte);
   viagens = aplicarConsulta("viagens", rv, viagens);
@@ -4441,6 +4454,7 @@ const TABELA_ATUALIZA = {
   link_avaliacoes: v => linkAvaliacoes = v,
   vagas: v => vagas = v,
   vagas_candidatas: v => vagasCandidatas = v,
+  candidatas: v => candidaturasSite = v,
   motorista_observacoes: v => motoristaObservacoes = v,
   viagem_ofertas: v => viagemOfertas = v,
   viagem_paradas: v => viagemParadas = v,
@@ -8978,6 +8992,44 @@ function renderTransporteMotoristas(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(m.whatsapp, m.nome)} <button class="act act-edit" onclick="openMotoristaModal(${m.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteMotorista(${m.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="9">Nenhuma motorista cadastrada ainda</td></tr>`;
+  renderCandidaturasSite();
+}
+
+// ===== CANDIDATURAS DO SITE (schema_candidaturas_no_crm.sql) =====
+// A candidatura fica em "candidatas" e gera a ficha em "motoristas".
+// motorista_id = a ficha de hoje; motorista_id_original = a que ela gerou.
+function dataHoraBR(iso){
+  if(!iso) return "-";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+}
+function situacaoFichaCandidatura(c){
+  const atual = c.motorista_id, orig = c.motorista_id_original;
+  const link = id => { const m = motoristas.find(x=>x.id===id); return `<a href="#" onclick="openMotoristaModal(${id}); return false;">${escapeHtml(m ? m.nome : "Motorista")} #${id}</a>`; };
+  if(atual && orig && atual !== orig) return `Juntada à ${link(atual)} <span style="color:var(--muted); font-size:12px;">(era #${orig})</span>`;
+  if(atual) return link(atual);
+  if(orig) return `<span style="color:var(--muted);">Ficha apagada (#${orig})</span>`;
+  return `<span style="color:var(--muted);">Sem ficha</span>`;
+}
+function renderCandidaturasSite(){
+  const wrap = document.getElementById("candidaturas-site-wrap");
+  if(!wrap) return;
+  const lista = candidaturasSite.filter(c=>!c.area_interesse || c.area_interesse === "Motorista");
+  const porMes = {};
+  lista.forEach(c=>{ const k = String(c.criado_em||"").slice(0,7); if(k) porMes[k] = (porMes[k]||0) + 1; });
+  const meses = Object.keys(porMes).sort().reverse().slice(0,6);
+  const nomeMesCurto = k => { const [a, m] = k.split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"].at(Number(m) - 1) + "/" + a.slice(2); };
+  document.getElementById("candidaturas-site-meses").innerHTML = meses.length
+    ? meses.map(k=>`<span class="tag" title="Candidaturas em ${nomeMesCurto(k)}">${nomeMesCurto(k)}: ${porMes[k]}</span>`).join("") + `<span class="tag novo">Total: ${lista.length}</span>`
+    : "";
+  document.getElementById("candidaturas-site-body").innerHTML = lista.map(c=>`
+    <tr>
+      <td style="white-space:nowrap;">${dataHoraBR(c.criado_em)}</td>
+      <td>${escapeHtml(c.nome||"-")}</td>
+      <td>${numeroClicavel(c.whatsapp)}</td>
+      <td style="max-width:320px; font-size:12.5px;">${escapeHtml(c.motivacao||"-")}</td>
+      <td>${situacaoFichaCandidatura(c)}</td>
+    </tr>`).join("") || `<tr><td class="empty" colspan="5">Nenhuma candidatura pelo site ainda</td></tr>`;
 }
 
 // ===== ASSISTENTE IA (voz / texto / foto → ação no CRM) =====
@@ -9733,6 +9785,13 @@ function openMotoristaModal(id){
   fillSelect(document.getElementById("mt-status"), MOTORISTA_ETAPAS, MOTORISTA_STATUS_PADRAO);
   document.getElementById("motorista-modal-title").textContent = id ? "Editar motorista" : "Nova motorista";
   const m = motoristas.find(x=>x.id===id) || {};
+  const cands = id ? candidaturasSite.filter(c=>c.motorista_id===id) : [];
+  const boxCand = document.getElementById("mt-candidatura");
+  boxCand.style.display = cands.length ? "" : "none";
+  boxCand.innerHTML = cands.map(c=>{
+    const juntada = c.motorista_id_original && c.motorista_id_original !== id ? ` (veio da ficha #${c.motorista_id_original}, juntada a esta)` : "";
+    return `<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Veio do formulário do site em ${dataHoraBR(c.criado_em)}${juntada}.`;
+  }).join("<br>");
   document.getElementById("mt-nome").value = m.nome||"";
   document.getElementById("mt-whatsapp").value = m.whatsapp||"";
   document.getElementById("mt-email").value = m.email||"";
@@ -9956,10 +10015,11 @@ async function saveMotorista(){
   else { closeModal("motorista-modal"); }
 }
 async function deleteMotorista(id){
-  if(!confirm('Excluir esta motorista? Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).')) return;
+  const temCandidatura = candidaturasSite.some(c=>c.motorista_id===id);
+  if(!confirm('Excluir esta motorista? Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).' + (temCandidatura ? '\n\nA candidatura do site continua em "Candidaturas do site", marcada como ficha apagada.' : ''))) return;
   const { error } = await sb.from("motoristas").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
-  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "viagens");
+  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "viagens", "candidatas");
 }
 
 // ===== TRANSPORTE: CLIENTES DE VIAGEM =====
