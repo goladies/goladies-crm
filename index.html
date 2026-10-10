@@ -3378,8 +3378,34 @@ const ETAPAS = ["Novo lead","Contato iniciado","Orçamento solicitado","Orçamen
 // Lead de teste (schema_testes_marcados.sql): aparece na lista com a etiqueta
 // "Teste", mas fica fora de todas as contagens.
 const leadReal = l => !l.teste;
-// Número do cadastro ao lado do nome: separa pessoas com o mesmo nome.
-const numId = id => id != null ? `<span class="num-id" title="Número do cadastro">#${id}</span>` : "";
+// Código do cadastro único (schema_cadastro_unico.sql) ao lado do nome: separa
+// pessoas com o mesmo nome. Lead, cliente de viagem, motorista e parceira (o)
+// da mesma pessoa mostram o mesmo código (#1A, #12D). Teste não tem código.
+let cadastros = [];
+let cadastrosPorId = new Map();
+function codigoCadastro(r){
+  const c = r && r.cadastro_id != null ? cadastrosPorId.get(r.cadastro_id) : null;
+  return c ? "#" + c.codigo : "";
+}
+// "Nome #12D" (só em tela interna; nunca em mensagem para cliente ou motorista)
+const nomeCod = r => r ? [r.nome, codigoCadastro(r)].filter(Boolean).join(" ") : "";
+// " (#12D)" para as opções dos selects
+const optCod = r => { const c = codigoCadastro(r); return c ? ` (${c})` : ""; };
+function atualizarCadastros(lista){
+  cadastros = lista;
+  cadastrosPorId = new Map(lista.map(c=>[c.id, c]));
+}
+const numId = r => { const c = codigoCadastro(r); return c ? `<span class="num-id" title="Código do cadastro">${c}</span>` : ""; };
+// Busca por código: "#12", "12D" ou "#12d". Devolve o id do cadastro ou null.
+// Número sozinho sem # não conta (é telefone).
+function cadastroDaBusca(q){
+  const m = /^(#\s*)?(\d+)([a-z])?$/i.exec(String(q||"").trim());
+  if(!m || (!m[1] && !m[3])) return null;
+  const c = cadastrosPorId.get(Number(m[2]));
+  if(!c) return null;
+  if(m[3] && c.codigo.toUpperCase() !== (m[2] + m[3]).toUpperCase()) return null;
+  return c.id;
+}
 const ETAPA_CLASS = {"Novo lead":"indigo","Contato iniciado":"amber","Orçamento solicitado":"pink","Orçamento enviado":"pink","Negociação":"teal","Fechado - Ganho":"green","Cliente ativo":"green","Perdido":"red"};
 const URG_CLASS = {"Urgente":"urg-alta","Essa semana":"urg-media","Sem pressa":"urg-baixa"};
 
@@ -3861,9 +3887,12 @@ function buscaGlobal(texto){
   const q = (texto||"").trim().toLowerCase();
   const qDigitos = q.replace(/\D/g,"");
   if(q.length < 2){ box.classList.remove("open"); box.innerHTML=""; return; }
-  // "#12" procura pelo código do cadastro (e da viagem), não por nome/telefone.
+  // "#12" procura a viagem 12 e o cadastro #12D; "12D" ou "#12D" só o cadastro.
+  // Não procura por nome/telefone nesses casos.
   const mCodigo = /^#\s*(\d+)$/.exec(q);
   const codigo = mCodigo ? Number(mCodigo[1]) : null;
+  const cadBusca = cadastroDaBusca(q);
+  const porCad = cadBusca != null || /^#?\s*\d+[a-z]$/i.test(q);
   const bateTexto = (...campos)=>campos.some(c=>{
     if(!c) return false;
     const v = String(c).toLowerCase();
@@ -3871,14 +3900,14 @@ function buscaGlobal(texto){
     return qDigitos.length >= 4 && v.replace(/\D/g,"").includes(qDigitos);
   });
   const contatosDe = pid => parceiroContatos.filter(c=>c.parceiro_id===pid).map(c=>c.numero).join(" ");
-  const porCodigo = (lista, ...campos) => codigo != null ? lista.filter(x=>x.id===codigo) : lista.filter(x=>bateTexto(...campos.map(f=>f(x))));
+  const porCodigo = (lista, ...campos) => (codigo != null || porCad) ? lista.filter(x=>cadBusca != null && x.cadastro_id===cadBusca) : lista.filter(x=>bateTexto(...campos.map(f=>f(x))));
   const nomeClienteViagem = v => (clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome || "Cliente não definido";
   const grupos = [
     { titulo:"Viagens", itens: codigo == null ? [] : viagens.filter(v=>v.id===codigo).map(v=>({nome:`Viagem #${v.id} · ${nomeClienteViagem(v)}`, sub:[v.status, (v.data || v.data_hora) ? formatarDataBR(v.data || String(v.data_hora).slice(0,10)) : ""].filter(Boolean).join(" · "), abrir:()=>openViagemModal(v.id)})) },
-    { titulo:"Leads e clientes", itens: porCodigo(leads, l=>l.nome, l=>l.whatsapp, l=>l.email).map(l=>({nome:l.nome, sub:["#"+l.id,l.whatsapp,l.etapa].filter(Boolean).join(" · "), abrir:()=>openLeadModal(l.id)})) },
-    { titulo:"Parceiras (os)", itens: porCodigo(parceiros, p=>p.nome, p=>contatosDe(p.id)).map(p=>({nome:p.nome, sub:["#"+p.id,p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>openParceiroModal(p.id)})) },
-    { titulo:"Motoristas", itens: porCodigo(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email).map(m=>({nome:m.nome, sub:["#"+m.id,m.whatsapp,m.status].filter(Boolean).join(" · "), abrir:()=>openMotoristaModal(m.id)})) },
-    { titulo:"Clientes de viagem", itens: porCodigo(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email).map(c=>({nome:c.nome, sub:["#"+c.id,c.whatsapp,c.segmento].filter(Boolean).join(" · "), abrir:()=>openClienteTransporteModal(c.id)})) },
+    { titulo:"Leads e clientes", itens: porCodigo(leads, l=>l.nome, l=>l.whatsapp, l=>l.email).map(l=>({nome:l.nome, sub:[codigoCadastro(l),l.whatsapp,l.etapa].filter(Boolean).join(" · "), abrir:()=>openLeadModal(l.id)})) },
+    { titulo:"Parceiras (os)", itens: porCodigo(parceiros, p=>p.nome, p=>contatosDe(p.id)).map(p=>({nome:p.nome, sub:[codigoCadastro(p),p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>openParceiroModal(p.id)})) },
+    { titulo:"Motoristas", itens: porCodigo(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email).map(m=>({nome:m.nome, sub:[codigoCadastro(m),m.whatsapp,m.status].filter(Boolean).join(" · "), abrir:()=>openMotoristaModal(m.id)})) },
+    { titulo:"Clientes de viagem", itens: porCodigo(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email).map(c=>({nome:c.nome, sub:[codigoCadastro(c),c.whatsapp,c.segmento].filter(Boolean).join(" · "), abrir:()=>openClienteTransporteModal(c.id)})) },
   ].filter(g=>g.itens.length);
   window._buscaGlobalAcoes = [];
   if(!grupos.length){ box.innerHTML = '<div class="sr-vazio">Nada encontrado</div>'; box.classList.add("open"); return; }
@@ -4305,6 +4334,9 @@ async function carregarDadosInterno(){
   // Ligações entre cadastros (schema_pessoa_juridica.sql): tolerante a SQL ainda não rodado.
   const rvc2 = await sb.from("vinculos_cadastros").select("*").order("id");
   if(!rvc2.error) vinculosCadastros = rvc2.data || [];
+  // Cadastro único (schema_cadastro_unico.sql): os códigos #1A, #12D.
+  const rcad = await sb.from("cadastros").select("*").order("id");
+  if(!rcad.error) atualizarCadastros(rcad.data || []);
 
   // Livro-caixa (schema_livro_caixa.sql): mesma tolerância. Sem o SQL a aba
   // mostra o aviso para rodar, em vez de acender a falha de carga.
@@ -4461,6 +4493,7 @@ const TABELA_ATUALIZA = {
   fin_entradas: v => finEntradas = v,
   fin_conferencias: v => finConferencias = v,
   vinculos_cadastros: v => vinculosCadastros = v,
+  cadastros: v => atualizarCadastros(v),
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
   parceiro_links: v => parceiroLinks = v,
@@ -4490,7 +4523,13 @@ const TABELA_ATUALIZA = {
 // apareceria sozinho de minuto em minuto numa internet ruim, sem você ter
 // pedido nada. Na recarga que você mesma manda fazer, o alerta continua.
 let recargaSilenciosa = false;
+// Cadastro novo ganha código no banco, e ligar ou desligar "mesma pessoa" muda
+// o código dos papéis: por isso essas tabelas recarregam juntas.
+const TABELAS_PAPEL = ["leads", "clientes_transporte", "motoristas", "parceiros"];
 async function recarregarTabelas(...nomes){
+  if(nomes.includes("vinculos_cadastros")) nomes.push(...TABELAS_PAPEL);
+  if(nomes.some(n=>TABELAS_PAPEL.includes(n))) nomes.push("cadastros");
+  nomes = [...new Set(nomes)];
   const timeoutMs = 15000;
   const timeout = new Promise(resolve => setTimeout(()=>resolve({ timeout: true }), timeoutMs));
   const busca = Promise.all(nomes.map(nome => sb.from(nome).select("*").order("id").then(r=>({ nome, ...r }))));
@@ -4537,7 +4576,7 @@ function renderDashboard(){
   }).join("");
   const recentes = [...reais].sort((a,b)=> (b.data||"").localeCompare(a.data||"")).slice(0,6);
   document.getElementById("dash-leads-recentes").innerHTML = recentes.map(l=>`
-    <tr class="tr-click" onclick="openLeadModal(${l.id})"><td>${escapeHtml(l.nome)}${numId(l.id)}</td><td>${escapeHtml(l.categoria||"-")}</td><td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td></tr>
+    <tr class="tr-click" onclick="openLeadModal(${l.id})"><td>${escapeHtml(l.nome)}${numId(l)}</td><td>${escapeHtml(l.categoria||"-")}</td><td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td></tr>
   `).join("") || `<tr><td class="empty" colspan="3">Sem leads ainda</td></tr>`;
 
   const counts = {};
@@ -5336,7 +5375,7 @@ function renderLeads(){
   ));
   document.getElementById("leads-body").innerHTML = filtered.map(l=>`
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l.id)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
+      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
@@ -5409,7 +5448,7 @@ function itensAtencao(){
   // Orçamentos pedidos, esperando você montar.
   (orcamentos||[]).filter(o=>o.status==="Solicitado" && !o.exemplo).forEach(o=>{
     const l = (leads||[]).find(x=>x.id===o.lead_id);
-    add("orcamentos", "amarelo", `Orçamento #${o.id}: ${[l && `${l.nome} #${l.id}`, o.servico].filter(Boolean).join(" · ") || "sem detalhe"}`, `openOrcamentoModal(${o.id})`);
+    add("orcamentos", "amarelo", `Orçamento #${o.id}: ${[l && nomeCod(l), o.servico].filter(Boolean).join(" · ") || "sem detalhe"}`, `openOrcamentoModal(${o.id})`);
   });
 
   // Financeiro: despesa vencida (vermelho) ou vencendo hoje (amarelo);
@@ -5607,7 +5646,7 @@ function convCadastros(tel){
 function convNumId(tel){
   const k = convCadastros(tel);
   const r = k.cliente || k.motorista || k.leads[0];
-  return r ? numId(r.id) : "";
+  return r ? numId(r) : "";
 }
 
 async function carregarConversas(forcar){
@@ -5844,7 +5883,7 @@ function renderClientes(){
   document.getElementById("clientes-body").innerHTML = clientes.map(l=>{
     const qtdServicos = orcamentos.filter(o=>o.lead_id===l.id).length;
     return `<tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td>${escapeHtml(l.nome)}${numId(l.id)}${etiquetaPJ(l)}</td>
+      <td>${escapeHtml(l.nome)}${numId(l)}${etiquetaPJ(l)}</td>
       <td>${numeroClicavel(l.whatsapp)}</td>
       <td>${escapeHtml(l.cidade||"-")}</td>
       <td>${qtdServicos}</td>
@@ -5913,7 +5952,7 @@ function renderParceiros(){
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
     return `<tr class="tr-click" onclick="openParceiroModal(${p.id})">
-      <td>${escapeHtml(p.nome)}${numId(p.id)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}</td>
+      <td>${escapeHtml(p.nome)}${numId(p)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}</td>
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
       <td>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">${escapeHtml(p.classe_carol)}</span> `:""}${p.nota_google!=null?`<span style="font-size:12px;">${escapeHtml(String(p.nota_google).replace(".",","))} ★ <span style="color:var(--muted);">(${p.avaliacoes_google||0})</span></span>`:""}${p.elegivel_certificacao?'<br><span class="tag" style="font-size:11px;">Elegível à certificação</span>':""}${!p.classe_carol&&p.nota_google==null&&!p.elegivel_certificacao?"-":""}</td>
@@ -5937,9 +5976,9 @@ function renderOrcamentos(){
     const lead = leads.find(l=>l.id===o.lead_id);
     const parceiro = parceiros.find(p=>p.id===o.parceiro_id);
     return `<tr class="tr-click" onclick="openOrcamentoModal(${o.id})">
-      <td>${lead ? escapeHtml(lead.nome) + numId(lead.id) : "-"}</td>
+      <td>${lead ? escapeHtml(lead.nome) + numId(lead) : "-"}</td>
       <td>${escapeHtml(o.servico||"-")}</td>
-      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro.id) : "-"}</td>
+      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro) : "-"}</td>
       <td>${o.valor_cotado!=null?formatarMoedaBR(o.valor_cotado):"-"}</td>
       <td>${o.valor_final!=null?formatarMoedaBR(o.valor_final):"-"}</td>
       <td><span class="tag ${o.status==='Aceito'?'ganho':o.status==='Recusado'?'perdido':'orc-env'}">${o.status}</span></td>
@@ -6060,7 +6099,7 @@ function ftCotacoes(){
 }
 function ftNomeCliente(v){
   const c = clientesTransporte.find(x => x.id === v.cliente_id);
-  return c ? `${c.nome} #${c.id}` : (v.cliente_nome || "-");
+  return c ? nomeCod(c) : (v.cliente_nome || "-");
 }
 // Km da corrida inteira: desde 26/09/2026 a volta tem km próprio
 // (distancia_km_retorno); nas antigas o distancia_km já era a soma.
@@ -7559,7 +7598,7 @@ function openLeadModal(id){
   document.getElementById("f-categoria").onchange = ()=>fillServicoOptions();
   fillServicoOptions();
   fillSelect(document.getElementById("f-etapa"), ETAPAS, "Novo lead");
-  document.getElementById("lead-modal-title").textContent = id ? `Editar lead #${id}` : "Novo lead";
+  document.getElementById("lead-modal-title").textContent = id ? `Editar lead ${codigoCadastro(leads.find(l=>l.id===id))}`.trim() : "Novo lead";
   const l = leads.find(x=>x.id===id) || {};
   document.getElementById("f-nome").value = l.nome||"";
   document.getElementById("f-whatsapp").value = l.whatsapp||"";
@@ -7807,7 +7846,7 @@ function renderDivulgacoes(){
       <td><strong>${escapeHtml(d.titulo)}</strong></td>
       <td>${escapeHtml(d.formato)}${d.modalidade?` <span style="color:var(--muted);">· ${escapeHtml(d.modalidade)}</span>`:""}</td>
       <td>${escapeHtml(d.tipo)}</td>
-      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro.id) : "-"}</td>
+      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro) : "-"}</td>
       <td>${d.data_inicio?d.data_inicio.split("-").reverse().join("/"):"-"}${d.hora_inicio?" "+d.hora_inicio.slice(0,5).replace(":00","h").replace(":","h"):""}</td>
       <td><span class="status-badge ${DIVULGACAO_STATUS_CLASS[d.status]||''}">${escapeHtml(d.status)}</span></td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openDivulgacaoModal(${d.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteDivulgacao(${d.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
@@ -7820,7 +7859,7 @@ function openDivulgacaoModal(id){
   fillSelect(document.getElementById("dv-modalidade"), DIVULGACAO_MODALIDADES, "Presencial");
   fillSelect(document.getElementById("dv-tipo"), DIVULGACAO_TIPOS, "Terceiro - divulgação");
   fillSelect(document.getElementById("dv-status"), DIVULGACAO_STATUS, "Planejado");
-  document.getElementById("dv-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("dv-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("divulgacao-modal-title").textContent = id ? "Editar divulgação" : "Nova divulgação";
   const d = divulgacoes.find(x=>x.id===id) || {};
   document.getElementById("dv-titulo").value = d.titulo||"";
@@ -8019,7 +8058,7 @@ function renderRetornoLinkModal(linkId){
     const estrelas = a.estrelas ? "★".repeat(a.estrelas) + "☆".repeat(5-a.estrelas) : "sem estrelas";
     return `<div style="padding:8px 0; border-bottom:1px solid var(--border);">
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <strong>${escapeHtml(m ? m.nome : "Motorista")}</strong>${numId(a.motorista_id)}
+        <strong>${escapeHtml(m ? m.nome : "Motorista")}</strong>${numId(m)}
         <span style="color:#F2B705; letter-spacing:1px;" title="${a.estrelas||0} de 5">${estrelas}</span>
         ${a.comprou ? `<span class="status-badge ${a.comprou==="sim"?"green":a.comprou==="analisar"?"amber":"red"}">${LINK_COMPROU_ROTULO[a.comprou]}</span>` : ""}
         <span style="color:var(--muted); font-size:12px; margin-left:auto;">${a.atualizado_em ? new Date(a.atualizado_em).toLocaleDateString("pt-BR") : ""}</span>
@@ -8039,7 +8078,7 @@ function openLinkModal(id){
   document.getElementById("lk-motoristas-wrap").innerHTML = motoristas.slice()
     .filter(m=>ids.includes(m.id) || !["Inativa","Não aprovada"].includes(m.status))
     .sort((a,b)=>(a.nome||"").localeCompare(b.nome||""))
-    .map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${ids.includes(m.id)?"checked":""}> ${escapeHtml(m.nome)}${numId(m.id)}</label>`).join("");
+    .map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${ids.includes(m.id)?"checked":""}> ${escapeHtml(m.nome)}${numId(m)}</label>`).join("");
   document.querySelector(`input[name=lk-publico][value=${ids.length ? "algumas" : "todas"}]`).checked = true;
   alternarPublicoLink();
   document.getElementById("lk-titulo").value = l.titulo||"";
@@ -8107,7 +8146,7 @@ function renderVagas(){
     const qtd = vagasCandidatas.filter(c=>c.vaga_id===v.id).length;
     return `<tr class="tr-click" onclick="openVagaModal(${v.id})">
       <td><strong>${escapeHtml(v.titulo)}</strong></td>
-      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro.id) : escapeHtml(v.empresa_nome||"-")}</td>
+      <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro) : escapeHtml(v.empresa_nome||"-")}</td>
       <td>${escapeHtml(v.local||"-")}</td>
       <td>${qtd}</td>
       <td><span class="status-badge ${VAGA_STATUS_CLASS[v.status]||''}">${escapeHtml(v.status)}</span></td>
@@ -8118,7 +8157,7 @@ function renderVagas(){
 function openVagaModal(id){
   editingVagaId = id || null;
   fillSelect(document.getElementById("vg-status"), VAGA_STATUS, "Em triagem");
-  document.getElementById("vg-empresa-parceira").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("vg-empresa-parceira").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("vaga-modal-title").textContent = id ? "Editar vaga" : "Nova vaga";
   const v = vagas.find(x=>x.id===id) || {};
   document.getElementById("vg-titulo").value = v.titulo||"";
@@ -8392,8 +8431,10 @@ function buscarContatoParceiro(texto){
   const q = (texto||"").trim().toLowerCase();
   const qDigitos = q.replace(/\D/g,"");
   const recentes = q.length < 2;
-  const mCodigo = /^#\s*(\d+)$/.exec(q);
-  const codigo = mCodigo ? Number(mCodigo[1]) : null;
+  // "#12", "12D" ou "#12D" procura pelo código do cadastro
+  const cadBusca = cadastroDaBusca(q);
+  const codigo = (cadBusca != null || /^#\s*\d+[a-z]?$|^\d+[a-z]$/i.test(q)) ? cadBusca : null;
+  const porCad = codigo != null || /^#\s*\d+[a-z]?$|^\d+[a-z]$/i.test(q);
   const bate = (...campos)=>campos.some(c=>{
     if(!c) return false;
     const v = String(c).toLowerCase();
@@ -8401,20 +8442,20 @@ function buscarContatoParceiro(texto){
     return qDigitos.length >= 4 && v.replace(/\D/g,"").includes(qDigitos);
   });
   const filtra = (lista, ...campos) => recentes ? [...lista].sort((a,b)=>b.id-a.id).slice(0,5)
-    : codigo != null ? lista.filter(x=>x.id===codigo) : lista.filter(x=>bate(...campos.map(f=>f(x))));
+    : porCad ? lista.filter(x=>codigo != null && x.cadastro_id===codigo) : lista.filter(x=>bate(...campos.map(f=>f(x))));
   const regiaoLead = l => [l.bairro, l.cidade, l.estado].filter(Boolean).join(", ");
   const nomeParceiro = pid => (parceiros.find(p=>p.id===pid)||{}).nome || "";
   const grupos = [
     { titulo:"Leads e clientes", itens: filtra(leads, l=>l.nome, l=>l.whatsapp, l=>l.email)
-      .map(l=>({nome:l.nome, sub:["#"+l.id, l.whatsapp].filter(Boolean).join(" · "),
+      .map(l=>({nome:l.nome, sub:[codigoCadastro(l), l.whatsapp].filter(Boolean).join(" · "),
         dados:{nome:l.nome, telefone:l.whatsapp, email:l.email, aniversario:l.aniversario, regiao:regiaoLead(l)}})) },
     { titulo:"Clientes de viagem", itens: filtra(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email)
-      .map(c=>({nome:c.nome, sub:["#"+c.id, c.whatsapp].filter(Boolean).join(" · "),
+      .map(c=>({nome:c.nome, sub:[codigoCadastro(c), c.whatsapp].filter(Boolean).join(" · "),
         dados:{nome:c.nome, telefone:c.whatsapp, email:c.email, aniversario:c.aniversario, regiao:c.regiao}})) },
     { titulo:"Motoristas", itens: filtra(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email)
-      .map(m=>({nome:m.nome, sub:["#"+m.id, m.whatsapp].filter(Boolean).join(" · "),
+      .map(m=>({nome:m.nome, sub:[codigoCadastro(m), m.whatsapp].filter(Boolean).join(" · "),
         dados:{nome:m.nome, telefone:m.whatsapp, email:m.email, aniversario:m.aniversario, regiao:m.regiao}})) },
-    { titulo:"Contatos de parceiras (os)", itens: (codigo != null || recentes) ? [] : parceiroContatos
+    { titulo:"Contatos de parceiras (os)", itens: (porCad || recentes) ? [] : parceiroContatos
       .filter(c=>c.parceiro_id!==editingParceiroId && bate(c.descricao, c.numero))
       .map(c=>({nome:c.descricao || c.numero, sub:[nomeParceiro(c.parceiro_id), c.numero].filter(Boolean).join(" · "),
         dados:{telefone:c.numero, tipo:c.tipo, descricao:c.descricao}})) },
@@ -8488,7 +8529,7 @@ function openParceiroModal(id){
   editingParceiroId = id || null;
   parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
-  document.getElementById("parceiro-modal-title").textContent = id ? "Editar parceira (o)" : "Nova parceira (o)";
+  document.getElementById("parceiro-modal-title").textContent = id ? `Editar parceira (o) ${codigoCadastro(parceiros.find(p=>p.id===id))}`.trim() : "Nova parceira (o)";
   fecharBuscaContatoParceiro();
   const p = parceiros.find(x=>x.id===id) || {};
   document.getElementById("p-nome").value = p.nome||"";
@@ -8825,9 +8866,9 @@ function toggleOrcamentoPago(){
 }
 function openOrcamentoModal(id){
   editingOrcamentoId = id || null;
-  document.getElementById("o-lead").innerHTML = leads.map(l=>`<option value="${l.id}">${escapeHtml(l.nome)} (#${l.id})</option>`).join("");
+  document.getElementById("o-lead").innerHTML = leads.map(l=>`<option value="${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("");
   fillSelect(document.getElementById("o-servico"), SERVICOS.map(s=>s.nome), "");
-  document.getElementById("o-parceiro").innerHTML = parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("o-parceiro").innerHTML = parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("orcamento-modal-title").textContent = id ? "Editar orçamento" : "Novo orçamento";
   const o = orcamentos.find(x=>x.id===id) || {};
   if(o.lead_id) document.getElementById("o-lead").value = o.lead_id;
@@ -8996,7 +9037,7 @@ function renderTransporteMotoristas(){
     const faltam = checklistDocumentosMotorista(m.id).filter(i=>!i.ok).length;
     const media = mediaAvaliacaoMotorista(m.id);
     return `<tr class="tr-click" onclick="openMotoristaModal(${m.id})">
-      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${numId(m.id)}${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}</td>
+      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${numId(m)}${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}</td>
       <td>${numeroClicavel(m.whatsapp)}</td>
       <td>${escapeHtml(m.regiao||"-")}${m.veiculo?"<br><span style='color:var(--muted); font-size:12px;'>"+escapeHtml(m.veiculo)+"</span>":""}</td>
       <td>${emDia?'<span class="tag urg-baixa">Em dia</span>':`<span class="tag urg-alta">${faltam} pendente${faltam>1?"s":""}</span>`}</td>
@@ -9020,10 +9061,10 @@ function dataHoraBR(iso){
 }
 function situacaoFichaCandidatura(c){
   const atual = c.motorista_id, orig = c.motorista_id_original;
-  const link = id => { const m = motoristas.find(x=>x.id===id); return `<a href="#" onclick="openMotoristaModal(${id}); return false;">${escapeHtml(m ? m.nome : "Motorista")} #${id}</a>`; };
-  if(atual && orig && atual !== orig) return `Juntada à ${link(atual)} <span style="color:var(--muted); font-size:12px;">(era #${orig})</span>`;
+  const link = id => { const m = motoristas.find(x=>x.id===id); return `<a href="#" onclick="openMotoristaModal(${id}); return false;">${escapeHtml(m ? nomeCod(m) : "Motorista")}</a>`; };
+  if(atual && orig && atual !== orig) return `Juntada à ${link(atual)} <span style="color:var(--muted); font-size:12px;">(era a ficha nº ${orig})</span>`;
   if(atual) return link(atual);
-  if(orig) return `<span style="color:var(--muted);">Ficha apagada (#${orig})</span>`;
+  if(orig) return `<span style="color:var(--muted);">Ficha apagada (nº ${orig})</span>`;
   return `<span style="color:var(--muted);">Sem ficha</span>`;
 }
 function renderCandidaturasSite(){
@@ -9053,7 +9094,7 @@ async function excluirCandidaturaSite(id){
   if(!c) return;
   const ficha = c.motorista_id ? motoristas.find(m=>m.id===c.motorista_id) : null;
   if(!confirm(`Apagar a candidatura de ${c.nome || "sem nome"} (${dataHoraBR(c.criado_em)})?\n\n` +
-    (ficha ? `A ficha da motorista ${ficha.nome} #${ficha.id} continua; só a candidatura sai da lista.\n\n` : "") +
+    (ficha ? `A ficha da motorista ${nomeCod(ficha)} continua; só a candidatura sai da lista.\n\n` : "") +
     "Não dá para desfazer.")) return;
   const { error } = await sb.from("candidatas").delete().eq("id", id);
   if(error){ alert("Não consegui apagar: " + error.message); return; }
@@ -9812,13 +9853,13 @@ let editingMotoristaId = null;
 function openMotoristaModal(id){
   editingMotoristaId = id || null;
   fillSelect(document.getElementById("mt-status"), MOTORISTA_ETAPAS, MOTORISTA_STATUS_PADRAO);
-  document.getElementById("motorista-modal-title").textContent = id ? "Editar motorista" : "Nova motorista";
+  document.getElementById("motorista-modal-title").textContent = id ? `Editar motorista ${codigoCadastro(motoristas.find(m=>m.id===id))}`.trim() : "Nova motorista";
   const m = motoristas.find(x=>x.id===id) || {};
   const cands = id ? candidaturasSite.filter(c=>c.motorista_id===id) : [];
   const boxCand = document.getElementById("mt-candidatura");
   boxCand.style.display = cands.length ? "" : "none";
   boxCand.innerHTML = cands.map(c=>{
-    const juntada = c.motorista_id_original && c.motorista_id_original !== id ? ` (veio da ficha #${c.motorista_id_original}, juntada a esta)` : "";
+    const juntada = c.motorista_id_original && c.motorista_id_original !== id ? ` (veio da ficha nº ${c.motorista_id_original}, juntada a esta)` : "";
     return `<svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Veio do formulário do site em ${dataHoraBR(c.criado_em)}${juntada}.`;
   }).join("<br>");
   document.getElementById("mt-nome").value = m.nome||"";
@@ -9865,7 +9906,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-acesso-status").innerHTML = (m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
-    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente (#${cliDaMotorista.id})</span>` : "")
+    + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente${optCod(cliDaMotorista)}</span>` : "")
     + (id ? htmlPedidoExclusao(m, "motorista") : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
@@ -10046,7 +10087,7 @@ async function saveMotorista(){
 async function deleteMotorista(id){
   const temCandidatura = candidaturasSite.some(c=>c.motorista_id===id);
   const mExcluir = motoristas.find(x=>x.id===id);
-  if(!confirm(`Excluir a motorista ${mExcluir ? mExcluir.nome : ""} #${id}${mExcluir && mExcluir.status ? " (" + mExcluir.status + ")" : ""}?\n\n` + 'Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).' + (temCandidatura ? '\n\nA candidatura do site continua em "Candidaturas do site", marcada como ficha apagada.' : ''))) return;
+  if(!confirm(`Excluir a motorista ${mExcluir ? nomeCod(mExcluir) : "#" + id}${mExcluir && mExcluir.status ? " (" + mExcluir.status + ")" : ""}?\n\n` + 'Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).' + (temCandidatura ? '\n\nA candidatura do site continua em "Candidaturas do site", marcada como ficha apagada.' : ''))) return;
   const { error } = await sb.from("motoristas").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "viagens", "candidatas");
@@ -10113,7 +10154,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${numId(r.id)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${numId(r)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)"><svg class=ic aria-hidden=true><use href=#i-star /></svg></span>`:""}</td>
@@ -10155,7 +10196,7 @@ function exportarClientesCsv(){
 let editingClienteTransporteId = null;
 function openClienteTransporteModal(id){
   editingClienteTransporteId = id || null;
-  document.getElementById("cliente-transporte-modal-title").textContent = id ? "Editar cliente" : "Nova cliente de viagem";
+  document.getElementById("cliente-transporte-modal-title").textContent = id ? `Editar cliente ${codigoCadastro(clientesTransporte.find(c=>c.id===id))}`.trim() : "Nova cliente de viagem";
   const c = clientesTransporte.find(x=>x.id===id) || {};
   document.getElementById("ct-nome").value = c.nome||"";
   document.getElementById("ct-whatsapp").value = c.whatsapp||"";
@@ -10207,14 +10248,14 @@ function htmlAcessoPainelCliente(c){
   html += htmlPedidoExclusao(c, "cliente");
   const mot = motoristaDaCliente(c.id);
   if(mot){
-    html += `<div style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(mot.nome)}</b> #${mot.id}). Ela nunca recebe oferta das próprias viagens.</div>`;
+    html += `<div style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(nomeCod(mot))}</b>). Ela nunca recebe oferta das próprias viagens.</div>`;
   }
   const dups = duplicatasCliente(c);
   if(dups.length){
     html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp de: ` +
-      dups.map(d=>`<b>${escapeHtml(d.nome)}</b> (#${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
+      dups.map(d=>`<b>${escapeHtml(nomeCod(d))}</b> (ficha nº ${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
       `.<br><small>Unificar traz tudo da outra pra esta (viagens, lugares salvos, pedidos, ligações), completa o que estiver vazio, guarda nas notas o que for diferente e apaga a outra.</small><br>` +
-      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (#${c.id}) e apagando #${d.id}</button>`).join(" ") +
+      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (ficha nº ${c.id}) e apagando a nº ${d.id}</button>`).join(" ") +
       `</div>`;
   }
   return html;
@@ -10235,19 +10276,19 @@ async function unificarClientes(manter, remover){
   if(r.auth_user_id && !m.auth_user_id) completa.push("login do app");
   const qtdViagens = viagens.filter(v=>v.cliente_id===remover).length;
   const linhas = [
-    `Unificar "${r.nome}" (#${remover}) em "${m.nome}" (#${manter})?`,
+    `Unificar "${nomeCod(r)}" (ficha nº ${remover}) em "${nomeCod(m)}" (ficha nº ${manter})?`,
     "",
-    `Vai para #${manter}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros.`,
-    completa.length ? `Completa em #${manter}: ${completa.join(", ")}.` : "",
-    nasNotas.length ? `Fica nas notas de #${manter} (era diferente): ${nasNotas.join("; ")}.` : "",
+    `Vai para a ficha nº ${manter}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros.`,
+    completa.length ? `Completa na ficha nº ${manter}: ${completa.join(", ")}.` : "",
+    nasNotas.length ? `Fica nas notas da ficha nº ${manter} (era diferente): ${nasNotas.join("; ")}.` : "",
     "",
-    `Depois disso #${remover} é apagada. Não dá pra desfazer.`
+    `Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`
   ].filter((l,i,a)=>l || (i>0 && a[i-1]));
   if(!confirm(linhas.join("\n"))) return;
   const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
   if(error){ alert("Não foi possível unificar: " + error.message); return; }
   showToast(resumo && typeof resumo === "object"
-    ? `Unificadas! ${resumo.viagens||0} viagem(ns), ${resumo.lugares||0} lugar(es) salvo(s) e ${resumo.ligacoes||0} ligação(ões) passaram para #${manter}.`
+    ? `Unificadas! ${resumo.viagens||0} viagem(ns), ${resumo.lugares||0} lugar(es) salvo(s) e ${resumo.ligacoes||0} ligação(ões) passaram para a ficha nº ${manter}.`
     : "Clientes unificadas!");
   closeModal("cliente-transporte-modal");
   await recarregarTabelas("clientes_transporte", "viagens");
@@ -10379,7 +10420,7 @@ function opcoesAlvoLigacao(pre, modo){
       if(modo==="pessoa") return !ehEmpresa(r) && !jaLigados(c.tabela, id, "empresa", cad.tabela, r.id);
       return !ehEmpresa(r) && cad.tabela!==c.tabela && !jaLigados(c.tabela, id, "mesma_pessoa", cad.tabela, r.id);
     }).filter(r=>!(modo==="empresa" && jaLigados(c.tabela, id, "empresa", cad.tabela, r.id)));
-    return itens.length ? `<optgroup label="${cad.rotulo}">${itens.map(r=>`<option value="${cad.tabela}:${r.id}">${escapeHtml(r.nome)} (#${r.id})</option>`).join("")}</optgroup>` : "";
+    return itens.length ? `<optgroup label="${cad.rotulo}">${itens.map(r=>`<option value="${cad.tabela}:${r.id}">${escapeHtml(r.nome)}${optCod(r)}</option>`).join("")}</optgroup>` : "";
   }).join("");
 }
 function renderLigacoes(pre){
@@ -10399,7 +10440,7 @@ function renderLigacoes(pre){
     if(!outro) return "";
     const rotuloTipo = v.tipo==="empresa" ? (souA ? "Empresa" : "Pessoa") : "Mesma pessoa";
     const extra = [cadastroDaTabela(outraTabela).rotulo, v.cargo ? escapeHtml(v.cargo) : "", v.principal ? "proprietária / contato principal" : ""].filter(Boolean).join(" · ");
-    return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${rotuloTipo}: ${escapeHtml(outro.nome)}</span>${numId(outroId)}<small>${extra}</small></div><div class="lig-acoes">
+    return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${rotuloTipo}: ${escapeHtml(outro.nome)}</span>${numId(outro)}<small>${extra}</small></div><div class="lig-acoes">
       <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${outraTabela}',${outroId})">Abrir</button>
       <button type="button" class="act act-del" title="Remover ligação" aria-label="Remover ligação" onclick="removerLigacao('${pre}',${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
   }).join("");
@@ -10416,23 +10457,27 @@ function renderLigacoes(pre){
       const [t, i] = [k.split(":")[0], Number(k.split(":")[1])];
       const cad = cadastroDaTabela(t), outro = cad && cad.lista().find(r=>r.id===i);
       if(!outro) return "";
-      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">Mesma pessoa: ${escapeHtml(outro.nome)}</span>${numId(i)}<small>${cad.rotulo} · ligada pela ${cadastroDaTabela(via.tabela).rotulo.toLowerCase()} #${via.id}</small></div><div class="lig-acoes">
+      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">Mesma pessoa: ${escapeHtml(outro.nome)}</span>${numId(outro)}<small>${cad.rotulo} · ligada pela ${cadastroDaTabela(via.tabela).rotulo.toLowerCase()}</small></div><div class="lig-acoes">
         <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${t}',${i})">Abrir</button></div></div>`;
     }).join("");
 
   // Possível mesma pessoa em outro cadastro (mesmo WhatsApp ou e-mail)
+  // Parceira (o) não tem WhatsApp na ficha: os números ficam nos contatos dela.
+  const telefonesDe = (tabela, r) => [r.whatsapp, ...(tabela==="parceiros" ? parceiroContatos.filter(x=>x.parceiro_id===r.id).map(x=>x.numero) : [])].filter(Boolean);
   let sugestoes = "";
   if(!empresa){
     const outros = [];
+    const meusTel = telefonesDe(c.tabela, meu);
     Object.values(CADASTROS).forEach(cad=>{
       if(cad.tabela===c.tabela) return;
       cad.lista().forEach(r=>{
         if(ehEmpresa(r) || jaLigados(c.tabela, id, "mesma_pessoa", cad.tabela, r.id)) return;
-        if(mesmoTelefone(r.whatsapp, meu.whatsapp) || mesmoEmail(r.email, meu.email)) outros.push({cad, r});
+        const mesmoTel = telefonesDe(cad.tabela, r).some(t=>meusTel.some(m=>mesmoTelefone(t, m)));
+        if(mesmoTel || mesmoEmail(r.email, meu.email)) outros.push({cad, r});
       });
     });
     sugestoes = outros.map(({cad, r})=>`<div class="lig-sugestao"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg>
-      <div class="lig-txt"><b>${escapeHtml(r.nome)}</b>${numId(r.id)} tem o mesmo WhatsApp ou e-mail<small>${cad.rotulo}. É a mesma pessoa?</small></div>
+      <div class="lig-txt"><b>${escapeHtml(r.nome)}</b>${numId(r)} tem o mesmo WhatsApp ou e-mail<small>${cad.rotulo}. É a mesma pessoa?</small></div>
       <button type="button" class="act act-edit" onclick="ligarMesmaPessoa('${pre}','${cad.tabela}',${r.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Ligar como mesma pessoa</button></div>`).join("");
   }
 
@@ -11115,7 +11160,7 @@ function idsMotoristasViagem(v){
 }
 function nomesMotoristasViagem(v){
   // "Nome #id": só telas internas (financeiro, repasses, avaliações); não vai em mensagem.
-  return idsMotoristasViagem(v).map(id=>{ const m = motoristas.find(x=>x.id===id); return m ? `${m.nome} #${m.id}` : null; }).filter(Boolean).join(", ");
+  return idsMotoristasViagem(v).map(id=>{ const m = motoristas.find(x=>x.id===id); return m ? nomeCod(m) : null; }).filter(Boolean).join(", ");
 }
 // Só motorista "Ativa" recebe oferta (cláusula 3.5 do Termo). Quem já estava
 // marcada numa viagem antiga continua aparecendo, pra não sumir da tela.
@@ -11123,7 +11168,7 @@ function renderMotoristasCheckboxes(selecionados){
   const wrap = document.getElementById("vg-motoristas-wrap");
   const elegiveis = motoristas.filter(m=>m.status==="Ativa" || selecionados.includes(m.id));
   const foraDoQuadro = motoristas.length - elegiveis.length;
-  wrap.innerHTML = elegiveis.map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${selecionados.includes(m.id)?"checked":""} onchange="atualizarStatusOferta()"> ${escapeHtml(m.nome)}${numId(m.id)}${m.status!=="Ativa"?` <span style="color:var(--muted); font-size:11px;">(${escapeHtml(m.status||"")})</span>`:""}</label>`).join("")
+  wrap.innerHTML = elegiveis.map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${selecionados.includes(m.id)?"checked":""} onchange="atualizarStatusOferta()"> ${escapeHtml(m.nome)}${numId(m)}${m.status!=="Ativa"?` <span style="color:var(--muted); font-size:11px;">(${escapeHtml(m.status||"")})</span>`:""}</label>`).join("")
     || `<span style="color:var(--muted); font-size:12.5px;">Nenhuma motorista Ativa ainda${motoristas.length?" (as cadastradas estão em certificação)":""}</span>`;
   if(foraDoQuadro > 0 && elegiveis.length){
     wrap.innerHTML += `<span style="color:var(--muted); font-size:11.5px; width:100%;">${foraDoQuadro} motorista${foraDoQuadro>1?"s":""} em certificação, inativa ou não aprovada não aparece${foraDoQuadro>1?"m":""} aqui.</span>`;
@@ -11289,7 +11334,7 @@ function labelViagem(v){
   const cliente = clientesTransporte.find(c=>c.id===v.cliente_id);
   const nomesMotoristas = nomesMotoristasViagem(v);
   const data = v.data ? formatarDataBR(v.data) : "sem data";
-  return `Viagem #${v.id} · ${data} · ${escapeHtml(cliente?`${cliente.nome} #${cliente.id}`:"sem cliente")} / ${escapeHtml(nomesMotoristas || "sem motorista")}`;
+  return `Viagem #${v.id} · ${data} · ${escapeHtml(cliente?nomeCod(cliente):"sem cliente")} / ${escapeHtml(nomesMotoristas || "sem motorista")}`;
 }
 function urgenciaViagem(v){
   if(!v.data || !v.horario_partida) return null;
@@ -11377,7 +11422,7 @@ function renderTransporteViagens(){
         return `<div class="kanban-card ${urg?urg.classe:''}" onclick="openViagemModal(${v.id})">
           ${urg?`<span class="kc-alerta ${urg.classe}">${urg.texto}</span>`:""}${pix}
           <div class="kc-num">Viagem #${v.id}</div>
-          <div class="kc-top" style="display:flex; align-items:center;">${cliente ? htmlAvatarCliente(cliente, "width:22px; height:22px; margin-right:6px; font-size:9px;") : ""}<span>${cliente ? `${escapeHtml(cliente.nome)}${numId(cliente.id)}` : "Cliente não definido"}</span></div>
+          <div class="kc-top" style="display:flex; align-items:center;">${cliente ? htmlAvatarCliente(cliente, "width:22px; height:22px; margin-right:6px; font-size:9px;") : ""}<span>${cliente ? `${escapeHtml(cliente.nome)}${numId(cliente)}` : "Cliente não definido"}</span></div>
           <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
           <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
@@ -11509,7 +11554,7 @@ setInterval(()=>{
 function openViagemModal(id, opcoes){
   editingViagemId = id || null;
   lancandoViagemFeita = !id && !!(opcoes && opcoes.viagemFeita);
-  document.getElementById("vg-cliente").innerHTML = `<option value="">-</option>` + clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)} (#${c.id})</option>`).join("");
+  document.getElementById("vg-cliente").innerHTML = `<option value="">-</option>` + clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("");
   fillSelect(document.getElementById("vg-tipo-servico"), TIPO_SERVICO_VIAGEM, "Padrão");
   fillSelect(document.getElementById("vg-canal"), CANAL_RECEPCAO, "Telefone");
   fillSelect(document.getElementById("vg-viagem-status"), VIAGEM_STATUS, "Solicitada");
@@ -12089,7 +12134,7 @@ async function deleteViagem(){
   const pago = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
   const repasse = pagamentosMotorista.some(p=>p.viagem_id===v.id);
   const linhas = [
-    `Viagem #${editingViagemId}` + (cli ? ` · ${cli.nome} #${cli.id}` : ""),
+    `Viagem #${editingViagemId}` + (cli ? ` · ${nomeCod(cli)}` : ""),
     [v.data ? formatarDataBR(v.data) : "", v.horario_partida ? v.horario_partida.slice(0,5) : "", v.status || ""].filter(Boolean).join(" · "),
     v.preco_cotado ? `Valor: ${formatarMoedaBR(v.preco_cotado)}` + (pago ? " (já PAGO pela cliente)" : "") : "",
   ].filter(Boolean);
@@ -12133,12 +12178,12 @@ function renderTransporteAvaliacoes(){
   document.getElementById("avaliacoes-body").innerHTML = lista.map(a=>{
     const viagem = viagens.find(v=>v.id===a.viagem_id);
     const moto = motoristaDaViagem(viagem);
-    const nomesMotoristas = moto ? `${moto.nome} #${moto.id}` : (viagem ? nomesMotoristasViagem(viagem) : "");
+    const nomesMotoristas = moto ? nomeCod(moto) : (viagem ? nomesMotoristasViagem(viagem) : "");
     const cliente = viagem ? clientesTransporte.find(c=>c.id===viagem.cliente_id) : null;
     return `<tr class="tr-click" onclick="openAvaliacaoModal(${a.id})">
       <td>${viagem ? (viagem.data ? formatarDataBR(viagem.data) : "Viagem #"+viagem.id) : "-"}</td>
-      <td>${moto ? `<a href="#" onclick="event.stopPropagation(); openMotoristaModal(${moto.id}); return false;">${escapeHtml(moto.nome)}</a>${numId(moto.id)}` : escapeHtml(nomesMotoristas || "-")}</td>
-      <td>${cliente ? `<a href="#" onclick="event.stopPropagation(); openClienteTransporteModal(${cliente.id}); return false;">${escapeHtml(cliente.nome)}</a>${numId(cliente.id)}` : "-"}</td>
+      <td>${moto ? `<a href="#" onclick="event.stopPropagation(); openMotoristaModal(${moto.id}); return false;">${escapeHtml(moto.nome)}</a>${numId(moto)}` : escapeHtml(nomesMotoristas || "-")}</td>
+      <td>${cliente ? `<a href="#" onclick="event.stopPropagation(); openClienteTransporteModal(${cliente.id}); return false;">${escapeHtml(cliente.nome)}</a>${numId(cliente)}` : "-"}</td>
       <td>${a.nota_motorista!=null ? a.nota_motorista+" ★" : "-"}</td>
       <td>${a.nota_cliente!=null ? a.nota_cliente+" ★" : "-"}</td>
       <td style="max-width:320px; white-space:normal;">${escapeHtml(a.comentario || "-")}</td>
@@ -12711,7 +12756,7 @@ function openEventoModal(id, dataPre, horaPre){
   document.getElementById("ev-origem").querySelector("option").textContent = "-";
   fillSelect(document.getElementById("ev-estado"), ["",...ESTADOS_BR], "RS");
   document.getElementById("ev-estado").querySelector("option").textContent = "-";
-  document.getElementById("ev-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("ev-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("evento-modal-title").textContent = id ? "Editar evento" : "Novo evento";
   const e = eventos.find(x=>x.id===id) || {};
   document.getElementById("ev-nome").value = e.nome||"";
@@ -13213,7 +13258,7 @@ function labelVendaParcela(p){
   const venda = vendas.find(v=>v.id===p.venda_id);
   const achado = venda ? leads.find(l=>l.id===venda.lead_id) : null;
   // Cópia com "Nome #id" (só telas internas: financeiro, alertas, livro-caixa)
-  const lead = achado ? { ...achado, nome: `${achado.nome} #${achado.id}` } : null;
+  const lead = achado ? { ...achado, nome: nomeCod(achado) } : null;
   return { lead, venda };
 }
 // Espelha listaContasAPagarUnificada: parcelas de venda (leads) + o dinheiro
@@ -13416,7 +13461,7 @@ function sugerirTipoCusto(){
 }
 function openContaPagarModal(id){
   editingContaPagarId = id || null;
-  document.getElementById("cp-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("cp-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("cp-categorias-lista").innerHTML = Object.values(PLANO_CONTAS).flat().map(c=>`<option value="${escapeHtml(c)}">`).join("");
   document.getElementById("conta-pagar-modal-title").textContent = id ? "Editar despesa" : "Nova despesa";
   const c = contasPagar.find(x=>x.id===id) || {};
@@ -14457,7 +14502,7 @@ function abrirEntradaAvulsa(id){
   document.getElementById("fe-data-prevista").value = e.data_prevista || "";
   document.getElementById("fe-data-recebimento").value = e.data_recebimento || (id ? "" : hojeLocalISO());
   document.getElementById("fe-parte").value = e.parte_go_ladies ?? "";
-  document.getElementById("fe-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)} (#${p.id})</option>`).join("");
+  document.getElementById("fe-parceiro").innerHTML = `<option value="">-</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("fe-parceiro").value = e.parceiro_id || "";
   document.getElementById("fe-obs").value = e.observacao || "";
   document.getElementById("btn-excluir-fin-entrada").style.display = id ? "inline-block" : "none";
