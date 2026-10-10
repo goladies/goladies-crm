@@ -5332,6 +5332,11 @@ function irParaTransporte(subtab){
   irParaAba("transporte");
   mostrarSubTab(subtab);
 }
+function irParaCandidaturas(){
+  irParaTransporte("motoristas");
+  const el = document.getElementById("candidaturas-site-wrap");
+  if(el) setTimeout(()=>el.scrollIntoView({ behavior:"smooth", block:"start" }), 50);
+}
 function irParaFinanceiro(subtab){
   const nav = document.querySelector('.nav-item[data-tab="financeiro"]');
   if(nav) nav.click();
@@ -5455,6 +5460,11 @@ function itensAtencao(){
              && !(pagamentosCliente||[]).some(p=>p.viagem_id===v.id && p.status==="Pago")){
       add("transporte", "amarelo", `${nome}: concluída sem pagamento registrado`, `openViagemModal(${v.id})`);
     }
+  });
+
+  // Candidatura nova de motorista pelo site: vermelho até marcar "Vista".
+  (candidaturasSite||[]).filter(c=>c.status==="Nova" && (!c.area_interesse || c.area_interesse==="Motorista")).forEach(c=>{
+    add("transporte", "vermelho", `Candidatura nova: ${c.nome || "sem nome"} (${dataHoraBR(c.criado_em)})`, `irParaCandidaturas()`);
   });
 
   // Orçamentos pedidos, esperando você montar.
@@ -9091,14 +9101,21 @@ function renderCandidaturasSite(){
     ? meses.map(k=>`<span class="tag" title="Candidaturas em ${nomeMesCurto(k)}">${nomeMesCurto(k)}: ${porMes[k]}</span>`).join("") + `<span class="tag novo">Total: ${lista.length}</span>`
     : "";
   document.getElementById("candidaturas-site-body").innerHTML = lista.map(c=>`
-    <tr>
-      <td style="white-space:nowrap;">${dataHoraBR(c.criado_em)}</td>
+    <tr${c.status==="Nova" ? ' style="background:var(--c-red-bg);"' : ""}>
+      <td style="white-space:nowrap;">${dataHoraBR(c.criado_em)}${c.status==="Nova" ? ` <span class="tag perdido">Nova</span>` : ""}</td>
       <td>${escapeHtml(c.nome||"-")}${(()=>{ const m = c.motorista_id && motoristas.find(x=>x.id===c.motorista_id); return m && m.cadastro_id != null ? numId(m) : numIdPorTelefone(c.whatsapp); })()}</td>
       <td>${numeroClicavel(c.whatsapp)}</td>
       <td style="max-width:320px; font-size:12.5px;">${escapeHtml(c.motivacao||"-")}</td>
       <td>${situacaoFichaCandidatura(c)}</td>
-      <td><button type="button" class="act act-del" title="Apagar candidatura" aria-label="Apagar candidatura" onclick="excluirCandidaturaSite(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
+      <td style="white-space:nowrap;">${c.status==="Nova" ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarCandidaturaVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Vista</button> ` : ""}<button type="button" class="act act-del" title="Apagar candidatura" aria-label="Apagar candidatura" onclick="excluirCandidaturaSite(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhuma candidatura pelo site ainda</td></tr>`;
+}
+async function marcarCandidaturaVista(id){
+  const { error } = await sb.from("candidatas").update({ status: "Vista" }).eq("id", id);
+  if(error){ alert("Não consegui marcar: " + error.message); return; }
+  await recarregarTabelas("candidatas");
+  renderCandidaturasSite();
+  atualizarAtencao();
 }
 // Apaga só a candidatura; a ficha da motorista (se existir) continua.
 async function excluirCandidaturaSite(id){
