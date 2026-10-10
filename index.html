@@ -694,13 +694,28 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .foto-perfil img{width:100%; height:100%; object-fit:cover; display:block;}
 .foto-perfil-wrap{display:flex; align-items:center; gap:14px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:12px;}
 .foto-perfil-wrap small{display:block; color:var(--muted); font-size:12px; margin:2px 0 8px;}
-.ligacoes-wrap{margin-top:14px; border-top:1px solid var(--border); padding-top:12px; font-size:13px;}
-.ligacoes-wrap h4{font-size:13px; margin:0 0 8px;}
-.lig-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border);}
-.lig-item small{color:var(--muted);}
-.lig-sugestao{margin:6px 0; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);}
-.lig-form{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+.ligacoes-wrap{margin-top:16px; border-top:1px solid var(--border); padding-top:16px; font-size:13px; display:flex; flex-direction:column; gap:10px;}
+.ligacoes-wrap h4{font-size:14px; margin:0;}
+.lig-sub{margin:-6px 0 0; color:var(--text2); font-size:12.5px;}
+.lig-vazio{margin:0; color:var(--text2); font-size:12.5px;}
+.lig-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--bg-card2);}
+.lig-item .lig-txt{min-width:0;}
+.lig-item .lig-nome{color:var(--text1); font-weight:600;}
+.lig-item small{display:block; margin-top:2px; color:var(--text2); font-size:12px;}
+.lig-item .lig-acoes{display:flex; gap:6px; flex-shrink:0;}
+.lig-sugestao{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-radius:10px; border:1px solid var(--c-amber); border-left-width:4px; background:var(--c-amber-bg); color:var(--text1);}
+.lig-sugestao .ic{color:var(--c-amber); flex-shrink:0;}
+.lig-sugestao .lig-txt{flex:1 1 220px; min-width:0; line-height:1.4;}
+.lig-sugestao small{display:block; color:var(--text2); font-size:12px;}
+.lig-sugestao .act{margin-left:auto; flex-shrink:0;}
+.lig-form{display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; padding:12px; border:1px solid var(--border); border-radius:10px;}
 .lig-form .full{grid-column:1/-1;}
+.lig-form .lig-form-titulo{font-weight:600; color:var(--text1);}
+.lig-form label{display:block; margin:0 0 4px; color:var(--text2); font-size:12px;}
+.lig-form select, .lig-form input[type=text]{width:100%; box-sizing:border-box;}
+.lig-form .lig-tipo-fixo{color:var(--text2); font-size:12.5px;}
+.lig-form .lig-botao{display:flex; justify-content:flex-end;}
+@media (max-width:560px){ .lig-form{grid-template-columns:1fr;} .lig-item{flex-direction:column; align-items:flex-start;} }
 .avatar-mini{width:28px; height:28px; border-radius:50%; background:var(--pink); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; vertical-align:middle; margin-right:8px; flex:0 0 auto;}
 .avatar-mini img{width:100%; height:100%; object-fit:cover; display:block;}
 .kc-alerta{display:block; font-size:10.5px; font-weight:800; margin-bottom:4px;}
@@ -10350,13 +10365,11 @@ function renderLigacoes(pre){
     const outraTabela = souA ? v.b_tabela : v.a_tabela, outroId = souA ? v.b_id : v.a_id;
     const outro = cadastroDaTabela(outraTabela).lista().find(r=>r.id===outroId);
     if(!outro) return "";
-    let texto;
-    if(v.tipo==="empresa") texto = souA ? `Empresa: <b>${escapeHtml(outro.nome)}</b>` : `Pessoa: <b>${escapeHtml(outro.nome)}</b>`;
-    else texto = `Mesma pessoa: <b>${escapeHtml(outro.nome)}</b>`;
-    const extra = [v.cargo ? escapeHtml(v.cargo) : "", v.principal ? "proprietária / contato principal" : "", cadastroDaTabela(outraTabela).rotulo].filter(Boolean).join(" · ");
-    return `<div class="lig-item"><div>${texto}<br><small>${extra}</small></div><div style="white-space:nowrap;">
+    const rotuloTipo = v.tipo==="empresa" ? (souA ? "Empresa" : "Pessoa") : "Mesma pessoa";
+    const extra = [cadastroDaTabela(outraTabela).rotulo, v.cargo ? escapeHtml(v.cargo) : "", v.principal ? "proprietária / contato principal" : ""].filter(Boolean).join(" · ");
+    return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${rotuloTipo}: ${escapeHtml(outro.nome)}</span>${numId(outroId)}<small>${extra}</small></div><div class="lig-acoes">
       <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${outraTabela}',${outroId})">Abrir</button>
-      <button type="button" class="act act-del" title="Remover ligação" onclick="removerLigacao('${pre}',${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+      <button type="button" class="act act-del" title="Remover ligação" aria-label="Remover ligação" onclick="removerLigacao('${pre}',${v.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
   }).join("");
 
   // Possível mesma pessoa em outro cadastro (mesmo WhatsApp ou e-mail)
@@ -10370,25 +10383,30 @@ function renderLigacoes(pre){
         if(mesmoTelefone(r.whatsapp, meu.whatsapp) || mesmoEmail(r.email, meu.email)) outros.push({cad, r});
       });
     });
-    sugestoes = outros.map(({cad, r})=>`<div class="lig-sugestao"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp ou e-mail de <b>${escapeHtml(r.nome)}</b> (${cad.rotulo}). É a mesma pessoa?
-      <button type="button" class="act act-edit" style="margin-left:6px;" onclick="ligarMesmaPessoa('${pre}','${cad.tabela}',${r.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Ligar como mesma pessoa</button></div>`).join("");
+    sugestoes = outros.map(({cad, r})=>`<div class="lig-sugestao"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg>
+      <div class="lig-txt"><b>${escapeHtml(r.nome)}</b>${numId(r.id)} tem o mesmo WhatsApp ou e-mail<small>${cad.rotulo}. É a mesma pessoa?</small></div>
+      <button type="button" class="act act-edit" onclick="ligarMesmaPessoa('${pre}','${cad.tabela}',${r.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Ligar como mesma pessoa</button></div>`).join("");
   }
 
   const form = empresa
     ? `<div class="lig-form">
-        <div class="full"><label>Adicionar pessoa desta empresa</label><select id="${pre}-lig-alvo"><option value="">- Selecionar -</option>${opcoesAlvoLigacao(pre,"pessoa")}</select></div>
-        <div><label>Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
-        <div style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
-        <div class="full"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar pessoa</button></div>
+        <div class="full lig-form-titulo">Nova ligação</div>
+        <div class="full"><label for="${pre}-lig-alvo">Pessoa desta empresa</label><select id="${pre}-lig-alvo"><option value="">- Selecionar -</option>${opcoesAlvoLigacao(pre,"pessoa")}</select></div>
+        <div><label for="${pre}-lig-cargo">Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
+        <div style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; margin:0 0 10px; color:var(--text1); font-size:13px;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
+        <div class="full lig-botao"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar pessoa</button></div>
       </div>`
     : `<div class="lig-form">
-        <div class="full"><label>Nova ligação</label><select id="${pre}-lig-tipo" onchange="trocarTipoLigacao('${pre}')">${pre!=="mt" ? `<option value="empresa">Trabalha em / é vinculada a uma empresa</option>` : ""}<option value="mesma_pessoa">É a mesma pessoa que outro cadastro (outro papel)</option></select></div>
-        <div class="full"><select id="${pre}-lig-alvo"></select></div>
-        <div id="${pre}-lig-cargo-wrap"><label>Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
-        <div id="${pre}-lig-principal-wrap" style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
-        <div class="full"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar</button></div>
+        <div class="full lig-form-titulo">Nova ligação</div>
+        ${pre!=="mt"
+          ? `<div class="full"><label for="${pre}-lig-tipo">Tipo</label><select id="${pre}-lig-tipo" onchange="trocarTipoLigacao('${pre}')"><option value="empresa">Trabalha em / é vinculada a uma empresa</option><option value="mesma_pessoa">É a mesma pessoa que outro cadastro (outro papel)</option></select></div>`
+          : `<div class="full lig-tipo-fixo">Ligar a outro cadastro da mesma pessoa (outro papel).<select id="${pre}-lig-tipo" hidden><option value="mesma_pessoa">mesma pessoa</option></select></div>`}
+        <div class="full"><label for="${pre}-lig-alvo">Cadastro</label><select id="${pre}-lig-alvo"></select></div>
+        <div id="${pre}-lig-cargo-wrap"><label for="${pre}-lig-cargo">Cargo / função</label><input type="text" id="${pre}-lig-cargo" placeholder="Ex: Proprietária, financeiro"></div>
+        <div id="${pre}-lig-principal-wrap" style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; margin:0 0 10px; color:var(--text1); font-size:13px;"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
+        <div class="full lig-botao"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar</button></div>
       </div>`;
-  el.innerHTML = `<h4>Ligações</h4>${itens || `<p style="color:var(--muted); font-size:12.5px; margin:0 0 4px;">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
+  el.innerHTML = `<h4>Ligações</h4><p class="lig-sub">Outros cadastros desta mesma pessoa e as empresas a que ela está ligada.</p>${itens || `<p class="lig-vazio">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
   if(!empresa) trocarTipoLigacao(pre);
 }
 function trocarTipoLigacao(pre){
