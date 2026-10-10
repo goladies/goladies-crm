@@ -1057,6 +1057,9 @@ tr.tr-click{cursor:pointer;}
 .sede-conversa .quando{font-size:11.5px; color:var(--muted);}
 .print-mini{display:block; max-width:220px; max-height:180px; margin-top:6px; border-radius:8px; border:1px solid var(--border); cursor:zoom-in; object-fit:cover;}
 .print-campo{margin-top:6px;}
+.print-zona{display:flex; gap:10px; align-items:center; padding:14px; border:2px dashed var(--border2, var(--border)); border-radius:10px; font-size:12.5px; color:var(--text2); cursor:pointer; outline:none;}
+.print-zona .ic{flex:none; width:22px; height:22px; color:var(--rosa-texto);}
+.print-zona:focus, .print-zona.sobre{border-color:var(--rosa); background:color-mix(in srgb, var(--rosa) 8%, transparent);}
 .print-acoes{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:6px;}
 .doc-pasta{margin-bottom:14px;}
 .doc-pasta-cab{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
@@ -3023,7 +3026,7 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label>Viagem</label><select id="av-viagem"></select></div>
       <div><label>Nota da motorista (recebida)</label><input type="number" id="av-nota-motorista" min="1" max="5" step="0.5"></div>
       <div><label>Nota da cliente (recebida)</label><input type="number" id="av-nota-cliente" min="1" max="5" step="0.5"></div>
-      <div class="full"><label>Comentário</label><textarea id="av-comentario" rows="2" placeholder="Pode colar aqui o que a cliente escreveu. Dá para colar o print com Ctrl+V também."></textarea></div>
+      <div class="full"><label>Comentário</label><textarea id="av-comentario" rows="2" placeholder="Escreva ou cole aqui o texto que a cliente mandou."></textarea></div>
       <div class="full">
         <label>Print da conversa <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
         <div class="print-campo" id="av-print-campo"></div>
@@ -7269,10 +7272,16 @@ function montarCampoPrint(id, pathExistente){
   if(pathExistente !== undefined) camposPrint[id] = pathExistente ? { path:pathExistente } : {};
   const st = camposPrint[id] = camposPrint[id] || {};
   const tem = st.url || st.path;
-  el.innerHTML = `${tem ? `<img class="print-mini" ${st.url?`src="${st.url}"`:`data-print="${escapeHtml(st.path)}"`} alt="Print" onclick="${st.url?`window.open('${st.url}')`:`verPrint('${escapeHtml(st.path)}')`}">` : ""}
+  el.innerHTML = `${tem ? `<img class="print-mini" ${st.url?`src="${st.url}"`:`data-print="${escapeHtml(st.path)}"`} alt="Print" onclick="${st.url?`window.open('${st.url}')`:`verPrint('${escapeHtml(st.path)}')`}">`
+      : `<div class="print-zona" tabindex="0" onclick="this.focus()" onfocus="campoPrintAtivo='${id}'"
+           ondragover="event.preventDefault(); this.classList.add('sobre')" ondragleave="this.classList.remove('sobre')"
+           ondrop="event.preventDefault(); this.classList.remove('sobre'); if(event.dataTransfer.files[0]) receberPrint('${id}', event.dataTransfer.files[0])">
+           <svg class=ic aria-hidden=true><use href=#i-photo /></svg>
+           <span><b>Tire o print com Win+Shift+S</b> (ou, no WhatsApp Web, botão direito na imagem › Copiar imagem) e aperte <b>Ctrl+V</b> com esta janela aberta.<br>Print que está no celular: mande para você mesma e use <b>Escolher arquivo</b> ou arraste para cá.</span>
+         </div>`}
     <div class="print-acoes">
-      <button type="button" class="btn ghost small" onclick="document.getElementById('${id}-file').click()"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ${tem ? "Trocar print" : "Anexar print"}</button>
-      ${tem ? `<button type="button" class="btn ghost small" onclick="limparCampoPrint('${id}', true)">Tirar</button>` : `<span class="dica">ou cole com Ctrl+V</span>`}
+      <button type="button" class="btn ghost small" onclick="document.getElementById('${id}-file').click()"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ${tem ? "Trocar print" : "Escolher arquivo"}</button>
+      ${tem ? `<button type="button" class="btn ghost small" onclick="limparCampoPrint('${id}', true)">Tirar</button>` : ""}
       <input type="file" id="${id}-file" accept="image/*" style="display:none;" onchange="if(this.files[0]) receberPrint('${id}', this.files[0])">
     </div>`;
   if(st.path && !st.url) hidratarPrints(el);
