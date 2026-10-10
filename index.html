@@ -1038,8 +1038,10 @@ tr.tr-click{cursor:pointer;}
 .sede-grupo-area small{font-size:13px; font-weight:500; color:var(--text2);}
 .sede-grupo-area img.mini{width:30px; height:30px; border-radius:50%; object-fit:cover;}
 .sede-grupo-area .qtd{margin-left:auto; font-size:12px; font-weight:700; background:var(--rosa); color:#fff; border-radius:999px; padding:1px 9px;}
-.sede-pend .num{flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:#fff; background:var(--c-gray);}
-.sede-pend .num.prio-1{background:var(--c-red);} .sede-pend .num.prio-2{background:var(--c-amber);}
+/* Número com fundo translúcido e texto na cor cheia: contraste bom nos dois temas */
+.sede-pend .num{flex:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:var(--c-gray); background:var(--c-gray-bg); border:2px solid var(--c-gray);}
+.sede-pend .num.prio-1{color:var(--c-red); background:var(--c-red-bg); border-color:var(--c-red);}
+.sede-pend .num.prio-2{color:var(--c-amber); background:var(--c-amber-bg); border-color:var(--c-amber);}
 .sede-pend .tit{font-weight:600;}
 .sede-pend .tit .status-badge{margin-left:4px; vertical-align:1px;}
 .sede-pend .acoes{align-items:center;}
