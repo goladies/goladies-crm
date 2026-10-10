@@ -3401,12 +3401,12 @@ const numId = r => { const c = codigoCadastro(r); return c ? `<span class="num-i
 function numIdPorTelefone(tel){
   if(!tel) return "";
   for(const lista of [clientesTransporte, motoristas, leads, parceiros]){
-    const r = (lista||[]).find(x=>x.cadastro_id != null && mesmoTelefone(x.whatsapp, tel));
+    const r = (lista||[]).find(x=>x.cadastro_id != null && cadastrosPorId.get(x.cadastro_id)?.tipo === "pessoa" && mesmoTelefone(x.whatsapp, tel));
     if(r) return numId(r);
   }
   const pc = (parceiroContatos||[]).find(x=>mesmoTelefone(x.numero, tel));
   const p = pc ? parceiros.find(x=>x.id===pc.parceiro_id) : null;
-  return p ? numId(p) : "";
+  return p && cadastrosPorId.get(p.cadastro_id)?.tipo === "pessoa" ? numId(p) : "";
 }
 // Busca por código: "#12", "12D" ou "#12d". Devolve o id do cadastro ou null.
 // Número sozinho sem # não conta (é telefone).
