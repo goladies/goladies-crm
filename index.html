@@ -9014,7 +9014,7 @@ function situacaoFichaCandidatura(c){
 function renderCandidaturasSite(){
   const wrap = document.getElementById("candidaturas-site-wrap");
   if(!wrap) return;
-  const lista = candidaturasSite.filter(c=>!c.area_interesse || c.area_interesse === "Motorista");
+  const lista = candidaturasSite.filter(c=>!c.area_interesse || c.area_interesse === "Motorista").sort((a,b)=>b.id-a.id);
   const porMes = {};
   lista.forEach(c=>{ const k = String(c.criado_em||"").slice(0,7); if(k) porMes[k] = (porMes[k]||0) + 1; });
   const meses = Object.keys(porMes).sort().reverse().slice(0,6);
