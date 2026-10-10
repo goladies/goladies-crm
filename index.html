@@ -1049,6 +1049,28 @@ tr.tr-click{cursor:pointer;}
 .sede-pergunta{margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-blue-bg); font-size:12.5px; color:var(--text2); cursor:default;}
 .sede-pergunta .resp{margin-top:6px; padding-top:6px; border-top:1px solid var(--border);}
 .sede-pergunta .quando{font-size:11.5px; color:var(--muted);}
+.sede-conversa{margin-top:8px; display:flex; flex-direction:column; gap:6px; cursor:default; font-size:12.5px;}
+.sede-conversa .msg{max-width:92%; padding:7px 10px; border-radius:10px; border:1px solid var(--border);}
+.sede-conversa .msg.eu{align-self:flex-end; background:var(--c-pink-bg, rgba(255,45,156,.10)); border-color:color-mix(in srgb, var(--rosa) 35%, transparent);}
+.sede-conversa .msg.ag{align-self:flex-start; background:var(--c-blue-bg);}
+.sede-conversa .msg .t{white-space:pre-wrap; color:var(--text); margin-top:2px;}
+.sede-conversa .quando{font-size:11.5px; color:var(--muted);}
+.print-mini{display:block; max-width:220px; max-height:180px; margin-top:6px; border-radius:8px; border:1px solid var(--border); cursor:zoom-in; object-fit:cover;}
+.print-campo{margin-top:6px;}
+.print-acoes{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:6px;}
+.doc-pasta{margin-bottom:14px;}
+.doc-pasta-cab{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+.doc-pasta-cab h3{font-size:15px; display:flex; align-items:center; gap:6px;}
+.doc-qtd{font-size:12px; font-weight:700; background:var(--rosa); color:#fff; border-radius:999px; padding:1px 9px;}
+.doc-linha{display:flex; gap:10px; align-items:center; padding:9px 4px; border-top:1px solid var(--border); cursor:pointer;}
+.doc-linha:hover{background:var(--bg-hover, rgba(255,255,255,.03));}
+.doc-ic{flex:none; color:var(--muted);}
+.doc-txt{flex:1; min-width:0; font-size:13.5px;}
+.doc-txt .status-badge{margin-left:4px; vertical-align:1px;}
+.doc-desc{font-size:12.5px; color:var(--text2); margin-top:2px;}
+.doc-meta{font-size:12px; color:var(--muted); margin-top:2px; word-break:break-word;}
+.doc-acoes{flex:none;}
+@media (max-width:700px){ .doc-linha{flex-wrap:wrap;} .doc-acoes{width:100%;} }
 .sede-pergunta-form{margin-top:8px; cursor:default;}
 .sede-pergunta-form textarea{width:100%;}
 .sede-trabalho{border:1px solid var(--border); border-radius:10px; background:var(--bg-card); margin-bottom:8px;}
@@ -1135,6 +1157,7 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
       <div class="nav-item" data-tab="gestao" data-titulo="Gestão do negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.2"/></svg><span>Gestão</span></div>
+      <div class="nav-item" data-tab="documentos" data-titulo="Documentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg><span>Documentos</span></div>
       <div class="nav-item" data-tab="sede" data-titulo="Sede"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01M12 10h.01"/></svg><span>Sede</span></div>
       <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
       <div class="nav-item" data-tab="servicos" data-titulo="Catálogo de serviços"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços</span></div>
@@ -1383,6 +1406,25 @@ tr.tr-click{cursor:pointer;}
           <tbody id="links-body"></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="tab-documentos" style="display:none;">
+      <div class="pagehead">
+        <div><h2>Documentos</h2><p>Contratos, estudos, processos e pautas. O arquivo fica no Google Drive (Meu Drive › Documentos Go Ladies); aqui fica a lista com o link.</p></div>
+        <button class="btn" onclick="openDocumentoModal()">+ Novo documento</button>
+      </div>
+      <div id="doc-aviso-sql" class="panel" style="display:none; border-left:4px solid var(--c-amber);">Falta rodar <b>schema_documentos_e_prints.sql</b> no Supabase para esta aba funcionar.</div>
+      <div class="filters">
+        <input type="text" id="doc-busca" placeholder="Buscar documento..." oninput="renderDocumentos()" style="max-width:260px;">
+        <select id="doc-filtro-categoria" onchange="renderDocumentos()"><option value="">Todas as pastas</option></select>
+        <select id="doc-filtro-area" onchange="renderDocumentos()"><option value="">Todas as áreas</option></select>
+        <select id="doc-filtro-situacao" onchange="renderDocumentos()">
+          <option value="atuais">Sem os antigos</option>
+          <option value="">Todas as situações</option>
+          <option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option>
+        </select>
+      </div>
+      <div id="doc-lista"></div>
     </div>
 
     <div id="tab-vagas" style="display:none;">
@@ -2905,7 +2947,8 @@ tr.tr-click{cursor:pointer;}
 
     <!-- Só leitura + ações próprias: o Salvar da viagem não mexe em avaliacoes. -->
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa); display:none;" id="vg-avaliacao-wrap">
-      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg>8. Avaliações desta viagem</span></div>
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg>8. Avaliações desta viagem</span>
+        <button type="button" class="btn secondary small" onclick="openAvaliacaoModal(null, editingViagemId)">+ Lançar avaliação</button></div>
       <div id="vg-avaliacao-lista"></div>
     </section>
 
@@ -2947,6 +2990,29 @@ tr.tr-click{cursor:pointer;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="documento-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="documento-modal-title" style="margin:0;">Documento</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('documento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Nome</label><input id="doc-nome"></div>
+      <div class="full"><label>Do que se trata</label><textarea id="doc-descricao" rows="2"></textarea></div>
+      <div><label>Pasta</label><select id="doc-categoria"></select></div>
+      <div><label>Área</label><select id="doc-area"></select></div>
+      <div><label>Situação</label><select id="doc-situacao"><option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option></select></div>
+      <div class="full"><label>Link do arquivo no Drive</label><input id="doc-link" placeholder="https://drive.google.com/..."><span class="dica">No Drive: botão direito no arquivo › Compartilhar › Copiar link. Sem link, o botão Abrir leva para a pasta.</span></div>
+      <div class="full"><label>Onde está no Drive</label><input id="doc-arquivo" placeholder="Contratos e termos/nome-do-arquivo.docx"><span class="dica">Caminho dentro de Meu Drive › Documentos Go Ladies.</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-documento" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirDocumento()">Tirar da lista</button>
+      <button class="btn ghost" onclick="closeModal('documento-modal')">Sair</button>
+      <button class="btn" onclick="salvarDocumento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="avaliacao-modal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -2957,7 +3023,15 @@ tr.tr-click{cursor:pointer;}
       <div class="full"><label>Viagem</label><select id="av-viagem"></select></div>
       <div><label>Nota da motorista (recebida)</label><input type="number" id="av-nota-motorista" min="1" max="5" step="0.5"></div>
       <div><label>Nota da cliente (recebida)</label><input type="number" id="av-nota-cliente" min="1" max="5" step="0.5"></div>
-      <div class="full"><label>Comentário</label><textarea id="av-comentario" rows="2"></textarea></div>
+      <div class="full"><label>Comentário</label><textarea id="av-comentario" rows="2" placeholder="Pode colar aqui o que a cliente escreveu. Dá para colar o print com Ctrl+V também."></textarea></div>
+      <div class="full">
+        <label>Print da conversa <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
+        <div class="print-campo" id="av-print-campo"></div>
+      </div>
+      <div class="full"><label>Pode divulgar?</label>
+        <select id="av-pode-divulgar"><option>Não perguntei</option><option>Sim, com primeiro nome</option><option>Sim, sem nome</option><option>Não</option></select>
+        <span class="dica">Só com "Sim" a Mari usa o texto em post. Ela redigita na arte da marca e nunca publica o print.</span>
+      </div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); font-weight:400;"><input type="checkbox" id="av-visivel" style="width:auto;"> Liberada (a motorista vê a nota e o comentário no painel dela)</label></div>
     </div>
     <div class="modal-actions">
@@ -3584,6 +3658,7 @@ let finEntradas = [];
 let finConferencias = [];
 let lcSqlFaltando = false;
 let sedePedidos = [], sedeResumos = [], sedePendencias = [], sedeDecisoes = [];
+let documentos = [], documentosPastas = [], documentosSqlFaltando = false, sedePendMensagens = [];
 let sedeTrabalhos = [], sedeTrabalhosSqlFaltando = false;
 let sedeSqlFaltando = false;
 // Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
@@ -4228,6 +4303,16 @@ async function carregarDadosInterno(){
   const rst = await sb.from("sede_trabalhos").select("*").order("data", { ascending: false }).order("id", { ascending: false }).limit(60);
   sedeTrabalhosSqlFaltando = !!rst.error;
   if(!rst.error) sedeTrabalhos = rst.data || [];
+  // Documentos e conversa nas pendências (schema_documentos_e_prints.sql): tolerante.
+  const [rdoc, rdpa, rspm] = await Promise.all([
+    sb.from("documentos").select("*").order("categoria").order("nome"),
+    sb.from("documentos_pastas").select("*"),
+    sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
+  ]);
+  documentosSqlFaltando = !!rdoc.error;
+  if(!rdoc.error) documentos = rdoc.data || [];
+  if(!rdpa.error) documentosPastas = rdpa.data || [];
+  if(!rspm.error) sedePendMensagens = rspm.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -5878,7 +5963,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); atualizarAtencao(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -7075,20 +7160,44 @@ async function mudarPrioridadePendencia(id, valor){
   showToast("Prioridade salva!");
   renderSede();
 }
-function abrirPerguntaPendencia(id){
-  const el = document.getElementById("sp-perg-"+id); if(!el) return;
-  el.style.display = el.style.display==="none" ? "block" : "none";
-  if(el.style.display==="block") el.querySelector("textarea").focus();
+// Conversa Jú ↔ agente em cada pendência (schema_documentos_e_prints.sql).
+// O formulário aberto e o rascunho sobrevivem ao redesenho da lista (a recarga
+// automática de minuto em minuto redesenha tudo).
+let pendRespAberta = null;
+const pendRascunhos = {};
+function abrirRespostaPendencia(id){
+  pendRespAberta = pendRespAberta===id ? null : id;
+  renderSedePendencias();
+  if(pendRespAberta){ const t = document.getElementById("sp-resp-txt-"+id); if(t) t.focus(); }
 }
-async function perguntarPendenciaSede(id){
-  const txt = (document.getElementById("sp-perg-txt-"+id)||{}).value || "";
-  if(!txt.trim()){ showToast("Escreva o que você quer saber", true); return; }
-  const agora = new Date().toISOString();
-  const r = await sb.from("sede_pendencias").update({ pergunta:txt.trim(), pergunta_em:agora, resposta_pergunta:null, respondida_em:null, atualizado_em:agora }).eq("id", id).select().single();
-  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
-  sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
-  showToast("Pergunta enviada!");
-  renderSede();
+async function enviarMensagemPendencia(id){
+  const txt = (pendRascunhos[id]||"").trim();
+  const campo = "sp-print-"+id;
+  if(!txt && !temPrintNovo(campo)){ showToast("Escreva algo ou cole um print", true); return; }
+  const btn = document.getElementById("sp-resp-btn-"+id); if(btn) btn.disabled = true;
+  try{
+    const print_path = await enviarCampoPrint(campo, "pendencias");
+    const r = await sb.from("sede_pendencia_mensagens").insert({ pendencia_id:id, autor:"Jú", texto: txt || null, print_path }).select().single();
+    if(r.error){ showToast("Não enviou: " + r.error.message, true); return; }
+    sedePendMensagens.push(r.data);
+    await sb.from("sede_pendencias").update({ atualizado_em:new Date().toISOString() }).eq("id", id);
+    delete pendRascunhos[id]; limparCampoPrint(campo); pendRespAberta = null;
+    showToast("Enviado! A agente responde no próximo resumo.");
+    renderSedePendencias();
+  } finally { if(btn) btn.disabled = false; }
+}
+function htmlConversaPendencia(p, nomeAgente){
+  const msgs = sedePendMensagens.filter(m=>m.pendencia_id===p.id);
+  if(!msgs.length) return "";
+  const ultima = msgs[msgs.length-1];
+  return `<div class="sede-conversa" onclick="event.stopPropagation()">${msgs.map(m=>{
+      const eu = m.autor==="Jú";
+      const nome = eu ? "Você" : escapeHtml((sedeAgente(m.autor)||{}).nome || nomeAgente);
+      return `<div class="msg ${eu?"eu":"ag"}"><div class="quem"><b>${nome}</b> <span class="quando">${sedeDataHora(m.criado_em)}</span></div>
+        ${m.texto?`<div class="t">${escapeHtml(m.texto)}</div>`:""}
+        ${m.print_path?`<img class="print-mini" data-print="${escapeHtml(m.print_path)}" alt="Print" onclick="verPrint('${escapeHtml(m.print_path)}')">`:""}</div>`;
+    }).join("")}
+    ${ultima.autor==="Jú" ? `<div class="quando">Esperando a resposta. A Gabi lê a conversa no resumo das 9h15.</div>` : ""}</div>`;
 }
 function renderSedePendencias(){
   const box = document.getElementById("sede-pendencias-lista"); if(!box) return;
@@ -7113,13 +7222,8 @@ function renderSedePendencias(){
       n++;
       const pr = sedePrio(p), [prNome, prCls] = SEDE_PRIORIDADES[pr];
       const aberta = p.status==="Aberta";
-      const quem = escapeHtml(a ? a.nome : "Gabi");
-      const perg = p.pergunta ? `<div class="sede-pergunta" onclick="event.stopPropagation()">
-          <div><b>Você perguntou</b> <span class="quando">${sedeDataHora(p.pergunta_em)}</span><br>${escapeHtml(p.pergunta)}</div>
-          ${p.resposta_pergunta
-            ? `<div class="resp"><b>${quem} respondeu</b> <span class="quando">${sedeDataHora(p.respondida_em)}</span><br>${escapeHtml(p.resposta_pergunta)}</div>`
-            : `<div class="quando">Esperando a resposta. A Gabi lê as perguntas no resumo das 9h15.</div>`}
-        </div>` : "";
+      const quem = a ? a.nome : "Gabi";
+      const nMsgs = sedePendMensagens.filter(m=>m.pendencia_id===p.id).length;
       return `
       <div class="sede-item sede-pend${p.aba?" clicavel":""}" ${p.aba?`onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')"`:""}>
         <div class="num prio-${pr}">${n}</div>
@@ -7127,12 +7231,14 @@ function renderSedePendencias(){
           <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span></div>
           ${p.detalhe?`<div class="det">${escapeHtml(p.detalhe)}</div>`:""}
           <div class="meta">criada em ${sedeDataHora(p.criado_em)}${p.atualizado_em && p.atualizado_em!==p.criado_em ? ` · atualizada em ${sedeDataHora(p.atualizado_em)}` : ""}${p.origem?` · ${escapeHtml(p.origem)}`:""}${!aberta?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeDataHora(p.fechada_em)}`:""}</div>
-          ${perg}
-          ${aberta ? `<div id="sp-perg-${p.id}" class="sede-pergunta-form" style="display:none;" onclick="event.stopPropagation()">
-              <textarea id="sp-perg-txt-${p.id}" rows="2" placeholder="O que você quer saber? Ex.: o que é esse workflow, onde fica, quanto tempo leva"></textarea>
+          ${htmlConversaPendencia(p, quem)}
+          ${aberta && pendRespAberta===p.id ? `<div class="sede-pergunta-form" onclick="event.stopPropagation()">
+              <textarea id="sp-resp-txt-${p.id}" rows="3" oninput="pendRascunhos[${p.id}]=this.value" onfocus="campoPrintAtivo='sp-print-${p.id}'"
+                placeholder="Escreva para ${escapeHtml(quem)}: uma informação, uma pergunta ou as duas. Para mandar print, cole aqui (Ctrl+V) ou use Anexar print.">${escapeHtml(pendRascunhos[p.id]||"")}</textarea>
+              <div class="print-campo" id="sp-print-${p.id}"></div>
               <div style="display:flex; gap:6px; margin-top:6px;">
-                <button class="btn small" type="button" onclick="perguntarPendenciaSede(${p.id})">Enviar pergunta</button>
-                <button class="btn ghost small" type="button" onclick="abrirPerguntaPendencia(${p.id})">Cancelar</button>
+                <button class="btn small" type="button" id="sp-resp-btn-${p.id}" onclick="enviarMensagemPendencia(${p.id})">Enviar</button>
+                <button class="btn ghost small" type="button" onclick="abrirRespostaPendencia(${p.id})">Cancelar</button>
               </div>
             </div>` : ""}
         </div>
@@ -7140,13 +7246,218 @@ function renderSedePendencias(){
           ? `<select class="sede-prio-sel" title="Prioridade" onchange="mudarPrioridadePendencia(${p.id}, this.value)">
                ${[1,2,3].map(v=>`<option value="${v}"${v===pr?" selected":""}>Prioridade ${SEDE_PRIORIDADES[v][0]}</option>`).join("")}
              </select>
-             <button class="btn ghost small" type="button" onclick="abrirPerguntaPendencia(${p.id})">Pedir mais informações</button>
+             <button class="btn ghost small" type="button" onclick="abrirRespostaPendencia(${p.id})"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> ${nMsgs ? "Responder" : "Conversar"}</button>
              <button class="btn secondary small" type="button" onclick="fecharPendenciaSede(${p.id},'Feita')"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Feita</button>
              <button class="btn ghost small" type="button" onclick="fecharPendenciaSede(${p.id},'Ignorada')">Ignorar</button>`
           : `<button class="btn ghost small" type="button" onclick="fecharPendenciaSede(${p.id},'Aberta')">Reabrir</button>`}</div>
       </div>`;
     }).join("");
   }).join("");
+  if(pendRespAberta && document.getElementById("sp-print-"+pendRespAberta)) montarCampoPrint("sp-print-"+pendRespAberta);
+  hidratarPrints(box);
+}
+
+// ===== PRINTS (bucket privado crm-prints, schema_documentos_e_prints.sql) =====
+// Cada campo guarda o estado em camposPrint[id]: { path } = já salvo, { blob, url } = novo,
+// ainda não enviado. Antes de subir, a imagem é reduzida para WebP (lado maior 1400px),
+// normalmente 100 a 250 KB, para caber muito print no 1 GB do plano gratuito.
+const camposPrint = {};
+let campoPrintAtivo = null;
+const cacheUrlPrint = {};
+function montarCampoPrint(id, pathExistente){
+  const el = document.getElementById(id); if(!el) return;
+  if(pathExistente !== undefined) camposPrint[id] = pathExistente ? { path:pathExistente } : {};
+  const st = camposPrint[id] = camposPrint[id] || {};
+  const tem = st.url || st.path;
+  el.innerHTML = `${tem ? `<img class="print-mini" ${st.url?`src="${st.url}"`:`data-print="${escapeHtml(st.path)}"`} alt="Print" onclick="${st.url?`window.open('${st.url}')`:`verPrint('${escapeHtml(st.path)}')`}">` : ""}
+    <div class="print-acoes">
+      <button type="button" class="btn ghost small" onclick="document.getElementById('${id}-file').click()"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> ${tem ? "Trocar print" : "Anexar print"}</button>
+      ${tem ? `<button type="button" class="btn ghost small" onclick="limparCampoPrint('${id}', true)">Tirar</button>` : `<span class="dica">ou cole com Ctrl+V</span>`}
+      <input type="file" id="${id}-file" accept="image/*" style="display:none;" onchange="if(this.files[0]) receberPrint('${id}', this.files[0])">
+    </div>`;
+  if(st.path && !st.url) hidratarPrints(el);
+}
+function temPrintNovo(id){ return !!(camposPrint[id] && camposPrint[id].blob); }
+function limparCampoPrint(id, redesenhar){
+  const st = camposPrint[id];
+  if(st && st.url) URL.revokeObjectURL(st.url);
+  camposPrint[id] = {};
+  if(redesenhar) montarCampoPrint(id);
+}
+async function comprimirImagem(file){
+  const img = await new Promise((ok, erro)=>{ const i = new Image(); i.onload = ()=>ok(i); i.onerror = erro; i.src = URL.createObjectURL(file); });
+  const esc = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * esc); c.height = Math.round(img.naturalHeight * esc);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(img.src);
+  for(const q of [0.8, 0.65, 0.5]){
+    const b = await new Promise(ok=>c.toBlob(ok, "image/webp", q));
+    if(b && b.size <= 900*1024) return b;
+  }
+  throw new Error("imagem grande demais mesmo reduzida");
+}
+async function receberPrint(id, file){
+  if(!file || !/^image\//.test(file.type)){ showToast("Só imagem (print ou foto)", true); return; }
+  try{
+    const blob = await comprimirImagem(file);
+    limparCampoPrint(id);
+    camposPrint[id] = { blob, url: URL.createObjectURL(blob) };
+    montarCampoPrint(id);
+    showToast(`Print pronto (${Math.round(blob.size/1024)} KB)`);
+  } catch(e){ showToast("Não deu para ler a imagem: " + e.message, true); }
+}
+// Sobe o print novo (se houver) e devolve o caminho a gravar; sem print novo, devolve o que já estava.
+async function enviarCampoPrint(id, pasta){
+  const st = camposPrint[id] || {};
+  if(!st.blob) return st.path || null;
+  const path = `${pasta}/${new Date().toISOString().slice(0,10)}-${Math.random().toString(36).slice(2,10)}.webp`;
+  const r = await sb.storage.from("crm-prints").upload(path, st.blob, { contentType:"image/webp" });
+  if(r.error) throw new Error("print não subiu: " + r.error.message);
+  return path;
+}
+async function urlPrint(path){
+  const c = cacheUrlPrint[path];
+  if(c && c.ate > Date.now()) return c.url;
+  const r = await sb.storage.from("crm-prints").createSignedUrl(path, 3600);
+  if(r.error) return "";
+  cacheUrlPrint[path] = { url:r.data.signedUrl, ate: Date.now() + 50*60000 };
+  return r.data.signedUrl;
+}
+function hidratarPrints(raiz){
+  (raiz||document).querySelectorAll("img[data-print]:not([src])").forEach(async img=>{
+    const u = await urlPrint(img.dataset.print); if(u) img.src = u; else img.alt = "Print indisponível";
+  });
+}
+async function verPrint(path){ const u = await urlPrint(path); if(u) window.open(u, "_blank"); }
+// Ctrl+V com imagem vai para o campo de print visível: o da avaliação, se a janela
+// estiver aberta, senão o da conversa da pendência aberta.
+document.addEventListener("paste", e=>{
+  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/"));
+  if(!item) return;
+  let id = null;
+  if(document.getElementById("avaliacao-modal").classList.contains("open")) id = "av-print-campo";
+  else if(pendRespAberta && document.getElementById("sp-print-"+pendRespAberta)) id = "sp-print-"+pendRespAberta;
+  else if(campoPrintAtivo && document.getElementById(campoPrintAtivo)) id = campoPrintAtivo;
+  if(!id) return;
+  e.preventDefault();
+  receberPrint(id, item.getAsFile());
+});
+
+// ===== DOCUMENTOS (catálogo do Drive, schema_documentos_e_prints.sql) =====
+const DOC_SITUACAO_COR = { "Rascunho":"gray", "Revisar com advogado":"amber", "Vigente":"green", "Referência":"blue", "Antigo":"gray" };
+const DOC_DRIVE_RAIZ = "Meu Drive › Documentos Go Ladies";
+let documentoEditando = null;
+function docLinkPasta(cat){ const p = documentosPastas.find(x=>x.categoria===cat); return p && p.link ? p.link : ""; }
+function renderDocumentos(){
+  const box = document.getElementById("doc-lista"); if(!box) return;
+  document.getElementById("doc-aviso-sql").style.display = documentosSqlFaltando ? "block" : "none";
+  const cats = [...new Set([...documentosPastas.map(p=>p.categoria), ...documentos.map(d=>d.categoria)])].sort((a,b)=>(a==="Versões antigas")-(b==="Versões antigas") || a.localeCompare(b));
+  const selC = document.getElementById("doc-filtro-categoria"), selA = document.getElementById("doc-filtro-area");
+  const vC = selC.value, vA = selA.value;
+  selC.innerHTML = `<option value="">Todas as pastas</option>` + cats.map(c=>`<option>${escapeHtml(c)}</option>`).join("");
+  selC.value = cats.includes(vC) ? vC : "";
+  const areas = [...new Set(documentos.map(d=>d.area).filter(Boolean))];
+  selA.innerHTML = `<option value="">Todas as áreas</option>` + areas.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(sedeNome(a))}</option>`).join("");
+  selA.value = areas.includes(vA) ? vA : "";
+  const sit = document.getElementById("doc-filtro-situacao").value;
+  const q = (document.getElementById("doc-busca").value||"").trim().toLowerCase();
+  const lista = documentos.filter(d => (!selC.value || d.categoria===selC.value) && (!selA.value || d.area===selA.value)
+    && (sit==="" ? true : sit==="atuais" ? d.situacao!=="Antigo" : d.situacao===sit)
+    && (!q || `${d.nome} ${d.descricao||""} ${d.arquivo||""}`.toLowerCase().includes(q)));
+  if(!lista.length){ box.innerHTML = `<div class="panel sede-vazio">${documentos.length ? "Nenhum documento com esse filtro." : "Nenhum documento ainda."}</div>`; return; }
+  const grupos = {};
+  lista.forEach(d => (grupos[d.categoria] = grupos[d.categoria] || []).push(d));
+  box.innerHTML = cats.filter(c=>grupos[c]).map(c=>{
+    const lp = docLinkPasta(c);
+    return `<div class="panel doc-pasta">
+      <div class="doc-pasta-cab">
+        <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> ${escapeHtml(c)} <span class="doc-qtd">${grupos[c].length}</span></h3>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          ${lp ? `<a class="btn ghost small" href="${escapeHtml(lp)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir pasta</a>` : ""}
+          <button type="button" class="btn ghost small" onclick="definirLinkPasta('${escapeHtml(c.replace(/'/g,""))}')">${lp ? "Trocar link da pasta" : "Colar link da pasta"}</button>
+        </div>
+      </div>
+      ${grupos[c].map(d=>{
+        const link = d.link || lp;
+        return `<div class="doc-linha" onclick="openDocumentoModal(${d.id})">
+          <svg class="ic doc-ic" aria-hidden=true><use href=#i-file-text /></svg>
+          <div class="doc-txt">
+            <div><b>${escapeHtml(d.nome)}</b> <span class="status-badge ${DOC_SITUACAO_COR[d.situacao]||"gray"}">${escapeHtml(d.situacao)}</span></div>
+            ${d.descricao?`<div class="doc-desc">${escapeHtml(d.descricao)}</div>`:""}
+            <div class="doc-meta">${d.area?`${escapeHtml(sedeNome(d.area))} · `:""}${escapeHtml((d.arquivo||"").split("/").pop())} · atualizado em ${sedeData(d.atualizado_em)}</div>
+          </div>
+          <div class="doc-acoes" onclick="event.stopPropagation()">
+            ${link ? `<a class="btn secondary small" href="${escapeHtml(link)}" target="_blank" rel="noopener" title="${d.link ? "Abre o arquivo" : "Abre a pasta (o arquivo ainda não tem link próprio)"}"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>`
+              : `<button type="button" class="btn ghost small" onclick="copiarCaminhoDoc(${d.id})" title="Sem link ainda: copia onde o arquivo está no Drive"><svg class=ic aria-hidden=true><use href=#i-copy /></svg> Onde está</button>`}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+}
+function copiarCaminhoDoc(id){
+  const d = documentos.find(x=>x.id===id); if(!d) return;
+  const caminho = `${DOC_DRIVE_RAIZ} › ${(d.arquivo||"").split("/").join(" › ")}`;
+  navigator.clipboard?.writeText(caminho);
+  showToast("Copiado: " + caminho);
+}
+async function definirLinkPasta(cat){
+  const atual = docLinkPasta(cat);
+  const link = prompt(`Link da pasta "${cat}" no Google Drive\n(no Drive: botão direito na pasta › Compartilhar › Copiar link)`, atual);
+  if(link===null) return;
+  const r = await sb.from("documentos_pastas").upsert({ categoria:cat, link: link.trim() || null }).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  documentosPastas = documentosPastas.filter(p=>p.categoria!==cat).concat(r.data);
+  showToast("Link da pasta salvo!");
+  renderDocumentos();
+}
+function openDocumentoModal(id){
+  documentoEditando = id || null;
+  const d = documentos.find(x=>x.id===id) || { situacao:"Rascunho" };
+  const cats = [...new Set([...documentosPastas.map(p=>p.categoria), ...documentos.map(x=>x.categoria)])].sort();
+  document.getElementById("doc-categoria").innerHTML = cats.map(c=>`<option>${escapeHtml(c)}</option>`).join("");
+  document.getElementById("doc-area").innerHTML = `<option value="">Nenhuma</option>` + SEDE_AGENTES.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</option>`).join("");
+  document.getElementById("documento-modal-title").textContent = id ? "Editar documento" : "Novo documento";
+  document.getElementById("doc-nome").value = d.nome || "";
+  document.getElementById("doc-descricao").value = d.descricao || "";
+  if(d.categoria) document.getElementById("doc-categoria").value = d.categoria;
+  document.getElementById("doc-area").value = d.area || "";
+  document.getElementById("doc-situacao").value = d.situacao || "Rascunho";
+  document.getElementById("doc-link").value = d.link || "";
+  document.getElementById("doc-arquivo").value = d.arquivo || "";
+  document.getElementById("btn-excluir-documento").style.display = id ? "" : "none";
+  document.getElementById("documento-modal").classList.add("open");
+}
+async function salvarDocumento(){
+  const reg = {
+    nome: document.getElementById("doc-nome").value.trim(),
+    descricao: document.getElementById("doc-descricao").value.trim() || null,
+    categoria: document.getElementById("doc-categoria").value,
+    area: document.getElementById("doc-area").value || null,
+    situacao: document.getElementById("doc-situacao").value,
+    link: document.getElementById("doc-link").value.trim() || null,
+    arquivo: document.getElementById("doc-arquivo").value.trim() || null,
+    atualizado_em: new Date().toISOString(),
+  };
+  if(!reg.nome || !reg.categoria){ showToast("Preencha nome e pasta", true); return; }
+  if(reg.link && !/^https?:\/\//i.test(reg.link)) reg.link = "https://" + reg.link;
+  const r = documentoEditando
+    ? await sb.from("documentos").update(reg).eq("id", documentoEditando).select().single()
+    : await sb.from("documentos").insert(reg).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  documentos = documentos.filter(x=>x.id!==r.data.id).concat(r.data).sort((a,b)=>a.categoria.localeCompare(b.categoria) || a.nome.localeCompare(b.nome));
+  closeModal("documento-modal");
+  showToast("Salvo!");
+  renderDocumentos();
+}
+async function excluirDocumento(){
+  if(!documentoEditando || !confirm("Tirar este documento da lista do CRM?\n\nO arquivo continua no Google Drive; só some daqui.")) return;
+  const r = await sb.from("documentos").delete().eq("id", documentoEditando);
+  if(r.error){ showToast("Não excluiu: " + r.error.message, true); return; }
+  documentos = documentos.filter(x=>x.id!==documentoEditando);
+  closeModal("documento-modal");
+  renderDocumentos();
 }
 
 // ── Decisões ──
@@ -11698,8 +12009,10 @@ function renderAvaliacoesCliente(){
 function renderAvaliacoesViagem(){
   const wrap = document.getElementById("vg-avaliacao-wrap");
   const avs = editingViagemId ? avaliacoes.filter(a=>a.viagem_id===editingViagemId) : [];
-  if(!avs.length){ wrap.style.display = "none"; return; }
+  if(!editingViagemId){ wrap.style.display = "none"; return; }
   wrap.style.display = "block";
+  if(!avs.length){ document.getElementById("vg-avaliacao-lista").innerHTML = `<div style="font-size:12.5px; color:var(--muted);">Nenhuma ainda. Se a cliente elogiou ou reclamou pelo WhatsApp, use <b>+ Lançar avaliação</b> e cole o print.</div>`; return; }
+  const corDiv = { "Sim, com primeiro nome":"green", "Sim, sem nome":"green", "Não":"red" };
   document.getElementById("vg-avaliacao-lista").innerHTML = avs.map(a=>{
     const badge = a.visivel ? '<span class="tag ativo">Liberada</span>' : '<span class="tag urg-media">Oculta</span>';
     const btnVis = a.visivel
@@ -11711,8 +12024,11 @@ function renderAvaliacoesViagem(){
         <div style="display:flex; gap:6px; align-items:center;">${badge} ${btnVis} <button type="button" class="act act-edit" onclick="openAvaliacaoModal(${a.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></div>
       </div>
       ${a.comentario ? `<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(a.comentario)}</div>` : ""}
+      ${a.print_path ? `<img class="print-mini" data-print="${escapeHtml(a.print_path)}" alt="Print da conversa" onclick="verPrint('${escapeHtml(a.print_path)}')">` : ""}
+      ${a.pode_divulgar ? `<div style="font-size:12px; margin-top:4px;">Divulgar: <span class="status-badge ${corDiv[a.pode_divulgar]||"gray"}">${escapeHtml(a.pode_divulgar)}</span></div>` : ""}
     </div>`;
   }).join("");
+  hidratarPrints(document.getElementById("vg-avaliacao-lista"));
 }
 // Depois de salvar/liberar/excluir, refaz as seções das fichas que estiverem abertas.
 function atualizarAvaliacoesAbertas(){
@@ -11728,12 +12044,15 @@ async function alternarVisivelAvaliacao(id, visivel){
   atualizarAvaliacoesAbertas();
 }
 let editingAvaliacaoId = null;
-function openAvaliacaoModal(id){
+function openAvaliacaoModal(id, viagemId){
   editingAvaliacaoId = id || null;
   document.getElementById("av-viagem").innerHTML = viagens.map(v=>`<option value="${v.id}">${labelViagem(v)}</option>`).join("") || `<option value="">Nenhuma viagem cadastrada ainda</option>`;
   document.getElementById("avaliacao-modal-title").textContent = id ? "Editar avaliação" : "Nova avaliação";
   const a = avaliacoes.find(x=>x.id===id) || {};
-  if(a.viagem_id) document.getElementById("av-viagem").value = a.viagem_id;
+  if(a.viagem_id || viagemId) document.getElementById("av-viagem").value = a.viagem_id || viagemId;
+  document.getElementById("av-pode-divulgar").value = a.pode_divulgar || "Não perguntei";
+  limparCampoPrint("av-print-campo");
+  montarCampoPrint("av-print-campo", a.print_path || null);
   document.getElementById("av-nota-motorista").value = a.nota_motorista ?? "";
   document.getElementById("av-nota-cliente").value = a.nota_cliente ?? "";
   document.getElementById("av-comentario").value = a.comentario || "";
@@ -11749,6 +12068,16 @@ async function saveAvaliacao(){
     comentario: document.getElementById("av-comentario").value,
     visivel: document.getElementById("av-visivel").checked,
   };
+  // Campos de schema_documentos_e_prints.sql: só vão no payload se o SQL já rodou
+  // (a avaliação carregada tem a coluna), senão o salvar quebraria.
+  const temColunas = avaliacoes.length ? ("pode_divulgar" in avaliacoes[0]) : !documentosSqlFaltando;
+  if(temColunas){
+    payload.pode_divulgar = document.getElementById("av-pode-divulgar").value;
+    try{ payload.print_path = await enviarCampoPrint("av-print-campo", "avaliacoes"); }
+    catch(e){ alert(e.message); return; }
+  } else if(temPrintNovo("av-print-campo") || document.getElementById("av-pode-divulgar").value!=="Não perguntei"){
+    alert("Para guardar o print e a autorização, falta rodar schema_documentos_e_prints.sql no Supabase. O resto foi salvo.");
+  }
   const { error } = editingAvaliacaoId
     ? await sb.from("avaliacoes").update(payload).eq("id", editingAvaliacaoId)
     : await sb.from("avaliacoes").insert(payload);
