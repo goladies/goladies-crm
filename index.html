@@ -10016,7 +10016,8 @@ async function saveMotorista(){
 }
 async function deleteMotorista(id){
   const temCandidatura = candidaturasSite.some(c=>c.motorista_id===id);
-  if(!confirm('Excluir esta motorista? Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).' + (temCandidatura ? '\n\nA candidatura do site continua em "Candidaturas do site", marcada como ficha apagada.' : ''))) return;
+  const mExcluir = motoristas.find(x=>x.id===id);
+  if(!confirm(`Excluir a motorista ${mExcluir ? mExcluir.nome : ""} #${id}${mExcluir && mExcluir.status ? " (" + mExcluir.status + ")" : ""}?\n\n` + 'Os documentos e observações dela também são excluídos; viagens ligadas a ela ficam sem motorista definida (não são apagadas).' + (temCandidatura ? '\n\nA candidatura do site continua em "Candidaturas do site", marcada como ficha apagada.' : ''))) return;
   const { error } = await sb.from("motoristas").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "viagens", "candidatas");
