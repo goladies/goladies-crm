@@ -1516,7 +1516,7 @@ tr.tr-click{cursor:pointer;}
           <p style="margin:0 0 10px; color:var(--muted); font-size:12.5px;">Quem preencheu "Quero ser motorista" no site. A candidatura continua aqui mesmo se a ficha for apagada ou juntada a outra.</p>
           <div id="candidaturas-site-meses" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
           <table class="tbl">
-            <thead><tr><th>Quando</th><th>Nome</th><th>Contato</th><th>Por que quer fazer parte</th><th>Ficha</th></tr></thead>
+            <thead><tr><th>Quando</th><th>Nome</th><th>Contato</th><th>Por que quer fazer parte</th><th>Ficha</th><th></th></tr></thead>
             <tbody id="candidaturas-site-body"></tbody>
           </table>
         </div>
@@ -9044,7 +9044,21 @@ function renderCandidaturasSite(){
       <td>${numeroClicavel(c.whatsapp)}</td>
       <td style="max-width:320px; font-size:12.5px;">${escapeHtml(c.motivacao||"-")}</td>
       <td>${situacaoFichaCandidatura(c)}</td>
-    </tr>`).join("") || `<tr><td class="empty" colspan="5">Nenhuma candidatura pelo site ainda</td></tr>`;
+      <td><button type="button" class="act act-del" title="Apagar candidatura" aria-label="Apagar candidatura" onclick="excluirCandidaturaSite(${c.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
+    </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhuma candidatura pelo site ainda</td></tr>`;
+}
+// Apaga só a candidatura; a ficha da motorista (se existir) continua.
+async function excluirCandidaturaSite(id){
+  const c = candidaturasSite.find(x=>x.id===id);
+  if(!c) return;
+  const ficha = c.motorista_id ? motoristas.find(m=>m.id===c.motorista_id) : null;
+  if(!confirm(`Apagar a candidatura de ${c.nome || "sem nome"} (${dataHoraBR(c.criado_em)})?\n\n` +
+    (ficha ? `A ficha da motorista ${ficha.nome} #${ficha.id} continua; só a candidatura sai da lista.\n\n` : "") +
+    "Não dá para desfazer.")) return;
+  const { error } = await sb.from("candidatas").delete().eq("id", id);
+  if(error){ alert("Não consegui apagar: " + error.message); return; }
+  await recarregarTabelas("candidatas");
+  renderCandidaturasSite();
 }
 
 // ===== ASSISTENTE IA (voz / texto / foto → ação no CRM) =====
