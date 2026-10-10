@@ -3396,6 +3396,18 @@ function atualizarCadastros(lista){
   cadastrosPorId = new Map(lista.map(c=>[c.id, c]));
 }
 const numId = r => { const c = codigoCadastro(r); return c ? `<span class="num-id" title="Código do cadastro">${c}</span>` : ""; };
+// Para linhas sem ficha ligada (candidatura apagada, pedido de peça): acha a
+// pessoa pelo WhatsApp em qualquer papel e devolve o mesmo selo do numId.
+function numIdPorTelefone(tel){
+  if(!tel) return "";
+  for(const lista of [clientesTransporte, motoristas, leads, parceiros]){
+    const r = (lista||[]).find(x=>x.cadastro_id != null && mesmoTelefone(x.whatsapp, tel));
+    if(r) return numId(r);
+  }
+  const pc = (parceiroContatos||[]).find(x=>mesmoTelefone(x.numero, tel));
+  const p = pc ? parceiros.find(x=>x.id===pc.parceiro_id) : null;
+  return p ? numId(p) : "";
+}
 // Busca por código: "#12", "12D" ou "#12d". Devolve o id do cadastro ou null.
 // Número sozinho sem # não conta (é telefone).
 function cadastroDaBusca(q){
@@ -5269,14 +5281,14 @@ function renderUsuariasApp(){
   const daApp = clientesTransporte
     .filter(c=>c.login_criado_em || c.origem === "Painel")
     .map(c=>({
-      nome: c.nome, tipo: "Cliente", tipoClasse: "novo",
+      nome: c.nome, cod: numId(c), tipo: "Cliente", tipoClasse: "novo",
       contato: c.whatsapp || c.email || "-",
       quando: c.login_criado_em || c.criado_em,
       situacao: c.login_criado_em ? "Login criado" : "Cadastro pelo app",
       onclick: `openClienteTransporteModal(${c.id})`,
     }))
     .concat(motoristas.filter(m=>m.auth_user_id).map(m=>({
-      nome: m.nome, tipo: "Motorista", tipoClasse: "negociacao",
+      nome: m.nome, cod: numId(m), tipo: "Motorista", tipoClasse: "negociacao",
       contato: m.whatsapp || m.email || "-",
       quando: m.criado_em,
       situacao: m.status || "-",
@@ -5286,7 +5298,7 @@ function renderUsuariasApp(){
     .slice(0, 10);
   corpo.innerHTML = daApp.map(u=>`
     <tr class="tr-click" onclick="${u.onclick}">
-      <td>${escapeHtml(u.nome||"-")}</td>
+      <td>${escapeHtml(u.nome||"-")}${u.cod}</td>
       <td><span class="tag ${u.tipoClasse}">${u.tipo}</span></td>
       <td>${escapeHtml(u.contato)}</td>
       <td>${u.quando ? new Date(u.quando).toLocaleDateString("pt-BR") : "-"}</td>
@@ -6002,7 +6014,7 @@ function renderPecas(){
     return `<tr class="tr-click" onclick="openPedidoModal(${p.id})">
       <td><strong>${p.peca}</strong></td>
       <td>${p.carro||"-"}</td>
-      <td>${p.cliente_nome||"-"}${p.cliente_whatsapp?" "+numeroClicavel(p.cliente_whatsapp):""}</td>
+      <td>${escapeHtml(p.cliente_nome||"-")}${numIdPorTelefone(p.cliente_whatsapp)}${p.cliente_whatsapp?" "+numeroClicavel(p.cliente_whatsapp):""}</td>
       <td>${p.origem||"-"}</td>
       <td>${qtd}</td>
       <td><span class="status-badge ${STATUS_PECA_CLASS[p.status]||''}">${p.status}</span></td>
@@ -9081,7 +9093,7 @@ function renderCandidaturasSite(){
   document.getElementById("candidaturas-site-body").innerHTML = lista.map(c=>`
     <tr>
       <td style="white-space:nowrap;">${dataHoraBR(c.criado_em)}</td>
-      <td>${escapeHtml(c.nome||"-")}</td>
+      <td>${escapeHtml(c.nome||"-")}${(()=>{ const m = c.motorista_id && motoristas.find(x=>x.id===c.motorista_id); return m && m.cadastro_id != null ? numId(m) : numIdPorTelefone(c.whatsapp); })()}</td>
       <td>${numeroClicavel(c.whatsapp)}</td>
       <td style="max-width:320px; font-size:12.5px;">${escapeHtml(c.motivacao||"-")}</td>
       <td>${situacaoFichaCandidatura(c)}</td>
