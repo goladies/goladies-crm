@@ -1734,6 +1734,14 @@ tr.tr-click{cursor:pointer;}
           <button class="btn secondary" onclick="exportarAcessosAppCsv()">⬇️ Exportar CSV</button>
         </div>
         <div class="cards" id="acessos-app-cards"></div>
+        <div class="panel" id="contas-app-wrap" style="margin-bottom:16px;">
+          <h3 style="font-size:14px; margin:0 0 4px;">Contas criadas no app da cliente</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;">Conta nova fica em vermelho até você marcar "Visto". Se em 15 min ela não confirmou o e-mail, volta pro vermelho: libere a conta e chame ela no WhatsApp.</p>
+          <table class="tbl">
+            <thead><tr><th>Criada</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>E-mail confirmado?</th><th></th></tr></thead>
+            <tbody id="contas-app-body"></tbody>
+          </table>
+        </div>
         <div class="filters">
           <select id="filter-acesso-app" onchange="renderAcessosApp()">
             <option value="">Cliente e motorista</option>
@@ -3712,6 +3720,7 @@ let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_para
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
 let demandasForaArea = [];  // quem pediu viagem onde ainda não atendemos
 let eventosAcessoApp = [];  // toda tentativa de cadastro/login no app, sucesso ou erro, schema_eventos_acesso_app.sql
+let contasApp = [];  // contas criadas no app da cliente + aviso/visto/confirmação, schema_aviso_conta_app.sql
 let avaliacoes = [];
 let pagamentosMotorista = [];
 let pagamentosCliente = [];
@@ -4329,6 +4338,10 @@ async function carregarDadosInterno(){
   const reva2 = await sb.from("eventos_acesso_app").select("*").order("criado_em", { ascending: false }).limit(2000);
   eventosAcessoApp = aplicarConsulta("eventos_acesso_app", reva2, eventosAcessoApp);
 
+  // Contas novas no app da cliente (schema_aviso_conta_app.sql), idem
+  const rcontas = await sb.from("contas_app").select("*").order("id");
+  contasApp = aplicarConsulta("contas_app", rcontas, contasApp);
+
   // Links do painel da motorista (schema_links_motoristas.sql), idem
   const [rlk, rla] = await Promise.all([
     sb.from("links_motoristas").select("*").order("id"),
@@ -4422,7 +4435,7 @@ async function carregarDadosInterno(){
 // Só as tabelas que mudam por fora entram na recarga automática: as ~28 do
 // carregamento inicial de minuto em minuto seriam carga demais pro banco no
 // plano gratuito, ainda mais somado ao n8n consultando ele o tempo todo.
-const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes", "link_avaliacoes", "eventos_acesso_app"];
+const TABELAS_AUTO = ["leads", "clientes_transporte", "viagens", "viagem_ofertas", "motoristas", "pagamentos_motorista", "avaliacoes", "link_avaliacoes", "eventos_acesso_app", "contas_app"];
 const INTERVALO_AUTO_MS = 60000;
 let atualizandoDados = false;
 let ultimaAtualizacao = null;
@@ -4530,6 +4543,7 @@ const TABELA_ATUALIZA = {
   areas_atendimento: v => areasAtendimento = v,
   demandas_fora_area: v => demandasForaArea = v,
   eventos_acesso_app: v => eventosAcessoApp = v,
+  contas_app: v => contasApp = v,
 };
 // Atualiza só as tabelas que uma ação realmente mudou, em vez de recarregar
 // as ~28 tabelas inteiras a cada Salvar/Excluir — reduz a carga no banco
@@ -5489,6 +5503,14 @@ function itensAtencao(){
   // Candidatura nova de motorista pelo site: vermelho até marcar "Vista".
   (candidaturasSite||[]).filter(c=>c.status==="Nova" && (!c.area_interesse || c.area_interesse==="Motorista")).forEach(c=>{
     add("transporte", "vermelho", `Candidatura nova: ${c.nome || "sem nome"} (${dataHoraBR(c.criado_em)})`, `irParaCandidaturas()`);
+  });
+
+  // Conta nova no app da cliente: vermelho até "Visto"; volta se passou de
+  // 15 min sem confirmar o e-mail.
+  (contasApp||[]).filter(contaAppPrecisaAtencao).forEach(c=>{
+    add("transporte", "vermelho", contaAppSemConfirmar(c)
+      ? `${c.nome || c.email}: criou a conta e não confirmou o e-mail`
+      : `Conta nova no app: ${c.nome || c.email} (${dataHoraBR(c.criado_em)})`, `irParaContasApp()`);
   });
 
   // Orçamentos pedidos, esperando você montar.
@@ -6675,6 +6697,66 @@ function renderAcessosApp(){
       <td>${escapeHtml(e.motivo || "")}</td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="6">Nenhum acesso registrado ainda</td></tr>`;
+  renderContasApp();
+}
+
+// ===== CONTAS NOVAS NO APP DA CLIENTE (schema_aviso_conta_app.sql) =====
+// O WhatsApp de aviso sai pelo workflow EQUIPE; aqui é o vermelho até "Visto"
+// e o "Liberar conta" pra quem não recebeu o e-mail de confirmação.
+const CONTA_APP_MIN_CONFIRMAR = 15;
+function contaAppSemConfirmar(c){
+  return !c.confirmado_em && c.criado_em && (Date.now() - new Date(c.criado_em).getTime()) > CONTA_APP_MIN_CONFIRMAR * 60000;
+}
+// Vermelho: ainda não vista, ou vista antes dos 15 min e continua sem confirmar.
+function contaAppPrecisaAtencao(c){
+  if(!c.visto_em) return true;
+  if(!contaAppSemConfirmar(c)) return false;
+  return new Date(c.visto_em).getTime() < new Date(c.criado_em).getTime() + CONTA_APP_MIN_CONFIRMAR * 60000;
+}
+function irParaContasApp(){
+  irParaTransporte("acessos-app");
+  const el = document.getElementById("contas-app-wrap");
+  if(el) setTimeout(()=>el.scrollIntoView({ behavior:"smooth", block:"start" }), 300);
+}
+function renderContasApp(){
+  const corpo = document.getElementById("contas-app-body");
+  if(!corpo) return;
+  const lista = [...contasApp].sort((a,b)=>b.id-a.id).slice(0, 50);
+  corpo.innerHTML = lista.map(c=>{
+    const atencao = contaAppPrecisaAtencao(c);
+    const situacao = c.confirmado_em
+      ? `<span class="status-badge green">Sim, ${dataHoraBR(c.confirmado_em)}</span>`
+      : contaAppSemConfirmar(c)
+        ? `<span class="status-badge red">Não confirmou</span>`
+        : `<span class="status-badge amber">Esperando</span>`;
+    return `
+    <tr${atencao ? ' style="background:var(--c-red-bg);"' : ""}>
+      <td style="white-space:nowrap;">${dataHoraBR(c.criado_em)}${!c.visto_em ? ` <span class="tag perdido">Nova</span>` : ""}</td>
+      <td>${escapeHtml(c.nome || "-")}</td>
+      <td>${c.whatsapp ? numeroClicavel(c.whatsapp) : "-"}</td>
+      <td>${escapeHtml(c.email || "-")}</td>
+      <td>${situacao}</td>
+      <td style="white-space:nowrap;">${!c.confirmado_em ? `<button type="button" class="act act-edit" title="Confirma o e-mail dela sem precisar do link" onclick="liberarContaApp(${c.id})"><svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberar conta</button> ` : ""}${atencao ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarContaAppVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Visto</button>` : ""}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Nenhuma conta criada ainda</td></tr>`;
+}
+async function marcarContaAppVista(id){
+  const { error } = await sb.from("contas_app").update({ visto_em: new Date().toISOString() }).eq("id", id);
+  if(error){ alert("Não consegui marcar: " + error.message); return; }
+  await recarregarTabelas("contas_app");
+  atualizarAtencao();
+}
+async function liberarContaApp(id){
+  const c = contasApp.find(x=>x.id===id);
+  if(!c) return;
+  if(!confirm(`Liberar a conta de ${c.nome || "sem nome"} (${c.email})?\n\n` +
+    "O e-mail dela fica confirmado agora e ela já consegue entrar no app com a senha que criou, sem precisar do link do e-mail.\n\n" +
+    "Depois avise ela no WhatsApp.")) return;
+  const { error } = await sb.rpc("liberar_conta_app", { p_conta_id: id });
+  if(error){ alert("Não consegui liberar: " + error.message); return; }
+  await sb.from("contas_app").update({ visto_em: new Date().toISOString() }).eq("id", id);
+  await recarregarTabelas("contas_app");
+  atualizarAtencao();
 }
 // Exporta tudo (sem os filtros da tela) pra montar público de remarketing:
 // quem errou ou não terminou o cadastro é candidata a receber um WhatsApp.
