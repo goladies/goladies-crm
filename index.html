@@ -296,6 +296,7 @@ td.acoes-cel .act{margin-right:3px;}
 .card{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--sombra);}
 .card-link{cursor:pointer; transition:border-color .15s, transform .15s;}
 .card-link:hover{border-color:var(--pink); transform:translateY(-1px);}
+.card-link.ativo{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink) inset;}
 .card-ativo{border-color:var(--pink);}
 .card .num{font-size:26px; font-weight:600; color:var(--rosa-texto); letter-spacing:-.5px;}
 .card .label{color:var(--text3); font-size:12px; margin-top:3px;}
@@ -1715,25 +1716,28 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="cards" id="acessos-app-cards"></div>
         <div class="panel" id="contas-app-wrap" style="margin-bottom:16px;">
-          <h3 style="font-size:14px; margin:0 0 4px;">Contas criadas no app da cliente</h3>
-          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;">Conta nova fica em vermelho até você marcar "Visto". Se em 15 min ela não confirmou o e-mail, volta pro vermelho: libere a conta e chame ela no WhatsApp.</p>
+          <h3 style="font-size:14px; margin:0 0 4px;">1. Quem tem conta: contas criadas no app da cliente</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 4px;"><b>Uma linha por pessoa</b> que criou login em app.goladies.com.br. Motorista não entra aqui (ela aparece na tabela 2).</p>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;">Conta nova fica em vermelho até você marcar "Visto". Se em 15 min ela não confirmou o e-mail, volta pro vermelho: libere a conta e chame ela no WhatsApp. Clique no título da coluna para ordenar.</p>
           <table class="tbl">
-            <thead><tr><th>Criada</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>E-mail confirmado?</th><th></th></tr></thead>
+            <thead><tr id="contas-app-head"></tr></thead>
             <tbody id="contas-app-body"></tbody>
           </table>
         </div>
-        <div class="filters">
-          <select id="filter-acesso-app" onchange="renderAcessosApp()">
-            <option value="">Cliente e motorista</option>
-            <option value="cliente">Só app da cliente</option>
-            <option value="motorista">Só app da motorista</option>
-          </select>
-          <select id="filter-acesso-tipo" onchange="renderAcessosApp()"><option value="">Todos os eventos</option></select>
-          <input type="text" id="filter-acesso-busca" placeholder="Buscar nome, WhatsApp ou e-mail..." oninput="renderAcessosApp()">
-        </div>
-        <div class="panel">
+        <div class="panel" id="acessos-diario-wrap">
+          <h3 style="font-size:14px; margin:0 0 4px;">2. O que cada pessoa tentou: diário de acessos (cliente e motorista)</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;"><b>Uma linha por tentativa</b>: cadastro concluído, erro no cadastro, erro no login, pedido de recuperar senha. A mesma pessoa pode aparecer várias vezes. Clique no título da coluna para ordenar.</p>
+          <div class="filters">
+            <select id="filter-acesso-app" onchange="renderAcessosApp()">
+              <option value="">Cliente e motorista</option>
+              <option value="cliente">Só app da cliente</option>
+              <option value="motorista">Só app da motorista</option>
+            </select>
+            <select id="filter-acesso-tipo" onchange="renderAcessosApp()"><option value="">Todos os eventos</option></select>
+            <input type="text" id="filter-acesso-busca" placeholder="Buscar nome, WhatsApp ou e-mail..." oninput="renderAcessosApp()">
+          </div>
           <table class="tbl">
-            <thead><tr><th>Quando</th><th>App</th><th>Evento</th><th>Nome</th><th>Contato</th><th>Motivo</th></tr></thead>
+            <thead><tr id="acessos-app-head"></tr></thead>
             <tbody id="acessos-app-body"></tbody>
           </table>
         </div>
@@ -3590,7 +3594,11 @@ const VAGA_CANDIDATA_STATUS = ["Recebida","Triagem","Indicada","Contratada","Rec
 // Clientes de viagem começa ordenada da mais recente pra mais antiga (id
 // maior primeiro); as outras tabelas seguem sem ordenação padrão, como
 // sempre foi. Continua reagindo ao clique no cabeçalho igual antes.
-let sortState = { clientesTransporte: { campo: "id", dir: -1, tipo: "numero" } };
+let sortState = {
+  clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
+  contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
+  acessosApp: { campo: "criado_em", dir: -1, tipo: "texto" },
+};
 function aplicarOrdenacao(chave, lista){
   const st = sortState[chave];
   if(!st) return lista;
@@ -6675,23 +6683,28 @@ function renderAcessosApp(){
   const appF = document.getElementById("filter-acesso-app").value;
   const tipoF = ft.value;
   const buscaF = document.getElementById("filter-acesso-busca").value.trim().toLowerCase();
-  const filtrados = eventosAcessoApp.filter(e=>
+  // Campos auxiliares só pra ordenar: rótulo do evento e o contato mostrado.
+  // Ordena sempre (padrão: mais novo primeiro) porque a recarga automática
+  // de minuto em minuto traz as linhas por id, do mais antigo pro mais novo.
+  const filtrados = aplicarOrdenacao("acessosApp", eventosAcessoApp.filter(e=>
     (!appF || e.app===appF) &&
     (!tipoF || e.tipo===tipoF) &&
     (!buscaF || [e.nome, e.whatsapp, e.email].some(v=>String(v||"").toLowerCase().includes(buscaF)))
-  // Ordena aqui porque a recarga automática de minuto em minuto
-  // (recarregarTabelas) traz as linhas por id, do mais antigo pro mais novo.
-  ).sort((a,b)=>String(b.criado_em||"").localeCompare(String(a.criado_em||"")));
+  ).map(e=>({ ...e, _evento: ROTULO_TIPO_ACESSO[e.tipo]||e.tipo, _contato: e.whatsapp || e.email || "" })));
+  renderCabecalho("acessos-app-head", [
+    {label:"Quando", campo:"criado_em"}, {label:"App", campo:"app"}, {label:"Evento", campo:"_evento"},
+    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"_contato"}, {label:"Motivo", campo:"motivo"},
+  ], "acessosApp");
 
   const concluidos = eventosAcessoApp.filter(e=>e.tipo==="cadastro_concluido").length;
   const errosCadastro = eventosAcessoApp.filter(e=>e.tipo==="cadastro_erro").length;
   const errosLogin = eventosAcessoApp.filter(e=>e.tipo==="login_erro").length;
-  document.getElementById("acessos-app-cards").innerHTML = `
-    <div class="card"><div class="num">${eventosAcessoApp.length}</div><div class="label">Eventos registrados</div></div>
-    <div class="card"><div class="num">${concluidos}</div><div class="label">Cadastros concluídos</div></div>
-    <div class="card"><div class="num">${errosCadastro}</div><div class="label">Erros no cadastro</div></div>
-    <div class="card"><div class="num">${errosLogin}</div><div class="label">Erros no login</div></div>
-  `;
+  const card = (num, label, tipo, dica) => `<div class="card card-link${tipoF===tipo?" ativo":""}" title="${dica}" onclick="filtrarAcessosPorTipo('${tipo}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+  document.getElementById("acessos-app-cards").innerHTML =
+    card(eventosAcessoApp.length, "Eventos registrados", "", "Mostrar todos na tabela 2") +
+    card(concluidos, "Cadastros concluídos", "cadastro_concluido", "Mostrar só os cadastros concluídos na tabela 2") +
+    card(errosCadastro, "Erros no cadastro", "cadastro_erro", "Mostrar só os erros no cadastro na tabela 2") +
+    card(errosLogin, "Erros no login", "login_erro", "Mostrar só os erros no login na tabela 2");
 
   corpo.innerHTML = filtrados.map(e=>`
     <tr>
@@ -6704,6 +6717,13 @@ function renderAcessosApp(){
     </tr>
   `).join("") || `<tr><td class="empty" colspan="6">Nenhum acesso registrado ainda</td></tr>`;
   renderContasApp();
+}
+// Cartões de Acessos ao app: filtram a tabela 2 pelo tipo e rolam até ela.
+function filtrarAcessosPorTipo(tipo){
+  document.getElementById("filter-acesso-tipo").value = tipo;
+  renderAcessosApp();
+  const el = document.getElementById("acessos-diario-wrap");
+  if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
 }
 
 // ===== CONTAS NOVAS NO APP DA CLIENTE (schema_aviso_conta_app.sql) =====
@@ -6727,7 +6747,12 @@ function irParaContasApp(){
 function renderContasApp(){
   const corpo = document.getElementById("contas-app-body");
   if(!corpo) return;
-  const lista = [...contasApp].sort((a,b)=>b.id-a.id).slice(0, 50);
+  // _conf: quem não confirmou vai pro fim na ordem crescente.
+  const lista = aplicarOrdenacao("contasApp", contasApp.map(c=>({ ...c, _conf: c.confirmado_em || "9999" }))).slice(0, 50);
+  renderCabecalho("contas-app-head", [
+    {label:"Criada", campo:"criado_em"}, {label:"Nome", campo:"nome"}, {label:"WhatsApp", campo:"whatsapp"},
+    {label:"E-mail", campo:"email"}, {label:"E-mail confirmado?", campo:"_conf"}, {label:""},
+  ], "contasApp");
   corpo.innerHTML = lista.map(c=>{
     const atencao = contaAppPrecisaAtencao(c);
     const situacao = c.confirmado_em
