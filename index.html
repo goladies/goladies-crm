@@ -1178,7 +1178,6 @@ tr.tr-click{cursor:pointer;}
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
       <div class="nav-item" data-tab="gestao" data-titulo="Gestão do negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.2"/></svg><span>Gestão</span></div>
-      <div class="nav-item" data-tab="documentos" data-titulo="Documentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg><span>Documentos</span></div>
       <div class="nav-item" data-tab="sede" data-titulo="Sede"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01M12 10h.01"/></svg><span>Sede</span></div>
       <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
       <div class="nav-item" data-tab="servicos" data-titulo="Catálogo de serviços"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços</span></div>
@@ -1430,25 +1429,6 @@ tr.tr-click{cursor:pointer;}
           <tbody id="links-body"></tbody>
         </table>
       </div>
-    </div>
-
-    <div id="tab-documentos" style="display:none;">
-      <div class="pagehead">
-        <div><h2>Documentos</h2><p>Contratos, estudos, processos e pautas. O arquivo fica no Google Drive (Meu Drive › Documentos Go Ladies); aqui fica a lista com o link.</p></div>
-        <button class="btn" onclick="openDocumentoModal()">+ Novo documento</button>
-      </div>
-      <div id="doc-aviso-sql" class="panel" style="display:none; border-left:4px solid var(--c-amber);">Falta rodar <b>schema_documentos_e_prints.sql</b> no Supabase para esta aba funcionar.</div>
-      <div class="filters">
-        <input type="text" id="doc-busca" placeholder="Buscar documento..." oninput="renderDocumentos()" style="max-width:260px;">
-        <select id="doc-filtro-categoria" onchange="renderDocumentos()"><option value="">Todas as pastas</option></select>
-        <select id="doc-filtro-area" onchange="renderDocumentos()"><option value="">Todas as áreas</option></select>
-        <select id="doc-filtro-situacao" onchange="renderDocumentos()">
-          <option value="atuais">Sem os antigos</option>
-          <option value="">Todas as situações</option>
-          <option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option>
-        </select>
-      </div>
-      <div id="doc-lista"></div>
     </div>
 
     <div id="tab-vagas" style="display:none;">
@@ -1994,6 +1974,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
         <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file /></svg> Trabalhos</button>
+        <button type="button" class="subnav-item" data-sede="documentos" onclick="mostrarSubSede('documentos')"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</button>
         <button type="button" class="subnav-item" data-sede="pedidos" onclick="mostrarSubSede('pedidos')"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Pedidos <span class="sede-conta" id="sede-conta-pedidos"></span></button>
         <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões <span class="sede-conta" id="sede-conta-decisoes"></span></button>
         <button type="button" class="subnav-item" data-sede="pendencias" onclick="mostrarSubSede('pendencias')"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências <span class="sede-conta" id="sede-conta-pendencias"></span></button>
@@ -2030,6 +2011,28 @@ tr.tr-click{cursor:pointer;}
           </div>
           <div id="sede-trabalhos-lista"><div class="sede-vazio">Nada ainda. A rotina "Segunda da equipe" grava aqui a cada segunda.</div></div>
         </div>
+      </div>
+
+      <div id="sede-documentos" style="display:none;">
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div><h3><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Contratos, estudos, processos e pautas. O arquivo fica no Google Drive (Meu Drive › Documentos Go Ladies); aqui fica a lista com o link.</p></div>
+            <button class="btn" type="button" onclick="openDocumentoModal()">+ Novo documento</button>
+          </div>
+          <div id="doc-aviso-sql" style="display:none; border-left:4px solid var(--c-amber); padding:8px 12px; margin-bottom:12px;">Falta rodar <b>schema_documentos_e_prints.sql</b> no Supabase para esta aba funcionar.</div>
+          <div class="filters">
+            <input type="text" id="doc-busca" placeholder="Buscar documento..." oninput="renderDocumentos()" style="max-width:260px;">
+            <select id="doc-filtro-categoria" onchange="renderDocumentos()"><option value="">Todas as pastas</option></select>
+            <select id="doc-filtro-area" onchange="renderDocumentos()"><option value="">Todas as áreas</option></select>
+            <select id="doc-filtro-situacao" onchange="renderDocumentos()">
+              <option value="atuais">Sem os antigos</option>
+              <option value="">Todas as situações</option>
+              <option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option>
+            </select>
+          </div>
+        </div>
+        <div id="doc-lista"></div>
       </div>
 
       <div id="sede-pedidos" style="display:none;">
@@ -4000,6 +4003,7 @@ async function liberarPainelCompleto(){
   }catch(e){}
   await carregarDados();
   const ultimaAba = localStorage.getItem("crm-ultima-aba");
+  if(ultimaAba==="documentos"){ irParaAba("documentos"); return; }
   const abaSalva = ultimaAba && document.querySelector(`.nav-item[data-tab="${ultimaAba}"]`);
   if(abaSalva) abaSalva.click();
 }
@@ -5346,6 +5350,8 @@ function renderUsuariasApp(){
 }
 // Atalhos dos cartões da Visão geral: abrem a aba de onde o número vem
 function irParaAba(tab){
+  // Documentos virou sub-aba da Sede (11/10/2026); links antigos continuam funcionando
+  if(tab==="documentos"){ irParaAba("sede"); mostrarSubSede("documentos"); return; }
   const nav = document.querySelector(`.nav-item[data-tab="${tab}"]`);
   if(nav) nav.click();
 }
@@ -6996,7 +7002,7 @@ const SEDE_PESSOAS = [
 ];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
   green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
-const SEDE_ABAS = ["equipe","hoje","trabalhos","pedidos","decisoes","pendencias"];
+const SEDE_ABAS = ["equipe","hoje","trabalhos","documentos","pedidos","decisoes","pendencias"];
 
 function sedeAgente(id){ return SEDE_AGENTES.find(a=>a.id===id); }
 function sedeMembro(id){ return SEDE_PESSOAS.find(a=>a.id===id) || sedeAgente(id); }
