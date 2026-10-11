@@ -1726,7 +1726,7 @@ tr.tr-click{cursor:pointer;}
         </div>
         <div class="panel" id="acessos-diario-wrap">
           <h3 style="font-size:14px; margin:0 0 4px;">2. O que cada pessoa tentou: diário de acessos (cliente e motorista)</h3>
-          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;"><b>Uma linha por tentativa</b>: cadastro concluído, erro no cadastro, erro no login, pedido de recuperar senha. A mesma pessoa pode aparecer várias vezes. Clique no título da coluna para ordenar.</p>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;"><b>Uma linha por tentativa</b>: conta criada, erro no cadastro, erro no login, pedido de recuperar senha. A mesma pessoa pode aparecer várias vezes. Clique no título da coluna para ordenar.</p>
           <div class="filters">
             <select id="filter-acesso-app" onchange="renderAcessosApp()">
               <option value="">Cliente e motorista</option>
@@ -6654,7 +6654,8 @@ async function mudarStatusDemanda(id, status){
 
 const ROTULO_TIPO_ACESSO = {
   cadastro_iniciado: "Cadastro iniciado",
-  cadastro_concluido: "Cadastro concluído",
+  // Gravado ao criar a conta, antes de confirmar o e-mail (pedido dela 11/10/2026)
+  cadastro_concluido: "Conta criada (falta confirmar e-mail)",
   cadastro_erro: "Erro no cadastro",
   login_ok: "Login OK",
   login_erro: "Erro no login",
@@ -6664,7 +6665,7 @@ const ROTULO_TIPO_ACESSO = {
 };
 const COR_TIPO_ACESSO = {
   cadastro_iniciado: "amber",
-  cadastro_concluido: "green",
+  cadastro_concluido: "blue",
   cadastro_erro: "red",
   login_ok: "green",
   login_erro: "red",
@@ -6702,7 +6703,7 @@ function renderAcessosApp(){
   const card = (num, label, tipo, dica) => `<div class="card card-link${tipoF===tipo?" ativo":""}" title="${dica}" onclick="filtrarAcessosPorTipo('${tipo}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
   document.getElementById("acessos-app-cards").innerHTML =
     card(eventosAcessoApp.length, "Eventos registrados", "", "Mostrar todos na tabela 2") +
-    card(concluidos, "Cadastros concluídos", "cadastro_concluido", "Mostrar só os cadastros concluídos na tabela 2") +
+    card(concluidos, "Contas criadas (falta confirmar e-mail)", "cadastro_concluido", "Mostrar só as contas criadas na tabela 2. Quem confirmou o e-mail aparece na tabela 1") +
     card(errosCadastro, "Erros no cadastro", "cadastro_erro", "Mostrar só os erros no cadastro na tabela 2") +
     card(errosLogin, "Erros no login", "login_erro", "Mostrar só os erros no login na tabela 2");
 
