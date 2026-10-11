@@ -1476,7 +1476,7 @@ tr.tr-click{cursor:pointer;}
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map-pin-off /></svg> Fora da área</button>
-        <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos ao app</button>
+        <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos aos apps (cliente e motorista)</button>
       </div>
 
       <div id="subtab-motoristas" style="display:none;">
@@ -1711,14 +1711,14 @@ tr.tr-click{cursor:pointer;}
 
       <div id="subtab-acessos-app" style="display:none;">
         <div class="pagehead">
-          <div><h2 style="font-size:16px;">Acessos ao app</h2><p>Toda tentativa de cadastro e login no app da cliente e no da motorista, deu certo ou não. Quem errou ou não terminou é candidata a remarketing.</p></div>
+          <div><h2 style="font-size:16px;">Acessos aos apps (cliente e motorista)</h2><p>Toda tentativa de cadastro e login no app da cliente e no da motorista, deu certo ou não. Quem errou ou não terminou é candidata (o) a remarketing.</p></div>
           <button class="btn secondary" onclick="exportarAcessosAppCsv()">⬇️ Exportar CSV</button>
         </div>
         <div class="cards" id="acessos-app-cards"></div>
         <div class="panel" id="contas-app-wrap" style="margin-bottom:16px;">
           <h3 style="font-size:14px; margin:0 0 4px;">1. Quem tem conta: contas criadas no app da cliente</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:0 0 4px;"><b>Uma linha por pessoa</b> que criou login em app.goladies.com.br. Motorista não entra aqui (ela aparece na tabela 2).</p>
-          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;">Conta nova fica em vermelho até você marcar "Visto". Se em 15 min ela não confirmou o e-mail, volta pro vermelho: libere a conta e chame ela no WhatsApp. Clique no título da coluna para ordenar.</p>
+          <p style="color:var(--muted); font-size:12.5px; margin:0 0 10px;">Conta nova fica em vermelho até você marcar "Visto". Se em 15 min ela (e) não confirmou o e-mail, volta pro vermelho: libere a conta e chame ela (e) no WhatsApp. Clique no título da coluna para ordenar.</p>
           <table class="tbl">
             <thead><tr id="contas-app-head"></tr></thead>
             <tbody id="contas-app-body"></tbody>
@@ -6768,7 +6768,7 @@ function renderContasApp(){
       <td>${c.whatsapp ? numeroClicavel(c.whatsapp) : "-"}</td>
       <td>${escapeHtml(c.email || "-")}</td>
       <td>${situacao}</td>
-      <td style="white-space:nowrap;">${!c.confirmado_em ? `<button type="button" class="act act-edit" title="Confirma o e-mail dela sem precisar do link" onclick="liberarContaApp(${c.id})"><svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberar conta</button> ` : ""}${atencao ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarContaAppVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Visto</button>` : ""}</td>
+      <td style="white-space:nowrap;">${!c.confirmado_em ? `<button type="button" class="act act-edit" title="Confirma o e-mail dela (e) sem precisar do link" onclick="liberarContaApp(${c.id})"><svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberar conta</button> ` : ""}${atencao ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarContaAppVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Visto</button>` : ""}</td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="6">Nenhuma conta criada ainda</td></tr>`;
 }
@@ -6782,8 +6782,8 @@ async function liberarContaApp(id){
   const c = contasApp.find(x=>x.id===id);
   if(!c) return;
   if(!confirm(`Liberar a conta de ${c.nome || "sem nome"} (${c.email})?\n\n` +
-    "O e-mail dela fica confirmado agora e ela já consegue entrar no app com a senha que criou, sem precisar do link do e-mail.\n\n" +
-    "Depois avise ela no WhatsApp.")) return;
+    "O e-mail dela (e) fica confirmado agora e ela (e) já consegue entrar no app com a senha que criou, sem precisar do link do e-mail.\n\n" +
+    "Depois avise ela (e) no WhatsApp.")) return;
   const { error } = await sb.rpc("liberar_conta_app", { p_conta_id: id });
   if(error){ alert("Não consegui liberar: " + error.message); return; }
   await sb.from("contas_app").update({ visto_em: new Date().toISOString() }).eq("id", id);
