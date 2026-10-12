@@ -733,6 +733,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa);}
 th[onclick]{cursor:pointer; user-select:none; white-space:nowrap;}
 th[onclick]:hover{color:var(--rosa-texto);}
 tr.tr-click{cursor:pointer;}
+.h3-link{cursor:pointer;}
+.h3-link:hover{color:var(--rosa-texto);}
 .link-whats{color:var(--rosa-texto); font-weight:600; text-decoration:none;}
 .link-whats:hover{text-decoration:underline;}
 .analytics-atalhos{display:flex; flex-wrap:wrap; gap:10px;}
@@ -1225,20 +1227,14 @@ tr.tr-click{cursor:pointer;}
       <h3 class="dash-grupo">Transporte</h3>
       <div class="cards" id="dash-cards-transp-geral"></div>
       <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
-          <div>
-            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Transporte no mês</h3>
-            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="dash-transporte-periodo"></p>
-          </div>
-          <button class="btn secondary small" type="button" onclick="irParaFinanceiro('resumo')">Ver financeiro completo</button>
-        </div>
+        <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Transporte no mês</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="dash-transporte-periodo"></p>
         <div class="cards" id="dash-cards-transporte"></div>
-        <div id="dash-transporte-detalhe" style="display:none; margin-top:14px;"></div>
       </div>
       <div class="panel">
-        <h3><svg class=ic aria-hidden=true><use href=#i-user /></svg> Novas usuárias do app</h3>
+        <h3 class="h3-link" role="link" tabindex="0" title="Abrir a tabela completa em Transporte, Acessos do app" onclick="irParaContasApp()" onkeydown="if(event.key==='Enter') irParaContasApp()"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Novas usuárias do app ›</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quem criou conta sozinha no app da cliente ou no painel da motorista, mais recentes primeiro</p>
-        <table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Contato</th><th>Cadastro</th><th>Situação</th></tr></thead><tbody id="dash-usuarias-app"></tbody></table>
+        <table class="tbl"><thead><tr id="dash-usuarias-app-head"></tr></thead><tbody id="dash-usuarias-app"></tbody></table>
       </div>
       <div class="panel">
         <h3>Funil de atendimento</h3>
@@ -3598,6 +3594,7 @@ let sortState = {
   clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
   contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
   acessosApp: { campo: "criado_em", dir: -1, tipo: "texto" },
+  usuariasApp: { campo: "quando", dir: -1, tipo: "texto" },
 };
 function aplicarOrdenacao(chave, lista){
   const st = sortState[chave];
@@ -5259,68 +5256,37 @@ function financeiroTransporteMes(mes, ano){
     ticketMedio: pagos.length ? recebido / pagos.length : 0,
   };
 }
+// Resumo gerencial do mês: só contagens, cada card leva à tabela de origem.
+// Dinheiro fica no Financeiro.
 function renderTransporteDashboard(){
   const wrap = document.getElementById("dash-cards-transporte");
   if(!wrap) return;
   const hoje = new Date();
   const mes = hoje.getMonth() + 1, ano = hoje.getFullYear();
-  const f = financeiroTransporteMes(mes, ano);
   const periodo = document.getElementById("dash-transporte-periodo");
-  if(periodo) periodo.textContent = `${nomeMes(mes)} de ${ano} · viagens pagas no mês, com o repasse das mesmas viagens`;
-  const corLucro = f.lucro >= 0 ? "var(--c-green)" : "var(--c-red)";
-  // Cada card abre, logo abaixo, a lista do mês que forma o número
-  const cardT = (chave, num, label, cor) => `<div class="card card-link${dashTransporteDetalhe === chave ? " card-ativo" : ""}" title="Ver viagem por viagem" onclick="abrirDetalheDashTransporte('${chave}')"><div class="num"${cor ? ` style="color:${cor};"` : ""}>${num}</div><div class="label">${label}</div></div>`;
+  if(periodo) periodo.textContent = `${nomeMes(mes)} de ${ano} · clique num número para abrir a tabela de origem`;
+  const idsTeste = new Set(clientesTransporte.filter(c=>c.teste).map(c=>c.id));
+  const vgReais = viagens.filter(v=>!idsTeste.has(v.cliente_id));
+  const realizadas = vgReais.filter(v=>v.status === "Concluída" && dentroDoMes(v.concluida_em || v.data, mes, ano)).length;
+  const hojeStr = hoje.toLocaleDateString("sv-SE");
+  const daqui7 = new Date(hoje.getTime() + 7 * 86400000).toLocaleDateString("sv-SE");
+  const proximas = vgReais.filter(v=>{
+    const d = String(v.data || "").slice(0,10);
+    return d && d >= hojeStr && d <= daqui7 && !["Concluída","Cancelada","Preço recusado pela cliente"].includes(v.status);
+  }).length;
+  const cliReais = clientesTransporte.filter(c=>!c.teste);
+  const novasClientes = cliReais.filter(c=>dentroDoMes(c.criado_em, mes, ano)).length;
+  const novasAppCliente = cliReais.filter(c=>dentroDoMes(c.login_criado_em, mes, ano)).length;
+  // Motorista não guarda a data do login; conta quem tem login e entrou no mês
+  const novasAppMotora = motoristas.filter(m=>m.auth_user_id && dentroDoMes(m.criado_em, mes, ano)).length;
+  const card = (num, label, titulo, onclick) => `<div class="card card-link" title="${titulo}" onclick="${onclick}"><div class="num">${num}</div><div class="label">${label}</div></div>`;
   wrap.innerHTML = [
-    cardT("recebido", formatarMoedaBR(f.recebido), "Recebido das clientes (bruto)"),
-    cardT("repasse", formatarMoedaBR(f.repassado), "Repasse às motoristas"),
-    cardT("lucro", formatarMoedaBR(f.lucro), "Lucro real Go Ladies", corLucro),
-    cardT("taxa", formatarMoedaBR(f.taxaMp), "Taxa Mercado Pago"),
-    cardT("descontos", formatarMoedaBR(f.descontos), "Descontos concedidos"),
-    cardT("concluidas", f.concluidas, `Viagens concluídas · ticket médio ${formatarMoedaBR(f.ticketMedio)}`),
+    card(realizadas, "Viagens realizadas no mês", "Abrir as viagens", "irParaTransporte('viagens')"),
+    card(proximas, "Próximas viagens (7 dias)", "Abrir as viagens", "irParaTransporte('viagens')"),
+    card(novasClientes, "Novas (os) clientes no mês", "Abrir as clientes de viagem", "irParaTransporte('clientes-transporte')"),
+    card(novasAppCliente, "Novas (os) usuárias (os) app cliente", "Abrir as contas do app", "irParaContasApp()"),
+    card(novasAppMotora, "Novas (os) usuárias (os) app motora", "Abrir as motoristas", "irParaTransporte('motoristas')"),
   ].join("");
-  renderDetalheDashTransporte(mes, ano, f);
-}
-let dashTransporteDetalhe = null;
-function abrirDetalheDashTransporte(chave){
-  dashTransporteDetalhe = dashTransporteDetalhe === chave ? null : chave;
-  renderTransporteDashboard();
-  if(dashTransporteDetalhe) document.getElementById("dash-transporte-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-function renderDetalheDashTransporte(mes, ano, f){
-  const el = document.getElementById("dash-transporte-detalhe");
-  if(!el) return;
-  const chave = dashTransporteDetalhe;
-  if(!chave){ el.style.display = "none"; el.innerHTML = ""; return; }
-  const R = formatarMoedaBR;
-  const titulos = { recebido: "Recebido das clientes", repasse: "Repasse às motoristas", lucro: "Lucro real Go Ladies", taxa: "Taxa Mercado Pago", descontos: "Descontos concedidos", concluidas: "Viagens concluídas" };
-  let tabela;
-  if(chave === "concluidas"){
-    const lista = viagens.filter(v=>v.status === "Concluída" && dentroDoMes(v.concluida_em || v.data, mes, ano))
-      .sort((a,b)=>String(a.concluida_em || a.data).localeCompare(String(b.concluida_em || b.data)));
-    tabela = `<table class="tbl"><thead><tr><th>Concluída em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Preço</th><th>Pagamento</th></tr></thead><tbody>
-      ${lista.map(v=>{ const pago = pagamentosCliente.some(p=>p.viagem_id === v.id && p.status === "Pago");
-        return `<tr class="tr-click" onclick="abrirViagemDoPagamento(${v.id})"><td>${fmtDataBR(String(v.concluida_em || v.data || "").slice(0,10)) || "-"}</td><td>#${v.id}</td><td>${escapeHtml(ftNomeCliente(v))}</td>
-        <td>${escapeHtml(nomesMotoristasViagem(v) || "-")}</td><td>${R(v.preco_cotado)}</td><td><span class="tag ${pago ? "ativo" : "urg-media"}">${pago ? "Pago" : "Sem pagamento"}</span></td></tr>`; }).join("")
-        || `<tr><td class="empty" colspan="6">Nenhuma viagem concluída em ${nomeMes(mes)}</td></tr>`}</tbody></table>`;
-  } else {
-    let pagos = pagamentosTransporteMes(mes, ano);
-    if(chave === "descontos") pagos = pagos.filter(x=>x.v && Number(x.v.desconto_valor || 0) > 0);
-    const destaque = col => (chave === col || (chave === "lucro" && col === "sobra")) ? ' style="font-weight:700; color:var(--rosa-texto);"' : "";
-    tabela = `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Recebido</th><th>Desconto</th><th>Taxa</th><th>Repasse</th><th>Sobrou</th></tr></thead><tbody>
-      ${pagos.map(x=>{ const sobra = x.recebido - x.taxa - x.repasse;
-        return `<tr${x.v ? ` class="tr-click" onclick="abrirViagemDoPagamento(${x.v.id})"` : ""}><td>${fmtDataBR(String(x.p.data_pagamento || "").slice(0,10))}</td><td>${x.v ? "#" + x.v.id : "-"}</td>
-        <td>${x.v ? escapeHtml(ftNomeCliente(x.v)) : "-"}</td><td>${x.v ? escapeHtml(nomesMotoristasViagem(x.v) || "-") : "-"}</td>
-        <td${destaque("recebido")}>${R(x.recebido)}</td><td${destaque("descontos")}>${x.v && Number(x.v.desconto_valor || 0) ? R(x.v.desconto_valor) : "-"}</td>
-        <td${destaque("taxa")}>${R(x.taxa)}</td><td${destaque("repasse")}>${R(x.repasse)}</td>
-        <td${destaque("sobra")}><span style="color:${sobra >= 0 ? "var(--c-green)" : "var(--c-red)"};">${R(sobra)}</span></td></tr>`; }).join("")
-        || `<tr><td class="empty" colspan="9">Nada nesse grupo em ${nomeMes(mes)}</td></tr>`}</tbody></table>`;
-  }
-  el.style.display = "";
-  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h3 style="margin:0;">Viagem por viagem · ${titulos[chave]} em ${nomeMes(mes)}</h3>
-      <button class="icon-btn" type="button" onclick="abrirDetalheDashTransporte(dashTransporteDetalhe)" aria-label="Fechar">✕</button>
-    </div>${tabela}
-    <p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa linha para abrir a viagem. ${chave === "concluidas" ? "" : "Entra pela data em que a cliente pagou."}</p>`;
 }
 // Cadastro pelo app: a cliente nasce em clientes_transporte com login_criado_em
 // preenchido (função cliente_id_atual); a motorista já existe no funil e ganha
@@ -5346,7 +5312,12 @@ function renderUsuariasApp(){
     })))
     .sort((a,b)=>String(b.quando||"").localeCompare(String(a.quando||"")))
     .slice(0, 10);
-  corpo.innerHTML = daApp.map(u=>`
+  // Resumo: sempre as 10 mais recentes; o clique no título só reordena essas 10.
+  renderCabecalho("dash-usuarias-app-head", [
+    {label:"Nome", campo:"nome"}, {label:"Tipo", campo:"tipo"}, {label:"Contato", campo:"contato"},
+    {label:"Cadastro", campo:"quando"}, {label:"Situação", campo:"situacao"},
+  ], "usuariasApp");
+  corpo.innerHTML = aplicarOrdenacao("usuariasApp", daApp).map(u=>`
     <tr class="tr-click" onclick="${u.onclick}">
       <td>${escapeHtml(u.nome||"-")}${u.cod}</td>
       <td><span class="tag ${u.tipoClasse}">${u.tipo}</span></td>
