@@ -3032,6 +3032,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
              vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
              pelo painel (cadeirinha, bagagem...). Só leitura: é a palavra dela. -->
         <div class="full" id="vg-obs-cliente-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); font-size:13px;"><b><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Outras observações da cliente:</b> <span id="vg-obs-cliente"></span></div>
+        <!-- Conta Adolescente e quem vai junto (schema_conta_adolescente.sql).
+             CPF e telefone de quem vai sem conta só a equipe vê. -->
+        <div class="full" id="vg-passageiros-wrap" style="display:none; padding:8px 10px; border-radius:8px; background:var(--rosa-bg, #fde7f3); font-size:13px; line-height:1.5;"></div>
         <div><label>Canal de recepção</label><select id="vg-canal"></select></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:8px;"><label class="vg-check"><input type="checkbox" id="vg-motorista-preferida"> Cliente quer a motorista preferida dela</label></div>
       </div>
@@ -5622,19 +5625,30 @@ function renderAniversariosDashboard(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth()+2, 0);
   const candidatos = [
-    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
-    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
-    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":""), aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
-    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
+    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), empresa:ehEmpresa(l), whats:l.whatsapp, aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
+    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
+    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
+    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", empresa:false, whats:m.whatsapp, aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
   ];
   const proximos = candidatos
     .filter(c=>c.aniversario)
     .map(c=>({...c, proxima: proximoAniversario(c.aniversario)}))
     .filter(c=>c.proxima && c.proxima >= hoje && c.proxima <= fimProximoMes)
     .sort((a,b)=>a.proxima-b.proxima);
-  el.innerHTML = proximos.map(c=>`
-    <tr class="tr-click" onclick="${c.abrir}"><td>${escapeHtml(c.nome)}</td><td>${escapeHtml(c.tipo)}</td><td>${c.proxima.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</td></tr>
-  `).join("") || `<tr><td class="empty" colspan="3">Nenhum aniversário nessa janela</td></tr>`;
+  el.innerHTML = proximos.map(c=>{
+    const ehHoje = c.proxima.getTime() === hoje.getTime();
+    // Idade que vai fazer (só pessoa, e só se o ano parece de nascimento)
+    const anos = !c.empresa && Number(c.aniversario.slice(0,4)) > 1900 ? c.proxima.getFullYear() - Number(c.aniversario.slice(0,4)) : null;
+    const link = c.whats ? linkWhats(c.whats, mensagemAniversario(c)) : null;
+    const parabens = link ? `<a class="act act-edit" href="${escapeHtml(link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Parabéns</a>` : "";
+    return `<tr class="tr-click" onclick="${c.abrir}"${ehHoje ? ` style="background:var(--rosa-bg, #fde7f3)"` : ""}><td>${ehHoje ? `<svg class=ic aria-hidden=true><use href=#i-cake /></svg> ` : ""}${escapeHtml(c.nome)}${anos !== null && anos > 0 && anos < 120 ? ` <small style="color:var(--muted)">(${anos} anos)</small>` : ""}</td><td>${escapeHtml(c.tipo)}</td><td>${ehHoje ? "<b>Hoje</b>" : c.proxima.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${parabens}</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="3">Nenhum aniversário nessa janela</td></tr>`;
+}
+// Mensagem pronta do botão Parabéns (sai pelo WhatsApp que abrir o link).
+function mensagemAniversario(c){
+  const nome = String(c.nome||"").trim().split(" ")[0];
+  if(c.empresa) return `Olá! Hoje é aniversário da ${c.nome}. Parabéns pela trajetória! Que venham muitos anos de parceria com a Go Ladies. 🩷\nJú Castilhos, Go Ladies`;
+  return `Feliz aniversário, ${nome}! 🩷\nHoje o dia é seu, e toda a equipe Go Ladies deseja um ano cheio de caminhos bons, com segurança, saúde e alegria.\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
 }
 
 function renderLeads(){
@@ -11153,6 +11167,7 @@ function htmlAcessoPainelCliente(c){
     ? `<svg class=ic aria-hidden=true><use href=#i-lock /></svg> <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
     : `<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
   html += htmlPedidoExclusao(c, "cliente");
+  html += htmlContaAdolescente(c);
   const mot = motoristaDaCliente(c.id);
   if(mot){
     html += `<div style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> <b>Também é motorista</b> (mesmo login, cadastro <b>${escapeHtml(nomeCod(mot))}</b>). Ela nunca recebe oferta das próprias viagens.</div>`;
@@ -11166,6 +11181,23 @@ function htmlAcessoPainelCliente(c){
       `</div>`;
   }
   return html;
+}
+// Conta Adolescente (schema_conta_adolescente.sql): idade, responsável,
+// adolescentes ligados e aceite das regras no app.
+function htmlContaAdolescente(c){
+  const idade = c.aniversario && !ehEmpresa(c) ? idadeAnos(c.aniversario) : null;
+  const partes = [];
+  if(c.auth_user_id && !c.aniversario) partes.push(`<svg class=ic aria-hidden=true><use href=#i-cake /></svg> Ainda não informou a data de nascimento (o app pede no próximo login).`);
+  if(idade !== null && idade < 18){
+    const r = c.responsavel_cliente_id ? clientesTransporte.find(x=>x.id===c.responsavel_cliente_id) : null;
+    partes.push(r
+      ? `<svg class=ic aria-hidden=true><use href=#i-user /></svg> <b>Conta Adolescente</b> (${idade} anos), ligada a <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${r.id})">${escapeHtml(nomeCod(r))}</a> (${escapeHtml((c.responsavel_vinculo||"responsável").toLowerCase())}) desde ${formatarDataBR(String(c.responsavel_desde||"").slice(0,10))}. As viagens dela (e) entram no nome da responsável.`
+      : `<span style="color:var(--c-red)"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> <b>Menor de idade sem responsável</b> (${idade} anos): não consegue pedir viagem até uma pessoa responsável mandar o convite pelo app (Perfil &gt; Família).</span>`);
+  }
+  const deps = clientesTransporte.filter(x=>x.responsavel_cliente_id===c.id && x.aniversario && idadeAnos(x.aniversario) < 18);
+  if(deps.length) partes.push(`<svg class=ic aria-hidden=true><use href=#i-users /></svg> Responsável pela Conta Adolescente de: ` + deps.map(d=>`<a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${d.id})">${escapeHtml(nomeCod(d))}</a> (${idadeAnos(d.aniversario)} anos)`).join(", ") + ".");
+  if(c.termos_aceitos_em) partes.push(`<small style="color:var(--muted)">Aceitou as regras da conta (${escapeHtml(c.termos_versao||"")}) em ${formatarDataBR(c.termos_aceitos_em.slice(0,10))}.</small>`);
+  return partes.length ? `<div style="margin-top:8px;">${partes.join("<br>")}</div>` : "";
 }
 async function unificarClientes(manter, remover){
   const m = clientesTransporte.find(x=>x.id===manter), r = clientesTransporte.find(x=>x.id===remover);
@@ -11603,6 +11635,44 @@ const PARADA_TIPOS = ["Embarque", "Desembarque", "Parada"];
 // (recado geral, sem prefixo) fica guardado aqui e volta pro texto ao
 // salvar, sem se perder.
 let obsGeralClienteAtual = "";
+// Viagem da Conta Adolescente (a cliente da viagem é a responsável) e quem
+// vai junto (viagem_passageiros). Busca na hora: é pouco e só abre no modal.
+async function mostrarPassageirosViagem(v){
+  const el = document.getElementById("vg-passageiros-wrap");
+  el.style.display = "none"; el.innerHTML = "";
+  if(!v || !v.id) return;
+  const linhas = [];
+  if(v.passageira_cliente_id){
+    const p = clientesTransporte.find(c=>c.id===v.passageira_cliente_id);
+    linhas.push(`<b><svg class=ic aria-hidden=true><use href=#i-user /></svg> Quem viaja:</b> <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(v.passageira_cliente_id)})">${escapeHtml(p ? p.nome : "#" + v.passageira_cliente_id)}</a> (Conta Adolescente${p && p.aniversario ? ", " + idadeAnos(p.aniversario) + " anos" : ""}). A cliente da viagem é a responsável.`);
+  }
+  try{
+    const { data, error } = await sb.from("viagem_passageiros").select("*").eq("viagem_id", v.id).order("id");
+    if(error) throw error;
+    if(data && data.length){
+      linhas.push(`<b><svg class=ic aria-hidden=true><use href=#i-users /></svg> Vai junto:</b>`);
+      data.forEach(p=>{
+        if(p.tipo === "conta") linhas.push(`• ${escapeHtml(p.nome)} (tem conta${p.cliente_id ? `, <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.cliente_id)})">abrir</a>` : ""})`);
+        else if(p.tipo === "sem_conta") linhas.push(`• ${escapeHtml(p.nome)} · CPF ${escapeHtml(formatarCpf(p.cpf))} · ${numeroClicavel(p.telefone)}`);
+        else linhas.push(`• ${escapeHtml(p.nome)} (criança, ${p.idade} anos)`);
+      });
+    }
+  }catch(e){ /* sem o SQL rodado a tabela não existe: só não mostra */ }
+  if(editingViagemId !== v.id || !linhas.length) return;
+  el.innerHTML = linhas.join("<br>");
+  el.style.display = "block";
+}
+function formatarCpf(c){
+  const d = String(c||"").replace(/\D/g,"");
+  return d.length === 11 ? `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}` : (c||"");
+}
+function idadeAnos(dataStr){
+  if(!dataStr) return null;
+  const n = new Date(dataStr+"T12:00:00"), h = new Date();
+  let i = h.getFullYear() - n.getFullYear();
+  if(h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) i--;
+  return i;
+}
 function partesObservacaoCliente(texto){
   const linhas = String(texto||"").split("\n");
   let embarque = "", destino = "";
@@ -12479,6 +12549,7 @@ function openViagemModal(id, opcoes){
   obsGeralClienteAtual = partesObs.geral;
   document.getElementById("vg-obs-cliente").textContent = partesObs.geral;
   document.getElementById("vg-obs-cliente-wrap").style.display = partesObs.geral ? "block" : "none";
+  mostrarPassageirosViagem(v);
   document.getElementById("vg-motorista-preferida").checked = !!v.motorista_preferida;
   document.getElementById("vg-canal").value = v.canal_recepcao||"Telefone";
   document.getElementById("vg-viagem-status").value = v.status||"Solicitada";
