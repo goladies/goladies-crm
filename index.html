@@ -4476,9 +4476,21 @@ document.getElementById("btn-atualizar-mobile").addEventListener("click", ()=>at
 // A recarga automática pula quando tem modal aberto (senão o renderAll troca
 // os dados embaixo de um cadastro que você está preenchendo) e quando a aba
 // está em segundo plano (não adianta buscar dado que ninguém está olhando).
+// Também pula quando você está digitando num campo da página ou deixou texto
+// não salvo numa caixa de texto (ex.: resposta das Decisões da Sede), senão
+// o redesenho apaga o que foi escrito.
+function temDigitacaoEmAndamento(){
+  const ativo = document.activeElement;
+  if(ativo && ativo.matches("textarea, input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]), select")) return true;
+  return Array.from(document.querySelectorAll(".app textarea[data-digitado]")).some(t => t.value.trim() && t.offsetParent);
+}
+// Marca a caixa de texto em que a pessoa digitou. Quando a tela é redesenhada
+// depois de salvar, a caixa nova nasce sem a marca.
+document.addEventListener("input", e => { if(e.target.matches && e.target.matches("textarea")) e.target.dataset.digitado = "1"; });
 setInterval(function(){
   if(document.hidden) return;
   if(document.querySelector(".modal-backdrop.open")) return;
+  if(temDigitacaoEmAndamento()) return;
   if(document.querySelector(".app").style.display !== "flex") return;
   atualizarDados(false);
 }, INTERVALO_AUTO_MS);
