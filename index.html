@@ -733,8 +733,6 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa);}
 th[onclick]{cursor:pointer; user-select:none; white-space:nowrap;}
 th[onclick]:hover{color:var(--rosa-texto);}
 tr.tr-click{cursor:pointer;}
-.h3-link{cursor:pointer;}
-.h3-link:hover{color:var(--rosa-texto);}
 .link-whats{color:var(--rosa-texto); font-weight:600; text-decoration:none;}
 .link-whats:hover{text-decoration:underline;}
 .analytics-atalhos{display:flex; flex-wrap:wrap; gap:10px;}
@@ -1230,11 +1228,6 @@ tr.tr-click{cursor:pointer;}
         <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Transporte no mês</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="dash-transporte-periodo"></p>
         <div class="cards" id="dash-cards-transporte"></div>
-      </div>
-      <div class="panel">
-        <h3 class="h3-link" role="link" tabindex="0" title="Abrir a tabela completa em Transporte, Acessos do app" onclick="irParaContasApp()" onkeydown="if(event.key==='Enter') irParaContasApp()"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Novas usuárias do app ›</h3>
-        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quem criou conta sozinha no app da cliente ou no painel da motorista, mais recentes primeiro</p>
-        <table class="tbl"><thead><tr id="dash-usuarias-app-head"></tr></thead><tbody id="dash-usuarias-app"></tbody></table>
       </div>
       <div class="panel">
         <h3>Funil de atendimento</h3>
@@ -3594,7 +3587,6 @@ let sortState = {
   clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
   contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
   acessosApp: { campo: "criado_em", dir: -1, tipo: "texto" },
-  usuariasApp: { campo: "quando", dir: -1, tipo: "texto" },
 };
 function aplicarOrdenacao(chave, lista){
   const st = sortState[chave];
@@ -4654,7 +4646,6 @@ function renderDashboard(){
   renderAniversariosDashboard();
   renderEventosDashboard();
   renderTransporteDashboard();
-  renderUsuariasApp();
   carregarUsoSupabase();
   carregarAcessosSite();
 }
@@ -5277,8 +5268,7 @@ function renderTransporteDashboard(){
   const cliReais = clientesTransporte.filter(c=>!c.teste);
   const novasClientes = cliReais.filter(c=>dentroDoMes(c.criado_em, mes, ano)).length;
   const novasAppCliente = cliReais.filter(c=>dentroDoMes(c.login_criado_em, mes, ano)).length;
-  // Motorista não guarda a data do login; conta quem tem login e entrou no mês
-  const novasAppMotora = motoristas.filter(m=>m.auth_user_id && dentroDoMes(m.criado_em, mes, ano)).length;
+  const novasAppMotora = motoristas.filter(m=>dentroDoMes(m.login_criado_em, mes, ano)).length;  // schema_motorista_login_criado_em.sql
   const card = (num, label, titulo, onclick) => `<div class="card card-link" title="${titulo}" onclick="${onclick}"><div class="num">${num}</div><div class="label">${label}</div></div>`;
   wrap.innerHTML = [
     card(realizadas, "Viagens realizadas no mês", "Abrir as viagens", "irParaTransporte('viagens')"),
@@ -5287,45 +5277,6 @@ function renderTransporteDashboard(){
     card(novasAppCliente, "Novas (os) usuárias (os) app cliente", "Abrir as contas do app", "irParaContasApp()"),
     card(novasAppMotora, "Novas (os) usuárias (os) app motora", "Abrir as motoristas", "irParaTransporte('motoristas')"),
   ].join("");
-}
-// Cadastro pelo app: a cliente nasce em clientes_transporte com login_criado_em
-// preenchido (função cliente_id_atual); a motorista já existe no funil e ganha
-// auth_user_id quando cria o login dela.
-function renderUsuariasApp(){
-  const corpo = document.getElementById("dash-usuarias-app");
-  if(!corpo) return;
-  const daApp = clientesTransporte
-    .filter(c=>c.login_criado_em || c.origem === "Painel")
-    .map(c=>({
-      nome: c.nome, cod: numId(c), tipo: "Cliente", tipoClasse: "novo",
-      contato: c.whatsapp || c.email || "-",
-      quando: c.login_criado_em || c.criado_em,
-      situacao: c.login_criado_em ? "Login criado" : "Cadastro pelo app",
-      onclick: `openClienteTransporteModal(${c.id})`,
-    }))
-    .concat(motoristas.filter(m=>m.auth_user_id).map(m=>({
-      nome: m.nome, cod: numId(m), tipo: "Motorista", tipoClasse: "negociacao",
-      contato: m.whatsapp || m.email || "-",
-      quando: m.criado_em,
-      situacao: m.status || "-",
-      onclick: `openMotoristaModal(${m.id})`,
-    })))
-    .sort((a,b)=>String(b.quando||"").localeCompare(String(a.quando||"")))
-    .slice(0, 10);
-  // Resumo: sempre as 10 mais recentes; o clique no título só reordena essas 10.
-  renderCabecalho("dash-usuarias-app-head", [
-    {label:"Nome", campo:"nome"}, {label:"Tipo", campo:"tipo"}, {label:"Contato", campo:"contato"},
-    {label:"Cadastro", campo:"quando"}, {label:"Situação", campo:"situacao"},
-  ], "usuariasApp");
-  corpo.innerHTML = aplicarOrdenacao("usuariasApp", daApp).map(u=>`
-    <tr class="tr-click" onclick="${u.onclick}">
-      <td>${escapeHtml(u.nome||"-")}${u.cod}</td>
-      <td><span class="tag ${u.tipoClasse}">${u.tipo}</span></td>
-      <td>${escapeHtml(u.contato)}</td>
-      <td>${u.quando ? new Date(u.quando).toLocaleDateString("pt-BR") : "-"}</td>
-      <td>${escapeHtml(u.situacao)}</td>
-    </tr>
-  `).join("") || `<tr><td class="empty" colspan="5">Ninguém se cadastrou pelo app ainda</td></tr>`;
 }
 // Atalhos dos cartões da Visão geral: abrem a aba de onde o número vem
 function irParaAba(tab){
