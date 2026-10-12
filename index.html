@@ -10836,7 +10836,8 @@ function openMotoristaModal(id){
     ? '<span class="tag ativo">✓ Login vinculado</span>'
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
     + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente${optCod(cliDaMotorista)}</span>` : "")
-    + (id ? htmlPedidoExclusao(m, "motorista") : "");
+    + (id ? htmlPedidoExclusao(m, "motorista") : "")
+    + (id && m.auth_user_id ? botaoSenhaProvisoria("motorista", m.id) : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
   document.getElementById("mt-doc-status").value = "Pendente";
@@ -11175,6 +11176,7 @@ function htmlAcessoPainelCliente(c){
     ? `<svg class=ic aria-hidden=true><use href=#i-lock /></svg> <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
     : `<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
   html += htmlPedidoExclusao(c, "cliente");
+  if(c.auth_user_id) html += botaoSenhaProvisoria("cliente", c.id);
   html += htmlContaAdolescente(c);
   const mot = motoristaDaCliente(c.id);
   if(mot){
@@ -11189,6 +11191,29 @@ function htmlAcessoPainelCliente(c){
       `</div>`;
   }
   return html;
+}
+// Senha provisória (schema_senha_provisoria.sql): pra quando o e-mail de
+// senha nova não chega (iCloud). A Jú digita a senha, o banco grava cifrada
+// e o CRM oferece o WhatsApp com a mensagem pronta.
+function botaoSenhaProvisoria(tipo, id){
+  return `<div style="margin-top:6px;"><button type="button" class="act act-edit" onclick="definirSenhaProvisoria('${tipo}', ${Number(id)})"><svg class=ic aria-hidden=true><use href=#i-key /></svg> Senha provisória</button> <small style="color:var(--muted)">quando o e-mail de senha nova não chega</small></div>`;
+}
+async function definirSenhaProvisoria(tipo, id){
+  const ficha = (tipo==="motorista" ? motoristas : clientesTransporte).find(x=>x.id===id);
+  if(!ficha) return;
+  const nome = String(ficha.nome||"").split(" ")[0];
+  const senha = prompt(`Senha provisória pra ${nome} (mínimo 6 caracteres).\n\nA senha atual dela deixa de valer na hora. Ela entra com esta e troca depois no app.`);
+  if(senha === null) return;
+  if(senha.trim().length < 6){ alert("A senha precisa ter pelo menos 6 caracteres."); return; }
+  if(!confirm(`Confirma? A senha de ${nome} passa a ser a que você digitou, e a antiga deixa de funcionar.`)) return;
+  const { error } = await sb.rpc("definir_senha_provisoria", { p_tipo: tipo, p_id: id, p_senha: senha.trim() });
+  if(error){ alert("Não foi possível definir a senha: " + error.message); return; }
+  showToast("Senha provisória definida.");
+  const app = tipo==="motorista" ? "motora.goladies.com.br" : "app.goladies.com.br";
+  const trocar = tipo==="motorista" ? "no painel, em Trocar senha" : "em Perfil > Meus dados > Trocar senha";
+  const msg = `Oi, ${nome}! O e-mail da Go Ladies não está chegando pra você, então liberei seu acesso por aqui. Entre em ${app} com o e-mail ${ficha.email||"do seu cadastro"} e a senha ${senha.trim()}\nDepois troque por uma sua ${trocar}. 🩷`;
+  const link = ficha.whatsapp ? linkWhats(ficha.whatsapp, msg) : null;
+  if(link && confirm("Abrir o WhatsApp com a mensagem pronta pra ela?")) window.open(link, "_blank");
 }
 // Conta Adolescente (schema_conta_adolescente.sql): idade, responsável,
 // adolescentes ligados e aceite das regras no app.
