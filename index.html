@@ -2010,7 +2010,7 @@ tr.tr-click{cursor:pointer;}
         <div class="panel">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
             <div><h3><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</h3>
-            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Contratos, estudos, processos e pautas. O arquivo fica no Google Drive (Meu Drive › Documentos Go Ladies); aqui fica a lista com o link.</p></div>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Contratos, estudos, processos e pautas. O arquivo fica no Google Drive (Meu Drive › Sede › Documentos); aqui fica a lista com o link.</p></div>
             <button class="btn" type="button" onclick="openDocumentoModal()">+ Novo documento</button>
           </div>
           <div id="doc-aviso-sql" style="display:none; border-left:4px solid var(--c-amber); padding:8px 12px; margin-bottom:12px;">Falta rodar <b>schema_documentos_e_prints.sql</b> no Supabase para esta aba funcionar.</div>
@@ -3042,7 +3042,7 @@ tr.tr-click{cursor:pointer;}
       <div><label>Área</label><select id="doc-area"></select></div>
       <div><label>Situação</label><select id="doc-situacao"><option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option></select></div>
       <div class="full"><label>Link do arquivo no Drive</label><input id="doc-link" placeholder="https://drive.google.com/..."><span class="dica">No Drive: botão direito no arquivo › Compartilhar › Copiar link. Sem link, o botão Abrir leva para a pasta.</span></div>
-      <div class="full"><label>Onde está no Drive</label><input id="doc-arquivo" placeholder="Contratos e termos/nome-do-arquivo.docx"><span class="dica">Caminho dentro de Meu Drive › Documentos Go Ladies.</span></div>
+      <div class="full"><label>Onde está no Drive</label><input id="doc-arquivo" placeholder="Contratos e termos/nome-do-arquivo.docx"><span class="dica">Caminho dentro de Meu Drive › Sede › Documentos.</span></div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-documento" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirDocumento()">Tirar da lista</button>
@@ -7527,7 +7527,7 @@ document.addEventListener("paste", e=>{
 
 // ===== DOCUMENTOS (catálogo do Drive, schema_documentos_e_prints.sql) =====
 const DOC_SITUACAO_COR = { "Rascunho":"gray", "Revisar com advogado":"amber", "Vigente":"green", "Referência":"blue", "Antigo":"gray" };
-const DOC_DRIVE_RAIZ = "Meu Drive › Documentos Go Ladies";
+const DOC_DRIVE_RAIZ = "Meu Drive › Sede › Documentos";
 let documentoEditando = null;
 function docLinkPasta(cat){ const p = documentosPastas.find(x=>x.categoria===cat); return p && p.link ? p.link : ""; }
 function renderDocumentos(){
