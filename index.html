@@ -8492,7 +8492,7 @@ function renderSedeDecisoes(){
       ${d.contexto?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Contexto:</b> ${escapeHtml(d.contexto)}</div>`:""}
       ${d.opcoes?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Caminhos:</b> ${escapeHtml(d.opcoes)}</div>`:""}
       ${d.recomendacao?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Recomendação:</b> ${escapeHtml(d.recomendacao)}</div>`:""}
-      <div class="det" style="font-size:13px; color:var(--text2);"><b>Opinião da Vera:</b> ${d.opiniao_vera ? escapeHtml(d.opiniao_vera) : `<span style="color:var(--muted);">a Vera ainda não começou</span>`}</div>
+      <div class="det" style="font-size:13px; color:var(--text2);"><b>Opinião da Vera:</b> ${d.opiniao_vera ? escapeHtml(d.opiniao_vera) + (d.opiniao_vera_em ? ` <small style="color:var(--muted);">(${formatarDataBR(String(d.opiniao_vera_em).slice(0,10))})</small>` : "") : `<span style="color:var(--muted);">a Vera ainda não conferiu</span>`}</div>
       ${conversa(d)}
       ${d.status==="Mais dados"
         ? `<div class="meta" style="font-size:12px; color:var(--muted);">A Gabi responde na rotina das 9h15 e a decisão volta para "Esperando você".</div>
