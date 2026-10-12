@@ -7003,7 +7003,7 @@ function renderContasApp(){
       <td>${c.whatsapp ? numeroClicavel(c.whatsapp) : "-"}</td>
       <td>${escapeHtml(c.email || "-")}</td>
       <td>${situacao}</td>
-      <td style="white-space:nowrap;">${!c.confirmado_em ? `<button type="button" class="act act-edit" title="Confirma o e-mail dela (e) sem precisar do link" onclick="liberarContaApp(${c.id})"><svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberar conta</button> ` : ""}${atencao ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarContaAppVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Visto</button>` : ""}</td>
+      <td style="white-space:nowrap;">${!c.confirmado_em ? `<button type="button" class="act act-edit" title="Confirma o e-mail dela (e) sem precisar do link" onclick="liberarContaApp(${c.id})"><svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Liberar conta</button> ` : ""}${atencao ? `<button type="button" class="act act-edit" title="Tira o alerta vermelho do menu" onclick="marcarContaAppVista(${c.id})"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Visto</button> ` : ""}<button type="button" class="act act-edit" title="Quando o e-mail de senha nova não chega" onclick="definirSenhaProvisoria('conta_app', ${c.id})"><svg class=ic aria-hidden=true><use href=#i-key /></svg> Senha provisória</button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="6">Nenhuma conta criada ainda</td></tr>`;
 }
@@ -11199,7 +11199,7 @@ function botaoSenhaProvisoria(tipo, id){
   return `<div style="margin-top:6px;"><button type="button" class="act act-edit" onclick="definirSenhaProvisoria('${tipo}', ${Number(id)})"><svg class=ic aria-hidden=true><use href=#i-key /></svg> Senha provisória</button> <small style="color:var(--muted)">quando o e-mail de senha nova não chega</small></div>`;
 }
 async function definirSenhaProvisoria(tipo, id){
-  const ficha = (tipo==="motorista" ? motoristas : clientesTransporte).find(x=>x.id===id);
+  const ficha = (tipo==="motorista" ? motoristas : tipo==="conta_app" ? contasApp : clientesTransporte).find(x=>x.id===id);
   if(!ficha) return;
   const nome = String(ficha.nome||"").split(" ")[0];
   const senha = prompt(`Senha provisória pra ${nome} (mínimo 6 caracteres).\n\nA senha atual dela deixa de valer na hora. Ela entra com esta e troca depois no app.`);
