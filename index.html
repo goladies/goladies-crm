@@ -4227,14 +4227,13 @@ function limparStaffConfirmado(){
   localStorage.removeItem("crm-staff-uid");
 }
 
-async function liberarPainelCompleto(){
+async function liberarPainelCompleto(user){
   document.getElementById("login-screen").style.display = "none";
   document.querySelector(".app").style.display = "flex";
-  // Com prazo: se o getUser travar, o painel não pode ficar esperando ele
-  try{
-    const r = await Promise.race([sb.auth.getUser(), new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 8000))]);
-    mostrarUsuaria(r.data && r.data.user);
-  }catch(e){}
+  // Nome de quem entrou: primeiro o da sessão que já está no navegador (sem ir à
+  // rede); o getUser, que vai ao servidor, roda só depois dos dados (12/10/2026:
+  // antes ele segurava a abertura do CRM esperando a resposta).
+  if(user) mostrarUsuaria(user);
   // Já abre na última tela (aba e sub-aba) ANTES de buscar os dados: assim não
   // passa pelo Dashboard e não desenha tudo duas vezes. O carregarDados desenha no fim.
   let ultimaAba = null;
@@ -4242,6 +4241,11 @@ async function liberarPainelCompleto(){
   if(ultimaAba==="documentos"){ ultimaAba = "sede"; lembrarSubAba("sede", "documentos"); }
   if(ultimaAba && document.getElementById("tab-"+ultimaAba)){ mostrarAbaDireto(ultimaAba); restaurarSubAba(ultimaAba); }
   await carregarDados();
+  // Com prazo: se o getUser travar, nada fica esperando ele
+  try{
+    const r = await Promise.race([sb.auth.getUser(), new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 8000))]);
+    if(r.data && r.data.user) mostrarUsuaria(r.data.user);
+  }catch(e){}
 }
 // Troca a aba visível sem redesenhar (o redesenho vem depois, com os dados)
 function mostrarAbaDireto(tab){
@@ -4307,7 +4311,7 @@ async function tratarMudancaAutenticacao(session){
     // roda do mesmo jeito, só que depois e em segundo plano, e desloga se
     // descobrir de fato que é motorista.
     if(staffConfirmadoLocalmente(session.user.id)){
-      await liberarPainelCompleto();
+      await liberarPainelCompleto(session.user);
       const resultado = await checarNaoEhMotorista();
       if(resultado === "motorista"){
         limparStaffConfirmado();
@@ -4344,7 +4348,7 @@ async function tratarMudancaAutenticacao(session){
       return;
     }
     marcarStaffConfirmado(session.user.id);
-    await liberarPainelCompleto();
+    await liberarPainelCompleto(session.user);
   } else {
     limparStaffConfirmado();
     document.querySelector(".app").style.display = "none";
@@ -4492,44 +4496,94 @@ function aplicarConsulta(nome, resultado, valorAtual){
 }
 
 async function carregarDadosInterno(){
+  // Todas as consultas saem juntas, de uma vez (12/10/2026: antes eram ~19 idas ao banco
+  // uma esperando a outra, e o CRM demorava a abrir). Promise.resolve dispara o builder
+  // do Supabase na hora; cada resultado é lido uma vez só, abaixo, na mesma ordem de antes.
+  const q = [
+    Promise.all([
+      sb.from("leads").select("*").order("id"),
+      sb.from("parceiros").select("*").order("id"),
+      sb.from("orcamentos").select("*").order("id"),
+    ]),
+    Promise.all([
+      sb.from("motoristas").select("*").order("id"),
+      sb.from("documentos_motorista").select("*").order("id"),
+      sb.from("clientes_transporte").select("*").order("id"),
+      sb.from("viagens").select("*").order("id"),
+      sb.from("avaliacoes").select("*").order("id"),
+      sb.from("pagamentos_motorista").select("*").order("id"),
+      sb.from("pagamentos_cliente").select("*").order("id"),
+      sb.from("parceiro_contatos").select("*").order("id"),
+      sb.from("parceiro_interacoes").select("*").order("id"),
+      sb.from("parceiro_enderecos").select("*").order("id"),
+      sb.from("lead_interacoes").select("*").order("id"),
+      sb.from("vendas").select("*").order("id"),
+      sb.from("venda_parcelas").select("*").order("id"),
+      sb.from("contas_pagar").select("*").order("id"),
+      sb.from("metas_financeiras").select("*").order("id"),
+      sb.from("pecas_pedidos").select("*").order("id"),
+      sb.from("pecas_tentativas").select("*").order("id"),
+      sb.from("parceiro_links").select("*").order("id"),
+      sb.from("divulgacoes").select("*").order("id"),
+      sb.from("vagas").select("*").order("id"),
+      sb.from("vagas_candidatas").select("*").order("id"),
+      sb.from("motorista_observacoes").select("*").order("id"),
+      sb.from("viagem_ofertas").select("*").order("id"),
+      sb.from("candidatas").select("*").order("id", { ascending: false }),
+    ]),
+    Promise.all([
+      sb.from("eventos").select("*").order("data_inicio"),
+      sb.from("evento_contatos").select("*").order("id"),
+      sb.from("evento_links").select("*").order("id"),
+      sb.from("evento_interacoes").select("*").order("id"),
+      sb.from("evento_arquivos").select("*").order("id"),
+    ]),
+    sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem"),
+    Promise.all([
+      sb.from("areas_atendimento").select("*").order("id"),
+      sb.from("demandas_fora_area").select("*").order("criado_em", { ascending: false }),
+    ]),
+    sb.from("eventos_acesso_app").select("*").order("criado_em", { ascending: false }).limit(2000),
+    sb.from("contas_app").select("*").order("id"),
+    Promise.all([
+      sb.from("links_motoristas").select("*").order("id"),
+      sb.from("link_avaliacoes").select("*").order("id"),
+    ]),
+    Promise.all([
+      sb.from("gestao_saldos").select("*").order("id"),
+      sb.from("gestao_aportes").select("*").order("id"),
+    ]),
+    sb.from("vinculos_cadastros").select("*").order("id"),
+    sb.from("cadastros").select("*").order("id"),
+    Promise.all([
+      sb.from("fin_contas").select("*").order("ordem").order("id"),
+      sb.from("fin_transferencias").select("*").order("id"),
+      sb.from("fin_entradas").select("*").order("id"),
+    ]),
+    sb.from("fin_conferencias").select("*").order("id"),
+    Promise.all([
+      sb.from("sede_pedidos").select("*").order("id", { ascending: false }),
+      sb.from("sede_resumos").select("*").order("data", { ascending: false }).limit(15),
+      sb.from("sede_pendencias").select("*").order("id"),
+      sb.from("sede_decisoes").select("*").order("id", { ascending: false }),
+    ]),
+    sb.from("sede_agenda").select("*").order("id"),
+    sb.from("sede_trabalhos").select("*").order("data", { ascending: false }).order("id", { ascending: false }).limit(60),
+    Promise.all([
+      sb.from("documentos").select("*").order("categoria").order("nome"),
+      sb.from("documentos_pastas").select("*"),
+      sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
+    ]),
+  ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
-  const [rlead, rparc, rorc] = await Promise.all([
-    sb.from("leads").select("*").order("id"),
-    sb.from("parceiros").select("*").order("id"),
-    sb.from("orcamentos").select("*").order("id"),
-  ]);
+  const [rlead, rparc, rorc] = await q[0];
   leads = aplicarConsulta("leads", rlead, leads);
   parceiros = aplicarConsulta("parceiros", rparc, parceiros);
   orcamentos = aplicarConsulta("orcamentos", rorc, orcamentos);
 
   // Módulo de Transporte — tolerante a erro (ex: SQL ainda não rodado),
   // pra não travar o resto do painel enquanto isso.
-  const [rm, rd, rc, rv, ra, rp, rpay, rpc, rpi, rpe, rli, rvd, rvp, rcp, rmf, rpp, rpt, rpl, rdv, rvg, rvc, rmo, rvo, rcand] = await Promise.all([
-    sb.from("motoristas").select("*").order("id"),
-    sb.from("documentos_motorista").select("*").order("id"),
-    sb.from("clientes_transporte").select("*").order("id"),
-    sb.from("viagens").select("*").order("id"),
-    sb.from("avaliacoes").select("*").order("id"),
-    sb.from("pagamentos_motorista").select("*").order("id"),
-    sb.from("pagamentos_cliente").select("*").order("id"),
-    sb.from("parceiro_contatos").select("*").order("id"),
-    sb.from("parceiro_interacoes").select("*").order("id"),
-    sb.from("parceiro_enderecos").select("*").order("id"),
-    sb.from("lead_interacoes").select("*").order("id"),
-    sb.from("vendas").select("*").order("id"),
-    sb.from("venda_parcelas").select("*").order("id"),
-    sb.from("contas_pagar").select("*").order("id"),
-    sb.from("metas_financeiras").select("*").order("id"),
-    sb.from("pecas_pedidos").select("*").order("id"),
-    sb.from("pecas_tentativas").select("*").order("id"),
-    sb.from("parceiro_links").select("*").order("id"),
-    sb.from("divulgacoes").select("*").order("id"),
-    sb.from("vagas").select("*").order("id"),
-    sb.from("vagas_candidatas").select("*").order("id"),
-    sb.from("motorista_observacoes").select("*").order("id"),
-    sb.from("viagem_ofertas").select("*").order("id"),
-    sb.from("candidatas").select("*").order("id", { ascending: false }),
-  ]);
+  const [rm, rd, rc, rv, ra, rp, rpay, rpc, rpi, rpe, rli, rvd, rvp, rcp, rmf, rpp, rpt, rpl, rdv, rvg, rvc, rmo, rvo, rcand] = await q[1];
   motoristas = aplicarConsulta("motoristas", rm, motoristas);
   candidaturasSite = aplicarConsulta("candidatas", rcand, candidaturasSite);
   documentosMotorista = aplicarConsulta("documentos_motorista", rd, documentosMotorista);
@@ -4554,16 +4608,11 @@ async function carregarDadosInterno(){
   vagasCandidatas = aplicarConsulta("vagas_candidatas", rvc, vagasCandidatas);
   motoristaObservacoes = aplicarConsulta("motorista_observacoes", rmo, motoristaObservacoes);
   viagemOfertas = aplicarConsulta("viagem_ofertas", rvo, viagemOfertas);
+  const pGastos = carregarGastosJuMotorista(); // precisa de motoristas; roda junto com o resto
 
   // Agenda de Eventos (schema_eventos.sql) — em chamada separada pra, se o
   // SQL ainda não tiver sido rodado, o erro ficar restrito a estas 5 tabelas.
-  const [rev, revc, revl, revi, reva] = await Promise.all([
-    sb.from("eventos").select("*").order("data_inicio"),
-    sb.from("evento_contatos").select("*").order("id"),
-    sb.from("evento_links").select("*").order("id"),
-    sb.from("evento_interacoes").select("*").order("id"),
-    sb.from("evento_arquivos").select("*").order("id"),
-  ]);
+  const [rev, revc, revl, revi, reva] = await q[2];
   eventos = aplicarConsulta("eventos", rev, eventos);
   eventoContatos = aplicarConsulta("evento_contatos", revc, eventoContatos);
   eventoLinks = aplicarConsulta("evento_links", revl, eventoLinks);
@@ -4571,91 +4620,69 @@ async function carregarDadosInterno(){
   eventoArquivos = aplicarConsulta("evento_arquivos", reva, eventoArquivos);
 
   // Paradas das viagens (schema_viagem_paradas.sql), separado pelo mesmo motivo
-  const rvpa = await sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem");
+  const rvpa = await q[3];
   viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
 
   // Área de atendimento e demanda de fora dela (schema_area_atendimento.sql), idem
-  const [rar, rdfa] = await Promise.all([
-    sb.from("areas_atendimento").select("*").order("id"),
-    sb.from("demandas_fora_area").select("*").order("criado_em", { ascending: false }),
-  ]);
+  const [rar, rdfa] = await q[4];
   areasAtendimento = aplicarConsulta("areas_atendimento", rar, areasAtendimento);
   demandasForaArea = aplicarConsulta("demandas_fora_area", rdfa, demandasForaArea);
 
   // Acessos ao app (schema_eventos_acesso_app.sql), idem
-  const reva2 = await sb.from("eventos_acesso_app").select("*").order("criado_em", { ascending: false }).limit(2000);
+  const reva2 = await q[5];
   eventosAcessoApp = aplicarConsulta("eventos_acesso_app", reva2, eventosAcessoApp);
 
   // Contas novas no app da cliente (schema_aviso_conta_app.sql), idem
-  const rcontas = await sb.from("contas_app").select("*").order("id");
+  const rcontas = await q[6];
   contasApp = aplicarConsulta("contas_app", rcontas, contasApp);
 
   // Links do painel da motorista (schema_links_motoristas.sql), idem
-  const [rlk, rla] = await Promise.all([
-    sb.from("links_motoristas").select("*").order("id"),
-    sb.from("link_avaliacoes").select("*").order("id"),
-  ]);
+  const [rlk, rla] = await q[7];
   linksMotoristas = aplicarConsulta("links_motoristas", rlk, linksMotoristas);
   linkAvaliacoes = aplicarConsulta("link_avaliacoes", rla, linkAvaliacoes);
 
   // Saldo de caixa da Gestão (schema_gestao.sql), idem
   // Sem aplicarConsulta de propósito: antes do SQL rodar, a tabela não existe
   // e isso não deve acender o aviso de "parte dos dados não carregou".
-  const [rgs, rga] = await Promise.all([
-    sb.from("gestao_saldos").select("*").order("id"),
-    sb.from("gestao_aportes").select("*").order("id"),
-  ]);
+  const [rgs, rga] = await q[8];
   if(!rgs.error) gestaoSaldos = rgs.data || [];
   if(!rga.error) gestaoAportes = rga.data || [];
 
   // Ligações entre cadastros (schema_pessoa_juridica.sql): tolerante a SQL ainda não rodado.
-  const rvc2 = await sb.from("vinculos_cadastros").select("*").order("id");
+  const rvc2 = await q[9];
   if(!rvc2.error) vinculosCadastros = rvc2.data || [];
   // Cadastro único (schema_cadastro_unico.sql): os códigos #1A, #12D.
-  const rcad = await sb.from("cadastros").select("*").order("id");
+  const rcad = await q[10];
   if(!rcad.error) atualizarCadastros(rcad.data || []);
 
   // Livro-caixa (schema_livro_caixa.sql): mesma tolerância. Sem o SQL a aba
   // mostra o aviso para rodar, em vez de acender a falha de carga.
-  const [rfc, rft, rfe] = await Promise.all([
-    sb.from("fin_contas").select("*").order("ordem").order("id"),
-    sb.from("fin_transferencias").select("*").order("id"),
-    sb.from("fin_entradas").select("*").order("id"),
-  ]);
+  const [rfc, rft, rfe] = await q[11];
   lcSqlFaltando = !!rfc.error;
   if(!rfc.error) finContas = rfc.data || [];
   if(!rft.error) finTransferencias = rft.data || [];
   if(!rfe.error) finEntradas = rfe.data || [];
   // Conferir saldo (schema_conferir_saldo.sql), também tolerante.
-  const rfcf = await sb.from("fin_conferencias").select("*").order("id");
+  const rfcf = await q[12];
   if(!rfcf.error) finConferencias = rfcf.data || [];
-  await carregarGastosJuMotorista();
+  await pGastos;
   // Sede (schema_sede.sql): também tolerante; sem o SQL a Sede mostra o aviso.
-  const [rsp, rsr, rspe, rsd] = await Promise.all([
-    sb.from("sede_pedidos").select("*").order("id", { ascending: false }),
-    sb.from("sede_resumos").select("*").order("data", { ascending: false }).limit(15),
-    sb.from("sede_pendencias").select("*").order("id"),
-    sb.from("sede_decisoes").select("*").order("id", { ascending: false }),
-  ]);
+  const [rsp, rsr, rspe, rsd] = await q[13];
   sedeSqlFaltando = !!rsp.error;
   if(!rsp.error) sedePedidos = rsp.data || [];
   if(!rsr.error) sedeResumos = rsr.data || [];
   if(!rspe.error) sedePendencias = rspe.data || [];
   if(!rsd.error) sedeDecisoes = rsd.data || [];
   // Agenda da Sede (schema_sede_agenda.sql): tarefas, decisões e ideias anotadas no CRM; tolerante.
-  const rsa = await sb.from("sede_agenda").select("*").order("id");
+  const rsa = await q[14];
   sedeAgendaSqlFaltando = !!rsa.error;
   if(!rsa.error) sedeAgenda = rsa.data || [];
   // Trabalhos (schema_sede_trabalhos.sql): texto completo das entregas; tolerante.
-  const rst = await sb.from("sede_trabalhos").select("*").order("data", { ascending: false }).order("id", { ascending: false }).limit(60);
+  const rst = await q[15];
   sedeTrabalhosSqlFaltando = !!rst.error;
   if(!rst.error) sedeTrabalhos = rst.data || [];
   // Documentos e conversa nas pendências (schema_documentos_e_prints.sql): tolerante.
-  const [rdoc, rdpa, rspm] = await Promise.all([
-    sb.from("documentos").select("*").order("categoria").order("nome"),
-    sb.from("documentos_pastas").select("*"),
-    sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
-  ]);
+  const [rdoc, rdpa, rspm] = await q[16];
   documentosSqlFaltando = !!rdoc.error;
   if(!rdoc.error) documentos = rdoc.data || [];
   if(!rdpa.error) documentosPastas = rdpa.data || [];
