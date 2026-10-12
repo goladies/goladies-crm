@@ -1198,6 +1198,22 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sede-pend .tit{font-weight:600;}
 .sede-pend .tit .status-badge{margin-left:4px; vertical-align:1px;}
 .sede-pend .acoes{align-items:center;}
+.sede-pend .tit .seta-abrir{display:inline-block; margin-left:6px; color:var(--muted); font-size:11px; transition:transform .15s;}
+.sede-pend.aberto .tit .seta-abrir{transform:rotate(90deg);}
+.sede-pend.aberto{border-color:var(--border2);}
+.sede-pend-mais{margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--bg-card2); border:1px solid var(--border); cursor:default; font-size:13px;}
+.sede-pend-mais h4{margin:0 0 6px; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);}
+.sede-pend-mais .vazio{color:var(--muted); font-size:12.5px;}
+.sede-ligados{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+.sede-ligados li{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.sede-ligados .marca{flex:none; width:16px; text-align:center; color:var(--muted);}
+.sede-ligados li.feito .marca{color:var(--c-green, #2fbf71);}
+.sede-ligados li.feito .nome{color:var(--text2);}
+.sede-ligados .nome{border:0; background:none; padding:0; font:inherit; font-weight:600; color:var(--rosa-texto); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+.sede-ligados .nome:disabled{color:var(--muted); cursor:default; text-decoration:none;}
+.sede-ligados .papel{border:1px solid var(--border2); background:var(--bg-card); color:var(--text2); border-radius:999px; padding:1px 8px; font:inherit; font-size:11.5px; cursor:pointer;}
+.sede-ligados .nota{font-size:12.5px; color:var(--text2);}
+.sede-pend-mais .ir{margin-top:10px;}
 .sede-prio-sel{width:auto; padding:5px 8px; font-size:12.5px;}
 .sede-pergunta{margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-blue-bg); font-size:12.5px; color:var(--text2); cursor:default;}
 .sede-pergunta .resp{margin-top:6px; padding-top:6px; border-top:1px solid var(--border);}
@@ -8230,6 +8246,53 @@ function htmlConversaPendencia(p, nomeAgente){
     }).join("")}
     ${ultima.autor==="Jú" ? `<div class="quando">Esperando a resposta. A Gabi lê a conversa no resumo das 9h15.</div>` : ""}</div>`;
 }
+// Clicar no card abre mais informações ali mesmo (pessoas ligadas e o botão para a aba),
+// sem sair da Sede. Os cards abertos sobrevivem à recarga automática.
+const pendAbertas = new Set();
+function alternarPendencia(id){
+  if(pendAbertas.has(id)) pendAbertas.delete(id); else pendAbertas.add(id);
+  renderSedePendencias();
+}
+function rotuloAba(destino){
+  if(String(destino).startsWith("sede:")){
+    const sub = destino.slice(5);
+    const nomes = { equipe:"Equipe", agenda:"Agenda", hoje:"Hoje", trabalhos:"Trabalhos", documentos:"Documentos", pedidos:"Pedidos", decisoes:"Decisões", pendencias:"Pendências" };
+    return "Sede › " + (nomes[sub] || sub);
+  }
+  const nav = document.querySelector(`.nav-item[data-tab="${destino}"]`);
+  return nav ? (nav.dataset.titulo || nav.textContent.trim()) : destino;
+}
+// Pessoas ligadas (schema_sede_pendencias_ligados.sql): [{codigo:"12D", nota, feito}].
+// O código é do cadastro único; cada papel (cliente, motorista...) abre a sua ficha por cima.
+function papeisDoCodigo(codigo){
+  const c = cadastros.find(x=>String(x.codigo).toUpperCase()===String(codigo).toUpperCase());
+  if(!c) return { cad:null, papeis:[] };
+  const papeis = [];
+  Object.values(CADASTROS).forEach(cad=>cad.lista().filter(r=>r.cadastro_id===c.id).forEach(r=>papeis.push({ cad, r })));
+  return { cad:c, papeis };
+}
+function abrirLigadoPendencia(tabela, id){ cadastroDaTabela(tabela).abrir(id); }
+function htmlMaisPendencia(p){
+  const lig = Array.isArray(p.ligados) ? p.ligados : [];
+  const linhas = lig.map(l=>{
+    const { cad, papeis } = papeisDoCodigo(l.codigo);
+    const nome = papeis[0] ? papeis[0].r.nome : (cad ? cad.nome : "");
+    const abrir = papeis[0] ? `abrirLigadoPendencia('${papeis[0].cad.tabela}', ${papeis[0].r.id})` : "";
+    return `<li class="${l.feito?"feito":""}">
+        <span class="marca" title="${l.feito?"Feito":"Falta"}">${l.feito?"✓":"•"}</span>
+        <button type="button" class="nome" ${abrir?`onclick="${abrir}"`:"disabled"}>${nome ? escapeHtml(nome) : "Código não encontrado"} #${escapeHtml(l.codigo)}</button>
+        ${papeis.length>1 ? papeis.map(x=>`<button type="button" class="papel" onclick="abrirLigadoPendencia('${x.cad.tabela}', ${x.r.id})">${escapeHtml(x.cad.rotulo)}</button>`).join("") : ""}
+        ${l.nota?`<span class="nota">${escapeHtml(l.nota)}</span>`:""}
+      </li>`;
+  }).join("");
+  const feitos = lig.filter(l=>l.feito).length;
+  return `<div class="sede-pend-mais" onclick="event.stopPropagation()">
+      <h4>Pessoas ligadas${lig.length ? ` · ${feitos} de ${lig.length} feitas` : ""}</h4>
+      ${lig.length ? `<ul class="sede-ligados">${linhas}</ul>`
+        : `<div class="vazio">Nenhuma pessoa ligada a esta pendência ainda. As agentes passam a ligar as pessoas a partir do próximo resumo.</div>`}
+      ${p.aba ? `<div class="ir"><button type="button" class="btn ghost small" onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')">Abrir em ${escapeHtml(rotuloAba(p.aba))} ›</button></div>` : ""}
+    </div>`;
+}
 function renderSedePendencias(){
   const box = document.getElementById("sede-pendencias-lista"); if(!box) return;
   const f = document.getElementById("sede-filtro-pendencias").value;
@@ -8256,12 +8319,13 @@ function renderSedePendencias(){
       const quem = a ? a.nome : "Gabi";
       const nMsgs = sedePendMensagens.filter(m=>m.pendencia_id===p.id).length;
       return `
-      <div class="sede-item sede-pend${p.aba?" clicavel":""}" ${p.aba?`onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')"`:""}>
+      <div class="sede-item sede-pend clicavel${pendAbertas.has(p.id)?" aberto":""}" onclick="alternarPendencia(${p.id})" title="${pendAbertas.has(p.id)?"Clique para fechar":"Clique para ver mais"}">
         <div class="num prio-${pr}">${n}</div>
         <div class="txt">
-          <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span></div>
+          <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span>${Array.isArray(p.ligados) && p.ligados.length ? ` <span class="status-badge gray" title="Pessoas ligadas">${p.ligados.length} ${p.ligados.length>1?"pessoas":"pessoa"}</span>` : ""}<span class="seta-abrir" aria-hidden="true">▶</span></div>
           ${p.detalhe?`<div class="det">${escapeHtml(p.detalhe)}</div>`:""}
           <div class="meta">criada em ${sedeDataHora(p.criado_em)}${p.atualizado_em && p.atualizado_em!==p.criado_em ? ` · atualizada em ${sedeDataHora(p.atualizado_em)}` : ""}${p.origem?` · ${escapeHtml(p.origem)}`:""}${!aberta?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeDataHora(p.fechada_em)}`:""}</div>
+          ${pendAbertas.has(p.id) ? htmlMaisPendencia(p) : ""}
           ${htmlConversaPendencia(p, quem)}
           ${aberta && pendRespAberta===p.id ? `<div class="sede-pergunta-form" onclick="event.stopPropagation()">
               <textarea id="sp-resp-txt-${p.id}" rows="3" oninput="pendRascunhos[${p.id}]=this.value" onfocus="campoPrintAtivo='sp-print-${p.id}'"
