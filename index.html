@@ -945,6 +945,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-mini .sag-it{white-space:normal; font-size:11.5px;}
 .sag-quem-grupo{font-size:11.5px; color:var(--text3); margin:6px 0 4px;}
 #sede-agenda-modal .chip-check input{width:auto;}
+.sag-sug{border:1px solid var(--rosa-borda); background:var(--rosa-bg); border-radius:10px; padding:10px 12px; font-size:13px;}
+.sag-sug .ic{width:14px; height:14px; vertical-align:-2px;}
+.sag-sug-motivo{color:var(--text2); font-size:12.5px; margin-top:4px;}
+.sag-it .sag-extra{color:var(--rosa-texto);}
 @media (max-width:1280px){ .sag-wrap{grid-template-columns:minmax(0,1fr);} }
 /* Tablet e celular: o mês mostra só bolinhas; tocar no dia abre a lista embaixo */
 @media (max-width:1100px){
@@ -2629,6 +2633,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
       <div class="full" id="sag-m-avisar-wrap"><label class="chip-check" style="display:inline-flex;"><input type="checkbox" id="sag-m-avisar"> <svg class=ic aria-hidden=true><use href=#i-bell /></svg> Me avisar no dia (a Gabi lembra no resumo das 9h15)</label></div>
       <div class="full" id="sag-m-decidido-wrap"><label>O que foi decidido</label><input type="text" id="sag-m-decidido" placeholder="Preencha ao marcar como decidido"></div>
+      <div class="full" id="sag-m-sugestao" style="display:none;"></div>
       <div class="full sag-dica" id="sag-m-info"></div>
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;">
@@ -7475,7 +7480,7 @@ function sagItens(){
   sedeAgenda.forEach(x=>{
     if(x.status==="Arquivado") return;
     out.push({ origem:"agenda", id:x.id, tipo:x.tipo, cor:x.tipo==="ideia" ? "branco" : x.cor, data:x.data, hora:x.hora ? x.hora.slice(0,5) : "",
-      titulo:x.titulo, area:x.area||"", quem:x.quem||[], avisar:x.avisar, decidido:x.decidido,
+      titulo:x.titulo, area:x.area||"", quem:x.quem||[], avisar:x.avisar, decidido:x.decidido, extra:x.tipo==="ideia" && x.status==="Aberto" ? sagExtraIdeia(x) : "",
       feito:x.status==="Feito" ? (sagDiaDe(x.feito_em) || x.data || hoje) : null, abrir:`abrirItemAgenda(${x.id})` });
   });
   const PRI = { 1:"vermelho", 2:"amarelo", 3:"verde" };
@@ -7525,6 +7530,16 @@ function sagItens(){
   });
   return out;
 }
+// Ideia: sugestão da Gabi (virar tarefa/decisão ou arquivar) e o aviso dos 30 dias na caixa
+const SAG_SUGESTAO = { tarefa:"virar tarefa", decisao:"virar decisão", arquivar:"arquivar" };
+function sagDiasNaCaixa(x){ return x.criado_em ? Math.floor((sagHojeData() - dataDeISO(isoLocal(new Date(x.criado_em)))) / 864e5) : 0; }
+function sagExtraIdeia(x){
+  const partes = [];
+  if(x.sugestao) partes.push(`${sagNomeQuem(x.sugestao_por||"gabi")} sugere: ${SAG_SUGESTAO[x.sugestao]}${x.sugestao_cor && x.sugestao!=="arquivar" ? " ("+x.sugestao_cor+")" : ""}`);
+  const dias = sagDiasNaCaixa(x);
+  if(dias>=30) partes.push(`há ${dias} dias na caixa: ainda faz sentido?`);
+  return partes.join(" · ");
+}
 function sagPassa(x){
   const tipo = x.feito ? "feito" : x.tipo;
   if(!sag.tipos.has(tipo)) return false;
@@ -7549,7 +7564,7 @@ function sagChip(x, detalhe){
   const rot = detalhe && x.rotulo ? `<span class="qm">· ${escapeHtml(x.rotulo)}</span>` : "";
   return `<div class="sag-it ${cls}" role="button" tabindex="0" onclick="event.stopPropagation(); ${x.abrir}" title="${escapeHtml(x.titulo)}${x.rotulo ? " · "+escapeHtml(x.rotulo) : ""}">`
     + `<svg class=ic aria-hidden=true><use href=#${ic} /></svg>${x.hora && !x.feito ? `<span class="hr">${x.hora}</span>` : ""}`
-    + `<span class="tx">${escapeHtml(x.titulo)}${detalhe && x.decidido ? `<span class="decidido">Decidido: ${escapeHtml(x.decidido)}</span>` : ""}</span>${rot}${quem}`
+    + `<span class="tx">${escapeHtml(x.titulo)}${detalhe && x.decidido ? `<span class="decidido">Decidido: ${escapeHtml(x.decidido)}</span>` : ""}${x.extra ? `<span class="decidido sag-extra">${escapeHtml(x.extra)}</span>` : ""}</span>${rot}${quem}`
     + `${x.avisar && !x.feito ? `<svg class=ic aria-hidden=true><use href=#i-bell /></svg>` : ""}</div>`;
 }
 function sagLegendaHtml(completa){
@@ -7732,6 +7747,18 @@ function abrirItemAgenda(id, dataPre){
   const ped = x ? (x.pedidos||[]).map(pid=>sedePedidos.find(p=>p.id===pid)).filter(p=>p && p.tipo==="Tarefa") : [];
   if(ped.length) info += (info?"<br>":"") + "Na fila das agentes: " + ped.map(p=>`${escapeHtml(sagNomeQuem(p.agente))} (${escapeHtml(p.status.toLowerCase())})`).join(", ");
   document.getElementById("sag-m-info").innerHTML = info;
+  // Sugestão da Gabi numa ideia aberta: aceitar aplica tipo e cor (ou arquiva); ignorar só apaga a sugestão
+  const sug = document.getElementById("sag-m-sugestao");
+  const dias = x && x.tipo==="ideia" ? sagDiasNaCaixa(x) : 0;
+  if(x && x.tipo==="ideia" && x.status==="Aberto" && (x.sugestao || dias>=30)){
+    sug.style.display = "";
+    sug.innerHTML = `<div class="sag-sug">
+      ${x.sugestao ? `<div><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> <b>${escapeHtml(sagNomeQuem(x.sugestao_por||"gabi"))} sugere: ${SAG_SUGESTAO[x.sugestao]}${x.sugestao_cor && x.sugestao!=="arquivar" ? ` <i class="sag-dot ${x.sugestao_cor}"></i> ${x.sugestao_cor}` : ""}</b></div>
+        ${x.sugestao_motivo ? `<div class="sag-sug-motivo">${escapeHtml(x.sugestao_motivo)}</div>` : ""}
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button class="btn small" type="button" onclick="aceitarSugestaoAgenda()">Aceitar sugestão</button><button class="btn ghost small" type="button" onclick="ignorarSugestaoAgenda()">Ignorar</button></div>` : ""}
+      ${dias>=30 ? `<div class="sag-sug-motivo"><svg class=ic aria-hidden=true><use href=#i-hourglass /></svg> Está há ${dias} dias na caixa. Ainda faz sentido? Se não, arquive.</div>` : ""}
+    </div>`;
+  } else { sug.style.display = "none"; sug.innerHTML = ""; }
   ajustarItemAgenda();
   document.getElementById("sede-agenda-modal").classList.add("open");
   if(!x) setTimeout(()=>document.getElementById("sag-m-titulo").focus(), 50);
@@ -7765,6 +7792,9 @@ async function salvarItemAgenda(statusNovo){
     reg.feito_por = statusNovo==="Aberto" ? null : sagEu();
   }
   if(!sagEditando) reg.criado_por = sagEu();
+  const antes = sagEditando ? sedeAgenda.find(i=>i.id===sagEditando) : null;
+  if(antes && "sugestao" in antes && antes.sugestao && (!ideia || statusNovo==="Arquivado"))
+    Object.assign(reg, { sugestao:null, sugestao_cor:null, sugestao_motivo:null, sugestao_por:null, sugestao_em:null });
   const r = sagEditando
     ? await sb.from("sede_agenda").update(reg).eq("id", sagEditando).select().single()
     : await sb.from("sede_agenda").insert(reg).select().single();
@@ -7776,6 +7806,21 @@ async function salvarItemAgenda(statusNovo){
   renderSede(); renderSuaSemana();
 }
 function marcarItemAgenda(status){ salvarItemAgenda(status); }
+function aceitarSugestaoAgenda(){
+  const x = sedeAgenda.find(i=>i.id===sagEditando); if(!x || !x.sugestao) return;
+  if(x.sugestao==="arquivar"){ salvarItemAgenda("Arquivado"); return; }
+  const tipo = x.sugestao==="decisao" ? "decidir" : "fazer";
+  document.querySelectorAll('input[name="sag-m-tipo"]').forEach(r=>r.checked = r.value===tipo);
+  if(x.sugestao_cor) document.querySelectorAll('input[name="sag-m-cor"]').forEach(r=>r.checked = r.value===x.sugestao_cor);
+  salvarItemAgenda();
+}
+async function ignorarSugestaoAgenda(){
+  const id = sagEditando;
+  const r = await sb.from("sede_agenda").update({ sugestao:null, sugestao_cor:null, sugestao_motivo:null, sugestao_por:null, sugestao_em:null }).eq("id", id).select().single();
+  if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
+  sedeAgenda = sedeAgenda.map(i=>i.id===id ? { ...i, ...r.data } : i);
+  abrirItemAgenda(id); renderSede(); renderSuaSemana();
+}
 function adiarItemAgenda(){
   const el = document.getElementById("sag-m-data");
   el.value = isoLocal(somarDias(el.value ? dataDeISO(el.value) : sagHojeData(), 7));
