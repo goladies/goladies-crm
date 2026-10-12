@@ -950,6 +950,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-mini .sag-it{white-space:normal; font-size:11.5px;}
 .sag-quem-grupo{font-size:11.5px; color:var(--text3); margin:6px 0 4px;}
 #sede-agenda-modal .chip-check input{width:auto;}
+#motorista-modal .chip-check input{width:auto;}
+.mp-grade{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:6px 12px;}
+.mp-grade > div{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12.5px;}
+.mp-grade select{width:auto; min-width:110px; padding:4px 6px; font-size:12px;}
+#mt-perfil-campos.travado{opacity:.45; pointer-events:none;}
 .sag-sug{border:1px solid var(--rosa-borda); background:var(--rosa-bg); border-radius:10px; padding:10px 12px; font-size:13px;}
 .sag-sug .ic{width:14px; height:14px; vertical-align:-2px;}
 .sag-sug-motivo{color:var(--text2); font-size:12.5px; margin-top:4px;}
@@ -2901,6 +2906,40 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Status</label><select id="mt-doc-status"><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
         <div><label>Arquivo (opcional)</label><input type="file" id="mt-doc-file" accept="image/*,.pdf"></div>
         <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addDocumentoMotorista()">+ Adicionar documento</button></div>
+      </div>
+    </div>
+
+    <!-- Perfil e cuidado (schema_motorista_perfil.sql): base da Clara. Só grava
+         depois que a motorista toca em "Autorizo" no painel dela. -->
+    <div id="mt-perfil-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
+      <h4 style="font-size:13px; margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-heart /></svg> Perfil e cuidado</h4>
+      <div id="mt-perfil-status" style="font-size:12.5px; margin-bottom:10px;"></div>
+      <div id="mt-perfil-campos">
+        <div class="formgrid">
+          <div class="full"><label>Trajetória e por que quer dirigir</label><textarea id="mp-trajetoria" rows="2"></textarea></div>
+          <div class="full"><label>Experiências que ela quer contar</label><textarea id="mp-experiencias" rows="2" placeholder="Ex.: cuido de criança há 10 anos"></textarea></div>
+          <div class="full"><label>O que quer aprender</label><textarea id="mp-quer-aprender" rows="2"></textarea></div>
+          <div><label>Filhos <span style="font-weight:400; color:var(--muted);">(se ela quiser contar)</span></label><input type="text" id="mp-filhos" placeholder="Ex.: 2, de 5 e 9 anos"></div>
+          <div><label>Estado civil <span style="font-weight:400; color:var(--muted);">(se ela quiser contar)</span></label><input type="text" id="mp-estado-civil"></div>
+          <div class="full"><span class="dica">Idade vem do Aniversário, lá em cima. Filhos, estado civil e idade nunca decidem quem pega a corrida, e a Clara não vê esses dados.</span></div>
+          <div class="full"><label>Competências</label><div id="mp-competencias" class="mp-grade"></div></div>
+          <div class="full"><label>Corridas</label><div id="mp-corridas" class="mp-grade"></div></div>
+          <div class="full"><label>Turnos que prefere</label><div id="mp-turnos" style="display:flex; flex-wrap:wrap; gap:6px;"></div></div>
+          <div class="full"><label>Dias que prefere</label><div id="mp-dias" style="display:flex; flex-wrap:wrap; gap:6px;"></div></div>
+          <div class="full"><label>Onde ou quando se sente insegura</label><textarea id="mp-inseguranca" rows="2"></textarea></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <button type="button" class="btn small" onclick="salvarPerfilMotorista()">Salvar perfil</button>
+          <button type="button" class="btn ghost small" style="color:var(--red); border-color:var(--red); margin-left:auto;" onclick="apagarPerfilMotorista()">Ela pediu para apagar</button>
+        </div>
+        <h4 style="font-size:12.5px; margin:16px 0 6px;">Conversas de cuidado</h4>
+        <div id="mp-cuidado-lista"></div>
+        <div class="formgrid" style="margin-top:8px;">
+          <div><label>Data</label><input type="date" id="mc-data"></div>
+          <div class="full"><label>Resumo</label><textarea id="mc-resumo" rows="2" placeholder="Como ela está, o que contou sobre jornada, segurança, cansaço"></textarea><span class="dica">Não escreva diagnóstico, remédio nem nada de saúde (dado sensível na LGPD).</span></div>
+          <div class="full"><label>Próximo passo</label><input type="text" id="mc-proximo"></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addCuidadoMotorista()">+ Adicionar conversa</button></div>
+        </div>
       </div>
     </div>
 
@@ -7158,10 +7197,10 @@ const SEDE_AGENTES = [
             "Não guarda dado pessoal em arquivo do Drive",
             "Não decide quem trabalha nem fala com motorista ou parceira por conta própria"],
     horarios:["Sob pedido, quando você chamar a Clara no Claude", "Conversa mensal de cuidado: a avaliar quando houver motoristas além de você"],
-    onde:"Claude: skill clara-pessoas (3 linhas que ela não cruza, certificação, aprendizados). Roteiros e trilhas em G:\\Meu Drive\\Sede\\Clara. Perfil da motorista com consentimento no CRM: a fazer (SQL).",
+    onde:"Claude: skill clara-pessoas (3 linhas que ela não cruza, certificação, aprendizados). Roteiros e trilhas em G:\\Meu Drive\\Sede\\Clara. Perfil da motorista no CRM (Transporte › ficha › Perfil e cuidado), só depois que ela toca em Autorizo no painel; a Clara lê só competências e preferências.",
     le:"Funil de motoristas (só id e etapa), certificação, normas e editais da Pietra", escreve:"Roteiros, trilhas, critérios e planos no Drive (sem dado pessoal)",
     custo:"Incluído no seu plano do Claude",
-    rotina:"Sob pedido", status:["Em montagem","amber"], aba:"transporte", abaRotulo:"Abrir Transporte" },
+    rotina:"Sob pedido", status:["Trabalhando","green"], aba:"transporte", abaRotulo:"Abrir Transporte" },
   { id:"rica", nome:"Rica", cargo:"Head de Finanças", titulo:"Head de Finanças (FP&A)", cor:"green", ia:"Claude", responde:"Ester", nivel:"area",
     jeito:"Cuidadosa com cada centavo, sem drama. Fala Ganhei, Gastei e Sobrou e mostra a conta quando calcula.",
     missao:"Você sempre saber quanto entrou, quanto saiu e quanto sobrou, sem abrir planilha.",
@@ -10849,6 +10888,7 @@ function openMotoristaModal(id){
   renderObservacoesMotorista();
   renderAvaliacoesMotorista();
   renderKmHistoricoMotorista();
+  carregarPerfilMotorista();
   document.getElementById("motorista-modal").classList.add("open");
 }
 function renderDocumentosMotorista(){
@@ -10955,6 +10995,120 @@ async function deleteObservacaoMotorista(id){
   motoristaObservacoes = data || [];
   renderObservacoesMotorista();
 }
+// ===== PERFIL E CUIDADO DA MOTORISTA (schema_motorista_perfil.sql) =====
+// Carrega na hora de abrir a ficha (não entra na carga geral). O banco recusa
+// conteúdo enquanto ela não tocar em "Autorizo" no painel dela.
+const MP_COMPETENCIAS = ["Crianças", "Adolescentes", "Pessoas idosas", "Mobilidade reduzida", "Primeiros socorros", "Eventos", "Viagens longas"];
+const MP_CORRIDAS = ["Criança", "Adolescente", "Pessoa idosa", "Volta à noite", "Aeroporto", "Evento", "Fora de POA"];
+const MP_TURNOS = ["Manhã", "Tarde", "Noite", "Madrugada"];
+const MP_DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+let perfilMotorista = null, cuidadoMotorista = [];
+function mpGrade(id, itens, valores, opcoes){
+  document.getElementById(id).innerHTML = itens.map(i=>`<div><span>${escapeHtml(i)}</span><select data-item="${escapeHtml(i)}">${
+    opcoes.map(([v,t])=>`<option value="${v}"${(valores[i]||"")===v?" selected":""}>${t}</option>`).join("")}</select></div>`).join("");
+}
+function mpChips(id, itens, marcados){
+  document.getElementById(id).innerHTML = itens.map(i=>`<label class="chip-check"><input type="checkbox" value="${escapeHtml(i)}"${(marcados||[]).includes(i)?" checked":""}> ${escapeHtml(i)}</label>`).join("");
+}
+async function carregarPerfilMotorista(){
+  const id = editingMotoristaId;
+  perfilMotorista = null; cuidadoMotorista = [];
+  preencherPerfilMotorista(id ? "Carregando…" : "Salve o cadastro primeiro.");
+  if(!id) return;
+  const [rp, rc] = await Promise.all([
+    sb.from("motorista_perfil").select("*").eq("motorista_id", id).maybeSingle(),
+    sb.from("motorista_cuidado").select("*").eq("motorista_id", id).order("data", { ascending: false }).order("id", { ascending: false }),
+  ]);
+  if(id !== editingMotoristaId) return; // trocou de ficha enquanto carregava
+  if(rp.error){ preencherPerfilMotorista("O perfil ainda não está ativo: falta rodar o schema_motorista_perfil.sql no Supabase."); return; }
+  perfilMotorista = rp.data; cuidadoMotorista = rc.data || [];
+  preencherPerfilMotorista();
+}
+function preencherPerfilMotorista(aviso){
+  const p = perfilMotorista || {};
+  const autorizado = !aviso && !!p.autorizado_em;
+  const m = motoristas.find(x=>x.id===editingMotoristaId) || {};
+  const idade = m.aniversario ? idadeAnos(m.aniversario) : null;
+  document.getElementById("mt-perfil-status").innerHTML = aviso
+    ? `<span style="color:var(--muted);">${escapeHtml(aviso)}</span>`
+    : (autorizado
+      ? `<span class="tag ativo">✓ Ela autorizou em ${escapeHtml(dataHoraBR(p.autorizado_em))}</span>`
+      : `<span class="tag urg-media">Ela ainda não autorizou</span> <span style="color:var(--muted);">Peça para ela abrir o painel (motora.goladies.com.br) › Perfil › Meu perfil Go Ladies e tocar em Autorizo. Até lá, nada é guardado aqui.</span>`)
+      + (idade != null ? `<div style="color:var(--muted); margin-top:4px;">Idade: ${idade} anos (do Aniversário).</div>` : "");
+  document.getElementById("mp-trajetoria").value = p.trajetoria || "";
+  document.getElementById("mp-experiencias").value = p.experiencias || "";
+  document.getElementById("mp-quer-aprender").value = p.quer_aprender || "";
+  document.getElementById("mp-filhos").value = p.filhos || "";
+  document.getElementById("mp-estado-civil").value = p.estado_civil || "";
+  document.getElementById("mp-inseguranca").value = p.inseguranca || "";
+  mpGrade("mp-competencias", MP_COMPETENCIAS, p.competencias || {}, [["","-"],["declarada","Declarada"],["certificada","Certificada"]]);
+  mpGrade("mp-corridas", MP_CORRIDAS, p.corridas || {}, [["","-"],["aceita","Aceita"],["nao_aceita","Não aceita"]]);
+  mpChips("mp-turnos", MP_TURNOS, p.turnos);
+  mpChips("mp-dias", MP_DIAS, p.dias);
+  document.getElementById("mc-data").value = "";
+  document.getElementById("mc-resumo").value = "";
+  document.getElementById("mc-proximo").value = "";
+  document.getElementById("mt-perfil-campos").classList.toggle("travado", !autorizado);
+  document.getElementById("mp-cuidado-lista").innerHTML = cuidadoMotorista.map(c=>`
+    <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <strong>${escapeHtml(fmtDataBR(c.data))}</strong>
+        <button class="icon-btn" type="button" onclick="deleteCuidadoMotorista(${c.id})" aria-label="Excluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
+      </div>
+      <div style="color:var(--muted); margin-top:2px;">${escapeHtml(c.resumo)}</div>
+      ${c.proximo_passo ? `<div style="margin-top:2px;">Próximo passo: ${escapeHtml(c.proximo_passo)}</div>` : ""}
+    </div>`).join("") || `<p style="color:var(--muted); font-size:12.5px;">Nenhuma conversa registrada ainda.</p>`;
+}
+function mpLerGrade(id){
+  const o = {};
+  document.querySelectorAll(`#${id} select`).forEach(s=>{ if(s.value) o[s.dataset.item] = s.value; });
+  return o;
+}
+async function salvarPerfilMotorista(){
+  if(!editingMotoristaId || !perfilMotorista || !perfilMotorista.autorizado_em) return;
+  const txt = id => document.getElementById(id).value.trim() || null;
+  const payload = {
+    trajetoria: txt("mp-trajetoria"), experiencias: txt("mp-experiencias"), quer_aprender: txt("mp-quer-aprender"),
+    filhos: txt("mp-filhos"), estado_civil: txt("mp-estado-civil"), inseguranca: txt("mp-inseguranca"),
+    competencias: mpLerGrade("mp-competencias"), corridas: mpLerGrade("mp-corridas"),
+    turnos: [...document.querySelectorAll("#mp-turnos input:checked")].map(i=>i.value),
+    dias: [...document.querySelectorAll("#mp-dias input:checked")].map(i=>i.value),
+    atualizado_em: new Date().toISOString(),
+    atualizado_por: (usuariaAtual && usuariaAtual.email) || null,
+  };
+  const { data, error } = await sb.from("motorista_perfil").update(payload).eq("motorista_id", editingMotoristaId).select().maybeSingle();
+  if(error){ alert("Erro ao salvar o perfil: " + error.message); return; }
+  if(data) perfilMotorista = data;
+  showToast("Perfil salvo!");
+}
+async function addCuidadoMotorista(){
+  if(!editingMotoristaId) return;
+  const resumo = document.getElementById("mc-resumo").value.trim();
+  if(!resumo){ alert("Escreva o resumo da conversa"); return; }
+  const payload = { motorista_id: editingMotoristaId, resumo, proximo_passo: document.getElementById("mc-proximo").value.trim() || null };
+  const d = document.getElementById("mc-data").value;
+  if(d) payload.data = d;
+  const { error } = await sb.from("motorista_cuidado").insert(payload);
+  if(error){ alert("Erro ao adicionar a conversa: " + error.message); return; }
+  await carregarPerfilMotorista();
+}
+async function deleteCuidadoMotorista(id){
+  if(!confirm("Excluir esta conversa de cuidado?")) return;
+  const { error } = await sb.from("motorista_cuidado").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  await carregarPerfilMotorista();
+}
+async function apagarPerfilMotorista(){
+  if(!editingMotoristaId) return;
+  const m = motoristas.find(x=>x.id===editingMotoristaId);
+  if(!confirm(`Apagar o perfil e todas as conversas de cuidado de ${m ? nomeCod(m) : "esta motorista"}?\n\nA autorização dela também sai: para guardar de novo, ela precisa tocar em Autorizo no painel. Não dá para desfazer.`)) return;
+  const r1 = await sb.from("motorista_cuidado").delete().eq("motorista_id", editingMotoristaId);
+  const r2 = r1.error ? r1 : await sb.from("motorista_perfil").delete().eq("motorista_id", editingMotoristaId);
+  if(r2.error){ alert("Erro ao apagar: " + r2.error.message); return; }
+  showToast("Perfil apagado");
+  await carregarPerfilMotorista();
+}
+
 // Ao marcar "Ativa" pela primeira vez, sugere validade de 12 meses a partir de hoje
 // (cláusula 3.3 do Termo). Não sobrescreve data já preenchida.
 function sugerirCertificadaAte(){
@@ -11013,7 +11167,7 @@ async function saveMotorista(){
   await salvarDocPrincipal("endereco", editingMotoristaId);
   await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
   await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes");
-  if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); }
+  if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); carregarPerfilMotorista(); }
   else { closeModal("motorista-modal"); }
 }
 async function deleteMotorista(id){
