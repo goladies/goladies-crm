@@ -61,9 +61,9 @@ begin
                             'cliente_ids', (select coalesce(jsonb_agg(t.id order by t.id), '[]') from public.clientes_transporte t where t.cadastro_id = c.id),
                             'viagens', (select count(*) from public.viagens v join public.clientes_transporte t on t.id = v.cliente_id
                                          where t.cadastro_id = c.id and v.status = 'Concluída'),
-                            'primeira_viagem', (select min(v.data_hora)::date from public.viagens v join public.clientes_transporte t on t.id = v.cliente_id
+                            'primeira_viagem', (select min(coalesce(v.data, (v.data_hora at time zone 'America/Sao_Paulo')::date)) from public.viagens v join public.clientes_transporte t on t.id = v.cliente_id
                                                  where t.cadastro_id = c.id and v.status = 'Concluída'),
-                            'ultima_viagem', (select max(v.data_hora)::date from public.viagens v join public.clientes_transporte t on t.id = v.cliente_id
+                            'ultima_viagem', (select max(coalesce(v.data, (v.data_hora at time zone 'America/Sao_Paulo')::date)) from public.viagens v join public.clientes_transporte t on t.id = v.cliente_id
                                                where t.cadastro_id = c.id and v.status = 'Concluída')
                           ) order by c.id)
                           from public.cadastros c), '[]'),
