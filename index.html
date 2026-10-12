@@ -7648,6 +7648,10 @@ async function decidirSede(id, status){
   const reg = status==="Esperando você"
     ? { status, decidido_em:null }
     : { status, resposta: resp.trim() || null, decidido_em: new Date().toISOString() };
+  // A pergunta fica na conversa da decisão; a Gabi responde ali e devolve para "Esperando você".
+  const atual = sedeDecisoes.find(x=>x.id===id) || {};
+  if(status==="Mais dados" && Array.isArray(atual.conversa))
+    reg.conversa = atual.conversa.concat({ autor:"Jú", texto: resp.trim(), em: new Date().toISOString() });
   const r = await sb.from("sede_decisoes").update(reg).eq("id", id).select().single();
   if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
   sedeDecisoes = sedeDecisoes.map(x=>x.id===id ? r.data : x);
@@ -7658,8 +7662,12 @@ function renderSedeDecisoes(){
   const box = document.getElementById("sede-decisoes-lista"); if(!box) return;
   if(!sedeDecisoes.length){ box.innerHTML = `<div class="sede-vazio">Nenhuma decisão ainda.</div>`; return; }
   const esperando = sedeDecisoes.filter(d=>d.status==="Esperando você");
-  const outras = sedeDecisoes.filter(d=>d.status!=="Esperando você");
+  const aguardando = sedeDecisoes.filter(d=>d.status==="Mais dados");
+  const outras = sedeDecisoes.filter(d=>d.status!=="Esperando você" && d.status!=="Mais dados");
   const cls = { "Aprovada":"green", "Recusada":"red", "Mais dados":"amber", "Esperando você":"pink" };
+  const autorConversa = a => a==="Jú" ? "Você perguntou" : a==="claude" ? "Resposta do Claude" : `Resposta de ${sedeNome(a)}`;
+  const conversa = d => (Array.isArray(d.conversa) && d.conversa.length ? d.conversa : (d.status==="Mais dados" && d.resposta ? [{autor:"Jú", texto:d.resposta}] : []))
+    .map(m=>`<div class="det" style="font-size:13px; white-space:pre-wrap; padding:6px 10px; border-radius:8px; background:rgba(127,127,127,.10);"><b>${escapeHtml(autorConversa(m.autor))}${m.em?` (${sedeData(m.em)})`:""}:</b> ${escapeHtml(m.texto||"")}</div>`).join("");
   const card = d => `<div class="sede-item sede-decisao" style="flex-direction:column; align-items:stretch;">
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <b style="flex:1; min-width:0;">${escapeHtml(d.titulo)}</b>
@@ -7670,7 +7678,11 @@ function renderSedeDecisoes(){
       ${d.opcoes?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Caminhos:</b> ${escapeHtml(d.opcoes)}</div>`:""}
       ${d.recomendacao?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Recomendação:</b> ${escapeHtml(d.recomendacao)}</div>`:""}
       <div class="det" style="font-size:13px; color:var(--text2);"><b>Opinião da Vera:</b> ${d.opiniao_vera ? escapeHtml(d.opiniao_vera) : `<span style="color:var(--muted);">a Vera ainda não começou</span>`}</div>
-      ${d.status==="Esperando você"
+      ${conversa(d)}
+      ${d.status==="Mais dados"
+        ? `<div class="meta" style="font-size:12px; color:var(--muted);">A Gabi responde na rotina das 9h15 e a decisão volta para "Esperando você".</div>
+           <div><button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Esperando você')">Decidir agora</button></div>`
+        : d.status==="Esperando você"
         ? `<textarea id="sd-resp-${d.id}" rows="2" placeholder="Sua resposta (opcional para aprovar ou recusar; obrigatória para pedir mais dados)"></textarea>
            <div style="display:flex; gap:6px; flex-wrap:wrap;">
              <button class="btn small" type="button" onclick="decidirSede(${d.id},'Aprovada')">Aprovar</button>
@@ -7681,6 +7693,7 @@ function renderSedeDecisoes(){
            <div><button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Esperando você')">Reabrir</button></div>`}
     </div>`;
   box.innerHTML = (esperando.length ? `<div class="sede-grupo">Esperando você</div>` + esperando.map(card).join("") : `<div class="sede-vazio">Nada esperando você agora.</div>`)
+    + (aguardando.length ? `<div class="sede-grupo">Aguardando resposta da equipe</div>` + aguardando.map(card).join("") : "")
     + (outras.length ? `<div class="sede-grupo">Já respondidas</div>` + outras.map(card).join("") : "");
 }
 
