@@ -857,7 +857,12 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-limite{display:none; background:var(--c-red-bg); border:1px solid var(--c-red); color:var(--c-red); border-radius:10px; padding:8px 12px; font-size:13px; margin-bottom:12px;}
 .sag-dot{width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;}
 .sag-dot.vermelho{background:var(--c-red);} .sag-dot.amarelo{background:var(--c-amber);} .sag-dot.verde{background:var(--c-green);}
-.sag-dot.branco{background:#fff; box-shadow:inset 0 0 0 1px var(--border2);} .sag-dot.evento{background:var(--sag-evento);} .sag-dot.feito{background:var(--c-gray); opacity:.7;}
+.sag-dot.branco{background:#fff; box-shadow:inset 0 0 0 1px var(--border2);} .sag-dot.feriado{background:var(--c-purple);}
+.sag-fer{display:flex; align-items:center; gap:5px; background:var(--c-purple-bg); color:var(--c-purple); border-radius:6px; padding:2px 7px; font-size:11.5px; font-weight:600; min-width:0; overflow:hidden; white-space:nowrap;}
+.sag-fer span{overflow:hidden; text-overflow:ellipsis;}
+.sag-fer .ic{width:12px; height:12px; flex-shrink:0;}
+.sag-fer.fac{background:transparent; border:1px dashed var(--c-purple); font-weight:500;}
+.sag-dia-sel .sag-fer,.sag-linha .sag-fer,.sag-semana .sag-fer{white-space:normal; font-size:12.5px; padding:5px 9px;} .sag-dot.evento{background:var(--sag-evento);} .sag-dot.feito{background:var(--c-gray); opacity:.7;}
 /* chip de um item */
 .sag-it{display:flex; align-items:center; gap:5px; border-radius:7px; padding:3px 7px; font-size:12px; line-height:1.3; border-left:3px solid; cursor:pointer; overflow:hidden; white-space:nowrap; min-width:0; color:var(--text1);}
 .sag-it:hover{filter:brightness(1.15);}
@@ -953,7 +958,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 /* Tablet e celular: o mês mostra só bolinhas; tocar no dia abre a lista embaixo */
 @media (max-width:1100px){
   .sag-mes .dia{min-height:62px;}
-  .sag-mes .sag-it,.sag-mes .mais{display:none;}
+  .sag-mes .sag-it,.sag-mes .mais,.sag-mes .sag-fer{display:none;}
   .sag-mes .dots{display:flex;}
   .sag-semana,.sag-mini{grid-template-columns:minmax(0,1fr);}
   .sag-semana .col,.sag-mini .col{min-height:0;}
@@ -2638,6 +2643,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;">
       <button class="btn ghost" id="sag-m-excluir" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirItemAgenda()">Excluir</button>
+      <button class="btn ghost" id="sag-m-google" type="button" onclick="abrirGoogleAgendaItem()" title="Abre o Google Agenda com o item preenchido; é só salvar lá"><svg class=ic aria-hidden=true><use href=#i-calendar-event /></svg> Google Agenda</button>
       <button class="btn ghost" id="sag-m-arquivar" style="display:none;" onclick="marcarItemAgenda('Arquivado')">Arquivar</button>
       <button class="btn ghost" id="sag-m-adiar" style="display:none;" onclick="adiarItemAgenda()">Adiar 1 semana</button>
       <button class="btn ghost" id="sag-m-reabrir" style="display:none;" onclick="marcarItemAgenda('Aberto')">Reabrir</button>
@@ -7462,7 +7468,7 @@ const SAG_AREA_AGENTE = { rica:"Financeiro", tati:"Transporte", carol:"Parcerias
 const SAG_PESSOAS = ["Jú","Rafaela"];
 const SAG_VISOES = [["mes","Mês"],["semana","Semana"],["linha","Linha do tempo"]];
 const SAG_DOW = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-const sag = { visao:"mes", ancora:null, diaSel:null, tipos:new Set(Object.keys(SAG_TIPOS)), cores:new Set(SAG_ORDEM_COR), area:"", quem:"", filtrosIni:false };
+const sag = { visao:"mes", ancora:null, diaSel:null, tipos:new Set(Object.keys(SAG_TIPOS)), cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
 try{ const v = localStorage.getItem("gl-sede-agenda-visao"); if(SAG_VISOES.some(x=>x[0]===v)) sag.visao = v; }catch(_){}
 let sagEditando = null;
 
@@ -7540,6 +7546,43 @@ function sagExtraIdeia(x){
   if(dias>=30) partes.push(`há ${dias} dias na caixa: ainda faz sentido?`);
   return partes.join(" · ");
 }
+// ── Feriados (Brasil, RS e Porto Alegre), calculados no código, ano a ano ──
+// Móveis pela Páscoa. Porto Alegre: Lei municipal 3.033 (Navegantes, Sexta-feira
+// Santa, Corpus Christi, Finados). 26/3 (aniversário de POA) NÃO é feriado.
+const sagFeriadosCache = {};
+function sagPascoa(ano){
+  const a = ano%19, b = Math.floor(ano/100), c = ano%100, d = Math.floor(b/4), e = b%4, f = Math.floor((b+8)/25),
+    g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15)%30, i = Math.floor(c/4), k = c%4, l = (32+2*e+2*i-h-k)%7,
+    m = Math.floor((a+11*h+22*l)/451), mes = Math.floor((h+l-7*m+114)/31), dia = ((h+l-7*m+114)%31)+1;
+  return new Date(ano, mes-1, dia);
+}
+function sagFeriadosAno(ano){
+  if(sagFeriadosCache[ano]) return sagFeriadosCache[ano];
+  const map = {}, p = sagPascoa(ano);
+  const add = (d, nome, onde, facultativo) => { const iso = typeof d==="string" ? `${ano}-${d}` : isoLocal(d); (map[iso] = map[iso] || []).push({ nome, onde, facultativo:!!facultativo }); };
+  add("01-01","Confraternização Universal","Brasil");
+  add(somarDias(p,-48),"Carnaval","ponto facultativo",true);
+  add(somarDias(p,-47),"Carnaval","ponto facultativo",true);
+  add(somarDias(p,-46),"Quarta de Cinzas (até 14h)","ponto facultativo",true);
+  add(somarDias(p,-2),"Sexta-feira Santa","Brasil");
+  add("02-02","Navegantes","Porto Alegre");
+  add("04-21","Tiradentes","Brasil");
+  add("05-01","Dia do Trabalho","Brasil");
+  add(somarDias(p,60),"Corpus Christi","Porto Alegre");
+  add("09-07","Independência","Brasil");
+  add("09-20","Revolução Farroupilha","RS");
+  add("10-12","Nossa Senhora Aparecida","Brasil");
+  add("11-02","Finados","Brasil");
+  add("11-15","Proclamação da República","Brasil");
+  add("11-20","Consciência Negra","Brasil");
+  add("12-25","Natal","Brasil");
+  return sagFeriadosCache[ano] = map;
+}
+function sagFeriados(iso){ return sag.feriados && iso ? (sagFeriadosAno(Number(iso.slice(0,4)))[iso] || []) : []; }
+function sagFeriadoHtml(iso, curto){
+  return sagFeriados(iso).map(f=>`<div class="sag-fer ${f.facultativo?"fac":""}" title="${escapeHtml(f.nome)} · ${f.facultativo?"ponto facultativo":"feriado "+(f.onde==="Brasil"?"nacional":f.onde==="RS"?"no RS":"em "+f.onde)}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span>${escapeHtml(f.nome)}${curto?"":` · ${escapeHtml(f.onde)}`}</span></div>`).join("");
+}
+
 function sagPassa(x){
   const tipo = x.feito ? "feito" : x.tipo;
   if(!sag.tipos.has(tipo)) return false;
@@ -7569,7 +7612,7 @@ function sagChip(x, detalhe){
 }
 function sagLegendaHtml(completa){
   const cores = Object.entries(SAG_CORES).map(([c,[n,d]])=>`<span><i class="sag-dot ${c}"></i><b>${n}</b> ${d}</span>`).join("")
-    + `<span><i class="sag-dot evento"></i><b>Azul</b> evento (transporte, live, curso)</span><span><i class="sag-dot feito"></i><b>Cinza</b> feito ou decidido</span>`;
+    + `<span><i class="sag-dot evento"></i><b>Azul</b> evento (transporte, live, curso)</span><span><i class="sag-dot feito"></i><b>Cinza</b> feito ou decidido</span><span><i class="sag-dot feriado"></i><b>Roxo</b> feriado (Brasil, RS e Porto Alegre) ou ponto facultativo</span>`;
   const icones = Object.values(SAG_TIPOS).map(([n,ic])=>`<span><svg class=ic aria-hidden=true><use href=#${ic} /></svg> ${n}</span>`).join("")
     + `<span><svg class=ic aria-hidden=true><use href=#i-bell /></svg> Me avisar no dia</span>`;
   return `<div class="sag-legenda">${cores}</div>` + (completa ? `<div class="sag-legenda">${icones}</div>` : "");
@@ -7596,14 +7639,14 @@ function renderSedeAgenda(){
     titulo = ini.getMonth()===fim.getMonth() ? `${ini.getDate()} a ${fim.getDate()} de ${fim.toLocaleDateString("pt-BR",{month:"long"})}` : `${ini.getDate()} de ${mesCurto(ini)} a ${fim.getDate()} de ${mesCurto(fim)}`;
     html = `<div class="sag-semana">${Array.from({length:7},(_,i)=>{
       const d = somarDias(ini, i), iso = isoLocal(d), l = doDia(iso);
-      return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab">${SAG_DOW[i]}<b>${d.getDate()}</b></div>${l.map(x=>sagChip(x, true)).join("") || `<div class="sag-dica" style="text-align:center;">Livre</div>`}</div>`;
+      return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab">${SAG_DOW[i]}<b>${d.getDate()}</b></div>${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica" style="text-align:center;">Livre</div>`)}</div>`;
     }).join("")}</div>`;
   } else if(sag.visao==="linha"){
     const ano = sag.ancora.getFullYear(), mes = sag.ancora.getMonth();
     titulo = capitalizar(new Date(ano, mes, 1).toLocaleDateString("pt-BR",{month:"long", year:"numeric"})) + " · linha do tempo";
     const dias = [];
-    for(let d = new Date(ano, mes+1, 0); d.getMonth()===mes; d = somarDias(d, -1)){ const iso = isoLocal(d), l = doDia(iso); if(l.length) dias.push([d, iso, l]); }
-    html = `<div class="panel" style="margin:0;">${dias.length ? `<div class="sag-linha">${dias.map(([d, iso, l])=>`<div class="dl" data-dia="${iso}"><div class="data"><b>${d.getDate()} ${mesCurto(d)}</b>${SAG_DOW[(d.getDay()+6)%7]}${iso===hoje?" · hoje":""}</div><div class="lst">${l.map(x=>sagChip(x, true)).join("")}</div></div>`).join("")}</div>` : `<div class="ag-vazio">Nada neste mês com esses filtros.</div>`}</div>`;
+    for(let d = new Date(ano, mes+1, 0); d.getMonth()===mes; d = somarDias(d, -1)){ const iso = isoLocal(d), l = doDia(iso); if(l.length || sagFeriados(iso).length) dias.push([d, iso, l]); }
+    html = `<div class="panel" style="margin:0;">${dias.length ? `<div class="sag-linha">${dias.map(([d, iso, l])=>`<div class="dl" data-dia="${iso}"><div class="data"><b>${d.getDate()} ${mesCurto(d)}</b>${SAG_DOW[(d.getDay()+6)%7]}${iso===hoje?" · hoje":""}</div><div class="lst">${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("")}</div></div>`).join("")}</div>` : `<div class="ag-vazio">Nada neste mês com esses filtros.</div>`}</div>`;
   } else {
     const ano = sag.ancora.getFullYear(), mes = sag.ancora.getMonth(), primeiro = new Date(ano, mes, 1);
     titulo = capitalizar(primeiro.toLocaleDateString("pt-BR",{month:"long", year:"numeric"}));
@@ -7614,16 +7657,16 @@ function renderSedeAgenda(){
     let cel = SAG_DOW.map(d=>`<div class="dow">${d}</div>`).join("");
     for(let i=0; i<total; i++){
       const d = somarDias(ini, i), iso = isoLocal(d), l = doDia(iso), MAX = 4;
-      const dots = l.map(x=>`<i class="sag-dot ${x.feito?"feito":(x.tipo==="evento"?"evento":x.cor)}"></i>`).join("");
+      const dots = (sagFeriados(iso).length ? `<i class="sag-dot feriado"></i>` : "") + l.map(x=>`<i class="sag-dot ${x.feito?"feito":(x.tipo==="evento"?"evento":x.cor)}"></i>`).join("");
       cel += `<div class="dia ${d.getMonth()!==mes?"fora":""} ${iso===hoje?"hoje":""} ${iso===sag.diaSel?"sel":""}" data-dia="${iso}" onclick="sagSelDia('${iso}')">
-        <span class="n">${d.getDate()}</span><div class="dots">${dots}</div>${l.slice(0,MAX).map(x=>sagChip(x)).join("")}${l.length>MAX?`<span class="mais">+ ${l.length-MAX} mais</span>`:""}</div>`;
+        <span class="n">${d.getDate()}</span><div class="dots">${dots}</div>${sagFeriadoHtml(iso, true)}${l.slice(0,MAX).map(x=>sagChip(x)).join("")}${l.length>MAX?`<span class="mais">+ ${l.length-MAX} mais</span>`:""}</div>`;
     }
     const ds = dataDeISO(sag.diaSel), lsel = doDia(sag.diaSel);
     html = `<div class="sag-mes">${cel}</div>
       <div class="panel sag-dia-sel" id="sag-dia-sel">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><h3 style="margin:0;">${capitalizar(ds.toLocaleDateString("pt-BR",{weekday:"long", day:"numeric", month:"long"}))}${sag.diaSel===hoje?" · hoje":""}</h3>
         <span style="flex:1;"></span><button class="btn ghost small" type="button" onclick="abrirItemAgenda(null, '${sag.diaSel}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>
-        <div class="sag-lst" style="margin-top:8px;">${lsel.map(x=>sagChip(x, true)).join("") || `<div class="sag-dica">Nada neste dia.</div>`}</div>
+        <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(sag.diaSel)}${lsel.map(x=>sagChip(x, true)).join("") || (sagFeriados(sag.diaSel).length ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div>
       </div>`;
   }
   document.getElementById("sag-titulo").textContent = titulo;
@@ -7653,6 +7696,7 @@ function sagRenderFiltros(){
   el.innerHTML = `Tipo: ${Object.entries(SAG_TIPOS).map(([k,[n,ic]])=>`<button type="button" class="sag-fc ${sag.tipos.has(k)?"":"off"}" onclick="sagAlternar('tipos','${k}')"><svg class=ic aria-hidden=true><use href=#${ic} /></svg> ${n}</button>`).join("")}
     &nbsp; Cor: ${Object.entries(SAG_CORES).map(([k,[n]])=>`<button type="button" class="sag-fc ${sag.cores.has(k)?"":"off"}" onclick="sagAlternar('cores','${k}')"><i class="sag-dot ${k}"></i> ${n}</button>`).join("")}
     <button type="button" class="sag-fc ${sag.cores.has("evento")?"":"off"}" onclick="sagAlternar('cores','evento')"><i class="sag-dot evento"></i> Azul</button>
+    <button type="button" class="sag-fc ${sag.feriados?"":"off"}" onclick="sag.feriados=!sag.feriados; renderSedeAgenda();"><i class="sag-dot feriado"></i> Feriados</button>
     &nbsp; <select class="sag-fc" onchange="sag.area=this.value; renderSedeAgenda();"><option value="">Todas as áreas</option>${SAG_AREAS.map(a=>`<option ${sag.area===a?"selected":""}>${a}</option>`).join("")}</select>
     <select class="sag-fc" onchange="sag.quem=this.value; renderSedeAgenda();"><option value="">Todo mundo</option>${quemOpc.map(q=>`<option value="${q}" ${sag.quem===q?"selected":""}>${escapeHtml(sagNomeQuem(q))}</option>`).join("")}</select>`;
 }
@@ -7707,7 +7751,7 @@ function renderSuaSemana(){
   document.getElementById("dss-semana").innerHTML = Array.from({length:7},(_,i)=>{
     const d = somarDias(d0, i), iso = isoLocal(d);
     const l = sagOrdenar(todos.filter(x=>!x.feito && sagNoDia(x, iso)));
-    return `<div class="col ${iso===hoje?"hoje":""}" onclick="irParaAgendaSede({visao:'semana'})"><div class="cab">${SAG_DOW[i]} <b>${d.getDate()}</b></div>${l.map(x=>sagChip(x)).join("")}</div>`;
+    return `<div class="col ${iso===hoje?"hoje":""}" onclick="irParaAgendaSede({visao:'semana'})"><div class="cab">${SAG_DOW[i]} <b>${d.getDate()}</b></div>${sagFeriadoHtml(iso, true)}${l.map(x=>sagChip(x)).join("")}</div>`;
   }).join("");
   document.getElementById("dss-legenda").innerHTML = sagLegendaHtml(false);
 }
@@ -7766,6 +7810,7 @@ function abrirItemAgenda(id, dataPre){
 function ajustarItemAgenda(){
   const tipo = document.querySelector('input[name="sag-m-tipo"]:checked').value;
   const ideia = tipo==="ideia";
+  document.getElementById("sag-m-google").style.display = ideia ? "none" : "";
   ["sag-m-cor-wrap","sag-m-data-wrap","sag-m-hora-wrap","sag-m-avisar-wrap"].forEach(id=>document.getElementById(id).style.display = ideia ? "none" : "");
   document.getElementById("sag-m-decidido-wrap").style.display = tipo==="decidir" ? "" : "none";
   const temData = !!document.getElementById("sag-m-data").value, av = document.getElementById("sag-m-avisar");
@@ -7806,6 +7851,24 @@ async function salvarItemAgenda(statusNovo){
   renderSede(); renderSuaSemana();
 }
 function marcarItemAgenda(status){ salvarItemAgenda(status); }
+// Leva a tarefa ou decisão pro Google Agenda (link pronto, sem conta nem senha no CRM):
+// com hora = 1 hora; sem hora = dia inteiro. Usa o que está no formulário, mesmo antes de salvar.
+function abrirGoogleAgendaItem(){
+  const titulo = document.getElementById("sag-m-titulo").value.trim(), data = document.getElementById("sag-m-data").value;
+  if(!titulo || !data){ showToast("Preencha o quê e a data primeiro", true); return; }
+  const tipo = document.querySelector('input[name="sag-m-tipo"]:checked').value, hora = document.getElementById("sag-m-hora").value;
+  const compact = iso => iso.replace(/-/g,"");
+  let dates;
+  if(hora){
+    const [h,m] = hora.split(":").map(Number), fim = new Date(2000,0,1,h+1,m);
+    const fimData = h===23 ? isoLocal(somarDias(dataDeISO(data),1)) : data;
+    dates = `${compact(data)}T${hora.replace(":","")}00/${compact(fimData)}T${String(fim.getHours()).padStart(2,"0")}${String(fim.getMinutes()).padStart(2,"0")}00`;
+  } else dates = `${compact(data)}/${compact(isoLocal(somarDias(dataDeISO(data),1)))}`;
+  const detalhes = [document.getElementById("sag-m-detalhe").value.trim(), "Anotado na Agenda da Sede (CRM Go Ladies)"].filter(Boolean).join("\n\n");
+  window.open("https://calendar.google.com/calendar/render?action=TEMPLATE"
+    + "&text=" + encodeURIComponent((tipo==="decidir" ? "Decidir: " : "") + titulo)
+    + "&dates=" + dates + "&details=" + encodeURIComponent(detalhes) + "&ctz=America/Sao_Paulo", "_blank", "noopener");
+}
 function aceitarSugestaoAgenda(){
   const x = sedeAgenda.find(i=>i.id===sagEditando); if(!x || !x.sugestao) return;
   if(x.sugestao==="arquivar"){ salvarItemAgenda("Arquivado"); return; }
