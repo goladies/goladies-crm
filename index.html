@@ -4239,7 +4239,7 @@ async function liberarPainelCompleto(){
   const ultimaAba = localStorage.getItem("crm-ultima-aba");
   if(ultimaAba==="documentos"){ irParaAba("documentos"); return; }
   const abaSalva = ultimaAba && document.querySelector(`.nav-item[data-tab="${ultimaAba}"]`);
-  if(abaSalva) abaSalva.click();
+  if(abaSalva){ abaSalva.click(); restaurarSubAba(ultimaAba); }
 }
 
 // Mesmo raciocínio do timeout de login: sem isso, se essa checagem travar
@@ -6988,7 +6988,18 @@ function exportarAcessosAppCsv(){
   URL.revokeObjectURL(a.href);
 }
 
+// Ao atualizar a página, o CRM volta para a mesma aba e sub-aba (12/10/2026)
+function lembrarSubAba(aba, nome){ try{ localStorage.setItem("crm-ultima-sub-"+aba, nome); }catch(_){} }
+function restaurarSubAba(aba){
+  let sub = null;
+  try{ sub = localStorage.getItem("crm-ultima-sub-"+aba); }catch(_){}
+  if(!sub) return;
+  if(aba==="transporte" && document.querySelector(`#tab-transporte #subtab-${CSS.escape(sub)}`)) mostrarSubTab(sub);
+  else if(aba==="financeiro" && document.querySelector(`#tab-financeiro #subtab-${CSS.escape(sub)}`)) mostrarSubTabFinanceiro(sub);
+  else if(aba==="sede" && SEDE_ABAS.includes(sub)) mostrarSubSede(sub);
+}
 function mostrarSubTab(nome){
+  lembrarSubAba("transporte", nome);
   document.querySelectorAll("#tab-transporte .subnav-item[data-subtab]").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-transporte [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
@@ -6997,6 +7008,7 @@ function mostrarSubTab(nome){
 }
 
 function mostrarSubTabFinanceiro(nome){
+  lembrarSubAba("financeiro", nome);
   document.querySelectorAll("#tab-financeiro .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-financeiro [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
@@ -7223,6 +7235,7 @@ function sedeStatus(a){
 function sedePedidosAbertos(id){ return sedePedidos.filter(p=>p.agente===id && ["Aberto","Em andamento"].includes(p.status)); }
 
 function mostrarSubSede(nome){
+  lembrarSubAba("sede", nome);
   document.querySelectorAll("#tab-sede .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.sede===nome));
   SEDE_ABAS.forEach(n=>document.getElementById("sede-"+n).style.display = n===nome ? "block" : "none");
 }
