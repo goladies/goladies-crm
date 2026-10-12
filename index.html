@@ -3901,7 +3901,15 @@ function linkWhats(numero, mensagem){
   if(digits.length < 8) return null;
   if(!digits.startsWith('55')) digits = '55' + digits;
   const texto = mensagem ? ('?text=' + encodeURIComponent(mensagem)) : '';
-  return `https://wa.me/${digits}${texto}`;
+  const web = `https://wa.me/${digits}${texto}`;
+  // Android (celular da Jú tem WhatsApp e WhatsApp Business; o da Go Ladies
+  // é o Business, 12/10/2026): abre direto no Business. Sem ele instalado,
+  // o Chrome cai no wa.me. Computador e iPhone seguem no wa.me.
+  if(/Android/i.test(navigator.userAgent)){
+    const q = `phone=${digits}` + (mensagem ? '&text=' + encodeURIComponent(mensagem) : '');
+    return `intent://send?${q}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=${encodeURIComponent(web)};end`;
+  }
+  return web;
 }
 function botaoWhats(numero, nome){
   const link = linkWhats(numero, nome ? `Olá, ${nome.split(' ')[0]}! Aqui é a Jú, da Go Ladies.` : null);
@@ -4432,7 +4440,7 @@ function renderAvisoSite(){
       const resumo = m ? m[1] : e.mensagem;
       const motivo = m ? m[2] : "";
       const tel = (resumo.match(/\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}/) || [""])[0].replace(/\D/g, "");
-      const whats = tel.length >= 10 ? '<a class="btn secondary" target="_blank" rel="noopener" href="https://api.whatsapp.com/send?phone=55' + tel + '"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> WhatsApp</a>' : "";
+      const whats = tel.length >= 10 ? '<a class="btn secondary" target="_blank" rel="noopener" href="' + escapeHtml(linkWhats(tel)) + '"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> WhatsApp</a>' : "";
       const quando = new Date(e.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       return '<div class="aviso-site-item"><div><b>' + escapeHtml(NOME_ENVIO_SITE[e.contexto] || e.contexto) + '</b> · ' + quando +
         '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") + '</div>' +
@@ -6118,7 +6126,7 @@ function desenharConversaAberta(){
       ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${tel}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
     </div>
     <div class="conv-acoes">
-      <a class="conv-acao" href="https://wa.me/${escapeHtml(String(c.telefone).replace(/\D/g,""))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
+      <a class="conv-acao" href="${escapeHtml(linkWhats(c.telefone) || "#")}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
       ${c.atencao ? "" : `<button type="button" class="conv-acao" onclick="marcarAtencao('${tel}', true)"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Marcar atenção</button>`}
       ${pausada ? "" : `<span class="conv-pausa" title="Deixar a assistente calada nessa conversa">
           <select id="conv-pausa-horas" aria-label="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
@@ -6859,7 +6867,7 @@ function renderDemandasForaArea(){
     <tr>
       <td>${d.criado_em ? new Date(d.criado_em).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${escapeHtml(d.nome || "-")}</td>
-      <td>${d.whatsapp ? `<a href="https://wa.me/55${String(d.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(d.whatsapp)}</a>` : escapeHtml(d.email || "-")}</td>
+      <td>${d.whatsapp ? `<a href="${escapeHtml(linkWhats(d.whatsapp) || "#")}" target="_blank" rel="noopener">${escapeHtml(d.whatsapp)}</a>` : escapeHtml(d.email || "-")}</td>
       <td>${enderecoCurtoCelula(d.origem_endereco)}</td>
       <td>${enderecoCurtoCelula(d.destino_endereco)}</td>
       <td><span class="tag novo">${escapeHtml(d.canal || "App")}</span></td>
@@ -6940,7 +6948,7 @@ function renderAcessosApp(){
       <td>${e.app==="motorista" ? "<svg class=ic aria-hidden=true><use href=#i-car /></svg> Motorista" : "<svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente"}</td>
       <td><span class="status-badge ${COR_TIPO_ACESSO[e.tipo]||"gray"}">${ROTULO_TIPO_ACESSO[e.tipo]||e.tipo}</span></td>
       <td>${escapeHtml(e.nome || "-")}</td>
-      <td>${e.whatsapp ? `<a href="https://wa.me/55${String(e.whatsapp).replace(/\D/g,"")}" target="_blank" rel="noopener">${escapeHtml(e.whatsapp)}</a>` : escapeHtml(e.email || "-")}</td>
+      <td>${e.whatsapp ? `<a href="${escapeHtml(linkWhats(e.whatsapp) || "#")}" target="_blank" rel="noopener">${escapeHtml(e.whatsapp)}</a>` : escapeHtml(e.email || "-")}</td>
       <td>${escapeHtml(e.motivo || "")}</td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="6">Nenhum acesso registrado ainda</td></tr>`;
