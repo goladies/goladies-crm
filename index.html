@@ -4235,11 +4235,21 @@ async function liberarPainelCompleto(){
     const r = await Promise.race([sb.auth.getUser(), new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 8000))]);
     mostrarUsuaria(r.data && r.data.user);
   }catch(e){}
+  // Já abre na última tela (aba e sub-aba) ANTES de buscar os dados: assim não
+  // passa pelo Dashboard e não desenha tudo duas vezes. O carregarDados desenha no fim.
+  let ultimaAba = null;
+  try{ ultimaAba = localStorage.getItem("crm-ultima-aba"); }catch(_){}
+  if(ultimaAba==="documentos"){ ultimaAba = "sede"; lembrarSubAba("sede", "documentos"); }
+  if(ultimaAba && document.getElementById("tab-"+ultimaAba)){ mostrarAbaDireto(ultimaAba); restaurarSubAba(ultimaAba); }
   await carregarDados();
-  const ultimaAba = localStorage.getItem("crm-ultima-aba");
-  if(ultimaAba==="documentos"){ irParaAba("documentos"); return; }
-  const abaSalva = ultimaAba && document.querySelector(`.nav-item[data-tab="${ultimaAba}"]`);
-  if(abaSalva){ abaSalva.click(); restaurarSubAba(ultimaAba); }
+}
+// Troca a aba visível sem redesenhar (o redesenho vem depois, com os dados)
+function mostrarAbaDireto(tab){
+  const nav = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if(!nav) return;
+  document.querySelectorAll(".nav-item[data-tab]").forEach(n=>n.classList.toggle("active", n===nav));
+  document.querySelectorAll("[id^=tab-]").forEach(t=>t.style.display="none");
+  document.getElementById("tab-"+tab).style.display="block";
 }
 
 // Mesmo raciocínio do timeout de login: sem isso, se essa checagem travar
