@@ -1198,9 +1198,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sede-pend .tit{font-weight:600;}
 .sede-pend .tit .status-badge{margin-left:4px; vertical-align:1px;}
 .sede-pend .acoes{align-items:center;}
-.sede-pend .tit .seta-abrir{display:inline-block; margin-left:6px; color:var(--muted); font-size:11px; transition:transform .15s;}
-.sede-pend.aberto .tit .seta-abrir{transform:rotate(90deg);}
-.sede-pend.aberto{border-color:var(--border2);}
+.sede-item .seta-abrir{display:inline-block; margin-left:6px; color:var(--muted); font-size:11px; font-weight:400; transition:transform .15s;}
+.sede-item.aberto .seta-abrir{transform:rotate(90deg);}
+.sede-item.aberto{border-color:var(--border2);}
+.sede-decisao .dec-resumo{font-size:13px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sede-decisao .dec-aberta{display:flex; flex-direction:column; gap:8px; cursor:default;}
 .sede-pend-mais{margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--bg-card2); border:1px solid var(--border); cursor:default; font-size:13px;}
 .sede-pend-mais h4{margin:0 0 6px; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);}
 .sede-pend-mais .vazio{color:var(--muted); font-size:12.5px;}
@@ -1863,7 +1865,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div id="subtab-acessos-app" style="display:none;">
         <div class="pagehead">
           <div><h2 style="font-size:16px;">Acessos aos apps (cliente e motorista)</h2><p>Toda tentativa de cadastro e login no app da cliente e no da motorista, deu certo ou não. Quem errou ou não terminou é candidata (o) a remarketing.</p></div>
-          <button class="btn secondary" onclick="exportarAcessosAppCsv()">⬇️ Exportar CSV</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn secondary" onclick="abrirLivroAceites()" title="Todos os aceites de termos do app da cliente e do painel da motorista, com data, hora, IP e aparelho"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Livro de aceites</button>
+            <button class="btn secondary" onclick="exportarAcessosAppCsv()">⬇️ Exportar CSV</button>
+          </div>
         </div>
         <div class="cards" id="acessos-app-cards"></div>
         <div class="panel" id="contas-app-wrap" style="margin-bottom:16px;">
@@ -8273,6 +8278,11 @@ function papeisDoCodigo(codigo){
 }
 function abrirLigadoPendencia(tabela, id){ cadastroDaTabela(tabela).abrir(id); }
 function htmlMaisPendencia(p){
+  return `<div class="sede-pend-mais" onclick="event.stopPropagation()">${htmlLigadosSede(p,
+      "Nenhuma pessoa ligada a esta pendência ainda. As agentes passam a ligar as pessoas a partir do próximo resumo.")}</div>`;
+}
+// Pessoas ligadas + botão "Abrir em <aba> ›" (pendências e decisões).
+function htmlLigadosSede(p, textoVazio){
   const lig = Array.isArray(p.ligados) ? p.ligados : [];
   const linhas = lig.map(l=>{
     const { cad, papeis } = papeisDoCodigo(l.codigo);
@@ -8286,12 +8296,13 @@ function htmlMaisPendencia(p){
       </li>`;
   }).join("");
   const feitos = lig.filter(l=>l.feito).length;
-  return `<div class="sede-pend-mais" onclick="event.stopPropagation()">
-      <h4>Pessoas ligadas${lig.length ? ` · ${feitos} de ${lig.length} feitas` : ""}</h4>
-      ${lig.length ? `<ul class="sede-ligados">${linhas}</ul>`
-        : `<div class="vazio">Nenhuma pessoa ligada a esta pendência ainda. As agentes passam a ligar as pessoas a partir do próximo resumo.</div>`}
-      ${p.aba ? `<div class="ir"><button type="button" class="btn ghost small" onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')">Abrir em ${escapeHtml(rotuloAba(p.aba))} ›</button></div>` : ""}
-    </div>`;
+  return `<h4>Pessoas ligadas${lig.length ? ` · ${feitos} de ${lig.length} feitas` : ""}</h4>
+      ${lig.length ? `<ul class="sede-ligados">${linhas}</ul>` : `<div class="vazio">${textoVazio}</div>`}
+      ${p.aba ? `<div class="ir"><button type="button" class="btn ghost small" onclick="irAreaAgente('${escapeHtml(String(p.aba).replace(/'/g,""))}')">Abrir em ${escapeHtml(rotuloAba(p.aba))} ›</button></div>` : ""}`;
+}
+function badgeLigadosSede(p){
+  const n = Array.isArray(p.ligados) ? p.ligados.length : 0;
+  return n ? ` <span class="status-badge gray" title="Pessoas ligadas">${n} ${n>1?"pessoas":"pessoa"}</span>` : "";
 }
 function renderSedePendencias(){
   const box = document.getElementById("sede-pendencias-lista"); if(!box) return;
@@ -8322,7 +8333,7 @@ function renderSedePendencias(){
       <div class="sede-item sede-pend clicavel${pendAbertas.has(p.id)?" aberto":""}" onclick="alternarPendencia(${p.id})" title="${pendAbertas.has(p.id)?"Clique para fechar":"Clique para ver mais"}">
         <div class="num prio-${pr}">${n}</div>
         <div class="txt">
-          <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span>${Array.isArray(p.ligados) && p.ligados.length ? ` <span class="status-badge gray" title="Pessoas ligadas">${p.ligados.length} ${p.ligados.length>1?"pessoas":"pessoa"}</span>` : ""}<span class="seta-abrir" aria-hidden="true">▶</span></div>
+          <div class="tit">${escapeHtml(p.titulo)} <span class="status-badge ${prCls}" title="${p.prioridade_por==="Jú" ? "Prioridade escolhida por você" : "Prioridade sugerida pela agente"}">${prNome}</span>${badgeLigadosSede(p)}<span class="seta-abrir" aria-hidden="true">▶</span></div>
           ${p.detalhe?`<div class="det">${escapeHtml(p.detalhe)}</div>`:""}
           <div class="meta">criada em ${sedeDataHora(p.criado_em)}${p.atualizado_em && p.atualizado_em!==p.criado_em ? ` · atualizada em ${sedeDataHora(p.atualizado_em)}` : ""}${p.origem?` · ${escapeHtml(p.origem)}`:""}${!aberta?` · ${escapeHtml(p.status)} por ${escapeHtml(p.fechada_por||"-")} em ${sedeDataHora(p.fechada_em)}`:""}</div>
           ${pendAbertas.has(p.id) ? htmlMaisPendencia(p) : ""}
@@ -8575,8 +8586,16 @@ async function decidirSede(id, status){
   const r = await sb.from("sede_decisoes").update(reg).eq("id", id).select().single();
   if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
   sedeDecisoes = sedeDecisoes.map(x=>x.id===id ? r.data : x);
+  delete decRascunhos[id];
   showToast("Salvo!");
   renderSede();
+}
+// Cards de decisão começam fechados; os abertos e o rascunho da resposta sobrevivem à recarga automática.
+const decAbertas = new Set();
+const decRascunhos = {};
+function alternarDecisao(id){
+  if(decAbertas.has(id)) decAbertas.delete(id); else decAbertas.add(id);
+  renderSedeDecisoes();
 }
 function renderSedeDecisoes(){
   const box = document.getElementById("sede-decisoes-lista"); if(!box) return;
@@ -8588,22 +8607,27 @@ function renderSedeDecisoes(){
   const autorConversa = a => a==="Jú" ? "Você perguntou" : a==="claude" ? "Resposta do Claude" : `Resposta de ${sedeNome(a)}`;
   const conversa = d => (Array.isArray(d.conversa) && d.conversa.length ? d.conversa : (d.status==="Mais dados" && d.resposta ? [{autor:"Jú", texto:d.resposta}] : []))
     .map(m=>`<div class="det" style="font-size:13px; white-space:pre-wrap; padding:6px 10px; border-radius:8px; background:rgba(127,127,127,.10);"><b>${escapeHtml(autorConversa(m.autor))}${m.em?` (${sedeData(m.em)})`:""}:</b> ${escapeHtml(m.texto||"")}</div>`).join("");
-  const card = d => `<div class="sede-item sede-decisao" style="flex-direction:column; align-items:stretch;">
+  // Card fechado: título, situação, quem trouxe e a recomendação numa linha. Clicar abre ali
+  // mesmo o resto e os botões de decidir (só no card aberto, para não decidir sem ler).
+  const card = d => { const ab = decAbertas.has(d.id); return `<div class="sede-item sede-decisao clicavel${ab?" aberto":""}" style="flex-direction:column; align-items:stretch;" onclick="alternarDecisao(${d.id})" title="${ab?"Clique para fechar":"Clique para ver e decidir"}">
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <b style="flex:1; min-width:0;">${escapeHtml(d.titulo)}</b>
+        <b style="flex:1; min-width:0;">${escapeHtml(d.titulo)}${badgeLigadosSede(d)}<span class="seta-abrir" aria-hidden="true">▶</span></b>
         <span class="status-badge ${cls[d.status]||"gray"}">${escapeHtml(d.status)}</span>
       </div>
       <div class="meta" style="font-size:12px; color:var(--muted);">Trouxe: ${escapeHtml(sedeNome(d.agente))} · ${sedeData(d.criado_em)}${d.decidido_em?` · respondida em ${sedeData(d.decidido_em)}`:""}</div>
+      ${!ab ? (d.recomendacao ? `<div class="det dec-resumo"><b>Recomendação:</b> ${escapeHtml(d.recomendacao)}</div>` : "") + (d.status!=="Esperando você" && d.resposta ? `<div class="det dec-resumo"><b>Sua resposta:</b> ${escapeHtml(d.resposta)}</div>` : "")
+      : `<div class="dec-aberta" onclick="event.stopPropagation()">
       ${d.contexto?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Contexto:</b> ${escapeHtml(d.contexto)}</div>`:""}
       ${d.opcoes?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Caminhos:</b> ${escapeHtml(d.opcoes)}</div>`:""}
       ${d.recomendacao?`<div class="det" style="font-size:13px; color:var(--text2); white-space:pre-wrap;"><b>Recomendação:</b> ${escapeHtml(d.recomendacao)}</div>`:""}
       <div class="det" style="font-size:13px; color:var(--text2);"><b>Opinião da Vera:</b> ${d.opiniao_vera ? escapeHtml(d.opiniao_vera) + (d.opiniao_vera_em ? ` <small style="color:var(--muted);">(${formatarDataBR(String(d.opiniao_vera_em).slice(0,10))})</small>` : "") : `<span style="color:var(--muted);">a Vera ainda não conferiu</span>`}</div>
       ${conversa(d)}
+      <div class="sede-pend-mais">${htmlLigadosSede(d, "Nenhuma pessoa ligada a esta decisão.")}</div>
       ${d.status==="Mais dados"
         ? `<div class="meta" style="font-size:12px; color:var(--muted);">A Gabi responde na rotina das 9h15 e a decisão volta para "Esperando você".</div>
            <div><button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Esperando você')">Decidir agora</button></div>`
         : d.status==="Esperando você"
-        ? `<textarea id="sd-resp-${d.id}" rows="2" placeholder="Sua resposta (opcional para aprovar ou recusar; obrigatória para pedir mais dados)"></textarea>
+        ? `<textarea id="sd-resp-${d.id}" rows="2" oninput="decRascunhos[${d.id}]=this.value" placeholder="Sua resposta (opcional para aprovar ou recusar; obrigatória para pedir mais dados)">${escapeHtml(decRascunhos[d.id]||"")}</textarea>
            <div style="display:flex; gap:6px; flex-wrap:wrap;">
              <button class="btn small" type="button" onclick="decidirSede(${d.id},'Aprovada')">Aprovar</button>
              <button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Recusada')">Recusar</button>
@@ -8611,7 +8635,8 @@ function renderSedeDecisoes(){
            </div>`
         : `${d.resposta?`<div class="det" style="font-size:13px; white-space:pre-wrap;"><b>Sua resposta:</b> ${escapeHtml(d.resposta)}</div>`:""}
            <div><button class="btn ghost small" type="button" onclick="decidirSede(${d.id},'Esperando você')">Reabrir</button></div>`}
-    </div>`;
+      </div>`}
+    </div>`; };
   box.innerHTML = (esperando.length ? `<div class="sede-grupo">Esperando você</div>` + esperando.map(card).join("") : `<div class="sede-vazio">Nada esperando você agora.</div>`)
     + (aguardando.length ? `<div class="sede-grupo">Aguardando resposta da equipe</div>` + aguardando.map(card).join("") : "")
     + (outras.length ? `<div class="sede-grupo">Já respondidas</div>` + outras.map(card).join("") : "");
@@ -10942,7 +10967,8 @@ function openMotoristaModal(id){
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
     + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente${optCod(cliDaMotorista)}</span>` : "")
     + (id ? htmlPedidoExclusao(m, "motorista") : "")
-    + (id && m.auth_user_id ? botaoSenhaProvisoria("motorista", m.id) : "");
+    + (id && m.auth_user_id ? botaoSenhaProvisoria("motorista", m.id) : "")
+    + (id ? botaoComprovanteAceites("motorista", id) : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
   document.getElementById("mt-doc-validade").value = "";
   document.getElementById("mt-doc-status").value = "Pendente";
@@ -11397,6 +11423,7 @@ function htmlAcessoPainelCliente(c){
     : `<svg class=ic aria-hidden=true><use href=#i-lock-open /></svg> Ainda não criou login no painel da cliente (<a href="https://app.goladies.com.br" target="_blank" rel="noopener">app.goladies.com.br</a>).`;
   html += htmlPedidoExclusao(c, "cliente");
   if(c.auth_user_id) html += botaoSenhaProvisoria("cliente", c.id);
+  if(c.id) html += botaoComprovanteAceites("cliente", c.id);
   html += htmlContaAdolescente(c);
   const mot = motoristaDaCliente(c.id);
   if(mot){
