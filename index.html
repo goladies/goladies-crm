@@ -7570,11 +7570,14 @@ function ajustarPedidoSede(){
   if(tipo==="Lembrete") sel.value = "gabi";
   sel.disabled = tipo==="Lembrete";
   document.getElementById("sp-data-rotulo").textContent = tipo==="Lembrete" ? "Lembrar em" : "Prazo (opcional)";
-  const a = sedeAgente(sel.value), st = a ? sedeStatus(a) : ["",""];
-  let dica = tipo==="Lembrete"
-    ? "A Gabi coloca este lembrete nas 3 coisas de hoje quando chegar a data. Sem data, ela lembra no próximo resumo."
-    : `Vai para a fila de ${a ? a.nome : "-"}.`;
-  if(tipo==="Tarefa" && a && st[0]!=="Trabalhando" && a.id!=="gabi") dica += ` Ela ainda não trabalha sozinha (${st[0].toLowerCase()}); a tarefa fica na fila e a Gabi te avisa.`;
+  const a = sedeAgente(sel.value);
+  // Rotina "Revisão das agentes" (13/10/2026): todo dia às 18h cada agente do Claude faz as Tarefas abertas.
+  let dica;
+  if(tipo==="Lembrete") dica = "A Gabi coloca este lembrete nas 3 coisas de hoje quando chegar a data. Sem data, ela lembra no próximo resumo.";
+  else if(!a) dica = "";
+  else if(a.id==="gabi") dica = "A Gabi responde no resumo das 9h15.";
+  else if(["pietra","sol"].includes(a.id)) dica = `A ${a.nome} fica no Gemini, fora do Claude: peça direto lá. Aqui fica só como anotação.`;
+  else dica = `A ${a.nome} faz às 18h (rotina "Revisão das agentes") e deixa o recado aqui no pedido. Com pressa, chame ela no Claude.`;
   document.getElementById("sp-dica").textContent = dica;
 }
 async function salvarPedidoSede(){
