@@ -7653,7 +7653,9 @@ const SAG_AREA_AGENTE = { rica:"Financeiro", tati:"Transporte", carol:"Parcerias
 const SAG_PESSOAS = ["Jú","Rafaela"];
 const SAG_VISOES = [["mes","Mês"],["semana","Semana"],["linha","Linha do tempo"]];
 const SAG_DOW = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-const sag = { visao:"mes", ancora:null, diaSel:null, tipos:new Set(Object.keys(SAG_TIPOS)), cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
+// "Feito" começa desmarcado: o histórico aparece só quando ela liga o filtro
+const SAG_TIPOS_PADRAO = () => Object.keys(SAG_TIPOS).filter(k=>k!=="feito");
+const sag = { visao:"mes", ancora:null, diaSel:null, tipos:new Set(SAG_TIPOS_PADRAO()),cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
 try{ const v = localStorage.getItem("gl-sede-agenda-visao"); if(SAG_VISOES.some(x=>x[0]===v)) sag.visao = v; }catch(_){}
 let sagEditando = null;
 
@@ -7902,7 +7904,7 @@ function sagHoje(){
 // Vindo do Dashboard: abre a agenda, com filtros se vierem (sem filtros = tudo)
 function irParaAgendaSede(f){
   f = f || {};
-  sag.tipos = new Set(f.tipos || Object.keys(SAG_TIPOS));
+  sag.tipos = new Set(f.tipos || SAG_TIPOS_PADRAO());
   sag.cores = new Set(f.cores || SAG_ORDEM_COR);
   sag.area = ""; sag.quem = "";
   if(f.visao) sag.visao = f.visao;
