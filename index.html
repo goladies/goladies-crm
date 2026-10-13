@@ -1815,7 +1815,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <h3>Viagem a viagem</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Da tabela ao que sobrou no bolso. Clique pra abrir a viagem.</p>
           <table class="tbl">
-            <thead><tr><th>Data</th><th>Cliente</th><th>km</th><th>Tabela</th><th>Desconto</th><th>Cobrado</th><th>Taxa MP</th><th>Motorista</th><th>Sobrou</th><th>Margem</th></tr></thead>
+            <thead><tr><th>Data</th><th>Cliente</th><th>km</th><th>Tabela</th><th>Desconto</th><th>Cobrado</th><th>Taxa MP</th><th>Motorista</th><th>Resultado</th><th>Margem</th></tr></thead>
             <tbody id="ft-viagens"></tbody>
           </table>
         </div>
@@ -2084,13 +2084,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Para onde foi o dinheiro no mês</h3>
-        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Do maior para o menor gasto. A coluna "Acumulado" mostra quais poucas linhas levam a maior parte do dinheiro.</p>
-        <table class="tbl"><thead><tr><th>Gasto</th><th>Tipo</th><th>Negócio</th><th>Valor</th><th>% do total</th><th>Acumulado</th></tr></thead><tbody id="gestao-gastos"></tbody></table>
+        <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Do maior para o menor pagamento. A coluna "Acumulado" mostra quais poucas linhas levam a maior parte do dinheiro.</p>
+        <table class="tbl"><thead><tr><th>Pagamento</th><th>Tipo</th><th>Negócio</th><th>Valor</th><th>% do total</th><th>Acumulado</th></tr></thead><tbody id="gestao-gastos"></tbody></table>
       </div>
 
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-briefcase /></svg> Resultado por negócio no mês</h3>
-        <table class="tbl"><thead><tr><th>Negócio</th><th>Receita</th><th>Gastos</th><th>Resultado</th></tr></thead><tbody id="gestao-linhas"></tbody></table>
+        <table class="tbl"><thead><tr><th>Negócio</th><th>Receita</th><th>Pagamentos</th><th>Resultado</th></tr></thead><tbody id="gestao-linhas"></tbody></table>
       </div>
 
       <div class="panel" id="gestao-painel-aportes" style="max-width:720px;">
@@ -3525,7 +3525,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Descrição *</label><input type="text" id="cp-descricao"></div>
       <div><label>Categoria</label><input type="text" id="cp-categoria" list="cp-categorias-lista" placeholder="Escolha ou digite" onchange="sugerirTipoCusto()"><datalist id="cp-categorias-lista"></datalist></div>
       <div><label>Valor (R$)</label><input type="number" id="cp-valor"></div>
-      <div><label>Tipo de gasto</label><select id="cp-tipo-custo"><option value="">-</option><option>Fixo</option><option>Variável</option><option>Investimento</option></select></div>
+      <div><label>Tipo de pagamento</label><select id="cp-tipo-custo"><option value="">-</option><option>Fixo</option><option>Variável</option><option>Investimento</option></select></div>
       <div><label>Negócio</label><select id="cp-linha-negocio"></select></div>
       <div><label>Saiu da conta</label><select id="cp-conta-origem"></select></div>
       <div><label>Saiu de qual conta ou caixinha</label><select id="cp-fin-conta"></select><span class="dica">É o que mexe no saldo do Livro-caixa.</span></div>
@@ -5372,7 +5372,7 @@ function renderCustosIa(d){
 
   const cardIa = (filtro, num, label) => `<div class="card card-link${custosIaDetalhe === filtro ? " card-ativo" : ""}" title="Ver chamada por chamada" onclick="abrirChamadasIa('${filtro}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
   document.getElementById("custos-ia-cards").innerHTML = [
-    cardIa("mes", formatarMoedaBR(mesBrl), `Gasto no mês · US$ ${Number(d.mes_usd || 0).toFixed(2)}`),
+    cardIa("mes", formatarMoedaBR(mesBrl), `Uso no mês · US$ ${Number(d.mes_usd || 0).toFixed(2)}`),
     cardIa("previsao", formatarMoedaBR(previsto), "Previsão até o fim do mês"),
     cardIa("anterior", brl(d.mes_anterior_usd), "Mês anterior"),
     cardIa("chamadas", chamadas.toLocaleString("pt-BR"), `Chamadas no mês · ${formatarMoedaBR(chamadas ? mesBrl / chamadas : 0)} cada`),
@@ -5468,7 +5468,7 @@ async function abrirChamadasIa(filtro){
   let explica = "";
   if(tipo === "previsao"){
     const diasMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-    explica = `<p style="margin:0 0 10px;">${formatarMoedaBR(total * cot)} gastos até o dia ${hoje.getDate()} ÷ ${hoje.getDate()} dia(s) × ${diasMes} dias do mês = <strong>${formatarMoedaBR(total * cot / hoje.getDate() * diasMes)}</strong>. É o ritmo de hoje esticado até o fim do mês.</p>`;
+    explica = `<p style="margin:0 0 10px;">${formatarMoedaBR(total * cot)} usados até o dia ${hoje.getDate()} ÷ ${hoje.getDate()} dia(s) × ${diasMes} dias do mês = <strong>${formatarMoedaBR(total * cot / hoje.getDate() * diasMes)}</strong>. É o ritmo de hoje esticado até o fim do mês.</p>`;
   }
   el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h3 style="margin:0;">Chamada por chamada · ${titulo}</h3>
@@ -6645,7 +6645,7 @@ function simular(){
                 `− ${fmt(repasse)}`);
   html += linha("Comissão da Go Ladies", "o que a empresa tem pra pagar imposto, infra e o seu tempo", fmt(comissao), "saldo" + (comissao < 0 ? " neg" : ""));
   html += linha("Custo do carro", `${v.kmTotal.toFixed(1).replace(".", ",")} km × ${fmt(custo.porKm)} · sai do repasse da motorista`, `− ${fmt(custoCarro)}`);
-  html += linha("Sobra pra motorista", `depois de pagar o carro, em ${v.minTotal} min comprometidos`, fmt(sobra), "saldo" + (sobra < 0 ? " neg" : ""));
+  html += linha("Resultado da motorista", `depois de pagar o carro, em ${v.minTotal} min comprometidos`, fmt(sobra), "saldo" + (sobra < 0 ? " neg" : ""));
   if(euDirijo) html += linha("Total que fica na sua casa", "repasse + comissão, já sem a taxa e sem o carro", fmt(totalCasa), "saldo" + (totalCasa < 0 ? " neg" : ""));
   cascata.innerHTML = html;
 
@@ -6707,7 +6707,7 @@ function renderDetalheFt(pagos, tot){
   const el = document.getElementById("ft-detalhe");
   if(!el) return;
   if(!["recebido", "taxa", "repasse", "sobra"].includes(ftDetalheAberto)){ el.style.display = "none"; el.innerHTML = ""; return; }
-  const titulos = { recebido: "Recebido das clientes", taxa: "Taxa Mercado Pago", repasse: "Repasse às motoristas", sobra: "Sobrou pra Go Ladies" };
+  const titulos = { recebido: "Recebido das clientes", taxa: "Taxa Mercado Pago", repasse: "Repasse às motoristas", sobra: "Resultado Go Ladies" };
   const destaque = col => ftDetalheAberto === col ? ' style="font-weight:700; color:var(--rosa-texto);"' : "";
   const linhas = [...pagos].sort((a,b)=>String(a.data_pagamento).localeCompare(String(b.data_pagamento))).map(p=>{
     const v = viagens.find(x=>x.id === p.viagem_id);
@@ -6726,7 +6726,7 @@ function renderDetalheFt(pagos, tot){
       <td${destaque("sobra")}><span style="color:${sobra >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(sobra)}</span></td></tr>`;
   }).join("");
   el.style.display = "";
-  el.innerHTML = ftCabecalhoDetalhe(titulos[ftDetalheAberto]) + `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Recebido</th><th>Taxa</th><th>Repasse</th><th>Sobrou</th></tr></thead><tbody>
+  el.innerHTML = ftCabecalhoDetalhe(titulos[ftDetalheAberto]) + `<table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>Motorista</th><th>Recebido</th><th>Taxa</th><th>Repasse</th><th>Resultado</th></tr></thead><tbody>
     ${linhas || `<tr><td class="empty" colspan="8">Nenhum pagamento de cliente no período</td></tr>`}
     ${linhas ? `<tr style="font-weight:700;"><td colspan="4">Total</td><td>${formatarMoedaBR(tot.recebido)}</td><td>${formatarMoedaBR(tot.taxaMp)}</td><td>${formatarMoedaBR(tot.repassado)}</td><td>${formatarMoedaBR(tot.lucro)}</td></tr>` : ""}
     </tbody></table><p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Entra pela data em que a cliente pagou. Clique numa linha para abrir a viagem.</p>`;
@@ -6785,7 +6785,7 @@ function renderFinanceiroTransporte(){
     ftCard("recebido", formatarMoedaBR(recebido), "Recebido das clientes (bruto)"),
     ftCard("taxa", formatarMoedaBR(taxaMp), "Taxa Mercado Pago"),
     ftCard("repasse", formatarMoedaBR(repassado), "Repasse às motoristas"),
-    ftCard("sobra", formatarMoedaBR(lucro), `Sobrou pra Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%`, corLucro),
+    ftCard("sobra", formatarMoedaBR(lucro), `Resultado Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%`, corLucro),
   ].join("");
   renderDetalheFt(pagos, { recebido, taxaMp, repassado, lucro });
 
@@ -7271,9 +7271,9 @@ const SEDE_AGENTES = [
     custo:"Incluído no seu plano do Claude",
     rotina:"Sob pedido", status:["Trabalhando","green"], aba:"transporte", abaRotulo:"Abrir Transporte" },
   { id:"rica", nome:"Rica", cargo:"Head de Finanças", titulo:"Head de Finanças (FP&A)", cor:"green", ia:"Claude", responde:"Ester", nivel:"area",
-    jeito:"Cuidadosa com cada centavo, sem drama. Fala Ganhei, Gastei e Sobrou e mostra a conta quando calcula.",
+    jeito:"Cuidadosa com cada centavo, sem drama. Fala recebimento e pagamento, previsto e realizado, e resultado; nunca “gasto”. Mostra a conta quando calcula.",
     missao:"Você sempre saber quanto entrou, quanto saiu e quanto sobrou, sem abrir planilha.",
-    faz:["Segunda: o mês até agora (Ganhei, Gastei, Sobrou), o que vence em 15 dias e o que falta lançar ou cobrar",
+    faz:["Segunda: o mês até agora (recebimentos, pagamentos previstos e realizados, resultado), o que vence em 15 dias e o que falta lançar ou cobrar",
          "Dia 1: fechamento do mês, com conta por corrida (taxa que ficou para a Go Ladies, descontos), para onde foi o dinheiro e quanto a Caixinha Go Ladies deveria ter recebido",
          "Avisa corrida concluída sem pagamento, repasse pendente, despesa recorrente sem lançamento e conta sem conferência há mais de 30 dias",
          "Responde perguntas de dinheiro: dá pra pagar? quanto sobrou? essa corrida deu lucro? (custo real R$ 1,42/km)",
@@ -15216,7 +15216,7 @@ async function carregarGastosJuMotorista(){
   const lista = [];
   (ra.data || []).forEach(a=>{ if(!a.pago_por_outra_pessoa && a.data) lista.push({ chave: "ab" + a.id, data: a.data, valor: Number(a.valor_total || 0), titulo: "Abastecimento" + (a.posto ? " · " + a.posto : ""), tipo: "Combustível", fixo: false }); });
   (rm.data || []).forEach(m=>{ if(!m.pago_por_outra_pessoa && m.status === "feita" && m.data && Number(m.valor) > 0) lista.push({ chave: "mn" + m.id, data: m.data, valor: Number(m.valor), titulo: m.descricao || m.tipo || "Manutenção", tipo: "Manutenção do carro", fixo: false }); });
-  (rd.data || []).forEach(d=>{ if(!d.pago_por_outra_pessoa && d.data) lista.push({ chave: "dp" + d.id, data: d.data, valor: Number(d.valor || 0), titulo: d.descricao || d.categoria || "Gasto", tipo: d.categoria || "Gasto", fixo: !!d.fixo_mensal }); });
+  (rd.data || []).forEach(d=>{ if(!d.pago_por_outra_pessoa && d.data) lista.push({ chave: "dp" + d.id, data: d.data, valor: Number(d.valor || 0), titulo: d.descricao || d.categoria || "Pagamento", tipo: d.categoria || "Pagamento", fixo: !!d.fixo_mensal }); });
   gastosJuMotorista = lista;
 }
 
@@ -15300,7 +15300,7 @@ function lcColetar(de, ate){
   });
   const ju = caixinhaDoBolso("Jú Motorista");
   gastosJuMotorista.forEach(g=>{
-    const base = { tipo: "saida", valor: g.valor, contaId: ju ? ju.id : null, titulo: g.titulo, categoria: "Gastos de motorista",
+    const base = { tipo: "saida", valor: g.valor, contaId: ju ? ju.id : null, titulo: g.titulo, categoria: "Pagamentos de motorista",
       sub: `${g.tipo} · lançado no app da motorista`, fixa: g.fixo, acao: "lcAvisoAppMotorista()" };
     if(!g.fixo){ if(dentro(g.data)) itens.push({ ...base, chave: g.chave, data: g.data, previsto: g.data > hojeLocalISO() }); return; }
     // Gasto fixo do app (seguro, parcela...): vale todo mês, no mesmo dia, a partir do mês dele.
@@ -15461,7 +15461,7 @@ function renderLcResumo(mes, ano){
   let html = `<div class="lc-cards">
     ${card("Entradas", lcR(entR), "lc-pos", `previsto para o mês: ${lcR(entT)}`, "lcIrParaLancamentos({tipo:'entrada'})")}
     ${card("Saídas", lcR(saiR), "lc-neg", `previsto para o mês: ${lcR(saiT)}`, "lcIrParaLancamentos({tipo:'saida'})")}
-    ${card("Sobra realizada", lcR(entR - saiR), entR - saiR >= 0 ? "lc-pos" : "lc-neg", `sobra prevista: ${lcR(entT - saiT)}`, "lcIrParaLancamentos({status:'realizado'})")}
+    ${card("Resultado realizado", lcR(entR - saiR), entR - saiR >= 0 ? "lc-pos" : "lc-neg", `resultado previsto: ${lcR(entT - saiT)}`, "lcIrParaLancamentos({status:'realizado'})")}
     ${card("Ainda a pagar", lcR(aPagar.reduce((s,i)=>s + i.valor, 0)), "lc-azul", `${aPagar.length} conta(s) em aberto no mês`, "lcIrParaLancamentos({tipo:'saida', status:'previsto'})")}
   </div>`;
 
@@ -15611,13 +15611,13 @@ function renderLcCategorias(mes, ano){
       <p class="lc-sub" style="margin:-6px 0 10px;">A categoria é texto livre: escreva uma nova direto na despesa ou na entrada e ela aparece aqui. Estas são as sugestões que já vêm na lista.</p>
       <p style="font-size:13px; margin:0 0 6px;"><b>Entradas:</b> Viagens, Serviços do ecossistema, ${LC_CATEGORIAS_ENTRADA.map(escapeHtml).join(", ")}</p>
       ${Object.entries(PLANO_CONTAS).map(([tipo, cats])=>`<p style="font-size:13px; margin:0 0 6px;"><b>Saídas · ${escapeHtml(tipo)}:</b> ${cats.map(escapeHtml).join(", ")}</p>`).join("")}
-      <p style="font-size:13px; margin:0;"><b>Do app da motorista:</b> Gastos de motorista (combustível, manutenção e gastos da aba Carro)</p>
+      <p style="font-size:13px; margin:0;"><b>Do app da motorista:</b> Pagamentos de motorista (combustível, manutenção e outros pagamentos da aba Carro)</p>
     </div>`;
 }
 
 // ----- Ações do Livro-caixa -----
 function lcAvisoAppMotorista(){
-  showToast("Esse gasto foi lançado no app da motorista (aba Carro). Edite por lá.");
+  showToast("Esse pagamento foi lançado no app da motorista (aba Carro). Edite por lá.");
 }
 function lcNovaSaida(){
   openContaPagarModal(null);
@@ -16113,7 +16113,7 @@ function gestaoPendencias(mes, ano){
   const semTipo = contasPagar.filter(c=>!c.tipo_custo && !tipoCustoDaCategoria(c.categoria));
   if(semTipo.length) itens.push({
     nivel: "baixa", texto: `${semTipo.length} despesa(s) sem tipo (fixo, variável ou investimento)`,
-    detalhe: "Sem tipo, elas contam como gasto fixo. Abra e escolha: " + semTipo.slice(0,6).map(c=>linkGestao(`openContaPagarModal(${c.id})`, escapeHtml(c.descricao || "-"))).join(", "),
+    detalhe: "Sem tipo, elas contam como pagamento fixo. Abra e escolha: " + semTipo.slice(0,6).map(c=>linkGestao(`openContaPagarModal(${c.id})`, escapeHtml(c.descricao || "-"))).join(", "),
     acao: semTipo.length === 1 ? `openContaPagarModal(${semTipo[0].id})` : "irParaFinanceiro('pagar')",
     dica: semTipo.length === 1 ? "Abrir a despesa" : "Ver Contas a Pagar",
   });
@@ -16212,7 +16212,7 @@ function renderGestao(){
       <td>${formatarMoedaBR(x.valor)}</td><td>${Math.round(x.valor / totalGastos * 100)}%</td><td>${Math.round(acumulado / totalGastos * 100)}%</td></tr>`;
   }).join("") + (gastos.length
     ? `<tr style="font-weight:700;"><td colspan="3">Total</td><td>${formatarMoedaBR(totalGastos)}</td><td colspan="2"></td></tr>`
-    : `<tr><td class="empty" colspan="6">Nenhum gasto pago em ${nomeMes(mes)}</td></tr>`);
+    : `<tr><td class="empty" colspan="6">Nenhum pagamento realizado em ${nomeMes(mes)}</td></tr>`);
 
   const resultadoLinha = GESTAO_LINHAS.map(linha=>{
     const receita = linha === "Transporte" ? g.t.recebido : linha === "Parceiras (os) e vendas" ? g.vendasMes : 0;
@@ -16260,7 +16260,7 @@ function renderGestao(){
         labels: meses.map(m=>`${nomeMes(m.mes)}/${String(m.ano).slice(2)}`),
         datasets: [
           { label: "Receita", data: meses.map(m=>m.receita), backgroundColor: corCss("--rosa") || "#FF2D9C", borderRadius: 6 },
-          { label: "Gastos", data: meses.map(m=>m.receita - m.lucro), backgroundColor: corCss("--c-amber") || "#FFC145", borderRadius: 6 },
+          { label: "Pagamentos", data: meses.map(m=>m.receita - m.lucro), backgroundColor: corCss("--c-amber") || "#FFC145", borderRadius: 6 },
           { label: "Lucro", data: meses.map(m=>m.lucro), type: "line", borderColor: corCss("--c-green") || "#1FAA72", backgroundColor: corCss("--c-green") || "#1FAA72", tension: .3 },
         ]
       },
@@ -16348,7 +16348,7 @@ function renderDetalheGestao(ctx){
         ...listaDespesas("Investimento"),
         ...rendimentosGoLadiesMes(mes, ano).map(f=>{ const c = finConta(f.fin_conta_id); return { s: "+", t: `Rendimento · ${escapeHtml(c ? c.nome : "conta")}`, d: `conferido em ${fmtDataBR(String(f.data).slice(0,10))} · fora da receita`, v: Number(f.diferenca || 0) }; }),
         { s: "=", t: "Lucro da Go Ladies", v: g.lucro, cor: corV(g.lucro) },
-      ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa despesa para corrigir o tipo. Compra que não se repete é Investimento; gasto que muda com o número de viagens é Variável.</p>`;
+      ]) + `<p style="color:var(--muted); font-size:12.5px; margin:10px 0 0;">Clique numa despesa para corrigir o tipo. Compra que não se repete é Investimento; pagamento que muda com o número de viagens é Variável.</p>`;
     }
   }
   else if(gestaoDetalheAberto === "bolso"){
@@ -16368,7 +16368,7 @@ function renderDetalheGestao(ctx){
       { s: "=", t: "Fixos do mês", v: g.fixosPrevistos },
     ]) + `<p style="margin:10px 0 0;">${equilibrio != null
       ? `${R(g.fixosPrevistos)} ÷ ${Math.round(margem * 100)}% de margem = <strong>${R(equilibrio)}</strong> de receita para empatar. Entraram ${R(g.receita)}${falta > 0 ? `, faltam ${R(falta)}` : ", fixos cobertos"}.`
-      : g.fixosPrevistos ? "Precisa de receita com margem positiva para calcular." : "Sem gastos fixos neste mês: qualquer receita já cobre."}</p>`;
+      : g.fixosPrevistos ? "Precisa de receita com margem positiva para calcular." : "Sem pagamentos fixos neste mês: qualquer receita já cobre."}</p>`;
   }
   else if(gestaoDetalheAberto === "cpf"){
     titulo = `Caiu no seu CPF em ${ano}`;
