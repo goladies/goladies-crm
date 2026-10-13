@@ -11417,6 +11417,86 @@ async function concluirExclusao(tipo, id){
   closeModal(tipo==="motorista" ? "motorista-modal" : "cliente-transporte-modal");
   await recarregarTabelas(tipo==="motorista" ? "motoristas" : "clientes_transporte");
 }
+// ===== LIVRO DE ACEITES (schema_livro_aceites.sql) =====
+// O banco grava sozinho cada aceite (cadastro do app, Conta Adolescente,
+// Meu perfil Go Ladies) e não deixa ninguém alterar nem apagar. Aqui só se lê:
+// comprovante por pessoa (imprimir/salvar em PDF) e a lista geral.
+const ACEITE_DOCS = {
+  "regras-conta-cliente": "Cadastro no app: Política de Privacidade e regras da conta",
+  "conta-adolescente": "Conta Adolescente (aceite da (o) adolescente)",
+  "conta-adolescente-responsavel": "Conta Adolescente: declarações da (o) responsável",
+  "perfil-motorista": "Meu perfil Go Ladies (motorista)",
+};
+function botaoComprovanteAceites(tipo, id){
+  return `<br><button type="button" class="act act-edit" style="margin-top:6px;" onclick="abrirComprovanteAceites('${tipo}', ${Number(id)})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Comprovante de aceites</button>`;
+}
+function nomeDaPessoaAceite(tipo, id){
+  const r = (tipo === "motorista" ? motoristas : clientesTransporte).find(x=>x.id===id);
+  return r ? nomeCod(r) : `${tipo === "motorista" ? "Motorista" : "Cliente"} nº ${id} (cadastro apagado ou anonimizado)`;
+}
+const fmtAceite = iso => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+function erroLivroAceites(error){
+  alert(/does not exist|schema cache|relation/i.test(error.message || "")
+    ? "O livro de aceites ainda não está ativo: falta rodar o schema_livro_aceites.sql no Supabase."
+    : "Erro ao ler o livro de aceites: " + error.message);
+}
+function janelaImpressao(titulo, corpo){
+  const w = window.open("", "_blank");
+  if(!w){ alert("O navegador bloqueou a janela nova. Libere as janelas (pop-ups) do CRM e tente de novo."); return; }
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapeHtml(titulo)}</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;max-width:880px;margin:24px auto;padding:0 16px;font-size:13px;line-height:1.5}
+h1{font-size:18px;margin:0 0 6px}h2{font-size:14px;margin:24px 0 6px;border-top:1px solid #ccc;padding-top:12px}
+table{border-collapse:collapse;width:100%;margin:6px 0}td,th{border:1px solid #ddd;padding:4px 8px;vertical-align:top;text-align:left}
+.ficha td:first-child{width:200px;color:#555}pre{white-space:pre-wrap;font-family:inherit;background:#f6f6f6;padding:10px 12px;border-radius:6px}
+.nao{margin-bottom:14px;padding:6px 12px;cursor:pointer}a{color:#c2185b}@media print{.nao{display:none}h2{break-after:avoid}}</style></head>
+<body><button class="nao" onclick="print()">Imprimir ou salvar em PDF</button>${corpo}</body></html>`);
+  w.document.close();
+}
+async function abrirComprovanteAceites(tipo, id){
+  const { data, error } = await sb.from("aceites")
+    .select("*, aceites_textos(documento, versao, titulo, texto, hash, criado_em)")
+    .eq("pessoa_tipo", tipo).eq("pessoa_id", id).order("aceito_em").order("id");
+  if(error){ erroLivroAceites(error); return; }
+  const nome = nomeDaPessoaAceite(tipo, id);
+  let corpo = `<h1>Comprovante de aceites</h1>
+<p><b>${escapeHtml(nome)}</b> · ${tipo === "motorista" ? "Motorista" : "Cliente"} nº ${Number(id)}<br>
+Emitido em ${escapeHtml(fmtAceite(new Date().toISOString()))} (horário de Brasília), a partir do livro de aceites do CRM Go Ladies.
+Os registros do livro não podem ser alterados nem apagados; a hora é a do servidor, não a do aparelho.</p>`;
+  if(!data.length) corpo += `<p>Nenhum aceite registrado para esta pessoa.</p>`;
+  data.forEach((a, i)=>{
+    const t = a.aceites_textos, d = a.detalhes || {};
+    corpo += `<h2>${i+1}. ${escapeHtml(ACEITE_DOCS[a.documento] || a.documento)}: ${escapeHtml(a.acao)}</h2>
+<table class="ficha">
+<tr><td>Quando</td><td>${escapeHtml(fmtAceite(a.aceito_em))} (horário de Brasília)</td></tr>
+<tr><td>Documento e versão</td><td>${escapeHtml(a.documento)} · ${escapeHtml(a.versao || "-")}</td></tr>
+<tr><td>De onde</td><td>${escapeHtml(a.origem || "-")}${d.site ? " (" + escapeHtml(d.site) + ")" : ""}</td></tr>
+<tr><td>IP</td><td>${escapeHtml(a.ip || "não registrado")}</td></tr>
+<tr><td>Aparelho e navegador</td><td>${escapeHtml(a.user_agent || "não registrado")}</td></tr>
+<tr><td>Conta logada (ID do login)</td><td>${escapeHtml(a.auth_user_id || "-")}</td></tr>
+<tr><td>Registro no livro</td><td>nº ${Number(a.id)}, gravado em ${escapeHtml(fmtAceite(a.registrado_em))}</td></tr>
+${d.obs ? `<tr><td>Observação</td><td>${escapeHtml(d.obs)}</td></tr>` : ""}
+${d.autorizado_em ? `<tr><td>Tinha autorizado em</td><td>${escapeHtml(fmtAceite(d.autorizado_em))}</td></tr>` : ""}
+${t ? `<tr><td>Impressão digital do texto (SHA-256)</td><td style="word-break:break-all;">${escapeHtml(t.hash)}</td></tr>` : ""}
+</table>
+${t ? `<div><b>Texto ${a.acao === "aceitou" ? "aceito" : "da autorização"}:</b></div><pre>${escapeHtml(t.texto)}</pre>` : `<p><i>O texto desta versão não está guardado no livro.</i></p>`}`;
+  });
+  janelaImpressao("Comprovante de aceites - " + nome, corpo);
+}
+async function abrirLivroAceites(){
+  const { data, error } = await sb.from("aceites")
+    .select("id, aceito_em, documento, versao, acao, pessoa_tipo, pessoa_id, origem, ip")
+    .order("aceito_em", { ascending: false }).order("id", { ascending: false }).limit(1000);
+  if(error){ erroLivroAceites(error); return; }
+  const linhas = data.map(a=>`<tr>
+<td>${escapeHtml(fmtAceite(a.aceito_em))}</td>
+<td><a href="#" onclick="opener && opener.abrirComprovanteAceites('${a.pessoa_tipo}', ${Number(a.pessoa_id)}); return false;">${escapeHtml(nomeDaPessoaAceite(a.pessoa_tipo, a.pessoa_id))}</a></td>
+<td>${escapeHtml(ACEITE_DOCS[a.documento] || a.documento)}<br><small>${escapeHtml(a.versao || "-")}</small></td>
+<td>${escapeHtml(a.acao)}</td><td>${escapeHtml(a.origem || "-")}</td><td>${escapeHtml(a.ip || "-")}</td></tr>`).join("");
+  janelaImpressao("Livro de aceites", `<h1>Livro de aceites</h1>
+<p>${data.length} registro${data.length === 1 ? "" : "s"} (mais novos primeiro${data.length === 1000 ? ", mostrando os 1.000 últimos" : ""}). Emitido em ${escapeHtml(fmtAceite(new Date().toISOString()))}. Clique no nome para abrir o comprovante completo da pessoa, com o texto aceito.</p>
+<table><thead><tr><th>Quando</th><th>Pessoa</th><th>Documento</th><th>O que fez</th><th>De onde</th><th>IP</th></tr></thead><tbody>${linhas || `<tr><td colspan="6">Nenhum aceite registrado ainda.</td></tr>`}</tbody></table>`);
+}
+
 function htmlAcessoPainelCliente(c){
   let html = c.auth_user_id
     ? `<svg class=ic aria-hidden=true><use href=#i-lock /></svg> <b>Tem login no painel da cliente</b>${c.login_criado_em ? ` desde ${formatarDataBR(c.login_criado_em.slice(0,10))}` : ""}.`
