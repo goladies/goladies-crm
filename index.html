@@ -2182,7 +2182,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <button class="btn small" type="button" onclick="salvarIdeiaRapida()" aria-label="Guardar ideia"><svg class=ic aria-hidden=true><use href=#i-plus /></svg></button>
               </div>
               <div class="sag-lst" id="sag-ideias"></div>
-              <div class="sag-dica">Ideia não tem cor nem data. Clique nela para virar tarefa, virar decisão ou arquivar.</div>
+              <div class="sag-dica">Ideia não tem cor nem data. Clique nela para virar tarefa, virar decisão, concluir ou arquivar.</div>
             </div>
             <div class="panel">
               <h3><svg class=ic aria-hidden=true><use href=#i-check /></svg> Sem data <span class="sede-conta" id="sag-conta-semdata"></span></h3>
@@ -7970,7 +7970,8 @@ function abrirItemAgenda(id, dataPre){
   document.getElementById("sag-m-arquivar").style.display = x && aberto ? "" : "none";
   document.getElementById("sag-m-adiar").style.display = x && aberto && x.tipo!=="ideia" ? "" : "none";
   document.getElementById("sag-m-reabrir").style.display = x && !aberto ? "" : "none";
-  document.getElementById("sag-m-concluir").style.display = x && aberto && x.tipo!=="ideia" ? "" : "none";
+  // Ideia também conclui (ex.: já foi feita), para ficar no histórico em vez de sumir como no Arquivar
+  document.getElementById("sag-m-concluir").style.display = x && aberto ? "" : "none";
   document.getElementById("sag-m-concluir").textContent = x && x.tipo==="decidir" ? "Decidido" : "Concluir";
   let info = "";
   if(x) info = `Anotado por ${escapeHtml(x.criado_por||"-")} em ${sedeDataHora(x.criado_em)}${x.status!=="Aberto" ? ` · ${x.status==="Feito"?"feito":"arquivado"}${x.feito_por?" por "+escapeHtml(x.feito_por):""}${x.feito_em?" em "+sedeDataHora(x.feito_em):""}` : ""}`;
@@ -8025,7 +8026,7 @@ async function salvarItemAgenda(statusNovo){
   }
   if(!sagEditando) reg.criado_por = sagEu();
   const antes = sagEditando ? sedeAgenda.find(i=>i.id===sagEditando) : null;
-  if(antes && "sugestao" in antes && antes.sugestao && (!ideia || statusNovo==="Arquivado"))
+  if(antes && "sugestao" in antes && antes.sugestao && (!ideia || statusNovo==="Arquivado" || statusNovo==="Feito"))
     Object.assign(reg, { sugestao:null, sugestao_cor:null, sugestao_motivo:null, sugestao_por:null, sugestao_em:null });
   const r = sagEditando
     ? await sb.from("sede_agenda").update(reg).eq("id", sagEditando).select().single()
