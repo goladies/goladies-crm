@@ -466,6 +466,26 @@ select p.autorizado_em, 'perfil-motorista', p.termo_versao, public.aceites_texto
                     where a.pessoa_tipo = 'motorista' and a.pessoa_id = p.motorista_id
                       and a.documento = 'perfil-motorista' and a.aceito_em = p.autorizado_em);
 
+-- ── 8. Gabi confere o backup diário (schema_backup_diario.sql) ──────────
+-- Se o n8n inteiro cair, nenhum aviso de erro sai. A Gabi lê o último backup
+-- todo dia e avisa se passar de 2 dias sem backup novo.
+create or replace function public.sede_backup_ler(p_chave text)
+returns jsonb language plpgsql security definer set search_path = public stable as $$
+begin
+  if not public.sede_chave_ok(p_chave) then
+    raise exception 'chave inválida';
+  end if;
+  return coalesce((
+    select jsonb_build_object('ultimo_backup_em', b.feito_em, 'arquivo', b.arquivo, 'tabelas', b.tabelas,
+                              'linhas', b.linhas, 'tamanho_kb', b.tamanho_kb,
+                              'horas_desde', round(extract(epoch from now() - b.feito_em) / 3600))
+      from public.backup_registros b order by b.feito_em desc limit 1),
+    jsonb_build_object('ultimo_backup_em', null));
+end;
+$$;
+revoke all on function public.sede_backup_ler(text) from public;
+grant execute on function public.sede_backup_ler(text) to anon, authenticated;
+
 select public.sql_registrar('schema_livro_aceites.sql');
 
 -- Conferência: textos guardados e aceites no livro
