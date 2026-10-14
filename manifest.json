@@ -1,6 +1,6 @@
 {
   "name": "CRM Go Ladies",
-  "short_name": "CRM Go Ladies",
+  "short_name": "CRM",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
