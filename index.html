@@ -2176,7 +2176,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="agenda" onclick="mostrarSubSede('agenda')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Agenda</button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
-        <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file /></svg> Trabalhos</button>
+        <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Trabalhos</button>
         <button type="button" class="subnav-item" data-sede="documentos" onclick="mostrarSubSede('documentos')"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</button>
         <button type="button" class="subnav-item" data-sede="pedidos" onclick="mostrarSubSede('pedidos')"><svg class=ic aria-hidden=true><use href=#i-send /></svg> Pedidos <span class="sede-conta" id="sede-conta-pedidos"></span></button>
         <button type="button" class="subnav-item" data-sede="decisoes" onclick="mostrarSubSede('decisoes')"><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Decisões <span class="sede-conta" id="sede-conta-decisoes"></span></button>
@@ -2249,7 +2249,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
       <div id="sede-trabalhos" style="display:none;">
         <div class="panel">
-          <h3><svg class=ic aria-hidden=true><use href=#i-file /></svg> O que a equipe entregou</h3>
+          <h3><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> O que a equipe entregou</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O texto completo de cada entrega (Semana da Tati e da Rica, Rumo da Ester, fechamento do mês), com a <b>conferência da Vera</b> no fim. Clique para abrir. O original fica também no Drive, em Sede.</p>
           <div class="sede-vazio" id="sede-trabalhos-aviso" style="display:none; border:1px dashed var(--c-amber); border-radius:10px; padding:10px 12px; margin-bottom:12px;">Para os trabalhos aparecerem aqui, falta rodar o <b>crm/schema_sede_trabalhos.sql</b> no SQL Editor do Supabase.</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
@@ -8352,11 +8352,13 @@ function renderSedeTrabalhos(){
   const box = document.getElementById("sede-trabalhos-lista"); if(!box) return;
   document.getElementById("sede-trabalhos-aviso").style.display = sedeTrabalhosSqlFaltando ? "block" : "none";
   const sel = document.getElementById("sede-filtro-trabalhos");
-  const ids = [...new Set(sedeTrabalhos.map(t=>t.agente))];
+  // Todas as agentes da equipe, mesmo as que ainda não entregaram nada.
+  const ids = [...new Set([...SEDE_AGENTES.map(a=>a.id), ...sedeTrabalhos.map(t=>t.agente)])];
   const atual = sel.value;
   sel.innerHTML = `<option value="">Todas as agentes</option>` + ids.map(id=>`<option value="${escapeHtml(id)}">${escapeHtml(sedeNome(id))}</option>`).join("");
   sel.value = ids.includes(atual) ? atual : "";
   const lista = sedeTrabalhos.filter(t => !sel.value || t.agente===sel.value);
+  if(!lista.length && sel.value){ box.innerHTML = `<div class="sede-vazio">${escapeHtml(sedeNome(sel.value))} ainda não entregou nenhum trabalho.</div>`; return; }
   if(!lista.length){ box.innerHTML = `<div class="sede-vazio">Nada ainda. A rotina "Segunda da equipe" grava aqui a cada segunda.</div>`; return; }
   box.innerHTML = lista.map(t=>{
     const a = sedeAgente(t.agente) || { id:t.agente, nome:t.agente };
