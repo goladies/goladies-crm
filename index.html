@@ -970,10 +970,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-prox .cab b{color:var(--text1);}
 .sag-prox .col.hoje .cab b{color:var(--rosa-texto);}
 .sag-prox .sag-lst{flex:1;}
-.sag-quadro{display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; align-items:flex-start;}
-.sag-col{flex:0 0 260px; background:var(--bg-card); border:1px solid var(--border); border-top:3px solid var(--rosa-borda); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px;}
+.sag-quadro{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; align-items:start;}
+.sag-col{min-width:0; background:var(--bg-card); border:1px solid var(--border); border-top:3px solid var(--rosa-borda); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px;}
 .sag-col .cab{display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:2px;}
-.sag-col-lst{display:flex; flex-direction:column; gap:6px;}
+/* Coluna longa rola por dentro, não estica a página */
+.sag-col-lst{display:flex; flex-direction:column; gap:6px; max-height:60vh; overflow-y:auto; padding-right:2px;}
+.sag-col-nova{border:1px dashed var(--border2); background:none; color:var(--text3); font-family:inherit; font-size:12.5px; cursor:pointer; align-items:center; justify-content:center; flex-direction:row; min-height:64px;}
+.sag-col-nova:hover{color:var(--rosa-texto); border-color:var(--rosa-borda);}
+.sag-col-nova .ic{width:13px; height:13px;}
 .sag-card{display:flex; gap:8px; align-items:flex-start; border-radius:9px; padding:8px 10px; border-left:3px solid; background:var(--bg-input); cursor:pointer; color:var(--text1); font-size:13px; line-height:1.35;}
 .sag-card:hover{filter:brightness(1.12);}
 .sag-card.vermelho{border-color:var(--c-red);} .sag-card.amarelo{border-color:var(--c-amber);} .sag-card.verde{border-color:var(--c-green);} .sag-card.branco{border-color:var(--sag-branco);}
@@ -996,7 +1000,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-aviso-semdata a{color:var(--rosa-texto);}
 .sag-atalhos{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;}
 @media (max-width:900px){ .sag-prox{grid-template-columns:repeat(2,minmax(0,1fr));} }
-@media (max-width:640px){ .sag-prox{grid-template-columns:minmax(0,1fr);} .sag-col{flex-basis:82vw;} }
+@media (max-width:640px){ .sag-prox{grid-template-columns:minmax(0,1fr);} .sag-quadro{grid-template-columns:minmax(0,1fr);} }
 @media (max-width:1280px){ .sag-wrap{grid-template-columns:minmax(0,1fr);} }
 /* Tablet e celular: o mês mostra só bolinhas; tocar no dia abre a lista embaixo */
 @media (max-width:1100px){
@@ -2197,6 +2201,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <button class="btn ghost small sag-nav" type="button" onclick="sagNavegar(1)" title="Próximo">›</button>
           <span class="sag-titulo" id="sag-titulo"></span>
           <div class="ag-visoes" id="sag-visoes"></div>
+          <div class="ag-visoes" id="sag-periodos"></div>
           <span style="flex:1;"></span>
           <span class="sag-hoje-conta" id="sag-hoje-conta"></span>
           <button class="btn secondary small" type="button" onclick="abrirItemAgenda()"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa ou decisão</button>
@@ -7693,14 +7698,20 @@ const SAG_TIPOS = { fazer:["Fazer","i-check"], decidir:["Decidir","i-clipboard-c
 const SAG_AREAS = ["Transporte","Parcerias","Marketing","Financeiro","Clientes","Pessoas","Tecnologia","Jurídico","Gestão","Sede"];
 const SAG_AREA_AGENTE = { rica:"Financeiro", tati:"Transporte", carol:"Parcerias", mari:"Marketing", ester:"Gestão", clara:"Pessoas", gabi:"Sede", vera:"Jurídico", pietra:"Sede", sol:"Sede" };
 const SAG_PESSOAS = ["Jú","Rafaela"];
-// Tudo junto (próximos 4 dias + Quadro) e Quadro (uma coluna por área, estilo Trello): ideia do Lapidar, 13/10/2026
-const SAG_VISOES = [["junto","Tudo junto"],["quadro","Quadro"],["mes","Mês"],["semana","Semana"],["linha","Linha do tempo"]];
+// Ideia do Lapidar, 13/10/2026: primeiro o que mostrar (Tudo junto = agenda + Quadro; Quadro = coluna por área,
+// estilo Trello), depois o período da agenda. Quadro sozinho não tem período: mostra tudo, com e sem data.
+const SAG_MODOS = [["junto","Tudo junto"],["agenda","Agenda"],["quadro","Quadro"]];
+const SAG_VISOES = [["prox","Próximos dias"],["dia","Dia"],["semana","Semana"],["mes","Mês"],["linha","Linha do tempo"]];
 const SAG_DOW = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 // "Feito" começa desmarcado: o histórico aparece só quando ela liga o filtro
 const SAG_TIPOS_PADRAO = () => Object.keys(SAG_TIPOS).filter(k=>k!=="feito");
-const sag = { visao:"junto", ancora:null, diaSel:null, tipos:new Set(SAG_TIPOS_PADRAO()),cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
-// Chave nova (v2) para abrir em "Tudo junto" uma vez; depois lembra a última visão escolhida
-try{ const v = localStorage.getItem("gl-sede-agenda-visao2"); if(SAG_VISOES.some(x=>x[0]===v)) sag.visao = v; }catch(_){}
+const sag = { modo:"junto", visao:"prox", ancora:null, diaSel:null, tipos:new Set(SAG_TIPOS_PADRAO()),cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
+// Abre em Tudo junto + Próximos dias; depois lembra a última escolha de cada nível
+try{
+  const m = localStorage.getItem("gl-sede-agenda-modo"), v = localStorage.getItem("gl-sede-agenda-periodo");
+  if(SAG_MODOS.some(x=>x[0]===m)) sag.modo = m;
+  if(SAG_VISOES.some(x=>x[0]===v)) sag.visao = v;
+}catch(_){}
 let sagEditando = null;
 
 // Quem está logada: a Rafaela entra com rafaela@goladies.com.br; qualquer outro login é a Jú.
@@ -7874,14 +7885,15 @@ function sagCard(x){
 function sagQuadroHtml(lista){
   const limite = isoLocal(somarDias(sagHojeData(), -14));
   const itens = lista.filter(x=>["fazer","decidir"].includes(x.tipo) && (!x.feito || x.feito>=limite));
-  const cols = [...SAG_AREAS]; if(itens.some(x=>!x.area)) cols.push("");
+  // Coluna vazia não aparece; "+ Outra área" cria tarefa numa área que ainda não tem nada
+  const cols = [...SAG_AREAS, ""].filter(a=>itens.some(x=>(x.area||"")===a));
   const ord = l => l.sort((a,b)=>(!!a.feito - !!b.feito) || SAG_ORDEM_COR.indexOf(a.cor) - SAG_ORDEM_COR.indexOf(b.cor) || (a.data||"9999").localeCompare(b.data||"9999"));
   return `<div class="sag-quadro">${cols.map(a=>{
     const l = ord(itens.filter(x=>(x.area||"")===a)), n = l.filter(x=>!x.feito).length;
     return `<div class="sag-col"><div class="cab"><b>${escapeHtml(a||"Sem área")}</b><span class="sede-conta">${n||""}</span></div>
       <div class="sag-col-lst">${l.map(sagCard).join("")}</div>
       <button type="button" class="sag-add" onclick="abrirItemAgenda(null, null, '${a}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Adicionar tarefa</button></div>`;
-  }).join("")}</div>`;
+  }).join("")}<button type="button" class="sag-col sag-col-nova" onclick="abrirItemAgenda()"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> ${cols.length ? "Outra área" : "Nada no Quadro com esses filtros. Criar tarefa"}</button></div>`;
 }
 function sagLegendaHtml(completa){
   const cores = Object.entries(SAG_CORES).map(([c,[n,d]])=>`<span><i class="sag-dot ${c}"></i><b>${n}</b> ${d}</span>`).join("")
@@ -7903,25 +7915,35 @@ function renderSedeAgenda(){
   if(!sag.filtrosIni){ sag.filtrosIni = true; if(window.innerWidth<=640) document.getElementById("sag-filtros-box").open = false; }
   const todos = sagItens(), lista = todos.filter(sagPassa), hoje = hojeLocalISO();
   const doDia = iso => sagOrdenar(lista.filter(x=>sagNoDia(x, iso)));
-  document.getElementById("sag-visoes").innerHTML = SAG_VISOES.map(([v,l])=>`<button type="button" class="${sag.visao===v?"active":""}" onclick="sagMudarVisao('${v}')">${l}</button>`).join("");
+  // 1º nível: o que mostrar (Tudo junto, Agenda, Quadro); 2º nível: o período da agenda
+  document.getElementById("sag-visoes").innerHTML = SAG_MODOS.map(([v,l])=>`<button type="button" class="${sag.modo===v?"active":""}" onclick="sagMudarModo('${v}')">${l}</button>`).join("");
+  const per = document.getElementById("sag-periodos");
+  per.style.display = sag.modo==="quadro" ? "none" : "";
+  per.innerHTML = SAG_VISOES.map(([v,l])=>`<button type="button" class="${sag.visao===v?"active":""}" onclick="sagMudarVisao('${v}')">${l}</button>`).join("");
   sagRenderFiltros();
 
   let titulo, html;
-  const quadro = ["junto","quadro"].includes(sag.visao);
-  document.querySelectorAll("#sede-agenda .sag-nav").forEach(b=>b.style.display = quadro ? "none" : "");
-  if(sag.visao==="junto"){
-    titulo = "Tudo junto";
-    const dias = Array.from({length:4}, (_,i)=>somarDias(sagHojeData(), i));
-    html = `<h3 class="sag-sec">Próximos dias</h3><div class="sag-prox">${dias.map((d,i)=>{
-      const iso = isoLocal(d), l = doDia(iso);
-      const nome = i===0 ? "Hoje" : i===1 ? "Amanhã" : capitalizar(d.toLocaleDateString("pt-BR",{weekday:"long"}));
-      return `<div class="col ${i===0?"hoje":""}" data-dia="${iso}"><div class="cab"><b>${nome}</b>, ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}</div>
-        <div class="sag-lst">${sagFeriadoHtml(iso, true)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica" style="margin:0;">Livre</div>`)}</div>
-        <button type="button" class="sag-add" onclick="abrirItemAgenda(null, '${iso}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>`;
-    }).join("")}</div><h3 class="sag-sec">Quadro</h3>${sagQuadroHtml(lista)}`;
-  } else if(sag.visao==="quadro"){
+  const soQuadro = sag.modo==="quadro";
+  document.querySelectorAll("#sede-agenda .sag-nav").forEach(b=>b.style.display = soQuadro ? "none" : "");
+  if(soQuadro){
     titulo = "Quadro";
     html = sagQuadroHtml(lista);
+  } else if(sag.visao==="prox"){
+    const dias = Array.from({length:4}, (_,i)=>somarDias(sag.ancora, i));
+    titulo = `Próximos dias · ${dias[0].getDate()} de ${mesCurto(dias[0])} a ${dias[3].getDate()} de ${mesCurto(dias[3])}`;
+    html = `<div class="sag-prox">${dias.map(d=>{
+      const iso = isoLocal(d), l = doDia(iso), dif = Math.round((d - sagHojeData()) / 864e5);
+      const nome = dif===0 ? "Hoje" : dif===1 ? "Amanhã" : capitalizar(d.toLocaleDateString("pt-BR",{weekday:"long"}));
+      return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab"><b>${nome}</b>, ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}</div>
+        <div class="sag-lst">${sagFeriadoHtml(iso, true)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica" style="margin:0;">Livre</div>`)}</div>
+        <button type="button" class="sag-add" onclick="abrirItemAgenda(null, '${iso}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>`;
+    }).join("")}</div>`;
+  } else if(sag.visao==="dia"){
+    const iso = isoLocal(sag.ancora), l = doDia(iso);
+    titulo = capitalizar(sag.ancora.toLocaleDateString("pt-BR",{weekday:"long", day:"numeric", month:"long"})) + (iso===hoje ? " · hoje" : "");
+    html = `<div class="panel sag-dia-sel" data-dia="${iso}" style="margin:0;">
+      <div style="display:flex; justify-content:flex-end;"><button class="btn ghost small" type="button" onclick="abrirItemAgenda(null, '${iso}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>
+      <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div></div>`;
   } else if(sag.visao==="semana"){
     const ini = sagSegunda(sag.ancora), fim = somarDias(ini, 6);
     titulo = ini.getMonth()===fim.getMonth() ? `${ini.getDate()} a ${fim.getDate()} de ${fim.toLocaleDateString("pt-BR",{month:"long"})}` : `${ini.getDate()} de ${mesCurto(ini)} a ${fim.getDate()} de ${mesCurto(fim)}`;
@@ -7957,11 +7979,12 @@ function renderSedeAgenda(){
         <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(sag.diaSel)}${lsel.map(x=>sagChip(x, true)).join("") || (sagFeriados(sag.diaSel).length ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div>
       </div>`;
   }
+  if(sag.modo==="junto") html += `<h3 class="sag-sec" style="margin-top:18px;">Quadro</h3>` + sagQuadroHtml(lista);
   document.getElementById("sag-titulo").textContent = titulo;
-  document.getElementById("sag-wrap").classList.toggle("sag-larga", sag.visao==="semana" || quadro);
-  // No calendário, avisa o que não aparece nele por não ter data (está no Quadro)
+  document.getElementById("sag-wrap").classList.toggle("sag-larga", sag.modo!=="agenda" || ["semana","prox"].includes(sag.visao));
+  // Só na Agenda (sem Quadro na tela): avisa o que não aparece nela por não ter data
   const nSemData = todos.filter(x=>!x.feito && ["fazer","decidir"].includes(x.tipo) && !x.data && sagPassa(x)).length;
-  const aviso = !quadro && nSemData ? `<div class="sag-aviso-semdata">${nSemData} ${nSemData===1?"item sem data está":"itens sem data estão"} só no <a href="#" onclick="event.preventDefault(); sagMudarVisao('quadro')">Quadro</a> e na lista Sem data.</div>` : "";
+  const aviso = sag.modo==="agenda" && nSemData ? `<div class="sag-aviso-semdata">${nSemData} ${nSemData===1?"item sem data está":"itens sem data estão"} só no <a href="#" onclick="event.preventDefault(); sagMudarModo('quadro')">Quadro</a> e na lista Sem data.</div>` : "";
   corpo.innerHTML = aviso + html;
   // Contador do dia: o que tem data hoje (aberto) mais o que foi feito hoje
   const doHoje = todos.filter(x=>["fazer","decidir"].includes(x.tipo) && (x.feito ? x.feito===hoje : x.data===hoje));
@@ -7995,10 +8018,15 @@ function sagRenderFiltros(){
     <select class="sag-fc" onchange="sag.quem=this.value; renderSedeAgenda();"><option value="">Todo mundo</option>${quemOpc.map(q=>`<option value="${q}" ${sag.quem===q?"selected":""}>${escapeHtml(sagNomeQuem(q))}</option>`).join("")}</select>`;
 }
 function sagAlternar(grupo, k){ sag[grupo].has(k) ? sag[grupo].delete(k) : sag[grupo].add(k); renderSedeAgenda(); }
-function sagMudarVisao(v){ sag.visao = v; try{ localStorage.setItem("gl-sede-agenda-visao2", v); }catch(_){} renderSedeAgenda(); }
+function sagMudarModo(m){ sag.modo = m; try{ localStorage.setItem("gl-sede-agenda-modo", m); }catch(_){} renderSedeAgenda(); }
+function sagMudarVisao(v){
+  sag.visao = v; sag.ancora = sagHojeData(); sag.diaSel = hojeLocalISO();
+  try{ localStorage.setItem("gl-sede-agenda-periodo", v); }catch(_){}
+  renderSedeAgenda();
+}
 function sagNavegar(n){
   const a = sag.ancora;
-  sag.ancora = sag.visao==="semana" ? somarDias(a, 7*n) : new Date(a.getFullYear(), a.getMonth()+n, 1);
+  sag.ancora = sag.visao==="semana" ? somarDias(a, 7*n) : sag.visao==="dia" ? somarDias(a, n) : sag.visao==="prox" ? somarDias(a, 4*n) : new Date(a.getFullYear(), a.getMonth()+n, 1);
   renderSedeAgenda();
 }
 function sagSelDia(iso){ sag.diaSel = iso; renderSedeAgenda(); }
@@ -8014,7 +8042,7 @@ function irParaAgendaSede(f){
   sag.tipos = new Set(f.tipos || SAG_TIPOS_PADRAO());
   sag.cores = new Set(f.cores || SAG_ORDEM_COR);
   sag.area = ""; sag.quem = "";
-  if(f.visao) sag.visao = f.visao;
+  if(f.visao){ sag.visao = f.visao; sag.modo = "agenda"; }
   sag.ancora = sagHojeData(); sag.diaSel = hojeLocalISO();
   irParaAba("sede"); mostrarSubSede("agenda"); renderSedeAgenda();
 }
