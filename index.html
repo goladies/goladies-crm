@@ -8380,6 +8380,13 @@ function abrirTrabalhoSede(id){
 
 // ── Pendências ──
 async function fecharPendenciaSede(id, status){
+  // Confirmação: a Jú clica sem querer; a pergunta diz qual card e o que acontece.
+  const p = sedePendencias.find(x=>x.id===id);
+  const tit = p && p.titulo ? `"${p.titulo}"` : "esta pendência";
+  const perg = status==="Feita"    ? `Marcar como feita: ${tit}?\n\nEla sai da lista de abertas e a Gabi não traz de novo.`
+             : status==="Ignorada" ? `Ignorar: ${tit}?\n\nEla sai da lista sem ser feita e a Gabi não traz de novo.`
+             :                       `Reabrir: ${tit}?\n\nEla volta para a lista de abertas.`;
+  if(!confirm(perg)) return;
   const reg = status==="Aberta"
     ? { status, fechada_em:null, fechada_por:null, atualizado_em:new Date().toISOString() }
     : { status, fechada_em:new Date().toISOString(), fechada_por:"Jú", atualizado_em:new Date().toISOString() };
@@ -8399,6 +8406,11 @@ function sedeDataHora(iso){
   return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} às ${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 async function mudarPrioridadePendencia(id, valor){
+  const p = sedePendencias.find(x=>x.id===id);
+  const tit = p && p.titulo ? `"${p.titulo}"` : "esta pendência";
+  const nome = (SEDE_PRIORIDADES[Number(valor)]||["?"])[0];
+  // Cancelar redesenha a lista, e a caixinha volta para a prioridade de antes.
+  if(!confirm(`Mudar a prioridade de ${tit} para ${nome}?\n\nA lista é reordenada e a agente não muda mais a prioridade sozinha.`)){ renderSede(); return; }
   const r = await sb.from("sede_pendencias").update({ prioridade:Number(valor), prioridade_por:"Jú", atualizado_em:new Date().toISOString() }).eq("id", id).select().single();
   if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
   sedePendencias = sedePendencias.map(x=>x.id===id ? r.data : x);
