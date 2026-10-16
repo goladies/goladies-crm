@@ -1965,7 +1965,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item" data-subtab="pagar" onclick="mostrarSubTabFinanceiro('pagar')"><svg class=ic aria-hidden=true><use href=#i-receipt /></svg> Contas a Pagar</button>
         <button type="button" class="subnav-item" data-subtab="metas" onclick="mostrarSubTabFinanceiro('metas')"><svg class=ic aria-hidden=true><use href=#i-target /></svg> Metas</button>
         <button type="button" class="subnav-item" data-subtab="resumo" onclick="mostrarSubTabFinanceiro('resumo')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Resumo</button>
-        <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia'); carregarCustosIa();"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de tecnologia</button>
+        <button type="button" class="subnav-item" data-subtab="custos-ia" onclick="mostrarSubTabFinanceiro('custos-ia')"><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Custos de tecnologia</button>
       </div>
 
       <div id="subtab-livro">
@@ -7414,6 +7414,10 @@ function mostrarSubTabFinanceiro(nome){
   document.querySelectorAll("#tab-financeiro .subnav-item").forEach(b=>b.classList.toggle("active", b.dataset.subtab===nome));
   document.querySelectorAll("#tab-financeiro [id^=subtab-]").forEach(p=>p.style.display="none");
   document.getElementById("subtab-"+nome).style.display="block";
+  // Custos de tecnologia busca os números ao abrir, venha de onde vier (clique,
+  // F5 voltando pra última sub-aba ou link do Dashboard). Antes só o clique no
+  // botão buscava, e o F5 deixava a tela vazia esperando (16/10/2026).
+  if(nome==="custos-ia") carregarCustosIa();
 }
 
 // ===== SEDE: equipe de IA =====
