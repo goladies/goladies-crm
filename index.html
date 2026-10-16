@@ -5748,6 +5748,21 @@ function cancelarEdicaoCompraApi(){
   document.getElementById("compra-api-cancelar").style.display = "none";
   document.querySelectorAll("#conta-api-compras tr.tr-ativa").forEach(tr=>tr.classList.remove("tr-ativa"));
 }
+// Lista "Campo: antes → depois" do que mudou, pra mostrar no confirm() antes de salvar
+function mudancasContaApi(antes, depois, campos){
+  const igual = (a, b) => (a ?? null) === (b ?? null) || (a != null && b != null && String(a) === String(b));
+  return campos.filter(c=>!igual(antes[c.k], depois[c.k]))
+    .map(c=>`${c.rotulo}: ${antes[c.k] == null || antes[c.k] === "" ? "falta lançar" : c.fmt(antes[c.k])} → ${depois[c.k] == null || depois[c.k] === "" ? "vazio" : c.fmt(depois[c.k])}`);
+}
+const txtContaApi = v => String(v);
+const CAMPOS_COMPRA_CONFIRMA = [
+  { k: "data", rotulo: "Data", fmt: fmtDataBR },
+  { k: "valor_usd", rotulo: "Crédito", fmt: v=>fmtUsd(v) },
+  { k: "valor_brl", rotulo: "No cartão", fmt: v=>formatarMoedaBR(v) },
+  { k: "iof_brl", rotulo: "IOF", fmt: v=>formatarMoedaBR(v) },
+  { k: "fatura", rotulo: "Fatura", fmt: txtContaApi },
+  { k: "observacao", rotulo: "Observação", fmt: txtContaApi },
+];
 async function salvarCompraApi(){
   const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
   const data = document.getElementById("compra-api-data").value;
@@ -5759,12 +5774,21 @@ async function salvarCompraApi(){
     observacao: document.getElementById("compra-api-obs").value.trim() || null,
   };
   const editando = compraApiEditando;
-  const { error } = editando
-    ? await sb.from("ia_compras_credito").update(linha).eq("id", editando)
+  if(editando){
+    const antes = contaApiCompras.find(x=>x.id === editando) || {};
+    const mudou = mudancasContaApi(antes, linha, CAMPOS_COMPRA_CONFIRMA);
+    if(!mudou.length){ showToast("Nada mudou."); return; }
+    if(!confirm(`Salvar a alteração da compra de ${fmtDataBR(antes.data)}?\n\n${mudou.join("\n")}`)) return;
+  }
+  // .select() devolve a linha gravada: sem permissão de editar, o banco não dá
+  // erro, só não grava nada (por isso confere se voltou alguma linha).
+  const { data: gravadas, error } = editando
+    ? await sb.from("ia_compras_credito").update(linha).eq("id", editando).select("id")
     : await sb.from("ia_compras_credito").insert(linha);
-  if(error){
-    const semPermissao = editando && /policy|permission|row-level/i.test(error.message);
-    showToast(semPermissao ? "Não salvou: falta rodar o schema_conta_api_editar.sql no Supabase." : "Não salvou: " + error.message, true);
+  if(error || (editando && !(gravadas && gravadas.length))){
+    showToast(editando && (!error || /policy|permission|row-level/i.test(error.message))
+      ? "Não salvou: falta rodar o schema_conta_api_editar.sql no Supabase."
+      : "Não salvou: " + error.message, true);
     return;
   }
   showToast(editando ? "Salvo" : "Lançado");
@@ -5778,17 +5802,28 @@ async function apagarCompraApi(id){
   if(compraApiEditando === id) cancelarEdicaoCompraApi();
   carregarContaApi();
 }
+const CAMPOS_CONTA_API_CONFIRMA = [
+  { k: "recarga_ativa", rotulo: "Recarga automática", fmt: v=>v ? "ligada" : "desligada" },
+  { k: "recarga_abaixo_usd", rotulo: "Recarrega se abaixo de", fmt: v=>fmtUsdCurto(v) },
+  { k: "recarga_ate_usd", rotulo: "Recarrega até", fmt: v=>fmtUsdCurto(v) },
+  { k: "cartao", rotulo: "Cartão", fmt: txtContaApi },
+  { k: "limite_gasto_usd", rotulo: "Limite de gasto", fmt: v=>fmtUsdCurto(v) + " / mês" },
+  { k: "aviso_email_usd", rotulo: "Aviso por e-mail", fmt: v=>fmtUsdCurto(v) },
+];
 async function salvarContaApi(){
   const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
-  const { error } = await sb.from("ia_conta_api").update({
+  const novo = {
     recarga_ativa: document.getElementById("conta-api-recarga").value === "true",
     recarga_abaixo_usd: num("conta-api-abaixo"),
     recarga_ate_usd: num("conta-api-ate"),
     cartao: document.getElementById("conta-api-cartao").value.trim() || null,
     limite_gasto_usd: num("conta-api-limite"),
     aviso_email_usd: num("conta-api-aviso"),
-    atualizado_em: new Date().toISOString(),
-  }).eq("id", 1);
+  };
+  const mudou = mudancasContaApi(contaApiCache || {}, novo, CAMPOS_CONTA_API_CONFIRMA);
+  if(!mudou.length){ showToast("Nada mudou."); return; }
+  if(!confirm(`Salvar a configuração do Console no CRM?\n\n${mudou.join("\n")}\n\nIsso só anota no CRM. Não muda nada no Console da Anthropic.`)) return;
+  const { error } = await sb.from("ia_conta_api").update({ ...novo, atualizado_em: new Date().toISOString() }).eq("id", 1);
   if(error){ showToast("Não salvou: " + error.message, true); return; }
   showToast("Salvo");
   carregarContaApi();
