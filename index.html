@@ -15945,11 +15945,13 @@ function renderLcResumo(mes, ano){
   const soma = (tipo, prev) => itens.filter(i=>i.tipo === tipo && (prev == null || i.previsto === prev)).reduce((s,i)=>s + i.valor, 0);
   const entR = soma("entrada", false), entT = soma("entrada"), saiR = soma("saida", false), saiT = soma("saida");
   const aPagar = itens.filter(i=>i.tipo === "saida" && i.previsto);
+  const aReceber = itens.filter(i=>i.tipo === "entrada" && i.previsto);
   const card = (t, v, cor, s, acao) => `<div class="lc-card" onclick="${acao}"><div class="t">${t}</div><div class="v ${cor}">${v}</div><div class="s">${s}</div></div>`;
   let html = `<div class="lc-cards">
     ${card("Entradas", lcR(entR), "lc-pos", `previsto para o mês: ${lcR(entT)}`, "lcIrParaLancamentos({tipo:'entrada'})")}
     ${card("Saídas", lcR(saiR), "lc-neg", `previsto para o mês: ${lcR(saiT)}`, "lcIrParaLancamentos({tipo:'saida'})")}
     ${card("Resultado realizado", lcR(entR - saiR), entR - saiR >= 0 ? "lc-pos" : "lc-neg", `resultado previsto: ${lcR(entT - saiT)}`, "lcIrParaLancamentos({status:'realizado'})")}
+    ${card("Ainda a receber", lcR(aReceber.reduce((s,i)=>s + i.valor, 0)), "lc-pos", `${aReceber.length} entrada(s) em aberto no mês`, "lcIrParaLancamentos({tipo:'entrada', status:'previsto'})")}
     ${card("Ainda a pagar", lcR(aPagar.reduce((s,i)=>s + i.valor, 0)), "lc-azul", `${aPagar.length} conta(s) em aberto no mês`, "lcIrParaLancamentos({tipo:'saida', status:'previsto'})")}
   </div>`;
 
