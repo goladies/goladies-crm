@@ -2398,7 +2398,19 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <h3 style="margin:0;">Meus dados</h3>
       <button class="icon-btn" type="button" onclick="closeModal('meus-dados-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid" style="margin-top:14px;">
+    <div class="foto-perfil-wrap" style="margin-top:14px;">
+      <div class="foto-perfil" id="md-foto-preview">GL</div>
+      <div>
+        <label style="margin:0;">Foto</label>
+        <small>Aparece no topo e no menu do CRM e no seu cartão da Sede. A equipe vê; ninguém de fora.</small>
+        <input type="file" id="md-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoMeusDados(this)">
+        <input type="file" id="md-foto-camera" accept="image/*" capture="user" style="display:none;" onchange="escolherFotoMeusDados(this)">
+        <button type="button" class="act act-edit" onclick="document.getElementById('md-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-photo /></svg> Escolher foto</button>
+        <button type="button" class="act act-edit" onclick="document.getElementById('md-foto-camera').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Tirar foto</button>
+        <button type="button" class="act act-del" id="md-foto-remover" onclick="removerFotoMeusDados()" style="display:none;">Remover</button>
+      </div>
+    </div>
+    <div class="formgrid">
       <div class="full"><label>Como você quer ser chamada no painel</label><input type="text" id="md-apelido" placeholder="Ex.: Jú" maxlength="40"></div>
       <div class="full"><label>E-mail de login</label><input type="email" id="md-email" disabled></div>
       <div class="full" style="margin-top:6px; padding-top:12px; border-top:1px solid var(--border);"><label style="font-weight:600; color:var(--text2);">Trocar senha (deixe em branco pra manter a atual)</label></div>
@@ -4244,7 +4256,12 @@ function mostrarUsuaria(user){
   const apelido = (user && user.user_metadata && user.user_metadata.apelido || "").trim();
   const nome = apelido || email.split("@")[0] || "Go Ladies";
   const iniciais = nome.replace(/[^a-zA-Z0-9À-ÿ]/g," ").trim().split(/\s+/).slice(0,2).map(p=>p[0]||"").join("").toUpperCase() || "GL";
-  document.querySelectorAll(".js-user-avatar").forEach(el=>{ el.textContent = iniciais; el.title = email; });
+  const foto = user && fotosEquipe.porUser[user.id];
+  document.querySelectorAll(".js-user-avatar").forEach(el=>{
+    if(foto){ el.innerHTML = `<img src="${escapeHtml(foto)}" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`; el.style.overflow = "hidden"; }
+    else el.textContent = iniciais;
+    el.title = email;
+  });
   document.querySelectorAll(".js-user-name").forEach(el=>{ el.textContent = nome; el.title = email; });
   const ola = document.getElementById("bv-ola");
   if(ola) ola.textContent = "Olá, " + nome;
@@ -4277,6 +4294,8 @@ function openMeusDadosModal(){
   document.getElementById("md-email").value = u.email || "";
   document.getElementById("md-senha").value = "";
   document.getElementById("md-senha2").value = "";
+  fotoMeusDadosPendente = null;
+  mostrarFotoMeusDados(fotosEquipe.porUser[u.id] || null);
   document.getElementById("meus-dados-modal").classList.add("open");
   fecharMenu();
 }
@@ -4295,6 +4314,9 @@ async function saveMeusDados(){
     if(senha) payload.password = senha;
     const { data, error } = await sb.auth.updateUser(payload);
     if(error) throw error;
+    const fotoMudou = await salvarFotoMeusDados(data.user.id);
+    if(fotoMudou === false) return;   // erro já avisado; o modal fica aberto
+    if(fotoMudou) await carregarFotosEquipe();
     mostrarUsuaria(data.user);
     closeModal("meus-dados-modal");
     showToast(senha ? "Dados e senha salvos!" : "Salvo!");
@@ -4303,6 +4325,73 @@ async function saveMeusDados(){
   }finally{
     btn.disabled = false;
   }
+}
+
+// ===== FOTO DA EQUIPE (Meus dados, topo, menu e Sede) =====
+// Bucket privado "fotos-equipe", pasta = id do login; caminho em equipe.foto_path
+// (schema_foto_equipe.sql). Links assinados valem 24h; recarregar a página renova.
+const fotosEquipe = { porUser: {}, pathPorUser: {}, porSede: {} };
+let fotoMeusDadosPendente = null;   // File novo, "remover" ou null (sem mudança)
+async function carregarFotosEquipe(){
+  const { data, error } = await sb.rpc("equipe_fotos");
+  if(error || !data) return;   // sem o SQL ainda: fica com as iniciais
+  const paths = data.map(f=>f.foto_path).filter(Boolean);
+  const urls = {};
+  if(paths.length){
+    const { data: assinadas } = await sb.storage.from("fotos-equipe").createSignedUrls(paths, 86400);
+    (assinadas || []).forEach(a=>{ if(a.signedUrl) urls[a.path] = a.signedUrl; });
+  }
+  fotosEquipe.porUser = {}; fotosEquipe.pathPorUser = {}; fotosEquipe.porSede = {};
+  const sedeEm = {};
+  data.forEach(f=>{
+    const url = urls[f.foto_path];
+    if(!url) return;
+    fotosEquipe.porUser[f.auth_user_id] = url;
+    fotosEquipe.pathPorUser[f.auth_user_id] = f.foto_path;
+    // A Jú tem dois logins: o cartão da Sede usa a foto mais recente
+    if(f.sede_id && (!sedeEm[f.sede_id] || f.foto_em > sedeEm[f.sede_id])){ fotosEquipe.porSede[f.sede_id] = url; sedeEm[f.sede_id] = f.foto_em; }
+  });
+  if(usuariaAtual) mostrarUsuaria(usuariaAtual);
+  const sede = document.getElementById("tab-sede");
+  if(sede && sede.style.display !== "none" && typeof renderSede === "function") renderSede();
+}
+// Foto da Sede: a enviada em Meus dados (Jú e Rafaela) ou o avatar fixo da agente
+function sedeFotoSrc(id){ return escapeHtml(fotosEquipe.porSede[id] || `images/sede/${id}.jpg`); }
+function mostrarFotoMeusDados(url){
+  const nome = document.getElementById("md-apelido").value || (usuariaAtual && usuariaAtual.email) || "";
+  document.getElementById("md-foto-preview").innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(nome));
+  document.getElementById("md-foto-remover").style.display = url ? "" : "none";
+}
+async function escolherFotoMeusDados(input){
+  const arquivo = input.files && input.files[0];
+  input.value = "";
+  if(!arquivo) return;
+  if(!arquivo.type.startsWith("image/")){ alert("Escolha uma imagem (JPG, PNG ou WEBP)."); return; }
+  try{
+    fotoMeusDadosPendente = await prepararFotoPerfil(arquivo);
+    mostrarFotoMeusDados(URL.createObjectURL(fotoMeusDadosPendente));
+  }catch(e){ alert("Não consegui ler essa imagem. Tente outra foto."); }
+}
+function removerFotoMeusDados(){
+  fotoMeusDadosPendente = "remover";
+  mostrarFotoMeusDados(null);
+}
+// Devolve true se mudou, null se não havia mudança, false se deu erro.
+async function salvarFotoMeusDados(uid){
+  const pend = fotoMeusDadosPendente;
+  if(!pend) return null;
+  const pathAtual = fotosEquipe.pathPorUser[uid] || null;
+  let novoPath = null;
+  if(pend !== "remover"){
+    novoPath = `${uid}/${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}.jpg`;
+    const { error: ue } = await sb.storage.from("fotos-equipe").upload(novoPath, pend, { contentType: "image/jpeg" });
+    if(ue){ showToast(/bucket|not found|policy|row-level/i.test(ue.message) ? "A foto não subiu: falta rodar o schema_foto_equipe.sql no Supabase." : "A foto não subiu: " + ue.message, true); return false; }
+  }
+  const { error } = await sb.rpc("equipe_salvar_foto", { p_path: novoPath });
+  if(error){ showToast("A foto não foi gravada: " + error.message, true); return false; }
+  if(pathAtual && pathAtual !== novoPath) await sb.storage.from("fotos-equipe").remove([pathAtual]);
+  fotoMeusDadosPendente = null;
+  return true;
 }
 
 // ===== BUSCA GLOBAL (barra do topo) =====
@@ -4404,6 +4493,7 @@ async function liberarPainelCompleto(user){
   try{ ultimaAba = localStorage.getItem("crm-ultima-aba"); }catch(_){}
   if(ultimaAba==="documentos"){ ultimaAba = "sede"; lembrarSubAba("sede", "documentos"); }
   if(ultimaAba && document.getElementById("tab-"+ultimaAba)){ mostrarAbaDireto(ultimaAba); restaurarSubAba(ultimaAba); }
+  carregarFotosEquipe();
   await carregarDados();
   // Com prazo: se o getUser travar, nada fica esperando ele
   try{
@@ -7679,7 +7769,7 @@ function sedeMembro(id){ return SEDE_PESSOAS.find(a=>a.id===id) || sedeAgente(id
 function sedeNome(id){ const a = sedeAgente(id); return a ? `${a.nome} · ${a.cargo}` : (id || "Equipe"); }
 function sedeHojeISO(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function sedeData(iso){ if(!iso) return ""; const [y,m,d] = String(iso).slice(0,10).split("-"); return `${d}/${m}/${y}`; }
-function sedeFoto(a, cls){ return `<img ${cls?`class="${cls}"`:""} src="images/sede/${a.id}.jpg" alt="" onerror="this.replaceWith(document.createTextNode('${a.nome.slice(0,2).toUpperCase()}'))">`; }
+function sedeFoto(a, cls){ return `<img ${cls?`class="${cls}"`:""} src="${sedeFotoSrc(a.id)}" alt="" onerror="this.replaceWith(document.createTextNode('${a.nome.slice(0,2).toUpperCase()}'))">`; }
 // Status real da Gabi: vem do último resumo que ela escreveu.
 function sedeStatus(a){
   if(a.id==="gabi" && sedeResumos.length){
@@ -7704,9 +7794,9 @@ function renderSede(){
   const org = document.getElementById("sede-org");
   if(!org) return;
   document.getElementById("sede-sql-aviso").style.display = sedeSqlFaltando ? "block" : "none";
-  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirFichaAgente('${a.id}')"><img src="images/sede/${a.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
+  const no = a => `<button type="button" class="no${a.nivel==="chefe"?" chefe":""}${["lado","apoio"].includes(a.nivel)?" lado":""}" onclick="abrirFichaAgente('${a.id}')"><img src="${sedeFotoSrc(a.id)}" alt="" onerror="this.remove()">${escapeHtml(a.nome)} · ${escapeHtml(a.cargo)}</button>`;
   const nivel = (...n) => SEDE_AGENTES.filter(a=>n.includes(a.nivel)).map(no).join("");
-  const pessoa = p => `<button type="button" class="no pessoa${p.nivel==="ceo"?" voce":""}" onclick="abrirFichaAgente('${p.id}')"><img src="images/sede/${p.id}.jpg" alt="" onerror="this.remove()">${escapeHtml(p.nome)} · ${escapeHtml(p.cargo)}</button>`;
+  const pessoa = p => `<button type="button" class="no pessoa${p.nivel==="ceo"?" voce":""}" onclick="abrirFichaAgente('${p.id}')"><img src="${sedeFotoSrc(p.id)}" alt="" onerror="this.remove()">${escapeHtml(p.nome)} · ${escapeHtml(p.cargo)}</button>`;
   org.innerHTML = `
     <div class="nivel">${SEDE_PESSOAS.filter(p=>p.nivel==="ceo").map(pessoa).join("")}</div>
     <span class="seta">▲</span>
@@ -7913,7 +8003,7 @@ function renderSedePedidos(){
     const venceu = p.data_alvo && p.data_alvo <= hoje && ["Aberto","Em andamento"].includes(p.status);
     const cls = { "Aberto":"amber", "Em andamento":"blue", "Feito":"green", "Cancelado":"gray" }[p.status] || "gray";
     return `<div class="sede-item clicavel" onclick="abrirPedidoSede(${p.id})">
-      <img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">
+      <img class="mini" src="${sedeFotoSrc(a.id)}" alt="" onerror="this.remove()">
       <div class="txt">
         <div>${escapeHtml(p.texto)}</div>
         <div class="meta">${escapeHtml(p.tipo)} · ${escapeHtml(sedeNome(p.agente))}${p.data_alvo?` · <span style="${venceu?"color:var(--rosa-texto); font-weight:600;":""}">${p.tipo==="Lembrete"?"lembrar em":"prazo"} ${sedeData(p.data_alvo)}</span>`:""} · <span class="status-badge ${cls}">${escapeHtml(p.status)}</span></div>
@@ -8606,7 +8696,7 @@ function renderSedeTrabalhos(){
     const a = sedeAgente(t.agente) || { id:t.agente, nome:t.agente };
     return `<details class="sede-trabalho" id="sede-trabalho-${t.id}">
       <summary>
-        <img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">
+        <img class="mini" src="${sedeFotoSrc(a.id)}" alt="" onerror="this.remove()">
         <span class="txt"><b>${escapeHtml(a.nome)} · ${escapeHtml(t.tipo)}</b><span class="meta">${t.titulo ? escapeHtml(t.titulo) : sedeData(t.data)}</span></span>
         ${sedeVeraBadge(t)}
       </summary>
@@ -8769,7 +8859,7 @@ function renderSedePendencias(){
   box.innerHTML = chaves.map(k=>{
     const a = sedeAgente(k);
     return `<div class="sede-grupo-area">
-        ${a ? `<img class="mini" src="images/sede/${escapeHtml(a.id)}.jpg" alt="" onerror="this.remove()">` : ""}
+        ${a ? `<img class="mini" src="${sedeFotoSrc(a.id)}" alt="" onerror="this.remove()">` : ""}
         <span>${a ? `Área de ${escapeHtml(a.nome)} <small>· ${escapeHtml(a.cargo)}</small>` : "Geral"}</span>
         <span class="qtd">${grupos[k].length}</span>
       </div>` + grupos[k].map(p=>{
