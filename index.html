@@ -3727,7 +3727,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <p style="font-size:12.5px; color:var(--text3); margin:8px 0 0;">Para dinheiro que não é viagem nem venda de lead: parceiros (os), cotas de patrocínio, serviço avulso. Viagens e vendas entram sozinhas.</p>
     <div class="formgrid">
       <div class="full"><label>Descrição *</label><input type="text" id="fe-descricao" placeholder="Ex: Cota de patrocínio · Loja X"></div>
-      <div><label>Categoria</label><input type="text" id="fe-categoria" list="fe-categorias-lista" placeholder="Escolha ou digite"><datalist id="fe-categorias-lista"></datalist></div>
+      <div><label>Categoria</label><input type="text" id="fe-categoria" list="fe-categorias-lista" placeholder="Escolha ou digite" onfocus="listaCompletaAoFocar(this)" onblur="listaCompletaAoSair(this)"><datalist id="fe-categorias-lista"></datalist></div>
       <div><label>Valor (R$) *</label><input type="number" step="0.01" min="0" id="fe-valor"></div>
       <div><label>Status</label><select id="fe-status"><option>Previsto</option><option>Recebido</option></select></div>
       <div><label>Caiu em qual conta</label><select id="fe-conta"></select></div>
@@ -15636,7 +15636,18 @@ function irParaGestaoDoMes(mes, ano){
 let lcMes = null;
 let lcAbaAtual = "resumo";
 const LC_MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const LC_CATEGORIAS_ENTRADA = ["Parceiros (os)", "Cotas de patrocínio", "Serviço avulso", "Eventos", "Outras entradas"];
+const LC_CATEGORIAS_ENTRADA = ["Parceiros (os)", "Cotas de patrocínio", "Serviço avulso", "Eventos", "Outros apps (Uber, 99)", "Outras entradas"];
+// Campo com sugestões (datalist) só mostra o que combina com o texto já escrito.
+// Ao clicar, esvazia para a lista aparecer inteira; ao sair sem escolher, volta o que estava.
+function listaCompletaAoFocar(inp){
+  inp.dataset.antes = inp.value;
+  inp.placeholder = inp.value || "Escolha ou digite";
+  inp.value = "";
+}
+function listaCompletaAoSair(inp){
+  if(!inp.value.trim() && inp.dataset.antes) inp.value = inp.dataset.antes;
+  inp.placeholder = "Escolha ou digite";
+}
 const LC_STATUS_SEM_PREVISAO = ["Cancelada", "Cotando preço", "Preço recusado pela cliente"];
 
 function lcMesAtual(){
