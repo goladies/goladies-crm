@@ -2073,6 +2073,34 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <h3>Últimos 30 dias</h3>
           <div class="chartwrap"><canvas id="chart-custos-ia"></canvas></div>
         </div>
+        <h3 style="margin:22px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-credit-card /></svg> Conta da API (Anthropic)</h3>
+        <div class="cards" id="conta-api-cards"></div>
+        <div class="panel">
+          <h3>Compras de crédito</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O que entrou de saldo no Console. Fica só aqui: não soma no total "Tecnologia no mês", porque o uso da IA já está lá (somar contaria duas vezes).</p>
+          <table class="tbl"><thead><tr><th>Data</th><th>Crédito</th><th>No cartão (com IOF)</th><th>IOF</th><th>Fatura</th><th></th></tr></thead><tbody id="conta-api-compras"></tbody></table>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-top:12px;">
+            <label style="font-size:12.5px;">Data<br><input type="date" id="compra-api-data" style="width:150px;"></label>
+            <label style="font-size:12.5px;">Crédito (US$)<br><input type="number" step="0.01" min="0" id="compra-api-usd" style="width:110px;"></label>
+            <label style="font-size:12.5px;">No cartão (R$)<br><input type="number" step="0.01" min="0" id="compra-api-brl" style="width:110px;"></label>
+            <label style="font-size:12.5px;">IOF (R$)<br><input type="number" step="0.01" min="0" id="compra-api-iof" style="width:100px;"></label>
+            <label style="font-size:12.5px;">Fatura<br><input type="text" id="compra-api-fatura" placeholder="Ex: UFTRJLAU-0003" style="width:150px;"></label>
+            <button class="btn small" type="button" onclick="lancarCompraApi()">Lançar</button>
+          </div>
+        </div>
+        <div class="panel" id="conta-api-ajustes" style="display:none;">
+          <h3>Configuração do Console</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Só anota aqui o que está no Console. Mudar aqui não muda lá: ajuste primeiro no <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--rosa-texto);">Console <svg class=ic aria-hidden=true><use href=#i-external-link /></svg></a>.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+            <label style="font-size:12.5px;">Recarga automática<br><select id="conta-api-recarga"><option value="true">Ligada</option><option value="false">Desligada</option></select></label>
+            <label style="font-size:12.5px;">Abaixo de (US$)<br><input type="number" step="0.01" min="0" id="conta-api-abaixo" style="width:100px;"></label>
+            <label style="font-size:12.5px;">Recarrega até (US$)<br><input type="number" step="0.01" min="0" id="conta-api-ate" style="width:100px;"></label>
+            <label style="font-size:12.5px;">Cartão<br><input type="text" id="conta-api-cartao" placeholder="Ex: Mastercard final 4009" style="width:180px;"></label>
+            <label style="font-size:12.5px;">Limite de gasto (US$ / mês)<br><input type="number" step="1" min="0" id="conta-api-limite" style="width:110px;"></label>
+            <label style="font-size:12.5px;">Aviso por e-mail (US$)<br><input type="number" step="0.01" min="0" id="conta-api-aviso" style="width:100px;"></label>
+            <button class="btn small" type="button" onclick="salvarContaApi()">Salvar</button>
+          </div>
+        </div>
         <h3 style="margin:22px 0 10px;"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Google Cloud (mapas, endereços e rotas)</h3>
         <div class="cards" id="custos-nuvem-cards"></div>
         <div class="panel">
@@ -5363,6 +5391,7 @@ async function carregarCustosIa(){
   }
   custosIaCache = data;
   renderCustosIa(data);
+  carregarContaApi();
   await carregarCustosNuvem();
   carregarCustosManuais();
 }
@@ -5589,6 +5618,113 @@ async function salvarConfigCustosIa(){
   if(error){ showToast("Não salvou: " + error.message, true); return; }
   showToast("Ajustes salvos");
   carregarCustosIa();
+}
+
+// Conta da API (Anthropic): o que está configurado no Console + compras de
+// crédito. Não soma no total do mês (o uso já está em uso_ia).
+const URL_CONSOLE_BILLING = "https://console.anthropic.com/settings/billing";
+const URL_CONSOLE_LIMITES = "https://console.anthropic.com/settings/limits";
+const fmtUsd = v => "US$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+let contaApiCache = null;
+async function carregarContaApi(){
+  const cards = document.getElementById("conta-api-cards");
+  if(!cards) return;
+  const [{ data: cfg, error: e1 }, { data: compras, error: e2 }] = await Promise.all([
+    sb.from("ia_conta_api").select("*").eq("id", 1).maybeSingle(),
+    sb.from("ia_compras_credito").select("id, data, valor_usd, valor_brl, iof_brl, fatura, observacao").order("data", { ascending: false }),
+  ]);
+  if(e1 || e2){
+    cards.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml((e1 || e2).message)}). Se for a primeira vez, falta rodar o schema_conta_api_anthropic.sql no Supabase.</p>`;
+    document.getElementById("conta-api-compras").innerHTML = "";
+    return;
+  }
+  const c = cfg || {};
+  contaApiCache = c;
+  const itens = compras || [];
+  const usadoUsd = Number(custosIaCache && custosIaCache.mes_usd || 0);
+  const limite = Number(c.limite_gasto_usd || 0);
+  const pct = limite ? Math.round(usadoUsd / limite * 100) : 0;
+  const totalUsd = itens.reduce((t, i)=>t + Number(i.valor_usd || 0), 0);
+  const totalBrl = itens.reduce((t, i)=>t + Number(i.valor_brl || 0), 0);
+  const abrir = url => `window.open('${url}', '_blank')`;
+  const rola = id => `document.getElementById('${id}').scrollIntoView({behavior:'smooth', block:'center'})`;
+  cards.innerHTML = `
+    <div class="card card-link" title="Abrir o faturamento no Console" onclick="${abrir(URL_CONSOLE_BILLING)}">
+      <div class="num" style="color:${c.recarga_ativa ? "var(--c-green)" : "var(--c-red)"};">${c.recarga_ativa ? "Ligada" : "Desligada"}</div>
+      <div class="label">Recarga automática${c.recarga_ativa ? ` · abaixo de ${fmtUsd(c.recarga_abaixo_usd)} recarrega até ${fmtUsd(c.recarga_ate_usd)}` : " · a API para quando o saldo acabar"}${c.cartao ? ` · ${escapeHtml(c.cartao)}` : ""}</div>
+    </div>
+    <div class="card card-link" title="Abrir os limites no Console" onclick="${abrir(URL_CONSOLE_LIMITES)}">
+      <div class="num">${limite ? fmtUsd(limite) + " / mês" : "Sem limite"}</div>
+      <div class="label">Limite de gasto: a API para se chegar nele${limite ? ` · usado ${fmtUsd(usadoUsd)} (${pct}%)` : ""}</div>
+    </div>
+    <div class="card card-link" title="Abrir os limites no Console" onclick="${abrir(URL_CONSOLE_LIMITES)}">
+      <div class="num">${c.aviso_email_usd ? fmtUsd(c.aviso_email_usd) : "Sem aviso"}</div>
+      <div class="label">Aviso por e-mail aos administradores quando o gasto do mês chegar nisso</div>
+    </div>
+    <div class="card card-link" title="Ver as compras" onclick="${rola("conta-api-compras")}">
+      <div class="num">${fmtUsd(totalUsd)}</div>
+      <div class="label">Crédito comprado · ${itens.length} compra${itens.length === 1 ? "" : "s"}${totalBrl ? ` · ${formatarMoedaBR(totalBrl)} no cartão` : ""}</div>
+    </div>
+  `;
+  document.getElementById("conta-api-compras").innerHTML = itens.map(i=>`
+    <tr class="tr-click" title="Abrir o faturamento no Console" onclick="${abrir(URL_CONSOLE_BILLING)}">
+      <td>${fmtDataBR(i.data)}</td>
+      <td><b>${fmtUsd(i.valor_usd)}</b>${i.observacao ? `<div style="color:var(--muted); font-size:11.5px;">${escapeHtml(i.observacao)}</div>` : ""}</td>
+      <td>${i.valor_brl == null ? `<span style="color:var(--muted);">-</span>` : formatarMoedaBR(i.valor_brl)}</td>
+      <td>${i.iof_brl == null ? `<span style="color:var(--muted);">-</span>` : formatarMoedaBR(i.iof_brl)}</td>
+      <td style="color:var(--muted);">${escapeHtml(i.fatura || "-")}</td>
+      <td><button class="btn secondary small" type="button" onclick="event.stopPropagation(); apagarCompraApi(${i.id})">Apagar</button></td>
+    </tr>
+  `).join("") || `<tr><td class="empty" colspan="6">Nenhuma compra lançada ainda</td></tr>`;
+
+  const aj = document.getElementById("conta-api-ajustes");
+  aj.style.display = "";
+  document.getElementById("conta-api-recarga").value = c.recarga_ativa ? "true" : "false";
+  document.getElementById("conta-api-abaixo").value = c.recarga_abaixo_usd ?? "";
+  document.getElementById("conta-api-ate").value = c.recarga_ate_usd ?? "";
+  document.getElementById("conta-api-cartao").value = c.cartao || "";
+  document.getElementById("conta-api-limite").value = c.limite_gasto_usd ?? "";
+  document.getElementById("conta-api-aviso").value = c.aviso_email_usd ?? "";
+  if(!document.getElementById("compra-api-data").value) document.getElementById("compra-api-data").value = hojeISO();
+}
+function hojeISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+async function lancarCompraApi(){
+  const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
+  const data = document.getElementById("compra-api-data").value;
+  const valor_usd = num("compra-api-usd");
+  if(!data || !(valor_usd > 0)){ showToast("Preencha a data e o crédito em dólar.", true); return; }
+  const { error } = await sb.from("ia_compras_credito").insert({
+    data, valor_usd, valor_brl: num("compra-api-brl"), iof_brl: num("compra-api-iof"),
+    fatura: document.getElementById("compra-api-fatura").value.trim() || null,
+  });
+  if(error){ showToast("Não salvou: " + error.message, true); return; }
+  ["compra-api-usd", "compra-api-brl", "compra-api-iof", "compra-api-fatura"].forEach(id=>document.getElementById(id).value = "");
+  showToast("Lançado");
+  carregarContaApi();
+}
+async function apagarCompraApi(id){
+  if(!confirm("Apagar esta compra de crédito?")) return;
+  const { error } = await sb.from("ia_compras_credito").delete().eq("id", id);
+  if(error){ showToast("Não apagou: " + error.message, true); return; }
+  carregarContaApi();
+}
+async function salvarContaApi(){
+  const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
+  const { error } = await sb.from("ia_conta_api").update({
+    recarga_ativa: document.getElementById("conta-api-recarga").value === "true",
+    recarga_abaixo_usd: num("conta-api-abaixo"),
+    recarga_ate_usd: num("conta-api-ate"),
+    cartao: document.getElementById("conta-api-cartao").value.trim() || null,
+    limite_gasto_usd: num("conta-api-limite"),
+    aviso_email_usd: num("conta-api-aviso"),
+    atualizado_em: new Date().toISOString(),
+  }).eq("id", 1);
+  if(error){ showToast("Não salvou: " + error.message, true); return; }
+  showToast("Salvo");
+  carregarContaApi();
 }
 
 function renderUsoSupabase(d){
