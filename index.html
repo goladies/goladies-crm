@@ -743,6 +743,14 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .kc-alerta.urg-15,.kc-alerta.urg-atraso{color:var(--c-red);}
 .chip-check{display:inline-flex; align-items:center; gap:5px; background:var(--bg-input); border:1px solid var(--border2); border-radius:16px; padding:4px 10px; font-size:12px; cursor:pointer; user-select:none; color:var(--text2);}
 .chip-check input{margin:0; accent-color:var(--rosa);}
+/* Filtro por período (Transporte › Viagens) */
+.periodo-grupo{display:inline-flex; flex-wrap:wrap; border:1px solid var(--border2); border-radius:9px; overflow:hidden;}
+.periodo-grupo button{background:var(--bg-input); color:var(--text2); border:0; border-right:1px solid var(--border2); padding:7px 11px; font-size:12.5px; font-family:inherit; cursor:pointer;}
+.periodo-grupo button:last-child{border-right:0;}
+.periodo-grupo button.ativo{background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;}
+.periodo-seta{background:var(--bg-input); color:var(--text1); border:1px solid var(--border2); border-radius:9px; width:32px; height:32px; font-size:18px; line-height:1; cursor:pointer;}
+.periodo-total{font-size:12.5px; color:var(--text2); margin:-4px 0 12px; padding:8px 12px; border:1px solid var(--border2); border-radius:9px; background:var(--bg-input); display:flex; flex-wrap:wrap; gap:4px 14px;}
+.periodo-total b{color:var(--text1);}
 .chip-check:has(input:checked){border-color:var(--rosa); color:var(--rosa-texto); background:var(--rosa-bg); font-weight:600;}
 input[type=checkbox],input[type=radio]{accent-color:var(--rosa);}
 th[onclick]{cursor:pointer; user-select:none; white-space:nowrap;}
@@ -1748,8 +1756,25 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           </div>
         </div>
         <div class="filters">
-          <select id="filter-viagem-tipo" onchange="renderTransporteViagens()"><option value="">Todos os tipos</option></select>
+          <select id="filter-viagem-tipo" onchange="salvarPeriodoViagens(); renderTransporteViagens()"><option value="">Todos os tipos</option></select>
+          <div class="periodo-grupo" id="viagem-periodo-botoes">
+            <button type="button" data-p="todas" onclick="escolherPeriodoViagens('todas')">Todas</button>
+            <button type="button" data-p="hoje" onclick="escolherPeriodoViagens('hoje')">Hoje</button>
+            <button type="button" data-p="semana" onclick="escolherPeriodoViagens('semana')">Esta semana</button>
+            <button type="button" data-p="mes" onclick="escolherPeriodoViagens('mes')">Este mês</button>
+            <button type="button" data-p="ano" onclick="escolherPeriodoViagens('ano')">Este ano</button>
+            <button type="button" data-p="datas" onclick="escolherPeriodoViagens('datas')">Escolher datas</button>
+          </div>
+          <span id="viagem-periodo-datas" style="display:none; align-items:center; gap:6px;">
+            de <input type="date" id="viagem-periodo-de" onchange="mudarDatasViagens()">
+            até <input type="date" id="viagem-periodo-ate" onchange="mudarDatasViagens()">
+          </span>
+          <span id="viagem-periodo-setas" style="display:none; align-items:center; gap:4px;">
+            <button type="button" class="periodo-seta" onclick="moverPeriodoViagens(-1)" title="Período anterior" aria-label="Período anterior">‹</button>
+            <button type="button" class="periodo-seta" onclick="moverPeriodoViagens(1)" title="Próximo período" aria-label="Próximo período">›</button>
+          </span>
         </div>
+        <div class="periodo-total" id="viagem-periodo-total"></div>
         <div class="kanban" id="kanban-viagens"></div>
       </div>
 
@@ -13229,11 +13254,134 @@ function urgenciaViagem(v){
 if(!window._intervaloUrgenciaKanban){
   window._intervaloUrgenciaKanban = setInterval(()=>{ if(document.getElementById("kanban-viagens")) renderTransporteViagens(); }, 30000);
 }
+// ===== FILTRO POR PERÍODO DAS VIAGENS (20/10/2026) =====
+// Todas / Hoje / Esta semana (seg a dom) / Este mês / Este ano / Escolher
+// datas, com ‹ › pro período anterior e o próximo. Data usada = dia da
+// viagem (data; sem ela, data_hora). Viagem sem data só aparece em "Todas".
+// A escolha (período, tipo e as datas) fica no navegador: gl-viagens-periodo.
+const ROTULO_TIPO_VIAGEM = { "Criança": "Criança (até 11 anos)", "Adolescente": "Adolescente (12 a 17 anos)" };
+const DIA_SEMANA_CURTO = ["dom","seg","ter","qua","qui","sex","sáb"];
+const MESES_NOME = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const periodoViagens = { tipo: "todas", offset: 0, de: "", ate: "" };
+(function(){
+  try {
+    const s = JSON.parse(localStorage.getItem("gl-viagens-periodo") || "null");
+    if(s && s.tipo){ periodoViagens.tipo = s.tipo; periodoViagens.de = s.de || ""; periodoViagens.ate = s.ate || ""; periodoViagens.tipoServico = s.tipoServico || ""; }
+  } catch(e){}
+})();
+function salvarPeriodoViagens(){
+  const ft = document.getElementById("filter-viagem-tipo");
+  try { localStorage.setItem("gl-viagens-periodo", JSON.stringify({ tipo: periodoViagens.tipo, de: periodoViagens.de, ate: periodoViagens.ate, tipoServico: ft ? ft.value : "" })); } catch(e){}
+}
+// isoLocal, dataDeISO e somarDias vêm da Agenda da Sede (mais abaixo).
+// "19/10 (seg)"; com o ano quando pedido: "15/10/2026 (qui)"
+function dataComSemana(d, comAno){
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}${comAno ? "/" + d.getFullYear() : ""} (${DIA_SEMANA_CURTO[d.getDay()]})`;
+}
+function diaDaViagem(v){
+  if(v.data) return String(v.data).slice(0,10);
+  if(v.data_hora){ const d = new Date(v.data_hora); return isNaN(d) ? null : isoLocal(d); }
+  return null;
+}
+// Início e fim (Date, dias inteiros) do período escolhido, ou null em "Todas".
+function intervaloPeriodoViagens(){
+  const p = periodoViagens, hoje = new Date(); hoje.setHours(0,0,0,0);
+  if(p.tipo === "hoje"){ const d = somarDias(hoje, p.offset); return { ini: d, fim: d }; }
+  if(p.tipo === "semana"){ const seg = somarDias(hoje, -((hoje.getDay()+6)%7) + 7*p.offset); return { ini: seg, fim: somarDias(seg, 6) }; }
+  if(p.tipo === "mes"){ const ini = new Date(hoje.getFullYear(), hoje.getMonth()+p.offset, 1); return { ini, fim: new Date(ini.getFullYear(), ini.getMonth()+1, 0) }; }
+  if(p.tipo === "ano"){ const a = hoje.getFullYear()+p.offset; return { ini: new Date(a,0,1), fim: new Date(a,11,31) }; }
+  if(p.tipo === "datas"){
+    if(!p.de && !p.ate) return null;
+    const ini = p.de ? dataDeISO(p.de) : null, fim = p.ate ? dataDeISO(p.ate) : null;
+    return { ini, fim };
+  }
+  return null;
+}
+function rotuloPeriodoViagens(r){
+  const p = periodoViagens;
+  if(!r) return p.tipo === "datas" ? "Escolha as datas" : "Todas as datas";
+  const anoAtual = new Date().getFullYear();
+  const comAno = (r.ini && r.ini.getFullYear() !== anoAtual) || (r.fim && r.fim.getFullYear() !== anoAtual) || (r.ini && r.fim && r.ini.getFullYear() !== r.fim.getFullYear());
+  if(p.tipo === "hoje") return dataComSemana(r.ini, true);
+  if(p.tipo === "ano") return `${r.ini.getFullYear()}: ${dataComSemana(r.ini, true)} a ${dataComSemana(r.fim, true)}`;
+  const faixa = !r.ini ? `até ${dataComSemana(r.fim, true)}`
+    : !r.fim ? `a partir de ${dataComSemana(r.ini, true)}`
+    : isoLocal(r.ini) === isoLocal(r.fim) ? dataComSemana(r.ini, true)
+    : `${dataComSemana(r.ini, comAno)} a ${dataComSemana(r.fim, comAno)}`;
+  if(p.tipo === "mes"){ const n = MESES_NOME[r.ini.getMonth()]; return `${n[0].toUpperCase()+n.slice(1)} de ${r.ini.getFullYear()}: ${faixa}`; }
+  return faixa;
+}
+function escolherPeriodoViagens(tipo){
+  periodoViagens.tipo = tipo; periodoViagens.offset = 0;
+  if(tipo === "datas" && !periodoViagens.de && !periodoViagens.ate){
+    // Começa no mês atual pra não abrir vazio.
+    const h = new Date(); periodoViagens.de = isoLocal(new Date(h.getFullYear(), h.getMonth(), 1)); periodoViagens.ate = isoLocal(new Date(h.getFullYear(), h.getMonth()+1, 0));
+  }
+  salvarPeriodoViagens(); renderTransporteViagens();
+}
+function mudarDatasViagens(){
+  periodoViagens.de = document.getElementById("viagem-periodo-de").value;
+  periodoViagens.ate = document.getElementById("viagem-periodo-ate").value;
+  salvarPeriodoViagens(); renderTransporteViagens();
+}
+function moverPeriodoViagens(dir){
+  const p = periodoViagens;
+  if(p.tipo === "datas"){
+    // Anda o mesmo número de dias do intervalo escolhido.
+    if(!p.de || !p.ate) return;
+    const ini = dataDeISO(p.de), fim = dataDeISO(p.ate);
+    // Meses inteiros (do dia 1 ao último dia) andam de mês em mês.
+    const mesesInteiros = ini.getDate() === 1 && somarDias(fim, 1).getDate() === 1;
+    if(mesesInteiros){
+      const n = (fim.getFullYear() - ini.getFullYear())*12 + fim.getMonth() - ini.getMonth() + 1;
+      const novoIni = new Date(ini.getFullYear(), ini.getMonth() + dir*n, 1);
+      p.de = isoLocal(novoIni); p.ate = isoLocal(new Date(novoIni.getFullYear(), novoIni.getMonth() + n, 0));
+    } else {
+      const dias = Math.round((fim - ini) / 86400000) + 1;
+      p.de = isoLocal(somarDias(ini, dir*dias)); p.ate = isoLocal(somarDias(fim, dir*dias));
+    }
+    salvarPeriodoViagens();
+  } else {
+    p.offset += dir;
+  }
+  renderTransporteViagens();
+}
 function renderTransporteViagens(){
   const ft = document.getElementById("filter-viagem-tipo");
-  if(!ft.dataset.filled){ fillSelect(ft, ["",...TIPO_SERVICO_VIAGEM], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
+  if(!ft.dataset.filled){
+    fillSelect(ft, ["",...TIPO_SERVICO_VIAGEM], periodoViagens.tipoServico || "");
+    ft.querySelectorAll("option").forEach(o=>{ if(ROTULO_TIPO_VIAGEM[o.value]) o.textContent = ROTULO_TIPO_VIAGEM[o.value]; });
+    ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1;
+  }
   const tipoF = ft.value;
-  const filtradas = viagens.filter(v=>!tipoF || v.tipo_servico===tipoF);
+  const p = periodoViagens;
+  document.querySelectorAll("#viagem-periodo-botoes button").forEach(b=>b.classList.toggle("ativo", b.dataset.p === p.tipo));
+  document.getElementById("viagem-periodo-datas").style.display = p.tipo === "datas" ? "inline-flex" : "none";
+  document.getElementById("viagem-periodo-de").value = p.de;
+  document.getElementById("viagem-periodo-ate").value = p.ate;
+  document.getElementById("viagem-periodo-setas").style.display = p.tipo === "todas" || (p.tipo === "datas" && !(p.de && p.ate)) ? "none" : "inline-flex";
+  const r = intervaloPeriodoViagens();
+  const iniIso = r && r.ini ? isoLocal(r.ini) : null, fimIso = r && r.fim ? isoLocal(r.fim) : null;
+  const filtradas = viagens.filter(v=>{
+    if(tipoF && v.tipo_servico!==tipoF) return false;
+    if(p.tipo === "todas") return true;
+    const dia = diaDaViagem(v);
+    if(!dia) return false;
+    return (!iniIso || dia >= iniIso) && (!fimIso || dia <= fimIso);
+  });
+  // Mais nova primeiro (dia + horário); sem data por último.
+  const chave = v => (diaDaViagem(v) || "") + " " + (v.horario_partida || (v.data_hora ? String(v.data_hora).slice(11,16) : ""));
+  filtradas.sort((a,b)=> chave(b).localeCompare(chave(a)) || b.id - a.id);
+
+  const concluidas = filtradas.filter(v=>v.status==="Concluída");
+  const canceladas = filtradas.filter(v=>v.status==="Cancelada").length;
+  const valor = concluidas.reduce((s,v)=>s+Number(v.preco_cotado||0), 0);
+  document.getElementById("viagem-periodo-total").innerHTML =
+    `<span>Período: <b>${rotuloPeriodoViagens(r)}</b></span>`
+    + `<span>Tipo: <b>${escapeHtml(tipoF ? (ROTULO_TIPO_VIAGEM[tipoF] || tipoF) : "Todos")}</b></span>`
+    + `<span><b>${concluidas.length}</b> ${concluidas.length===1?"viagem concluída":"viagens concluídas"}</span>`
+    + `<span>Valor: <b>${formatarMoedaBR(valor)}</b></span>`
+    + `<span><b>${canceladas}</b> ${canceladas===1?"cancelada":"canceladas"}</span>`;
 
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
     const doColuna = filtradas.filter(v=>v.status===status);
@@ -13300,7 +13448,7 @@ function renderTransporteViagens(){
           <div class="kc-num">Viagem #${v.id}</div>
           <div class="kc-top" style="display:flex; align-items:center;">${cliente ? htmlAvatarCliente(cliente, "width:22px; height:22px; margin-right:6px; font-size:9px;") : ""}<span>${cliente ? `${escapeHtml(cliente.nome)}${numId(cliente)}` : "Cliente não definido"}</span></div>
           <div style="color:var(--muted); display:flex; align-items:center;">${fotoMot}<span>${escapeHtml(nomesMotoristas || "Sem motorista")}</span></div>
-          <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${formatarDataBR(v.data)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
+          <div style="color:var(--muted); font-size:11.5px; margin-top:4px;">${v.data?`${dataComSemana(dataDeISO(String(v.data).slice(0,10)), true)}${v.horario_partida?" "+v.horario_partida.slice(0,5):""}`:"Sem data"}</div>
           ${v.dias_semana?`<div style="color:var(--muted); font-size:11px;">${escapeHtml(v.dias_semana)}</div>`:""}
           ${(()=>{ if(!v.origem_endereco || !v.destino_endereco) return ""; const t = trechoLocais(v.origem_endereco, v.destino_endereco); return `<div style="font-size:12px; margin-top:3px;">${escapeHtml(t.linha)}</div>${t.cidade ? `<div style="color:var(--muted); font-size:11px;">${escapeHtml(t.cidade)}</div>` : ""}`; })()}
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
