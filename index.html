@@ -1848,9 +1848,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
                 <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
                 <div class="full"><label>Espera combinada, além dos 10 min inclusos (min)</label><input type="number" id="sim-espera" step="1" min="0" value="0" oninput="simular()"></div>
+                <!-- Tabelas de preço (21/10/2026): mesma escolha da viagem -->
+                <div class="sim-tabela-preco"><label>Tipo de serviço</label><select id="sim-tipo" onchange="simTabelaTrocada()"></select></div>
+                <div class="sim-tabela-preco"><label>Tabela de preço</label><select id="sim-tabela-preco" onchange="simTabelaTrocada()"></select></div>
+                <div class="full sim-tabela-preco"><p class="sim-nota" id="sim-tabela-info" style="margin:0;"></p></div>
               </div>
               <label class="sim-check"><input type="checkbox" id="sim-idavolta" onchange="simular()"> <span>Ida e volta (cobra o trecho duas vezes)</span></label>
-              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simular()"> <span>Madrugada (22h às 6h) ou feriado: +30%</span></label>
+              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simTabelaTrocada()"> <span id="sim-noturno-rot">Madrugada (22h às 6h) ou feriado: +30%</span></label>
               <label class="sim-check"><input type="checkbox" id="sim-premium" onchange="simular()"> <span>Acompanhamento premium: +R$20 por trecho, 100% da motorista</span></label>
             </div>
 
@@ -1862,7 +1866,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Preço cobrado</label><input type="number" id="sim-cobrado" step="0.01" min="0" oninput="simularCobradoManual()"></div>
                 <div class="full"><button type="button" class="icon-btn" onclick="simularVoltarTabela()" style="font-size:11.5px;">↺ voltar pro preço de tabela</button></div>
                 <div class="full"><label>Quem dirige</label><select id="sim-quem" onchange="simular()"><option value="eu">Eu (Juliana)</option><option value="outra">Outra motorista</option></select></div>
-                <div><label>Repasse à motorista (%)</label><input type="number" id="sim-repasse" step="1" min="0" max="100" value="75" oninput="simular()"></div>
+                <div><label>Repasse à motorista (%)</label><input type="number" id="sim-repasse" step="1" min="0" max="100" value="75" oninput="this.dataset.manual='1'; simular()"></div>
                 <div><label>Meta da motorista (R$/h)</label><input type="number" id="sim-meta-hora" step="1" min="0" value="30" oninput="simular()"></div>
                 <div class="full"><label>Forma de pagamento</label><select id="sim-forma" onchange="simularFormaPagamento()"><option value="0.99">Pix pelo Mercado Pago</option><option value="4.98">Cartão pelo Mercado Pago</option><option value="0">Dinheiro, Pix da chave fixa ou transferência</option></select></div>
                 <div class="full"><label>Taxa cobrada sobre o valor (%)</label><input type="number" id="sim-taxa-pct" step="0.01" min="0" value="0.99" oninput="simular()"></div>
@@ -6944,8 +6948,8 @@ function kmTotalViagem(v){ return Number(v.distancia_km || 0) + Number(v.distanc
 // ===== SIMULADOR DE PREÇO =====
 // Rascunho pra decidir preço e desconto antes de cotar. Não grava nada e não
 // encosta em viagem nenhuma. As contas seguem as mesmas regras do resto do
-// CRM: tabela do topo do arquivo (TAXA_FIXA_CLIENTE + TARIFA_KM_CLIENTE),
-// repasse de 75%, taxa do Mercado Pago saindo inteira da comissão (igual
+// CRM: tabelas de preço (schema_tabelas_preco.sql; antes, as constantes
+// TAXA_FIXA_CLIENTE + TARIFA_KM_CLIENTE), repasse pela taxa da tabela, taxa do Mercado Pago saindo inteira da comissão (igual
 // financeiroTransporteMes) e semáforo com a mesma regra do MARGEM_REF.
 //
 // Custo do carro: Estudo de Precificação v2 (18/09/2026), seção 3. Lá o
@@ -7000,9 +7004,42 @@ function simViagem(){
 }
 // Espera e premium são 100% da motorista (Termo cl. 9.7), então ficam
 // separados do preço que entra na divisão 75/25.
+// Tabela do simulador (21/10/2026): a escolhida no select ou a automática
+// pelo tipo de serviço e pela noite, igual à viagem (escolherTabelaPreco).
+// Sem o schema_tabelas_preco.sql, cai no padrão do sistema (25 + 4/km, +30%).
+function simTabelaAtual(){
+  const sel = document.getElementById("sim-tabela-preco");
+  const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
+  const tipo = (document.getElementById("sim-tipo") || {}).value || "Padrão";
+  return forcada || escolherTabelaPreco(tipo, simCheck("sim-noturno"));
+}
+// Preenche os selects mantendo o que ela escolheu; chamado a cada render.
+function simPrepararTabelas(){
+  const selTipo = document.getElementById("sim-tipo"), selTab = document.getElementById("sim-tabela-preco");
+  if(!selTipo || !selTab) return;
+  const usa = !tabelasPrecoSqlFaltando;
+  document.querySelectorAll("#ft-sim .sim-tabela-preco").forEach(el => { el.style.display = usa ? "" : "none"; });
+  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite" : "Madrugada (22h às 6h) ou feriado: +30%";
+  if(!usa) return;
+  const tipoAtual = selTipo.value || "Padrão";
+  fillSelect(selTipo, TIPO_SERVICO_VIAGEM, tipoAtual);
+  const tabAtual = selTab.value;
+  selTab.innerHTML = `<option value="">Automática (pelo tipo e horário)</option>` +
+    tabelasPreco.filter(t => t.ativa || String(t.id) === tabAtual).map(t => `<option value="${t.id}">${escapeHtml(t.nome)}${t.ativa ? "" : " (desativada)"}</option>`).join("");
+  selTab.value = tabelasPreco.some(t => String(t.id) === tabAtual) ? tabAtual : "";
+}
+// Trocar tipo, tabela ou noite devolve o repasse pra taxa da tabela.
+function simTabelaTrocada(){
+  delete document.getElementById("sim-repasse").dataset.manual;
+  simular();
+}
 function simPrecoTabela(v){
-  let base = (TAXA_FIXA_CLIENTE + TARIFA_KM_CLIENTE * simNum("sim-km-cliente")) * v.trechos;
-  if(simCheck("sim-noturno")) base *= (1 + ADICIONAL_NOTURNO);
+  const t = simTabelaAtual();
+  const base = precoTrechoTabela(t, simNum("sim-km-cliente"), Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0) * v.trechos;
+  const info = document.getElementById("sim-tabela-info");
+  if(info) info.textContent = "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
+  const elRep = document.getElementById("sim-repasse");
+  if(elRep && !elRep.dataset.manual) elRep.value = String(Math.round((100 - taxaTabelaPreco(t)) * 100) / 100);
   const espera = v.esperaMin * VALOR_MIN_ESPERA;
   const premium = simCheck("sim-premium") ? SIM_ADICIONAL_PREMIUM * v.trechos : 0;
   return { base, espera, premium, adicionais100: espera + premium, total: base + espera + premium };
@@ -7341,6 +7378,8 @@ async function recarregarTabelasPreco(){
   const r = await sb.from("tabelas_preco").select("*").order("ordem").order("id");
   if(!r.error){ tabelasPreco = r.data || []; tabelasPrecoSqlFaltando = false; }
   renderTabelasPreco();
+  simPrepararTabelas();
+  simular();
 }
 
 function renderFinanceiroTransporte(){
@@ -7348,6 +7387,7 @@ function renderFinanceiroTransporte(){
   if(!wrap) return;
   renderTabelasPreco();
   simRenderFixos();
+  simPrepararTabelas();
   simular();
   const dias = ftPeriodoDias();
   const cotacoes = ftCotacoes();
