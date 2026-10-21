@@ -1156,6 +1156,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-end-acoes button{width:26px; height:26px; padding:0;}
 #ft-sim #sim-end-mais{margin-top:8px;}
 #ft-sim .sim-end-botoes{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+#ft-sim .sim-cobrar{margin-top:12px; padding:11px 13px; border-radius:10px; border:1px solid var(--rosa); border-left-width:4px; font-size:12.5px; line-height:1.55; color:var(--text2);}
+#ft-sim .sim-cobrar .sim-cobrar-valor{font-size:15px; color:var(--text1);}
+#ft-sim .sim-cobrar .sim-cobrar-valor b{font-size:20px; color:var(--rosa-texto);}
 #ft-sim .sim-check{display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text2); margin-top:8px; cursor:pointer; line-height:1.4;}
 #ft-sim .sim-check input{margin:1px 0 0; flex:0 0 auto;}
 #ft-sim .sim-fixo{display:grid; grid-template-columns:auto 1fr 74px; align-items:center; gap:7px; margin-top:6px;}
@@ -1862,6 +1865,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                   <button type="button" class="btn ghost small" onclick="simAbrirMaps()">Ver no Maps</button>
                 </div>
                 <p class="sim-nota" id="sim-end-resumo" style="display:none;"></p>
+                <div class="sim-cobrar" id="sim-cobrar"></div>
               </div>
               <div class="sim-grid">
                 <div><label>Km com a cliente</label><input type="number" id="sim-km-cliente" step="0.1" min="0" value="10" oninput="simular()"></div>
@@ -7300,6 +7304,14 @@ function simular(){
        ${nivel === "amber" ? `Está abaixo da meta, mas ainda paga o carro.` : nivel === "red" ? `Bem abaixo da meta: preço baixo demais pra esta distância.` : `Acima da meta.`}</small>`;
   sem.style.borderLeftColor = `var(--c-${nivel})`;
   sem.style.background = `var(--c-${nivel}-bg)`;
+
+  // ── Resposta em cima (21/10/2026): quanto cobrar, quem fica com quanto ──
+  document.getElementById("sim-cobrar").innerHTML =
+    `<div class="sim-cobrar-valor">Cobrar da cliente: <b>${fmt(cobrado)}</b></div>
+     Motorista fica com ${fmt(repasse)} · Go Ladies ${fmt(comissao)}${taxaMp ? ` (já sem os ${fmt(taxaMp)} do Mercado Pago)` : ""}<br>
+     ${sobra <= 0
+       ? `<span style="color:var(--c-red); font-weight:600;">Nesse preço a motorista não paga nem o carro</span>`
+       : porHora === null ? "" : `<span style="color:var(--c-${nivel}); font-weight:600;">A motorista ganha ${fmt(porHora)} / hora depois do custo do carro</span>`}`;
 
   // ── Pisos: isola o preço em sobra = adic + pct × (P − adic) − custoCarro ──
   const precoParaSobra = alvo => pctRepasse > 0 ? p.adicionais100 + (alvo + custoCarro - p.adicionais100) / pctRepasse : null;
