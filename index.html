@@ -1181,6 +1181,24 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-aviso{margin-top:12px; padding:10px 12px; border-radius:9px; font-size:12px; line-height:1.5;
   background:var(--bg-card2); border:1px solid var(--border); color:var(--text2);}
 #ft-sim .sim-aviso b{color:var(--text1);}
+/* 21/10/2026: no escuro, rótulos e explicações do simulador e das tabelas de
+   preço ficavam cinza demais; aqui o cinza clareia (no tema claro não muda). */
+:root:not([data-tema="claro"]) #ft-sim, :root:not([data-tema="claro"]) #ft-tabelas{
+  --text3:rgba(255,255,255,.82); --text2:rgba(255,255,255,.92); --muted:rgba(255,255,255,.82);}
+
+/* ---------- TABELAS DE PREÇO (Financeiro do transporte) ---------- */
+#ft-tabelas .tp-lista{width:100%; border-collapse:collapse; font-size:13px;}
+#ft-tabelas .tp-lista th{text-align:left; font-size:11.5px; font-weight:600; color:var(--text3); padding:6px 8px; border-bottom:1px solid var(--border2);}
+#ft-tabelas .tp-lista td{padding:8px; border-bottom:1px solid var(--border); color:var(--text1); font-variant-numeric:tabular-nums;}
+#ft-tabelas .tp-lista tr.inativa td{opacity:.5;}
+#ft-tabelas .tp-lista tr:hover td{background:var(--bg-hover);}
+#ft-tabelas .tp-editor{margin-top:14px; background:var(--bg-card2); border:1px solid var(--rosa-borda); border-radius:12px; padding:13px 14px;}
+#ft-tabelas .tp-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+#ft-tabelas label{display:block; font-size:11.5px; color:var(--text3); margin-bottom:3px;}
+#ft-tabelas input,#ft-tabelas select{width:100%; padding:6px 9px; font-size:12.5px;}
+#ft-tabelas .tp-exemplo{margin-top:10px; padding:8px 10px; border-radius:9px; background:var(--bg-card); font-size:12.5px; color:var(--text2);}
+#ft-tabelas .tp-exemplo b{color:var(--text1);}
+@media (max-width:900px){ #ft-tabelas .tp-grid{grid-template-columns:1fr 1fr;} #ft-tabelas .tp-lista .tp-opc{display:none;} }
 @media (max-width:1100px){
   #ft-sim .sim-cols{grid-template-columns:1fr 1fr;}
   #ft-sim .sim-saida{grid-template-columns:1fr;}
@@ -1802,6 +1820,19 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
         <div class="cards" id="ft-cards"></div>
         <div class="panel" id="ft-detalhe" style="display:none;"></div>
+
+        <!-- Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026): a cotação
+             automática do CRM e do app escolhe a tabela pelo tipo de serviço e
+             pelo horário de cada trecho. Salvar sempre pede confirmação. -->
+        <div class="panel" id="ft-tabelas">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
+            <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
+          </div>
+          <p style="color:var(--muted); font-size:12.5px; margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o tipo de serviço e o horário: tipo exato vale mais que "Todos", dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h, ou quando você marca feriado na viagem. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <div id="tp-conteudo"></div>
+          <div id="tp-editor" class="tp-editor" style="display:none;"></div>
+        </div>
 
         <div class="panel" id="ft-sim">
           <h3><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador de preço</h3>
@@ -3216,7 +3247,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemMudou(); atualizarFotoClienteViagem()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
         <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
-        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento()"></select></div>
+        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado()"></select></div>
         <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Ex.: aniversário, formatura, show"></div>
         <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
              vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
@@ -3267,7 +3298,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
         <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na ida</label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h) ou feriado: +30% na ida</span></label></div>
       </div>
     </section>
 
@@ -3284,7 +3315,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"><span class="dica">Do embarque da volta até o destino final.</span></div>
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="recalcularCotacao()"> Madrugada (22h às 6h) ou feriado: +30% na volta</label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h) ou feriado: +30% na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
         <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
       </div>
@@ -3296,8 +3327,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <!-- Pedido de ajuste da cliente (app), em destaque no topo do Preço -->
       <div id="vg-ajuste-cliente" class="vg-ajuste-cliente" style="display:none;"></div>
       <div class="formgrid">
-        <div class="sugerido"><label>Tarifa fixa por trecho <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="recalcularCotacao()"></div></div>
-        <div class="sugerido"><label>Valor por km <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="recalcularCotacao()"></div></div>
+        <!-- Tabela de preço (schema_tabelas_preco.sql): automática pelo tipo e
+             horário de cada trecho, ou escolhida aqui pra viagem toda. -->
+        <div class="full" id="vg-tabela-preco-wrap" style="display:none;"><label>Tabela de preço</label><select id="vg-tabela-preco" onchange="tabelaPrecoTrocada()"></select><span class="dica" id="vg-tabela-preco-info"></span></div>
+        <div class="sugerido"><label>Tarifa fixa por trecho <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="tarifaDigitada(this)"></div></div>
+        <div class="sugerido"><label>Valor por km <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="tarifaDigitada(this)"></div></div>
         <!-- Espera combinada decidida em 18/09/2026: R$1/min além dos 10
              inclusos, 100% pra motorista. -->
         <div><label>Espera combinada (min)</label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"><span class="dica">Além dos 10 inclusos; R$ 1/min, 100% pra motorista.</span></div>
@@ -4154,6 +4188,8 @@ let clientesTransporte = [];
 let viagens = [];
 let viagemOfertas = [];
 let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
+let tabelasPreco = [];          // tabelas de preço por tipo e horário (schema_tabelas_preco.sql)
+let tabelasPrecoSqlFaltando = true;
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
 let demandasForaArea = [];  // quem pediu viagem onde ainda não atendemos
 let eventosAcessoApp = [];  // toda tentativa de cadastro/login no app, sucesso ou erro, schema_eventos_acesso_app.sql
@@ -4853,6 +4889,7 @@ async function carregarDadosInterno(){
       sb.from("documentos_pastas").select("*"),
       sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
     ]),
+    sb.from("tabelas_preco").select("*").order("ordem").order("id"),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -4966,6 +5003,11 @@ async function carregarDadosInterno(){
   if(!rdoc.error) documentos = rdoc.data || [];
   if(!rdpa.error) documentosPastas = rdpa.data || [];
   if(!rspm.error) sedePendMensagens = rspm.data || [];
+  // Tabelas de preço (schema_tabelas_preco.sql): sem o SQL, a cotação segue
+  // pela regra antiga (constantes) e a seção mostra o aviso.
+  const rtp = await q[17];
+  tabelasPrecoSqlFaltando = !!rtp.error;
+  if(!rtp.error) tabelasPreco = rtp.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -7158,9 +7200,153 @@ function renderDetalheFtValidacao(cotacoes){
   el.innerHTML = ftCabecalhoDetalhe(titulos[ftDetalheAberto]) + `<table class="tbl"><thead><tr><th>Data</th><th>Viagem</th><th>Cliente</th><th>Preço cotado</th><th>Fechou por</th><th>Desconto</th><th>Km</th><th>R$/km</th><th>Desfecho</th></tr></thead><tbody>
     ${linhas || `<tr><td class="empty" colspan="9">Nenhuma cotação nesse grupo no período</td></tr>`}</tbody></table>`;
 }
+// ── Tabelas de preço: lista, edição e confirmação (21/10/2026) ──────────
+// Clicar na linha abre o editor; Salvar e Ativa sempre pedem confirmação
+// mostrando o antes e o depois.
+let tabelaPrecoEditando = undefined;   // id da tabela aberta; null = nova
+function renderTabelasPreco(){
+  const box = document.getElementById("tp-conteudo");
+  if(!box) return;
+  const btn = document.getElementById("tp-btn-nova");
+  if(tabelasPrecoSqlFaltando){
+    btn.style.display = "none";
+    box.innerHTML = `<div class="tp-exemplo">Falta rodar o <b>schema_tabelas_preco.sql</b> no Supabase (SQL Editor). Enquanto isso, a cotação segue a regra antiga: R$ 25 por trecho + R$ 4/km, +30% de madrugada ou feriado.</div>`;
+    return;
+  }
+  btn.style.display = "";
+  if(!tabelasPreco.length){
+    box.innerHTML = `<div class="tp-exemplo">Nenhuma tabela cadastrada. Sem tabela ativa, a cotação usa a regra antiga (R$ 25 por trecho + R$ 4/km, +30% à noite). Clique em <b>Nova tabela</b> pra criar.</div>`;
+    return;
+  }
+  const sem = `<span style="color:var(--text3);">sem</span>`;
+  box.innerHTML = `<div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
+      <th>Tabela</th><th>Vale para</th><th>Quando</th><th>Fixa por trecho</th><th>Por km</th><th class="tp-opc">Mínimo</th><th>Adicional</th><th class="tp-opc">Taxa Go Ladies</th><th>Ativa</th><th></th>
+    </tr></thead><tbody>` +
+    tabelasPreco.map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
+      <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:11.5px; color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
+      <td>${escapeHtml(t.tipo_servico || "Todos")}</td>
+      <td>${QUANDO_TABELA_PRECO[t.quando] || escapeHtml(t.quando)}</td>
+      <td>${formatarMoedaBR(Number(t.tarifa_fixa))}</td>
+      <td>${formatarMoedaBR(Number(t.valor_km))}</td>
+      <td class="tp-opc">${t.valor_minimo != null ? formatarMoedaBR(Number(t.valor_minimo)) : sem}</td>
+      <td>${Number(t.adicional_pct) ? "+" + Number(t.adicional_pct) + "%" : sem}</td>
+      <td class="tp-opc">${Number(t.taxa_go_ladies_pct)}%</td>
+      <td onclick="event.stopPropagation();"><input type="checkbox" style="width:auto;" ${t.ativa ? "checked" : ""} onchange="alternarTabelaPrecoAtiva(${t.id}, this)" aria-label="Ativa"></td>
+      <td><button type="button" class="icon-btn" title="Editar" aria-label="Editar"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></td>
+    </tr>`).join("") + `</tbody></table></div>`;
+}
+function editarTabelaPreco(id){
+  const maiorOrdem = tabelasPreco.reduce((m, t) => Math.max(m, Number(t.ordem) || 0), 0);
+  const t = id ? tabelasPreco.find(x => x.id === id) : { nome: "", tipo_servico: null, quando: "qualquer",
+    tarifa_fixa: TAXA_FIXA_CLIENTE, valor_km: TARIFA_KM_CLIENTE, valor_minimo: null, adicional_pct: 0,
+    taxa_go_ladies_pct: 25, ordem: maiorOrdem + 10, observacao: "" };
+  if(!t) return;
+  tabelaPrecoEditando = id || null;
+  const ed = document.getElementById("tp-editor");
+  const opTipo = [["", "Todos os tipos"], ...TIPO_SERVICO_VIAGEM.map(x => [x, x])];
+  ed.innerHTML = `<div style="font-weight:600; font-size:13.5px; margin-bottom:10px; color:var(--text1);">${id ? "Editando: " + escapeHtml(t.nome) : "Nova tabela"}</div>
+    <div class="tp-grid">
+      <div><label>Nome</label><input type="text" id="tp-nome" value="${escapeHtml(t.nome)}" placeholder="Ex.: Criança à noite"></div>
+      <div><label>Vale para</label><select id="tp-tipo">${opTipo.map(([v, r]) => `<option value="${v}" ${(t.tipo_servico || "") === v ? "selected" : ""}>${r}</option>`).join("")}</select></div>
+      <div><label>Quando</label><select id="tp-quando">${Object.entries(QUANDO_TABELA_PRECO).map(([v, r]) => `<option value="${v}" ${t.quando === v ? "selected" : ""}>${r}</option>`).join("")}</select></div>
+      <div><label>Taxa Go Ladies (%)</label><input type="number" id="tp-taxa" step="0.5" min="0" max="100" value="${t.taxa_go_ladies_pct}"></div>
+      <div><label>Taxa fixa por trecho (R$)</label><input type="number" id="tp-fixa" step="0.01" min="0" value="${t.tarifa_fixa}"></div>
+      <div><label>Valor por km (R$)</label><input type="number" id="tp-km" step="0.01" min="0" value="${t.valor_km}"></div>
+      <div><label>Valor mínimo por trecho (R$)</label><input type="number" id="tp-min" step="0.01" min="0" value="${t.valor_minimo ?? ""}" placeholder="sem mínimo"></div>
+      <div><label>Adicional (%)</label><input type="number" id="tp-adic" step="1" min="0" value="${t.adicional_pct}"></div>
+      <div><label>Ordem (desempate)</label><input type="number" id="tp-ordem" step="1" value="${t.ordem}"></div>
+      <div style="grid-column:span 3;"><label>Observação</label><input type="text" id="tp-obs" value="${escapeHtml(t.observacao || "")}" placeholder="Ex.: testando preço de dia mais baixo"></div>
+    </div>
+    <div class="tp-exemplo" id="tp-exemplo"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button type="button" class="btn ghost small" onclick="fecharEditorTabelaPreco()">Cancelar</button>
+      <button type="button" class="btn small" onclick="salvarTabelaPreco()">Salvar</button>
+    </div>`;
+  ed.style.display = "";
+  ed.querySelectorAll("input,select").forEach(el => el.addEventListener("input", exemploTabelaPreco));
+  exemploTabelaPreco();
+  ed.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function lerEditorTabelaPreco(){
+  const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
+  return {
+    nome: document.getElementById("tp-nome").value.trim(),
+    tipo_servico: document.getElementById("tp-tipo").value || null,
+    quando: document.getElementById("tp-quando").value,
+    tarifa_fixa: num("tp-fixa") ?? 0,
+    valor_km: num("tp-km") ?? 0,
+    valor_minimo: num("tp-min"),
+    adicional_pct: num("tp-adic") ?? 0,
+    taxa_go_ladies_pct: num("tp-taxa") ?? 25,
+    ordem: num("tp-ordem") ?? 100,
+    observacao: document.getElementById("tp-obs").value.trim() || null,
+  };
+}
+function exemploTabelaPreco(){
+  const d = lerEditorTabelaPreco();
+  const ex = km => {
+    const p = precoTrechoTabela(d, km, d.tarifa_fixa, d.valor_km);
+    return `${km} km = <b>${formatarMoedaBR(p)}</b> (motorista ${formatarMoedaBR(p * (1 - d.taxa_go_ladies_pct / 100))})`;
+  };
+  document.getElementById("tp-exemplo").innerHTML = "Exemplos de um trecho com essa tabela: " + [3, 10, 20].map(ex).join(" · ");
+}
+function fecharEditorTabelaPreco(){
+  const ed = document.getElementById("tp-editor");
+  ed.style.display = "none";
+  ed.innerHTML = "";
+  tabelaPrecoEditando = undefined;
+}
+async function salvarTabelaPreco(){
+  const d = lerEditorTabelaPreco();
+  if(!d.nome){ alert("Dê um nome pra tabela."); return; }
+  if(d.taxa_go_ladies_pct < 0 || d.taxa_go_ladies_pct > 100){ alert("A taxa da Go Ladies vai de 0 a 100%."); return; }
+  if([d.tarifa_fixa, d.valor_km, d.adicional_pct].some(x => x < 0) || (d.valor_minimo != null && d.valor_minimo < 0)){ alert("Os valores não podem ser negativos."); return; }
+  const id = tabelaPrecoEditando;
+  const antes = id ? tabelasPreco.find(x => x.id === id) : null;
+  const rot = { nome: "Nome", tipo_servico: "Vale para", quando: "Quando", tarifa_fixa: "Taxa fixa por trecho", valor_km: "Valor por km",
+    valor_minimo: "Valor mínimo", adicional_pct: "Adicional", taxa_go_ladies_pct: "Taxa Go Ladies", ordem: "Ordem", observacao: "Observação" };
+  const fmt = (k, v) => {
+    if(v == null || v === "") return k === "tipo_servico" ? "Todos" : "sem";
+    if(["tarifa_fixa", "valor_km", "valor_minimo"].includes(k)) return formatarMoedaBR(Number(v));
+    if(["adicional_pct", "taxa_go_ladies_pct"].includes(k)) return Number(v) + "%";
+    if(k === "quando") return QUANDO_TABELA_PRECO[v] || v;
+    return String(v);
+  };
+  const linhas = antes
+    ? Object.keys(rot).filter(k => fmt(k, antes[k]) !== fmt(k, d[k])).map(k => `${rot[k]}: ${fmt(k, antes[k])} → ${fmt(k, d[k])}`)
+    : Object.keys(rot).filter(k => k !== "ordem" && k !== "observacao").map(k => `${rot[k]}: ${fmt(k, d[k])}`);
+  if(antes && !linhas.length){ fecharEditorTabelaPreco(); return; }
+  const ok = confirm((antes ? `Salvar as mudanças na tabela "${antes.nome}"?` : `Criar a tabela "${d.nome}"?`)
+    + "\n\n" + linhas.join("\n")
+    + "\n\nVale pras próximas cotações (CRM e app). Viagens já cotadas não mudam.");
+  if(!ok) return;
+  const r = antes ? await sb.from("tabelas_preco").update(d).eq("id", id) : await sb.from("tabelas_preco").insert(d);
+  if(r.error){ alert("Não deu pra salvar a tabela: " + r.error.message); return; }
+  fecharEditorTabelaPreco();
+  await recarregarTabelasPreco();
+}
+async function alternarTabelaPrecoAtiva(id, cb){
+  const t = tabelasPreco.find(x => x.id === id);
+  if(!t) return;
+  const nova = cb.checked;
+  const ok = confirm(nova
+    ? `Ativar a tabela "${t.nome}"? Ela passa a valer nas próximas cotações.`
+    : `Desativar a tabela "${t.nome}"? As próximas cotações deixam de usar ela. Viagens já cotadas não mudam.`);
+  if(!ok){ cb.checked = !nova; return; }
+  const r = await sb.from("tabelas_preco").update({ ativa: nova }).eq("id", id);
+  if(r.error){ cb.checked = !nova; alert("Não deu pra salvar: " + r.error.message); return; }
+  await recarregarTabelasPreco();
+}
+async function recarregarTabelasPreco(){
+  const r = await sb.from("tabelas_preco").select("*").order("ordem").order("id");
+  if(!r.error){ tabelasPreco = r.data || []; tabelasPrecoSqlFaltando = false; }
+  renderTabelasPreco();
+}
+
 function renderFinanceiroTransporte(){
   const wrap = document.getElementById("ft-cards");
   if(!wrap) return;
+  renderTabelasPreco();
   simRenderFixos();
   simular();
   const dias = ftPeriodoDias();
@@ -12710,22 +12896,148 @@ function viagemJaPaga(){
   const pg = pagamentosCliente.find(p=>p.viagem_id === editingViagemId);
   return !!(pg && pg.status === "Pago");
 }
+// ── Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026) ──────────────
+// Cada trecho usa a tabela ativa que mais combina com o tipo de serviço e o
+// período (noite = 22h às 6h ou feriado marcado). Mesma escolha do
+// calcular_cotacao_tabela no banco, que cota os pedidos do app.
+const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 22h)", noite: "Noite (22h às 6h) ou feriado", qualquer: "Qualquer horário" };
+let tabelaPrecoMexida = false;      // o preço foi refeito nesta edição da viagem
+let tabelaPrecoNomeSalvo = "";      // nome guardado na viagem quando abriu
+let repasseTabelaRatio = null;      // parte da motorista no preço de tabela calculado
+function tabelaPrecoPadraoSistema(noturno){
+  return { id: null, nome: "Padrão do sistema", tipo_servico: null, quando: "qualquer",
+    tarifa_fixa: TAXA_FIXA_CLIENTE, valor_km: TARIFA_KM_CLIENTE, valor_minimo: null,
+    adicional_pct: noturno ? ADICIONAL_NOTURNO * 100 : 0,
+    taxa_go_ladies_pct: Math.round((1 - PERCENTUAL_REPASSE_MOTORISTA) * 100), ativa: true };
+}
+function escolherTabelaPreco(tipo, noturno){
+  if(tabelasPrecoSqlFaltando) return tabelaPrecoPadraoSistema(noturno);
+  const periodo = noturno ? "noite" : "dia";
+  const cand = tabelasPreco.filter(t => t.ativa && (!t.tipo_servico || t.tipo_servico === tipo) && (t.quando === "qualquer" || t.quando === periodo));
+  cand.sort((a, b) => (!!b.tipo_servico - !!a.tipo_servico) || ((b.quando !== "qualquer") - (a.quando !== "qualquer")) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
+  return cand[0] || tabelaPrecoPadraoSistema(noturno);
+}
+function taxaTabelaPreco(t){ return t && t.taxa_go_ladies_pct != null ? Number(t.taxa_go_ladies_pct) : 25; }
+// maior entre (fixa + km × valor) e o mínimo, × (1 + adicional %)
+function precoTrechoTabela(t, km, fixa, valorKm){
+  const base = Math.max(fixa + valorKm * km, Number(t.valor_minimo) || 0);
+  return base * (1 + (Number(t.adicional_pct) || 0) / 100);
+}
+function resumoTabelaPreco(t){
+  const partes = [formatarMoedaBR(Number(t.tarifa_fixa) || 0) + " + " + formatarMoedaBR(Number(t.valor_km) || 0) + "/km"];
+  if(Number(t.valor_minimo)) partes.push("mínimo " + formatarMoedaBR(Number(t.valor_minimo)));
+  if(Number(t.adicional_pct)) partes.push("+" + Number(t.adicional_pct) + "%");
+  return partes.join(", ");
+}
+// A escolhida na mão no modal vale pros dois trechos; senão, automática.
+function tabelasDoModal(){
+  const tipo = document.getElementById("vg-tipo-servico").value || "Padrão";
+  const sel = document.getElementById("vg-tabela-preco");
+  const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
+  return {
+    ida: forcada || escolherTabelaPreco(tipo, document.getElementById("vg-adicional-noturno").checked),
+    volta: forcada || escolherTabelaPreco(tipo, document.getElementById("vg-adicional-noturno-retorno").checked),
+    forcada: !!forcada,
+  };
+}
+// Tarifa fixa e valor por km "automáticos" seguem a tabela de cada trecho;
+// digitados por ela valem pros dois trechos (o adicional e o mínimo seguem a tabela).
+function tarifasAutomaticas(){ return document.getElementById("vg-tarifa-fixa").dataset.auto === "1"; }
+function aplicarTabelaNosCampos(){
+  const { ida } = tabelasDoModal();
+  const fFixa = document.getElementById("vg-tarifa-fixa"), fKm = document.getElementById("vg-valor-km");
+  fFixa.value = Number(ida.tarifa_fixa).toFixed(2); fKm.value = Number(ida.valor_km).toFixed(2);
+  fFixa.dataset.auto = "1"; fKm.dataset.auto = "1";
+}
+function atualizarInfoTabelaPreco(){
+  const wrap = document.getElementById("vg-tabela-preco-wrap");
+  const info = document.getElementById("vg-tabela-preco-info");
+  const usa = !tabelasPrecoSqlFaltando;
+  wrap.style.display = usa ? "" : "none";
+  document.getElementById("vg-adicional-noturno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite na ida" : "Madrugada (22h às 6h) ou feriado: +30% na ida";
+  document.getElementById("vg-adicional-noturno-retorno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite na volta" : "Madrugada (22h às 6h) ou feriado: +30% na volta";
+  if(!usa){ info.textContent = ""; return; }
+  const { ida, volta } = tabelasDoModal();
+  const temVolta = (Number(document.getElementById("vg-distancia-retorno-km").value) || 0) > 0;
+  let txt = "Ida: " + ida.nome + " (" + resumoTabelaPreco(ida) + ")";
+  if(temVolta) txt += " · Volta: " + volta.nome + " (" + resumoTabelaPreco(volta) + ")";
+  if(!tarifasAutomaticas()) txt += ". A tarifa fixa e o valor por km digitados valem pros dois trechos";
+  if(!tabelaPrecoMexida && tabelaPrecoNomeSalvo) txt = "Usada na cotação: " + tabelaPrecoNomeSalvo + ". Se refizer o preço: " + txt;
+  info.textContent = txt + ".";
+}
+function preencherSelectTabelaPreco(valorAtual){
+  const sel = document.getElementById("vg-tabela-preco");
+  const lista = tabelasPreco.filter(t => t.ativa || String(t.id) === String(valorAtual || ""));
+  sel.innerHTML = `<option value="">Automática (pelo tipo de serviço e horário)</option>` +
+    lista.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}${t.ativa ? "" : " (desativada)"}</option>`).join("");
+  sel.value = valorAtual ? String(valorAtual) : "";
+}
+// Chamada ao abrir o modal: viagem nova nasce automática; viagem salva mantém
+// a tarifa que tem (só muda se ela trocar tabela, tipo ou noite).
+function prepararTabelaPrecoModal(v){
+  tabelaPrecoMexida = !v.id;
+  tabelaPrecoNomeSalvo = v.tabela_preco_nome || "";
+  preencherSelectTabelaPreco(v.tabela_preco_escolhida ? v.tabela_preco_id : "");
+  const fFixa = document.getElementById("vg-tarifa-fixa"), fKm = document.getElementById("vg-valor-km");
+  delete fFixa.dataset.auto; delete fKm.dataset.auto;
+  if(!v.id || v.tarifa_fixa == null) aplicarTabelaNosCampos();
+  atualizarInfoTabelaPreco();
+}
+function tabelaPrecoTrocada(){
+  if(viagemJaPaga()){ atualizarInfoTabelaPreco(); return; }
+  aplicarTabelaNosCampos();
+  recalcularCotacao();
+}
+// Tipo de serviço ou noite/feriado mudou: a tabela de cada trecho pode mudar.
+function periodoTrechoTrocado(){
+  if(!viagemJaPaga() && tarifasAutomaticas()) aplicarTabelaNosCampos();
+  recalcularCotacao();
+}
+function tarifaDigitada(campo){
+  delete campo.dataset.auto;
+  recalcularCotacao();
+}
+function dadosTabelaPrecoModal(){
+  const { ida, volta, forcada } = tabelasDoModal();
+  const temVolta = (Number(document.getElementById("vg-distancia-retorno-km").value) || 0) > 0;
+  return {
+    tabela_preco_id: ida.id || null,
+    tabela_preco_retorno_id: temVolta ? (volta.id || null) : null,
+    tabela_preco_nome: temVolta && volta.nome !== ida.nome ? ida.nome + " / " + volta.nome : ida.nome,
+    tabela_preco_escolhida: forcada,
+  };
+}
 // Preço de tabela pelo km e adicionais do modal (null sem km).
 function calcularTabela(){
   const km = Number(document.getElementById("vg-distancia-km").value) || 0;
   if(!km) return null;
-  const tarifaFixa = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
-  const valorKm = Number(document.getElementById("vg-valor-km").value) || 0;
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
-  // Cada trecho (ida e, se tiver km, volta) paga fixo + km e tem a sua
-  // madrugada/feriado, que segue o repasse de 75%; a espera combinada é
-  // somada por fora e vai inteira pra motorista. Mesma conta do
-  // pedir_viagem_cliente (schema_distancia_ida_volta.sql).
-  const trecho = (kmTrecho, noturno) => (tarifaFixa + valorKm * kmTrecho) * (noturno ? 1 + ADICIONAL_NOTURNO : 1);
+  // Cada trecho (ida e, se tiver km, volta) usa a sua tabela; a espera
+  // combinada é somada por fora e vai inteira pra motorista. Mesma conta do
+  // pedir_viagem_cliente (schema_tabelas_preco.sql).
+  const { ida, volta } = tabelasDoModal();
+  const auto = tarifasAutomaticas();
+  const fixaCampo = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
+  const kmCampo = Number(document.getElementById("vg-valor-km").value) || 0;
+  const trecho = (t, kmTrecho) => precoTrechoTabela(t, kmTrecho,
+    auto ? Number(t.tarifa_fixa) || 0 : fixaCampo, auto ? Number(t.valor_km) || 0 : kmCampo);
   const kmVolta = Number(document.getElementById("vg-distancia-retorno-km").value) || 0;
-  let base = trecho(km, document.getElementById("vg-adicional-noturno").checked);
-  if(kmVolta) base += trecho(kmVolta, document.getElementById("vg-adicional-noturno-retorno").checked);
+  const pIda = trecho(ida, km);
+  let base = pIda, motorista = pIda * (1 - taxaTabelaPreco(ida) / 100);
+  if(kmVolta){
+    const pVolta = trecho(volta, kmVolta);
+    base += pVolta;
+    motorista += pVolta * (1 - taxaTabelaPreco(volta) / 100);
+  }
+  repasseTabelaRatio = base ? motorista / base : null;
   return base + esperaMin * VALOR_MIN_ESPERA;
+}
+// Parte da motorista pela tabela (taxa da Go Ladies de cada trecho).
+function ratioRepasseModal(){
+  repasseTabelaRatio = null;
+  calcularTabela();
+  if(repasseTabelaRatio != null) return repasseTabelaRatio;
+  return 1 - taxaTabelaPreco(tabelasDoModal().ida) / 100;
 }
 // Viagem criada antes da coluna preco_tabela (ou cotada pelo app) abre com a
 // tabela vazia, e aí o desconto nunca aparecia (viagem #38, 23/09/2026).
@@ -12739,9 +13051,12 @@ function preencherTabelaSeVazia(){
 function recalcularCotacao(){
   if(viagemJaPaga()){
     atualizarDesconto();
+    atualizarInfoTabelaPreco();
     return;
   }
   const tabela = calcularTabela();
+  if(tabela != null) tabelaPrecoMexida = true;
+  atualizarInfoTabelaPreco();
   if(tabela != null){
     // Refazer a tabela não apaga o desconto que ela já tinha dado: o cotado
     // acompanha a tabela nova mantendo a mesma diferença.
@@ -12768,7 +13083,7 @@ function recalcularRepasseMotorista(){
   const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
   const espera = esperaMin * VALOR_MIN_ESPERA;
   const base = Math.max(0, cotado - espera);
-  document.getElementById("vg-preco-motorista").value = (base * PERCENTUAL_REPASSE_MOTORISTA + espera).toFixed(2);
+  document.getElementById("vg-preco-motorista").value = (base * ratioRepasseModal() + espera).toFixed(2);
 }
 function cotadoEditado(){
   recalcularRepasseMotorista();
@@ -13627,6 +13942,7 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
   document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
+  prepararTabelaPrecoModal(v);
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
   document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
   document.getElementById("vg-repasse-multa").value = v.repasse_multa ?? "";
@@ -13881,6 +14197,12 @@ async function saveViagem(){
   const colunasExistem = viagens.length > 0 && ("espera_extra_min" in viagens[0]);
   if(colunasExistem || adicionais.espera_extra_min || adicionais.adicional_noturno || adicionais.cancelamento_cobrado){
     Object.assign(payload, adicionais);
+  }
+  // Tabela de preço usada (schema_tabelas_preco.sql): só grava quando o preço
+  // foi refeito nesta edição, senão a viagem antiga ganharia o nome de uma
+  // tabela que não foi a da cotação dela.
+  if(!tabelasPrecoSqlFaltando && tabelaPrecoMexida && ("tabela_preco_id" in (viagens[0] || {tabela_preco_id:null}))){
+    Object.assign(payload, dadosTabelaPrecoModal());
   }
   // Colunas de schema_cancelamento_multa.sql (05/10/2026): mesmo cuidado.
   const multa = {
