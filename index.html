@@ -12820,7 +12820,10 @@ function configurarBuscaEndereco(input){
   let timer = null;
   let sessionToken = gerarSessionTokenEndereco();
 
-  input.addEventListener("input", ()=>{
+  input.addEventListener("input", e=>{
+    // No Simulador, o "input" disparado pelo próprio código ao escolher a
+    // sugestão não pode buscar de novo: no iPhone a lista reabria e ficava.
+    if(!e.isTrusted && input.closest("#ft-sim")) return;
     clearTimeout(timer);
     const termo = input.value.trim();
     if(termo.length < 3){ lista.classList.remove("aberta"); lista.innerHTML = ""; return; }
