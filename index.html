@@ -1149,6 +1149,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-grid .full{grid-column:1/-1;}
 #ft-sim label{display:block; font-size:11.5px; color:var(--text3); margin-bottom:3px;}
 #ft-sim input[type=number],#ft-sim input[type=text],#ft-sim select{width:100%; padding:6px 9px; font-size:12.5px;}
+#ft-sim .sim-enderecos{margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border2);}
+#ft-sim .sim-end-item{display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:6px; margin-top:6px;}
+#ft-sim .sim-end-num{font-size:11.5px; font-weight:700; color:var(--text3); text-align:center;}
+#ft-sim .sim-end-acoes{display:flex; gap:2px;}
+#ft-sim .sim-end-acoes button{width:26px; height:26px; padding:0;}
+#ft-sim #sim-end-mais{margin-top:8px;}
+#ft-sim .sim-end-botoes{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
 #ft-sim .sim-check{display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text2); margin-top:8px; cursor:pointer; line-height:1.4;}
 #ft-sim .sim-check input{margin:1px 0 0; flex:0 0 auto;}
 #ft-sim .sim-fixo{display:grid; grid-template-columns:auto 1fr 74px; align-items:center; gap:7px; margin-top:6px;}
@@ -1842,6 +1849,20 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <div class="sim-bloco">
               <h4>A viagem</h4>
               <p class="sim-ajuda">Km vazio é o que você roda sem ninguém no carro: ir buscar a cliente e voltar pra casa no fim. Ponha o tempo de embarque junto com o vazio.</p>
+              <!-- Endereços só pra cotação (21/10/2026): mede a rota no Google e
+                   preenche os 4 campos de km e minutos; nada é salvo. -->
+              <div class="sim-enderecos">
+                <label>Motorista sai de</label>
+                <div class="campo-endereco"><input type="text" id="sim-end-saida" placeholder="Rua, número, bairro" autocomplete="off" oninput="simSalvarSaida()"><div class="sugestoes-endereco"></div></div>
+                <div id="sim-end-lista"></div>
+                <button type="button" class="btn ghost small" id="sim-end-mais" onclick="simAdicionarEndereco()">+ Adicionar endereço</button>
+                <label class="sim-check"><input type="checkbox" id="sim-end-volta" checked> <span>Motorista volta pro ponto de saída no fim</span></label>
+                <div class="sim-end-botoes">
+                  <button type="button" class="btn small" id="sim-end-calcular" onclick="simCalcularRota()">Calcular rota</button>
+                  <button type="button" class="btn ghost small" onclick="simAbrirMaps()">Ver no Maps</button>
+                </div>
+                <p class="sim-nota" id="sim-end-resumo" style="display:none;"></p>
+              </div>
               <div class="sim-grid">
                 <div><label>Km com a cliente</label><input type="number" id="sim-km-cliente" step="0.1" min="0" value="10" oninput="simular()"></div>
                 <div><label>Minutos com a cliente</label><input type="number" id="sim-min-cliente" step="1" min="0" value="20" oninput="simular()"></div>
@@ -7004,6 +7025,139 @@ function simViagem(){
     minTotal: minCliente + simNum("sim-min-vazio") + esperaMin,
   };
 }
+// ── Endereços do simulador (21/10/2026) ──
+// Só pra cotação: mede a rota no Google (Routes API, mesma chave do Places,
+// igual ao app da cliente) e preenche km e minutos com a cliente e vazios.
+// Nada é salvo; o ponto de saída fica lembrado só neste navegador.
+const SIM_MAX_ENDERECOS = 5;
+let simEnderecos = ["", ""];
+
+function simRenderEnderecos(){
+  const lista = document.getElementById("sim-end-lista");
+  if(!lista) return;
+  if(!lista.dataset.pronto){
+    lista.dataset.pronto = "1";
+    const saida = document.getElementById("sim-end-saida");
+    try{ saida.value = localStorage.getItem("sim-end-saida") || ""; }catch(e){}
+  }
+  const n = simEnderecos.length;
+  lista.innerHTML = simEnderecos.map((end, i)=>`
+    <div class="sim-end-item">
+      <span class="sim-end-num">${i+1}</span>
+      <div class="campo-endereco"><input type="text" value="${escapeHtml(end)}" placeholder="${i===0 ? "Embarque" : (i===n-1 ? "Destino" : "Parada")}" autocomplete="off" oninput="simEnderecos[${i}]=this.value"><div class="sugestoes-endereco"></div></div>
+      <div class="sim-end-acoes">
+        <button type="button" class="icon-btn" title="Subir" onclick="simMoverEndereco(${i},-1)" ${i===0?"disabled":""}>↑</button>
+        <button type="button" class="icon-btn" title="Descer" onclick="simMoverEndereco(${i},1)" ${i===n-1?"disabled":""}>↓</button>
+        <button type="button" class="icon-btn" title="Tirar" onclick="simTirarEndereco(${i})" ${n<=2?"disabled":""}>✕</button>
+      </div>
+    </div>`).join("");
+  lista.querySelectorAll(".campo-endereco input").forEach(configurarBuscaEndereco);
+  // (a busca do "Motorista sai de" já liga sozinha no carregamento, com os outros campos fixos)
+  document.getElementById("sim-end-mais").style.display = n >= SIM_MAX_ENDERECOS ? "none" : "";
+}
+function simAdicionarEndereco(){
+  if(simEnderecos.length >= SIM_MAX_ENDERECOS) return;
+  simEnderecos.push("");
+  simRenderEnderecos();
+  const inputs = document.querySelectorAll("#sim-end-lista input");
+  inputs[inputs.length-1].focus();
+}
+function simTirarEndereco(i){ if(simEnderecos.length > 2){ simEnderecos.splice(i,1); simRenderEnderecos(); } }
+function simMoverEndereco(i, d){
+  const j = i + d;
+  if(j < 0 || j >= simEnderecos.length) return;
+  [simEnderecos[i], simEnderecos[j]] = [simEnderecos[j], simEnderecos[i]];
+  simRenderEnderecos();
+}
+function simSalvarSaida(){
+  try{ localStorage.setItem("sim-end-saida", document.getElementById("sim-end-saida").value.trim()); }catch(e){}
+}
+
+// Uma rota no Google. Sem paradas no meio, pede os caminhos alternativos e
+// fica com o maior km e o maior tempo (regra das cotações).
+async function simMedirRota(origem, destino, meio){
+  const corpo = {
+    origin: { address: origem }, destination: { address: destino },
+    intermediates: (meio || []).map(e=>({ address: e })),
+    travelMode: "DRIVE", routingPreference: "TRAFFIC_AWARE",
+    computeAlternativeRoutes: !(meio && meio.length),
+    languageCode: "pt-BR", regionCode: "BR", units: "METRIC"
+  };
+  const controle = new AbortController();
+  const prazo = setTimeout(()=>controle.abort(), 10000);
+  try{
+    const resp = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      signal: controle.signal, method: "POST",
+      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY, "X-Goog-FieldMask": "routes.distanceMeters,routes.duration" },
+      body: JSON.stringify(corpo)
+    });
+    const dados = await resp.json();
+    const rotas = (dados.routes || []).filter(r=>r.distanceMeters);
+    if(!rotas.length){ console.warn("Rota sem resultado:", dados); return null; }
+    return {
+      km: Math.max(...rotas.map(r=>r.distanceMeters)) / 1000,
+      min: Math.max(...rotas.map(r=>parseFloat(String(r.duration || "0").replace("s","")) || 0)) / 60,
+    };
+  }catch(err){ console.error("Não foi possível medir a rota:", err); return null; }
+  finally{ clearTimeout(prazo); }
+}
+
+async function simCalcularRota(){
+  const pontos = simEnderecos.map(e=>e.trim()).filter(Boolean);
+  const saida = document.getElementById("sim-end-saida").value.trim();
+  const volta = simCheck("sim-end-volta");
+  const idaVolta = simCheck("sim-idavolta");
+  if(pontos.length < 2){ alert("Preencha pelo menos o embarque e o destino."); return; }
+  const btn = document.getElementById("sim-end-calcular");
+  const resumo = document.getElementById("sim-end-resumo");
+  btn.disabled = true; btn.textContent = "Medindo a rota...";
+  // Na ida e volta a corrida termina de novo no embarque
+  const fimCorrida = idaVolta ? pontos[0] : pontos[pontos.length-1];
+  const [corrida, ate, retorno] = await Promise.all([
+    simMedirRota(pontos[0], pontos[pontos.length-1], pontos.slice(1, -1)),
+    saida ? simMedirRota(saida, pontos[0]) : null,
+    saida && volta ? simMedirRota(fimCorrida, saida) : null,
+  ]);
+  btn.disabled = false; btn.textContent = "Calcular rota";
+  if(!corrida){ alert("Não consegui medir a rota com a cliente. Confira os endereços."); return; }
+  const kmTxt = n => n.toFixed(1).replace(".", ",");
+  const partes = [];
+  if(saida){
+    if(ate) partes.push(`Até a cliente: ${kmTxt(ate.km)} km, ${Math.ceil(ate.min)} min`);
+    else partes.push(`Até a cliente: não consegui medir`);
+  }
+  partes.push(`Corrida${idaVolta ? " (cada trecho)" : ""}: ${kmTxt(corrida.km)} km, ${Math.ceil(corrida.min)} min`);
+  if(saida && volta){
+    if(retorno) partes.push(`Volta pra casa: ${kmTxt(retorno.km)} km, ${Math.ceil(retorno.min)} min`);
+    else partes.push(`Volta pra casa: não consegui medir`);
+  }
+  document.getElementById("sim-km-cliente").value = Math.round(corrida.km * 10) / 10;
+  document.getElementById("sim-min-cliente").value = Math.ceil(corrida.min);
+  if(saida){
+    const kmVazio = (ate ? ate.km : 0) + (retorno ? retorno.km : 0);
+    const minVazio = (ate ? ate.min : 0) + (retorno ? retorno.min : 0);
+    document.getElementById("sim-km-vazio").value = Math.round(kmVazio * 10) / 10;
+    document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
+  }else{
+    partes.push("Sem ponto de saída: km e minutos vazios ficaram como estavam");
+  }
+  resumo.innerHTML = partes.map(escapeHtml).join(" · ") + `<br>Trânsito de agora. Dá pra ajustar os números à mão.`;
+  resumo.style.display = "";
+  simular();
+}
+
+function simAbrirMaps(){
+  const pontos = simEnderecos.map(e=>e.trim()).filter(Boolean);
+  const saida = document.getElementById("sim-end-saida").value.trim();
+  if(pontos.length < 2){ alert("Preencha pelo menos o embarque e o destino."); return; }
+  const todos = [...(saida ? [saida] : []), ...pontos];
+  if(simCheck("sim-idavolta")) todos.push(pontos[0]);
+  if(saida && simCheck("sim-end-volta")) todos.push(saida);
+  const origem = todos.shift(), destino = todos.pop();
+  const waypoints = todos.length ? `&waypoints=${encodeURIComponent(todos.slice(0, 9).join("|"))}` : "";
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}${waypoints}`, "_blank");
+}
+
 // Espera e premium são 100% da motorista (Termo cl. 9.7), então ficam
 // separados do preço que entra na divisão 75/25.
 // Tabela do simulador (21/10/2026): a escolhida no select ou a automática
@@ -7389,6 +7543,7 @@ function renderFinanceiroTransporte(){
   if(!wrap) return;
   renderTabelasPreco();
   simRenderFixos();
+  simRenderEnderecos();
   simPrepararTabelas();
   simular();
   const dias = ftPeriodoDias();
