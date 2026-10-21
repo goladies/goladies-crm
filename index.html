@@ -3951,7 +3951,9 @@ function badgeCertificacao(m){
   return `<span class="tag urg-baixa">Até ${fmtDataBR(m.certificada_ate)}</span>`;
 }
 const DOCUMENTOS_OBRIGATORIOS_MOTORISTA = ["CNH","CRLV","Antecedentes Criminais","Comprovante de Endereço"];
-const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento"];
+// "Oficina parceira" (21/10/2026, ideia da Cris Piuga): a cliente deixa o carro
+// na oficina e a Go Ladies leva e busca; cada um tem a sua tabela de preço.
+const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento","Oficina parceira (com plano)","Oficina parceira (sem plano)"];
 const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E-mail"];
 // "Escolher motoristas" (schema_status_escolher_motoristas.sql): pagamento ok
 // mas nenhuma motorista marcada; ao marcar e salvar, o banco passa sozinho
