@@ -1863,6 +1863,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div class="sim-end-botoes">
                   <button type="button" class="btn small" id="sim-end-calcular" onclick="simCalcularRota()">Calcular rota</button>
                   <button type="button" class="btn ghost small" onclick="simAbrirMaps()">Ver no Maps</button>
+                  <button type="button" class="btn ghost small" onclick="simNovaCotacao()">Nova cotação</button>
                 </div>
                 <p class="sim-nota" id="sim-end-resumo" style="display:none;"></p>
                 <div class="sim-cobrar" id="sim-cobrar"></div>
@@ -7048,7 +7049,7 @@ function simRenderEnderecos(){
   lista.innerHTML = simEnderecos.map((end, i)=>`
     <div class="sim-end-item">
       <span class="sim-end-num">${i+1}</span>
-      <div class="campo-endereco"><input type="text" value="${escapeHtml(end)}" placeholder="${i===0 ? "Embarque" : (i===n-1 ? "Destino" : "Parada")}" autocomplete="off" oninput="simEnderecos[${i}]=this.value"><div class="sugestoes-endereco"></div></div>
+      <div class="campo-endereco"><input type="text" value="${escapeHtml(end)}" placeholder="${i===0 ? "Embarque" : (i===n-1 ? "Destino" : "Parada")}" autocomplete="off" oninput="simEnderecos[${i}]=this.value; simGuardar()"><div class="sugestoes-endereco"></div></div>
       <div class="sim-end-acoes">
         <button type="button" class="icon-btn" title="Subir" onclick="simMoverEndereco(${i},-1)" ${i===0?"disabled":""}>↑</button>
         <button type="button" class="icon-btn" title="Descer" onclick="simMoverEndereco(${i},1)" ${i===n-1?"disabled":""}>↓</button>
@@ -7058,6 +7059,62 @@ function simRenderEnderecos(){
   lista.querySelectorAll(".campo-endereco input").forEach(configurarBuscaEndereco);
   // (a busca do "Motorista sai de" já liga sozinha no carregamento, com os outros campos fixos)
   document.getElementById("sim-end-mais").style.display = n >= SIM_MAX_ENDERECOS ? "none" : "";
+  simGuardar();
+}
+
+// ── Última cotação (22/10/2026) ──
+// Fica guardada neste navegador: sair do menu, recarregar ou fechar o CRM
+// não apaga. "Nova cotação" limpa os endereços e os números da viagem.
+const SIM_CHAVE_COTACAO = "sim-ultima-cotacao";
+let simRestaurado = false;
+function simGuardar(){
+  if(!simRestaurado) return; // antes de restaurar, os campos ainda são os padrões
+  const campos = {};
+  document.querySelectorAll("#ft-sim input[id], #ft-sim select[id]").forEach(el=>{
+    if(el.id === "sim-end-saida" || el.readOnly) return;
+    campos[el.id] = el.type === "checkbox" ? el.checked : el.value;
+  });
+  const resumo = document.getElementById("sim-end-resumo");
+  const dados = {
+    campos, enderecos: simEnderecos,
+    cobradoManual: !!document.getElementById("sim-cobrado").dataset.manual,
+    repasseManual: !!document.getElementById("sim-repasse").dataset.manual,
+    resumo: resumo.style.display === "none" ? "" : resumo.innerHTML,
+  };
+  try{ localStorage.setItem(SIM_CHAVE_COTACAO, JSON.stringify(dados)); }catch(e){}
+}
+function simRestaurar(){
+  if(simRestaurado) return;
+  simRestaurado = true;
+  let dados = null;
+  try{ dados = JSON.parse(localStorage.getItem(SIM_CHAVE_COTACAO) || "null"); }catch(e){}
+  if(!dados) return;
+  Object.entries(dados.campos || {}).forEach(([id, val])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type === "checkbox") el.checked = !!val;
+    else if(el.tagName !== "SELECT" || [...el.options].some(o=>o.value === val)) el.value = val;
+  });
+  if(dados.cobradoManual) document.getElementById("sim-cobrado").dataset.manual = "1";
+  if(dados.repasseManual) document.getElementById("sim-repasse").dataset.manual = "1";
+  if(Array.isArray(dados.enderecos) && dados.enderecos.length >= 2) simEnderecos = dados.enderecos.slice(0, SIM_MAX_ENDERECOS);
+  simRenderEnderecos();
+  if(dados.resumo){
+    const resumo = document.getElementById("sim-end-resumo");
+    resumo.innerHTML = dados.resumo;
+    resumo.style.display = "";
+  }
+}
+function simNovaCotacao(){
+  simEnderecos = ["", ""];
+  simRenderEnderecos();
+  ["sim-km-cliente","sim-min-cliente","sim-km-vazio","sim-min-vazio","sim-espera"].forEach(id=>{ document.getElementById(id).value = 0; });
+  ["sim-idavolta","sim-noturno","sim-premium"].forEach(id=>{ document.getElementById(id).checked = false; });
+  const elCobrado = document.getElementById("sim-cobrado");
+  delete elCobrado.dataset.manual;
+  const resumo = document.getElementById("sim-end-resumo");
+  resumo.innerHTML = ""; resumo.style.display = "none";
+  simTabelaTrocada();
 }
 function simAdicionarEndereco(){
   if(simEnderecos.length >= SIM_MAX_ENDERECOS) return;
@@ -7312,6 +7369,7 @@ function simular(){
      ${sobra <= 0
        ? `<span style="color:var(--c-red); font-weight:600;">Nesse preço a motorista não paga nem o carro</span>`
        : porHora === null ? "" : `<span style="color:var(--c-${nivel}); font-weight:600;">A motorista ganha ${fmt(porHora)} / hora depois do custo do carro</span>`}`;
+  simGuardar();
 
   // ── Pisos: isola o preço em sobra = adic + pct × (P − adic) − custoCarro ──
   const precoParaSobra = alvo => pctRepasse > 0 ? p.adicionais100 + (alvo + custoCarro - p.adicionais100) / pctRepasse : null;
@@ -7557,6 +7615,7 @@ function renderFinanceiroTransporte(){
   simRenderFixos();
   simRenderEnderecos();
   simPrepararTabelas();
+  simRestaurar();
   simular();
   const dias = ftPeriodoDias();
   const cotacoes = ftCotacoes();
