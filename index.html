@@ -3501,6 +3501,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
         <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
+        <div><label>Pessoas na ida</label><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h) ou feriado: +30% na ida</span></label></div>
       </div>
     </section>
@@ -3518,6 +3519,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"><span class="dica">Do embarque da volta até o destino final.</span></div>
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
+        <div><label>Pessoas na volta</label><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h) ou feriado: +30% na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
         <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
@@ -13501,7 +13503,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
   carregarPreviewFoto("ct", c);
-  document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) : "";
+  document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) + htmlGarupaCliente(c) : "";
   renderAvaliacoesCliente();
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
@@ -13699,6 +13701,8 @@ async function unificarClientes(manter, remover){
     `Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`
   ].filter((l,i,a)=>l || (i>0 && a[i-1]));
   if(!confirm(linhas.join("\n"))) return;
+  // Garupa: passa antes, porque apagar a ficha que some desliga as paradas dela
+  if(colunaPassageiraFichaExiste()) await sb.from("viagem_paradas").update({ passageira_cliente_id: manter }).eq("passageira_cliente_id", remover);
   const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
   if(error){ alert("Não foi possível unificar: " + error.message); return; }
   showToast(resumo && typeof resumo === "object"
@@ -14245,8 +14249,71 @@ function montarObservacaoCliente(){
 }
 function carregarParadasModal(viagemId){
   paradasModal = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem)
-    .map(p=>({ tipo: p.tipo, endereco: p.endereco||"", passageira_nome: p.passageira_nome||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
+    .map(p=>({ tipo: p.tipo, endereco: p.endereco||"", passageira_nome: p.passageira_nome||"", passageira_cliente_id: p.passageira_cliente_id||null, horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
   renderParadasModal();
+}
+// Passageira da parada ligada a uma ficha de cliente de viagem
+// (schema_garupa_pessoas.sql). Opcional: sem ficha, o nome fica só como texto.
+// Antes do SQL rodado a coluna não existe e a ligação não aparece.
+const colunaPassageiraFichaExiste = () => !viagemParadas.length || ("passageira_cliente_id" in viagemParadas[0]);
+const semAcentoMin = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+function htmlLigacaoPassageira(i){
+  const p = paradasModal[i];
+  if(!colunaPassageiraFichaExiste()) return "";
+  if(p.passageira_cliente_id){
+    const c = clientesTransporte.find(x=>x.id===p.passageira_cliente_id);
+    return `<svg class=ic aria-hidden=true><use href=#i-link /></svg> Ficha: <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.passageira_cliente_id)})">${escapeHtml(c ? nomeCod(c) : "#" + p.passageira_cliente_id)}</a> · <a href="#" onclick="event.preventDefault(); ligarPassageiraParada(${i}, null)">desligar</a>`;
+  }
+  const busca = semAcentoMin(p.passageira_nome);
+  if(busca.length < 3) return "";
+  const achadas = clientesTransporte.filter(c=>semAcentoMin(c.nome).includes(busca)).slice(0, 4);
+  return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPassageiraParada(${i}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
+    + ` <button type="button" class="btn ghost small" onclick="criarFichaPassageiraParada(${i})">+ Criar ficha</button>`;
+}
+function atualizarLigacaoPassageira(i){
+  const el = document.getElementById("vg-parada-lig-" + i);
+  if(el) el.innerHTML = htmlLigacaoPassageira(i);
+}
+function ligarPassageiraParada(i, clienteId){
+  const p = paradasModal[i];
+  p.passageira_cliente_id = clienteId;
+  if(clienteId){
+    const c = clientesTransporte.find(x=>x.id===clienteId);
+    if(c) p.passageira_nome = c.nome;
+  }
+  renderParadasModal();
+}
+async function criarFichaPassageiraParada(i){
+  const nome = paradasModal[i].passageira_nome.trim();
+  if(!nome) return;
+  const whats = prompt(`Criar a ficha de cliente de viagem de ${nome}.\n\nWhatsApp dela (opcional, pode deixar vazio):`);
+  if(whats === null) return;
+  const mesma = whats.trim() && clientesTransporte.find(c=>mesmoTelefone(c.whatsapp, whats));
+  if(mesma){
+    if(confirm(`Esse WhatsApp já é de ${nomeCod(mesma)}. Ligar a parada a essa ficha?`)) ligarPassageiraParada(i, mesma.id);
+    return;
+  }
+  const cliente = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
+  const { data, error } = await sb.from("clientes_transporte").insert({
+    nome, whatsapp: whats.trim(), origem: "Indicação",
+    notas: `Criada como passageira da garupa${editingViagemId ? " da viagem #" + editingViagemId : ""}${cliente ? " (cliente " + nomeCod(cliente) + ")" : ""} em ${dataComSemana(new Date(), true)}.`,
+  }).select();
+  if(error){ alert("Erro ao criar a ficha: " + error.message); return; }
+  await recarregarTabelas("clientes_transporte");
+  showToast(`Ficha criada: ${data[0].nome}`);
+  ligarPassageiraParada(i, data[0].id);
+}
+// Na ficha da cliente: viagens em que ela foi passageira de garupa
+function htmlGarupaCliente(c){
+  if(!c || !c.id) return "";
+  const ids = [...new Set(viagemParadas.filter(p=>p.passageira_cliente_id===c.id).map(p=>p.viagem_id))];
+  const vs = viagens.filter(v=>ids.includes(v.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  if(!vs.length) return "";
+  return `<div style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-users /></svg> <b>Foi de garupa</b> (${vs.length} ${vs.length===1 ? "viagem" : "viagens"}, pagas por outra pessoa): ` +
+    vs.map(v=>{
+      const dona = clientesTransporte.find(x=>x.id===v.cliente_id);
+      return `<a href="#" onclick="event.preventDefault(); closeModal('cliente-transporte-modal'); openViagemModal(${Number(v.id)})">${v.data ? dataComSemana(new Date(String(v.data).slice(0,10) + "T12:00:00"), true) : "#" + v.id}${dona ? " com " + escapeHtml(dona.nome.split(" ")[0]) : ""}</a>`;
+    }).join(", ") + ".</div>";
 }
 function renderParadasModal(){
   const el = document.getElementById("vg-paradas-lista");
@@ -14267,7 +14334,7 @@ function renderParadasModal(){
         <button type="button" class="icon-btn" title="Remover" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div><label>Tipo</label><select onchange="paradasModal[${i}].tipo=this.value">${PARADA_TIPOS.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
-      <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value"></div>
+      <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value; atualizarLigacaoPassageira(${i})"><div id="vg-parada-lig-${i}" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">${htmlLigacaoPassageira(i)}</div></div>
       <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
       <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
       <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
@@ -14275,7 +14342,7 @@ function renderParadasModal(){
   el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
 }
 function adicionarParadaViagem(){
-  paradasModal.push({ tipo: "Embarque", endereco: "", passageira_nome: "", horario_previsto: "", observacao: "" });
+  paradasModal.push({ tipo: "Embarque", endereco: "", passageira_nome: "", passageira_cliente_id: null, horario_previsto: "", observacao: "" });
   renderParadasModal();
   const inputs = document.querySelectorAll("#vg-paradas-lista input[type=text]");
   const ultimoEndereco = [...inputs].filter(i=>i.placeholder.startsWith("Rua")).pop();
@@ -14298,6 +14365,8 @@ async function gravarParadasViagem(viagemId){
     const ins = await sb.from("viagem_paradas").insert(validas.map((p,i)=>({
       viagem_id: viagemId, ordem: i+1, tipo: p.tipo, endereco: p.endereco.trim(),
       passageira_nome: p.passageira_nome.trim() || null, horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
+      // Só manda a coluna quando tem ligação: sem o schema_garupa_pessoas.sql ela não existe
+      ...(p.passageira_cliente_id ? { passageira_cliente_id: p.passageira_cliente_id } : {}),
     })));
     if(ins.error){ alert("Erro ao salvar paradas: " + ins.error.message); return; }
   }
@@ -15411,6 +15480,8 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-codigo-inicio").value = v.codigo_inicio || "(ainda não gerado)";
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
+  document.getElementById("vg-pessoas-ida").value = v.pessoas_ida ?? "";
+  document.getElementById("vg-pessoas-volta").value = v.pessoas_volta ?? "";
   // Medição da rota (medirRotaViagem) recomeça do zero a cada abertura
   medicaoRotaViagem++;
   ["vg-distancia-km","vg-duracao-min","vg-distancia-retorno-km","vg-duracao-retorno-min"].forEach(c=>{ delete document.getElementById(c).dataset.autoValor; });
@@ -15591,7 +15662,7 @@ function mostrarCampoEvento(){
   const ehEvento = document.getElementById("vg-tipo-servico").value === "Evento";
   document.getElementById("vg-evento-wrap").style.display = (ehEvento || document.getElementById("vg-evento-descricao").value) ? "" : "none";
 }
-const CAMPOS_VOLTA_VIAGEM = ["vg-data-retorno","vg-horario-retorno","vg-duracao-retorno-min","vg-horario-chegada-retorno","vg-distancia-retorno-km","vg-origem-retorno","vg-destino-retorno"];
+const CAMPOS_VOLTA_VIAGEM = ["vg-data-retorno","vg-horario-retorno","vg-duracao-retorno-min","vg-horario-chegada-retorno","vg-distancia-retorno-km","vg-origem-retorno","vg-destino-retorno","vg-pessoas-volta"];
 // Abre a seção Volta quando a viagem já tem algum dado de volta.
 function sincronizarVoltaViagem(){
   const tem = CAMPOS_VOLTA_VIAGEM.some(id=>document.getElementById(id).value !== "") || document.getElementById("vg-adicional-noturno-retorno").checked;
@@ -15707,6 +15778,14 @@ async function saveViagem(){
   const colunasVoltaExistem = viagens.length > 0 && ("distancia_km_retorno" in viagens[0]);
   if(colunasVoltaExistem || volta.distancia_km_retorno != null || volta.adicional_noturno_retorno){
     Object.assign(payload, volta);
+  }
+  // Colunas de schema_garupa_pessoas.sql (23/10/2026): mesmo cuidado.
+  const numPessoas = id => document.getElementById(id).value === "" ? null : Math.round(Number(document.getElementById(id).value));
+  const pessoas = { pessoas_ida: numPessoas("vg-pessoas-ida"), pessoas_volta: numPessoas("vg-pessoas-volta") };
+  if([pessoas.pessoas_ida, pessoas.pessoas_volta].some(n=>n != null && (n < 1 || n > 20))){ alert("Pessoas na ida e na volta: de 1 a 20, contando a cliente."); return; }
+  const colunasPessoasExistem = viagens.length > 0 && ("pessoas_ida" in viagens[0]);
+  if(colunasPessoasExistem || pessoas.pessoas_ida != null || pessoas.pessoas_volta != null){
+    Object.assign(payload, pessoas);
   }
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
