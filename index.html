@@ -1541,6 +1541,21 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
           <div>
+            <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-device-mobile /></svg> App no celular</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;" id="uso-app-periodo">Quem instalou o app na tela inicial, quem usa pelo ícone e quem se cadastrou.</p>
+          </div>
+          <div class="acessos-dias" id="uso-app-dias" role="group" aria-label="Período">
+            <button type="button" data-dias="7" onclick="carregarUsoApp(7)">7 dias</button>
+            <button type="button" data-dias="30" class="ativo" onclick="carregarUsoApp(30)">30 dias</button>
+            <button type="button" data-dias="90" onclick="carregarUsoApp(90)">90 dias</button>
+          </div>
+        </div>
+        <div id="uso-app"><p class="empty">Carregando...</p></div>
+        <div id="uso-app-lista"></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
             <h3 style="margin-top:0;"><svg class=ic aria-hidden=true><use href=#i-gauge /></svg> Uso do Supabase (plano gratuito)</h3>
             <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Quanto do limite grátis já está ocupado. Verde até 60%, amarelo até 85%, vermelho acima.</p>
           </div>
@@ -5460,6 +5475,104 @@ function renderDashboard(){
   renderTransporteDashboard();
   carregarUsoSupabase();
   carregarAcessosSite();
+  carregarUsoApp();
+}
+
+// ===== APP NO CELULAR (schema_uso_app.sql) =====
+// Instalou / abriu pelo ícone vêm de uso_app (os apps gravam, no máximo 1
+// abertura por dia por aparelho); cadastro vem de eventos_acesso_app.
+// Motorista e Conta Adolescente são sempre anônimas (revisão da Justa,
+// 23/10/2026): na lista aparece só o aparelho, nunca quem é.
+const usoAppCache = {};
+let usoAppDias = 30;
+const USO_APP_SISTEMA = { android: "Android", iphone: "iPhone", computador: "Computador" };
+async function carregarUsoApp(dias){
+  const wrap = document.getElementById("uso-app");
+  if(!wrap) return;
+  const forcar = !!dias;
+  usoAppDias = dias || usoAppDias;
+  document.querySelectorAll("#uso-app-dias button").forEach(b=>b.classList.toggle("ativo", Number(b.dataset.dias) === usoAppDias));
+  const lista = document.getElementById("uso-app-lista");
+  lista.innerHTML = ""; lista.dataset.aberta = "";
+  const c = usoAppCache[usoAppDias];
+  if(c && Date.now() - c.em < 10 * 60 * 1000){ renderUsoApp(c.dados); return; }
+  if(forcar) wrap.innerHTML = `<p class="empty">Carregando...</p>`;
+  const { data, error } = await sb.rpc("uso_app_resumo", { p_dias: usoAppDias });
+  if(error){
+    wrap.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}). Se for a primeira vez, falta rodar o schema_uso_app.sql no Supabase.</p>`;
+    return;
+  }
+  usoAppCache[usoAppDias] = { dados: data, em: Date.now() };
+  renderUsoApp(data);
+}
+function renderUsoApp(d){
+  const wrap = document.getElementById("uso-app");
+  if(!wrap || !d) return;
+  const dataBR = s=>s ? s.slice(8, 10) + "/" + s.slice(5, 7) + "/" + s.slice(0, 4) : "";
+  document.getElementById("uso-app-periodo").textContent = d.primeiro_registro
+    ? `Últimos ${usoAppDias} dias, comparado com os ${usoAppDias} anteriores. O uso pelo ícone conta desde ${dataBR(d.primeiro_registro)}; antes disso não era medido.`
+    : `Últimos ${usoAppDias} dias. O uso pelo ícone ainda não tem nenhum registro: começa a contar quando alguém abrir o app pelo ícone.`;
+  const n = x=>Number(x || 0).toLocaleString("pt-BR");
+  const delta = (atual, anterior)=>{
+    anterior = Number(anterior || 0);
+    if(!anterior) return `<div class="delta">sem dados do período anterior</div>`;
+    const pct = Math.round((atual - anterior) / anterior * 100);
+    if(pct === 0) return `<div class="delta">igual ao período anterior</div>`;
+    return `<div class="delta ${pct > 0 ? "sobe" : "desce"}">${pct > 0 ? "▲" : "▼"} ${Math.abs(pct)}% (antes: ${n(anterior)})</div>`;
+  };
+  const card = (m, label, acao, dica, extra = "")=>{
+    const atual = Number((m || {}).atual || 0);
+    return `<div class="card card-link" title="${dica}" onclick="${acao}"><div class="num">${n(atual)}</div><div class="label">${label}</div>${extra}${delta(atual, (m || {}).anterior)}</div>`;
+  };
+  const linha = (app, titulo)=>{
+    const a = d[app] || {};
+    const sist = Object.entries(a.usam_por_sistema || {}).map(([s, q])=>`${USO_APP_SISTEMA[s] || s} ${n(q)}`).join(" · ");
+    const ini = Number((a.cadastro_iniciado || {}).atual || 0), fim = Number((a.cadastro_concluido || {}).atual || 0);
+    const pct = ini ? `<div class="delta">${Math.round(fim / ini * 100)}% de quem começou</div>` : "";
+    return `<h4 style="margin:4px 0 8px;">${titulo}</h4>
+      <div class="cards" style="margin-bottom:14px;">
+        ${card(a.instalaram, "Instalaram o app", `mostrarListaUsoApp('${app}', 'instalou')`, "Ver a lista. Só Android e computador avisam quando instalam; o iPhone não avisa")}
+        ${card(a.usam, "Usam pelo ícone (pessoas)", `mostrarListaUsoApp('${app}', 'abriu_icone')`, "Ver a lista. Celulares diferentes que abriram o app pelo ícone", sist ? `<div class="delta">${sist}</div>` : "")}
+        ${card(a.aberturas, "Aberturas pelo ícone", `mostrarListaUsoApp('${app}', 'abriu_icone')`, "Ver a lista. Conta no máximo 1 por dia por celular")}
+        ${card(a.cadastro_iniciado, "Começaram o cadastro", `irParaAcessosApp('${app}', 'cadastro_iniciado')`, "Abrir Acessos aos apps com quem começou o cadastro")}
+        ${card(a.cadastro_concluido, "Concluíram o cadastro", `irParaAcessosApp('${app}', 'cadastro_concluido')`, "Abrir Acessos aos apps com quem criou a conta", pct)}
+      </div>`;
+  };
+  wrap.innerHTML = linha("cliente", "App da cliente") + linha("motorista", "App da motorista") +
+    `<p style="color:var(--muted); font-size:12.5px; margin:0;">Na motorista e na Conta Adolescente o registro é sempre anônimo: dá pra contar, mas não saber quem é.</p>`;
+}
+function irParaAcessosApp(app, tipo){
+  irParaTransporte("acessos-app");
+  setTimeout(()=>{
+    const f = document.getElementById("filter-acesso-app");
+    if(f) f.value = app;
+    filtrarAcessosPorTipo(tipo);
+  }, 300);
+}
+async function mostrarListaUsoApp(app, tipo){
+  const box = document.getElementById("uso-app-lista");
+  if(!box) return;
+  if(box.dataset.aberta === app + tipo){ box.innerHTML = ""; box.dataset.aberta = ""; return; }
+  box.dataset.aberta = app + tipo;
+  box.innerHTML = `<p class="empty">Carregando...</p>`;
+  const desde = new Date(Date.now() - usoAppDias * 864e5).toISOString();
+  const { data, error } = await sb.from("uso_app").select("criado_em, sistema, aparelho, cliente_id")
+    .eq("app", app).eq("tipo", tipo).gte("criado_em", desde)
+    .order("criado_em", { ascending: false }).limit(500);
+  if(error){ box.innerHTML = `<p class="empty">Não deu pra carregar (${escapeHtml(error.message)}).</p>`; return; }
+  const titulo = (tipo === "instalou" ? "Quem instalou" : "Aberturas pelo ícone") + (app === "motorista" ? " no app da motorista" : " no app da cliente") + ` (${usoAppDias} dias)`;
+  const quem = r=>{
+    if(app === "motorista") return `<span style="color:var(--muted);">Anônima (o)</span>`;
+    const c = r.cliente_id && clientesTransporte.find(x=>x.id === r.cliente_id);
+    if(c) return `<a href="#" onclick="openClienteTransporteModal(${c.id}); return false;">${escapeHtml(nomeCod(c))}</a>`;
+    return `<span style="color:var(--muted);">${r.cliente_id ? "Ficha nº " + r.cliente_id : "Sem login ou Conta Adolescente"}</span>`;
+  };
+  box.innerHTML = `<h4 style="margin:4px 0 8px;">${titulo} <button type="button" class="act" onclick="mostrarListaUsoApp('${app}', '${tipo}')">Fechar</button></h4>
+    <table class="tbl"><thead><tr><th>Quando</th><th>Quem</th><th>Celular</th><th>Código do aparelho</th></tr></thead><tbody>
+    ${data.map(r=>`<tr><td>${new Date(r.criado_em).toLocaleString("pt-BR")}</td><td>${quem(r)}</td><td>${USO_APP_SISTEMA[r.sistema] || escapeHtml(r.sistema)}</td><td><code>${escapeHtml(r.aparelho)}</code></td></tr>`).join("")
+      || `<tr><td class="empty" colspan="4">Nenhum registro nesse período</td></tr>`}
+    </tbody></table>`;
+  box.scrollIntoView({ behavior:"smooth", block:"nearest" });
 }
 
 // ===== ACESSOS DO SITE (GA4, Meta Pixel, Clarity) =====
@@ -5554,7 +5667,7 @@ async function carregarAcessosSite(dias){
   if(!wrap) return;
   const forcar = !!dias;
   acessosDias = dias || acessosDias;
-  document.querySelectorAll(".acessos-dias button").forEach(b=>b.classList.toggle("ativo", Number(b.dataset.dias) === acessosDias));
+  document.querySelectorAll(".acessos-dias:not(#uso-app-dias) button").forEach(b=>b.classList.toggle("ativo", Number(b.dataset.dias) === acessosDias));
   const c = acessosCache[acessosDias];
   if(c && Date.now() - c.em < 10 * 60 * 1000){ renderAcessosSite(c.dados); return; }
   if(forcar) wrap.innerHTML = `<p class="empty">Carregando...</p>`;
