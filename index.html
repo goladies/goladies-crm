@@ -3485,6 +3485,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
             </div>
             <input type="text" id="vg-origem-obs" placeholder="Observação do embarque (opcional)" style="margin-top:6px;">
+            <div class="vg-ponto-pass" style="margin-top:6px;"><input type="text" id="vg-origem-pass" placeholder="Passageira que embarca aqui (opcional)" oninput="pontosPassageira.origem.passageira_nome=this.value; atualizarLigacaoPassageira('origem')"><div id="vg-origem-pass-lig" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;"></div></div>
           </div>
           <div id="vg-paradas-lista" style="margin-top:8px;"></div>
           <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
@@ -3493,6 +3494,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
             </div>
             <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
+            <div class="vg-ponto-pass" style="margin-top:6px;"><input type="text" id="vg-destino-pass" placeholder="Passageira que desce aqui (opcional)" oninput="pontosPassageira.destino.passageira_nome=this.value; atualizarLigacaoPassageira('destino')"><div id="vg-destino-pass-lig" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;"></div></div>
           </div>
           <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
         </div>
@@ -13703,6 +13705,10 @@ async function unificarClientes(manter, remover){
   if(!confirm(linhas.join("\n"))) return;
   // Garupa: passa antes, porque apagar a ficha que some desliga as paradas dela
   if(colunaPassageiraFichaExiste()) await sb.from("viagem_paradas").update({ passageira_cliente_id: manter }).eq("passageira_cliente_id", remover);
+  if(colunasPassageiraPontoExistem()){
+    await sb.from("viagens").update({ origem_passageira_cliente_id: manter }).eq("origem_passageira_cliente_id", remover);
+    await sb.from("viagens").update({ destino_passageira_cliente_id: manter }).eq("destino_passageira_cliente_id", remover);
+  }
   const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
   if(error){ alert("Não foi possível unificar: " + error.message); return; }
   showToast(resumo && typeof resumo === "object"
@@ -14256,35 +14262,61 @@ function carregarParadasModal(viagemId){
 // (schema_garupa_pessoas.sql). Opcional: sem ficha, o nome fica só como texto.
 // Antes do SQL rodado a coluna não existe e a ligação não aparece.
 const colunaPassageiraFichaExiste = () => !viagemParadas.length || ("passageira_cliente_id" in viagemParadas[0]);
+// Embarque (origem) e destino também têm passageira (schema_garupa_embarque_destino.sql).
+// k = índice da parada (número) ou "origem"/"destino".
+let pontosPassageira = { origem: { passageira_nome: "", passageira_cliente_id: null }, destino: { passageira_nome: "", passageira_cliente_id: null } };
+const colunasPassageiraPontoExistem = () => !viagens.length || ("origem_passageira_nome" in viagens[0]);
+const pontoPassageira = k => typeof k === "number" ? paradasModal[k] : pontosPassageira[k];
+const argPonto = k => typeof k === "number" ? k : `'${k}'`;
 const semAcentoMin = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-function htmlLigacaoPassageira(i){
-  const p = paradasModal[i];
-  if(!colunaPassageiraFichaExiste()) return "";
+function htmlLigacaoPassageira(k){
+  const p = pontoPassageira(k);
+  if(!p || !(typeof k === "number" ? colunaPassageiraFichaExiste() : colunasPassageiraPontoExistem())) return "";
   if(p.passageira_cliente_id){
     const c = clientesTransporte.find(x=>x.id===p.passageira_cliente_id);
-    return `<svg class=ic aria-hidden=true><use href=#i-link /></svg> Ficha: <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.passageira_cliente_id)})">${escapeHtml(c ? nomeCod(c) : "#" + p.passageira_cliente_id)}</a> · <a href="#" onclick="event.preventDefault(); ligarPassageiraParada(${i}, null)">desligar</a>`;
+    return `<svg class=ic aria-hidden=true><use href=#i-link /></svg> Ficha: <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.passageira_cliente_id)})">${escapeHtml(c ? nomeCod(c) : "#" + p.passageira_cliente_id)}</a> · <a href="#" onclick="event.preventDefault(); ligarPassageiraParada(${argPonto(k)}, null)">desligar</a>`;
   }
   const busca = semAcentoMin(p.passageira_nome);
   if(busca.length < 3) return "";
   const achadas = clientesTransporte.filter(c=>semAcentoMin(c.nome).includes(busca)).slice(0, 4);
-  return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPassageiraParada(${i}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
-    + ` <button type="button" class="btn ghost small" onclick="criarFichaPassageiraParada(${i})">+ Criar ficha</button>`;
+  return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPassageiraParada(${argPonto(k)}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
+    + ` <button type="button" class="btn ghost small" onclick="criarFichaPassageiraParada(${argPonto(k)})">+ Criar ficha</button>`;
 }
-function atualizarLigacaoPassageira(i){
-  const el = document.getElementById("vg-parada-lig-" + i);
-  if(el) el.innerHTML = htmlLigacaoPassageira(i);
+function atualizarLigacaoPassageira(k){
+  const el = document.getElementById(typeof k === "number" ? "vg-parada-lig-" + k : `vg-${k}-pass-lig`);
+  if(el) el.innerHTML = htmlLigacaoPassageira(k);
 }
-function ligarPassageiraParada(i, clienteId){
-  const p = paradasModal[i];
+function ligarPassageiraParada(k, clienteId){
+  const p = pontoPassageira(k);
   p.passageira_cliente_id = clienteId;
   if(clienteId){
     const c = clientesTransporte.find(x=>x.id===clienteId);
     if(c) p.passageira_nome = c.nome;
   }
-  renderParadasModal();
+  if(typeof k === "number"){ renderParadasModal(); return; }
+  document.getElementById(`vg-${k}-pass`).value = p.passageira_nome;
+  atualizarLigacaoPassageira(k);
+}
+function carregarPassageirasPontos(v){
+  const sqlOk = colunasPassageiraPontoExistem();
+  ["origem","destino"].forEach(k=>{
+    pontosPassageira[k] = { passageira_nome: v[k + "_passageira_nome"] || "", passageira_cliente_id: v[k + "_passageira_cliente_id"] || null };
+    document.getElementById(`vg-${k}-pass`).value = pontosPassageira[k].passageira_nome;
+    document.getElementById(`vg-${k}-pass`).closest(".vg-ponto-pass").style.display = sqlOk ? "" : "none";
+    atualizarLigacaoPassageira(k);
+  });
+}
+function dadosPassageirasPontos(){
+  const d = {};
+  ["origem","destino"].forEach(k=>{
+    const p = pontosPassageira[k];
+    d[k + "_passageira_nome"] = p.passageira_nome.trim() || null;
+    d[k + "_passageira_cliente_id"] = p.passageira_nome.trim() ? p.passageira_cliente_id : null;
+  });
+  return d;
 }
 async function criarFichaPassageiraParada(i){
-  const nome = paradasModal[i].passageira_nome.trim();
+  const nome = pontoPassageira(i).passageira_nome.trim();
   if(!nome) return;
   const whats = prompt(`Criar a ficha de cliente de viagem de ${nome}.\n\nWhatsApp dela (opcional, pode deixar vazio):`);
   if(whats === null) return;
@@ -14307,7 +14339,7 @@ async function criarFichaPassageiraParada(i){
 function htmlGarupaCliente(c){
   if(!c || !c.id) return "";
   const ids = [...new Set(viagemParadas.filter(p=>p.passageira_cliente_id===c.id).map(p=>p.viagem_id))];
-  const vs = viagens.filter(v=>ids.includes(v.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  const vs = viagens.filter(v=>v.cliente_id!==c.id && (ids.includes(v.id) || v.origem_passageira_cliente_id===c.id || v.destino_passageira_cliente_id===c.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
   if(!vs.length) return "";
   return `<div style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-users /></svg> <b>Foi de garupa</b> (${vs.length} ${vs.length===1 ? "viagem" : "viagens"}, pagas por outra pessoa): ` +
     vs.map(v=>{
@@ -15482,6 +15514,7 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
   document.getElementById("vg-pessoas-ida").value = v.pessoas_ida ?? "";
   document.getElementById("vg-pessoas-volta").value = v.pessoas_volta ?? "";
+  carregarPassageirasPontos(v);
   // Medição da rota (medirRotaViagem) recomeça do zero a cada abertura
   medicaoRotaViagem++;
   ["vg-distancia-km","vg-duracao-min","vg-distancia-retorno-km","vg-duracao-retorno-min"].forEach(c=>{ delete document.getElementById(c).dataset.autoValor; });
@@ -15787,6 +15820,9 @@ async function saveViagem(){
   if(colunasPessoasExistem || pessoas.pessoas_ida != null || pessoas.pessoas_volta != null){
     Object.assign(payload, pessoas);
   }
+  // Colunas de schema_garupa_embarque_destino.sql (23/10/2026): mesmo cuidado.
+  const passPontos = dadosPassageirasPontos();
+  if(viagens.length > 0 && ("origem_passageira_nome" in viagens[0])) Object.assign(payload, passPontos);
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
