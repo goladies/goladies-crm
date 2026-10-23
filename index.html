@@ -457,6 +457,9 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .conv-faixa span{flex:1; min-width:0;}
 .conv-faixa.amar{background:rgba(242,183,5,.12); border:1px solid rgba(242,183,5,.5);}
 .conv-faixa.amar > .ic{color:#D9A300;}
+.conv-faixa:not(.azul):not(.amar){background:var(--bg-card2); border:1px solid var(--border2);}
+.conv-faixa:not(.azul):not(.amar) > .ic{color:var(--text3);}
+select.conv-acao.conv-menu{padding-right:8px; max-width:220px;}
 .conv-faixa.azul{background:var(--c-blue-bg); border:1px solid rgba(91,157,255,.45);}
 .conv-faixa.azul > .ic{color:var(--c-blue);}
 .conv-faixa-btn{flex-shrink:0; height:28px; padding:0 10px; border-radius:7px; border:1px solid var(--border2); background:var(--bg-card); color:var(--text1); font:inherit; font-size:12px; font-weight:600; cursor:pointer;}
@@ -1760,6 +1763,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item" data-conv-filtro="atencao" onclick="filtrarConversas('atencao')"><svg class=ic aria-hidden=true><use href=#i-flag /></svg> Com atenção <span class="sede-conta" id="conv-conta-atencao"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="todas" onclick="filtrarConversas('todas')"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Todas <span class="sede-conta" id="conv-conta-todas"></span></button>
         <button type="button" class="subnav-item" data-conv-filtro="pausadas" onclick="filtrarConversas('pausadas')"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Assistente pausada <span class="sede-conta" id="conv-conta-pausadas"></span></button>
+        <button type="button" class="subnav-item" data-conv-filtro="outros" onclick="filtrarConversas('outros')"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Outros assuntos <span class="sede-conta" id="conv-conta-outros"></span></button>
+        <button type="button" class="subnav-item" data-conv-filtro="ignoradas" onclick="filtrarConversas('ignoradas')"><svg class=ic aria-hidden=true><use href=#i-ban /></svg> Ignoradas <span class="sede-conta" id="conv-conta-ignoradas"></span></button>
         <input type="text" id="conv-busca" placeholder="Buscar nome ou número" oninput="desenharConversas()" style="margin-left:auto; max-width:220px;">
       </div>
       <div class="conv-layout" id="conv-layout">
@@ -6648,7 +6653,16 @@ function convHora(iso){
   if(d.toDateString()===ontem.toDateString()) return "ontem";
   return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
 }
-const CONV_PERFIS = { cliente:"Cliente", motorista_ativa:"Motorista certificada", motorista_cadastro:"Motorista em cadastro", cliente_e_motorista:"Cliente e motorista", novo:"Contato novo" };
+const CONV_PERFIS = { cliente:"Cliente", motorista_ativa:"Motorista certificada", motorista_cadastro:"Motorista em cadastro", cliente_e_motorista:"Cliente e motorista", parceira:"Parceira (o)", lead:"Lead", novo:"Contato novo" };
+// "Outro assunto" (schema_whatsapp_conversa_assunto.sql): conversa que não
+// vira cadastro. pausa = a assistente fica calada ao marcar.
+const CONV_ASSUNTOS = {
+  cobranca:   { rotulo:"Cobrança ou conta", icone:"receipt", pausa:true, dica:"Claro, banco, cartão, luz…" },
+  fornecedor: { rotulo:"Fornecedora (or)", icone:"truck", pausa:false, dica:"gráfica, contador…" },
+  pessoal:    { rotulo:"Pessoal", icone:"heart", pausa:false, dica:"família, amiga" },
+  spam:       { rotulo:"Spam ou propaganda", icone:"ban", pausa:true, dica:"vai pra Ignoradas" }
+};
+const CONV_PAUSA_ASSUNTO = "Outro assunto";
 const CONV_TIPOS = { audio:"áudio", imagem:"foto", documento:"documento", outro:"arquivo" };
 
 function convPausada(c){ return !!(c.pausado_ate && new Date(c.pausado_ate) > new Date()); }
@@ -6677,14 +6691,35 @@ function convCadastros(tel){
   return {
     cliente: (clientesTransporte||[]).find(c=>convFim8(c.whatsapp)===f),
     motorista: (motoristas||[]).find(m=>convFim8(m.whatsapp)===f),
-    leads: (leads||[]).filter(l=>convFim8(l.whatsapp)===f).sort((a,b)=>b.id-a.id)
+    leads: (leads||[]).filter(l=>convFim8(l.whatsapp)===f).sort((a,b)=>b.id-a.id),
+    parceiro: (()=>{
+      const pc = (parceiroContatos||[]).find(x=>convFim8(x.numero)===f);
+      return pc ? (parceiros||[]).find(p=>p.id===pc.parceiro_id) : null;
+    })()
   };
+}
+
+// Etiqueta pelo cadastro de agora (23/10/2026). O perfil gravado em
+// whatsapp_conversas só muda quando a assistente responde, então quem virou
+// cliente depois (ou só falou com a Jú) ficava como "Contato".
+function convPerfil(c){
+  const k = convCadastros(c.telefone);
+  if(k.cliente && k.motorista) return "cliente_e_motorista";
+  if(k.motorista) return k.motorista.status==="Ativa" ? "motorista_ativa" : "motorista_cadastro";
+  if(k.cliente) return "cliente";
+  if(k.parceiro) return "parceira";
+  if(k.leads.length) return "lead";
+  return "novo";
+}
+function convNome(c){
+  const k = convCadastros(c.telefone);
+  return c.nome || (k.parceiro && k.parceiro.nome) || (k.leads[0] && k.leads[0].nome) || "";
 }
 
 // Código do cadastro ligado ao número (cliente de viagem, motorista ou lead mais recente)
 function convNumId(tel){
   const k = convCadastros(tel);
-  const r = k.cliente || k.motorista || k.leads[0];
+  const r = k.cliente || k.motorista || k.parceiro || k.leads[0];
   return r ? numId(r) : "";
 }
 
@@ -6714,15 +6749,26 @@ function renderConversas(){
 
 function filtrarConversas(f){ convFiltro = f; desenharConversas(); }
 
+// Filtros: "Todas" é só quem é ou pode virar cadastro; Outro assunto vai pra
+// "Outros assuntos" e spam pra "Ignoradas" (fora de todos os outros).
+const CONV_FILTROS = {
+  esperando: c => c.esperando,
+  atencao:   c => c.atencao && c.assunto!=="spam",
+  todas:     c => !c.assunto,
+  pausadas:  c => convPausada(c) && c.assunto!=="spam",
+  outros:    c => c.assunto && c.assunto!=="spam",
+  ignoradas: c => c.assunto==="spam"
+};
 function desenharConversas(){
   const esperando = conversas.filter(c=>c.esperando).length;
   atualizarAtencao();
   const lista = document.getElementById("conv-lista");
   if(!lista) return;
   document.getElementById("conv-conta-esperando").textContent = esperando || "";
-  document.getElementById("conv-conta-atencao").textContent = conversas.filter(c=>c.atencao).length || "";
-  document.getElementById("conv-conta-todas").textContent = conversas.length || "";
-  document.getElementById("conv-conta-pausadas").textContent = conversas.filter(convPausada).length || "";
+  ["atencao","todas","pausadas","outros","ignoradas"].forEach(f=>{
+    const el = document.getElementById("conv-conta-" + f);
+    if(el) el.textContent = conversas.filter(CONV_FILTROS[f]).length || "";
+  });
   document.querySelectorAll("#tab-conversas .subnav-item[data-conv-filtro]").forEach(b=>b.classList.toggle("active", b.dataset.convFiltro===convFiltro));
 
   if(conversasErro){
@@ -6732,8 +6778,9 @@ function desenharConversas(){
   const busca = (document.getElementById("conv-busca").value||"").toLowerCase().trim();
   const buscaDig = busca.replace(/\D/g,"");
   const filtradas = conversas.filter(c=>
-    (convFiltro==="todas" || (convFiltro==="esperando" && c.esperando) || (convFiltro==="atencao" && c.atencao) || (convFiltro==="pausadas" && convPausada(c))) &&
-    (!busca || (c.nome||"").toLowerCase().includes(busca) || (buscaDig.length>=3 && String(c.telefone).includes(buscaDig)))
+    // Busca acha em todos os filtros (inclusive Outros assuntos e Ignoradas)
+    (busca ? true : (CONV_FILTROS[convFiltro] || CONV_FILTROS.todas)(c)) &&
+    (!busca || convNome(c).toLowerCase().includes(busca) || (buscaDig.length>=3 && String(c.telefone).includes(buscaDig)))
   );
   if(!conversasCarregadoEm && conversasCarregando){
     lista.innerHTML = `<div class="conv-vazia">Buscando as conversas…</div>`;
@@ -6742,23 +6789,28 @@ function desenharConversas(){
       esperando: ["circle-check", "Nada esperando você.", "A assistente está dando conta 🩷"],
       atencao: ["flag", "Nenhuma conversa com atenção.", "Use “Marcar atenção” numa conversa pra lembrar dela."],
       pausadas: ["player-play", "A assistente está ligada em todas.", ""],
-      todas: ["message-circle", "Nenhuma conversa ainda.", ""]
-    }[convFiltro];
+      todas: ["message-circle", "Nenhuma conversa ainda.", ""],
+      outros: ["tag", "Nenhuma conversa de outro assunto.", "Cobrança, fornecedora (or) e pessoal aparecem aqui."],
+      ignoradas: ["ban", "Nada ignorado.", "Spam e propaganda marcados aparecem aqui."]
+    }[convFiltro] || ["message-circle", "Nenhuma conversa.", ""];
     lista.innerHTML = busca
       ? `<div class="conv-vazia"><svg class=ic aria-hidden=true><use href=#i-search /></svg>Nada encontrado nessa busca.</div>`
       : `<div class="conv-vazia"><svg class=ic aria-hidden=true><use href=#i-${vazio[0]} /></svg><b>${vazio[1]}</b><br>${vazio[2]}</div>`;
   }else{
     lista.innerHTML = filtradas.map(c=>{
-      const nome = c.nome || convFormatarTel(c.telefone);
+      const nome = convNome(c) || convFormatarTel(c.telefone);
+      const perfil = convPerfil(c);
+      const assunto = CONV_ASSUNTOS[c.assunto];
       const quem = c.ultima_autor==="bot" ? "Assistente: " : c.ultima_autor==="equipe" ? "Você: " : "";
       const texto = c.ultima_tipo && c.ultima_tipo!=="texto" ? `${convMidiaRotulo(c.ultima_tipo)} ${c.ultima_msg||""}` : (c.ultima_msg||"");
       const etiquetas = [
         c.esperando ? `<span class="conv-pill ${convHorasDesde(c.passou_em) > 4 ? "verm" : "rosa"}">Passou pra você${convHaQuanto(c.passou_em)}</span>` : "",
         convPausada(c) ? `<span class="conv-pill"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausada</span>` : "",
-        `<span class="conv-pill">${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</span>`
+        assunto && perfil==="novo" ? "" : `<span class="conv-pill">${escapeHtml(CONV_PERFIS[perfil])}</span>`,
+        assunto ? `<span class="conv-pill"><svg class=ic aria-hidden=true><use href=#i-${assunto.icone} /></svg> ${escapeHtml(assunto.rotulo)}</span>` : ""
       ].join("");
       return `<div class="conv-item${c.telefone===convAberta?" ativa":""}" onclick="abrirConversa('${escapeHtml(c.telefone)}')">
-        <div class="conv-avatar ${convClasseAvatar(c.perfil)}" aria-hidden="true">${escapeHtml(convIniciais(c.nome))}</div>
+        <div class="conv-avatar ${convClasseAvatar(perfil)}" aria-hidden="true">${escapeHtml(convIniciais(convNome(c)))}</div>
         <div class="conv-corpo">
           <div class="linha1"><span class="nome">${c.atencao ? `<svg class="ic conv-bandeira" aria-label="Com atenção"><use href=#i-flag /></svg>` : ""}${escapeHtml(nome)}${convNumId(c.telefone)}</span><span class="hora">${convHora(c.ultima_em)}</span></div>
           <div class="etiquetas">${etiquetas}</div>
@@ -6808,12 +6860,16 @@ function desenharConversaAberta(){
   const ligacoes = [
     cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente</span>` : "",
     cad.motorista ? `<span class="conv-ligacao" onclick="openMotoristaModal(${cad.motorista.id})"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motorista</span>` : "",
+    cad.parceiro ? `<span class="conv-ligacao" onclick="openParceiroModal(${cad.parceiro.id})"><svg class=ic aria-hidden=true><use href=#i-tool /></svg> ${escapeHtml(cad.parceiro.nome||"Parceira (o)")}</span>` : "",
     ...cad.leads.slice(0,4).map(l=>`<span class="conv-ligacao" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> ${escapeHtml(l.servico||l.categoria||"Lead")} <span class="conv-pill">${escapeHtml(l.etapa||"")}</span></span>`)
   ].join("");
   const ateTxt = d => new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(",", " às");
+  const assunto = CONV_ASSUNTOS[c.assunto];
+  const pausaLonga = pausada && new Date(c.pausado_ate) - Date.now() > 365*86400000;
   const faixas = [
-    c.atencao ? `<div class="conv-faixa amar"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span><b>Atenção:</b> ${escapeHtml(c.atencao_nota || "conversa marcada pra você olhar")}</span><button type="button" class="conv-faixa-btn" onclick="marcarAtencao('${tel}', false)">Tirar atenção</button></div>` : "",
-    pausada ? `<div class="conv-faixa azul"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg><span>Assistente pausada nessa conversa até <b>${ateTxt(c.pausado_ate)}</b>${c.pausado_motivo ? ` (${escapeHtml(c.pausado_motivo.toLowerCase())})` : ""}.</span><button type="button" class="conv-faixa-btn" onclick="pausarAssistente('${tel}', 0)">Retomar agora</button></div>` : ""
+    assunto ? `<div class="conv-faixa"><svg class=ic aria-hidden=true><use href=#i-${assunto.icone} /></svg><span><b>${escapeHtml(assunto.rotulo)}</b>${c.assunto_nota ? `: ${escapeHtml(c.assunto_nota)}` : ""}</span>${c.assunto==="cobranca" ? `<button type="button" class="conv-faixa-btn" onclick="convLancarConta('${tel}')">Lançar em Contas a pagar</button>` : ""}<button type="button" class="conv-faixa-btn" onclick="convMarcarAssunto('${tel}', '')">Tirar marcação</button></div>` : "",
+    c.atencao ?`<div class="conv-faixa amar"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span><b>Atenção:</b> ${escapeHtml(c.atencao_nota || "conversa marcada pra você olhar")}</span><button type="button" class="conv-faixa-btn" onclick="marcarAtencao('${tel}', false)">Tirar atenção</button></div>` : "",
+    pausada ? `<div class="conv-faixa azul"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg><span>Assistente pausada nessa conversa${pausaLonga ? "" : ` até <b>${ateTxt(c.pausado_ate)}</b>`}${c.pausado_motivo ? ` (${escapeHtml(c.pausado_motivo.toLowerCase())})` : ""}.</span><button type="button" class="conv-faixa-btn" onclick="pausarAssistente('${tel}', 0)">Retomar agora</button></div>` : ""
   ].join("");
 
   let diaAnterior = "";
@@ -6843,8 +6899,8 @@ function desenharConversaAberta(){
   area.innerHTML = `
     <div class="conv-topo">
       <button type="button" class="conv-acao conv-voltar" onclick="fecharConversa()" aria-label="Voltar pra lista"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg></button>
-      <div class="conv-avatar grande ${convClasseAvatar(c.perfil)}" aria-hidden="true">${escapeHtml(convIniciais(c.nome))}</div>
-      <div class="quem"><b>${escapeHtml(c.nome || telFmt)}${convNumId(c.telefone)}</b><small>${escapeHtml(telFmt)} <span class="conv-pill">${escapeHtml(CONV_PERFIS[c.perfil]||"Contato")}</span></small></div>
+      <div class="conv-avatar grande ${convClasseAvatar(convPerfil(c))}" aria-hidden="true">${escapeHtml(convIniciais(convNome(c)))}</div>
+      <div class="quem"><b>${escapeHtml(convNome(c) || telFmt)}${convNumId(c.telefone)}</b><small>${escapeHtml(telFmt)} <span class="conv-pill">${escapeHtml(CONV_PERFIS[convPerfil(c)])}</span></small></div>
       ${c.esperando ? `<button type="button" class="btn" onclick="marcarRespondida('${tel}')" title="Tira de 'Esperando você'. Volta sozinha se a assistente passar algo novo."><svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcar como respondida</button>` : ""}
     </div>
     <div class="conv-acoes">
@@ -6854,6 +6910,17 @@ function desenharConversaAberta(){
           <select id="conv-pausa-horas" aria-label="Por quanto tempo"><option value="4">4 horas</option><option value="24">24 horas</option><option value="720">Até eu retomar</option></select>
           <button type="button" class="conv-acao" onclick="pausarAssistente('${tel}', Number(document.getElementById('conv-pausa-horas').value))"><svg class=ic aria-hidden=true><use href=#i-player-pause /></svg> Pausar assistente</button>
         </span>`}
+      <select class="conv-acao conv-menu" aria-label="Cadastrar como" onchange="convCadastrar('${tel}', this.value); this.value='';">
+        <option value="">+ Cadastrar como…</option>
+        <option value="servico">Pedido de serviço (lead)</option>
+        ${cad.cliente ? "" : `<option value="cliente">Cliente de viagem</option>`}
+        ${cad.parceiro ? "" : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
+        ${cad.motorista ? "" : `<option value="motorista">Motorista</option>`}
+      </select>
+      ${assunto ? "" : `<select class="conv-acao conv-menu" aria-label="Outro assunto" onchange="if(this.value) convMarcarAssunto('${tel}', this.value); this.value='';">
+        <option value="">Outro assunto…</option>
+        ${Object.entries(CONV_ASSUNTOS).map(([k,a])=>`<option value="${k}">${escapeHtml(a.rotulo)} (${escapeHtml(a.dica)})</option>`).join("")}
+      </select>`}
     </div>
     ${faixas}
     ${ligacoes ? `<div class="conv-ligacoes"><span class="conv-ligacoes-rotulo">Ligado a</span>${ligacoes}</div>` : ""}
@@ -6911,6 +6978,79 @@ async function pausarAssistente(tel, horas){
   if(c){ c.pausado_ate = ate; c.pausado_motivo = horas>0 ? "Pausado pelo CRM" : null; }
   showToast(horas > 0 ? "Assistente pausada nessa conversa" : "Assistente de volta nessa conversa");
   desenharConversas();
+}
+
+// Outro assunto (schema_whatsapp_conversa_assunto.sql). assunto "" tira a
+// marcação. Cobrança e spam pausam a assistente sem data pra voltar; ao tirar,
+// só retoma se a pausa foi dessa marcação (não mexe em pausa manual).
+async function convMarcarAssunto(tel, assunto){
+  const c = conversas.find(x=>x.telefone===tel);
+  const a = CONV_ASSUNTOS[assunto];
+  let nota = null;
+  if(a){
+    nota = prompt(`${a.rotulo}: nota pra lembrar (opcional, ex.: "${assunto==="cobranca" ? "Claro, internet da Sede" : assunto==="fornecedor" ? "gráfica do folder" : "prima"}")`, "");
+    if(nota === null) return;   // cancelou
+    nota = nota.trim() || null;
+  }
+  const dados = { telefone: tel, assunto: a ? assunto : null, assunto_nota: nota, assunto_em: a ? new Date().toISOString() : null };
+  if(a && a.pausa){
+    dados.bot_pausado_ate = new Date(Date.now() + 10*365*86400000).toISOString();
+    dados.pausado_motivo = CONV_PAUSA_ASSUNTO;
+  }else if(!a && c && c.pausado_motivo === CONV_PAUSA_ASSUNTO){
+    dados.bot_pausado_ate = null;
+    dados.pausado_motivo = null;
+  }
+  const { error } = await sb.from("whatsapp_conversas").upsert(dados, { onConflict: "telefone" });
+  if(error){
+    const falta = /assunto/.test(error.message) ? " (falta rodar o schema_whatsapp_conversa_assunto.sql no Supabase)" : "";
+    showToast("Não consegui marcar: " + error.message + falta, true);
+    return;
+  }
+  if(c){
+    Object.assign(c, { assunto: dados.assunto, assunto_nota: nota, assunto_em: dados.assunto_em });
+    if("bot_pausado_ate" in dados){ c.pausado_ate = dados.bot_pausado_ate; c.pausado_motivo = dados.pausado_motivo; }
+  }
+  showToast(a ? `Marcada como ${a.rotulo.toLowerCase()}${a.pausa ? " e assistente pausada" : ""}` : "Marcação tirada");
+  desenharConversas();
+}
+
+// Cobrança: abre Nova despesa com a empresa e a nota já escritas.
+function convLancarConta(tel){
+  const c = conversas.find(x=>x.telefone===tel) || {};
+  openContaPagarModal(null);
+  document.getElementById("cp-descricao").value = [convNome(c), c.assunto_nota].filter(Boolean).join(" · ") || "Conta (WhatsApp " + convFormatarTel(tel) + ")";
+}
+
+// Cadastrar como: abre a tela de cadastro que já existe com nome e WhatsApp
+// preenchidos. Só salva quando a Jú clicar em Salvar.
+function convCadastrar(tel, tipo){
+  if(!tipo) return;
+  const c = conversas.find(x=>x.telefone===tel) || {};
+  const nome = convNome(c);
+  const whats = convFormatarTel(tel);
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
+  if(tipo==="servico"){
+    openLeadModal(null);
+    set("f-nome", nome); set("f-whatsapp", whats);
+    set("f-origem", "Outro"); set("f-origem-outro", "WhatsApp");
+    toggleOrigemOutro();
+  }else if(tipo==="cliente"){
+    openClienteTransporteModal(null);
+    set("ct-nome", nome); set("ct-whatsapp", whats);
+    set("ct-origem", "Outro"); set("ct-notas", "Veio pela conversa do WhatsApp.");
+  }else if(tipo==="parceira" || tipo==="patrocinio"){
+    openParceiroModal(null);
+    set("p-nome", nome);
+    parceiroContatosPendentes.push({ tipo: "Celular", numero: whats, descricao: "WhatsApp (veio da conversa)" });
+    renderContatosParceiro();
+    if(tipo==="patrocinio"){
+      const cb = document.querySelector('#p-tipo-parceria-wrap input[value="Patrocínio"]');
+      if(cb) cb.checked = true;
+    }
+  }else if(tipo==="motorista"){
+    openMotoristaModal(null);
+    set("mt-nome", nome); set("mt-whatsapp", whats);
+  }
 }
 
 // Contatos › Clientes (23/10/2026): todo mundo que já comprou, uma linha por
