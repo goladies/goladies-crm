@@ -3515,9 +3515,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="formgrid">
         <!-- Cobrança no Mercado Pago (workflow MERCADO PAGO do n8n) -->
         <div class="full" id="vg-mp-info" style="display:none; font-size:12.5px; color:var(--muted);"></div>
-        <div class="destaque"><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta()"><option>Pendente</option><option>Pago</option></select></div>
+        <div class="destaque"><label>Status do pagamento</label><select id="vg-lid-status" onchange="atualizarStatusOferta(); sugerirValorRecebido()"><option>Pendente</option><option>Pago</option></select></div>
         <div><label>Forma de pagamento</label><select id="vg-lid-forma"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
-        <div><label>Valor recebido (bruto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O realizado; o previsto é o Preço cobrado.</span></div>
+        <div class="sugerido"><label>Valor recebido (bruto) <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-valor" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">Ao marcar Pago, vem igual ao Preço cobrado; recebeu outro valor, troque.</span></div>
         <div class="sugerido"><label>Valor líquido <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-lid-liquido" step="0.01" oninput="recalcularTaxaMp(); recalcularComissaoPagamento()"></div><span class="dica">O que caiu na conta; Pix Mercado Pago preenche sozinho.</span></div>
         <div class="automatico"><label>Taxa Mercado Pago <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-lid-taxa-mp" readonly tabindex="-1"><span class="dica">Calculada: recebido − líquido.</span></div>
         <div><label>Data do pagamento</label><input type="date" id="vg-lid-data"></div>
@@ -13880,6 +13880,21 @@ function recalcularRepasseMotorista(){
 function cotadoEditado(){
   recalcularRepasseMotorista();
   atualizarDesconto();
+  sugerirValorRecebido();
+}
+// Pago (23/10/2026): o recebido bruto vem igual ao Preço cobrado, porque em
+// princípio é o mesmo valor. Só preenche vazio ou o que ele mesmo preencheu
+// (dataset.autoValor); o que ela digitou fica. Abrir viagem não mexe.
+function sugerirValorRecebido(){
+  const campo = document.getElementById("vg-lid-valor");
+  if(document.getElementById("vg-lid-status").value !== "Pago") return;
+  if(!(campo.value === "" || campo.value === campo.dataset.autoValor)) return;
+  const cotado = document.getElementById("vg-preco-cotado").value;
+  if(cotado === "") return;
+  campo.value = Number(cotado).toFixed(2);
+  campo.dataset.autoValor = campo.value;
+  recalcularTaxaMp();
+  recalcularComissaoPagamento();
 }
 // Desconto é só conta (tabela − cobrado) desde 26/09/2026: o campo virou
 // automático, quem se digita é o Preço cobrado.
@@ -14841,6 +14856,7 @@ function openViagemModal(id, opcoes){
 
   const pgc = pagamentosCliente.find(p=>p.viagem_id===id) || {};
   document.getElementById("vg-lid-valor").value = pgc.valor_recebido ?? "";
+  delete document.getElementById("vg-lid-valor").dataset.autoValor;   // sugerirValorRecebido
   document.getElementById("vg-lid-liquido").value = pgc.valor_liquido ?? "";
   document.getElementById("vg-lid-forma").value = pgc.forma_pagamento || "";
   document.getElementById("vg-lid-status").value = pgc.status || "Pendente";
