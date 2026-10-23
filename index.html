@@ -1585,7 +1585,31 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
 
     <div id="contatos-clientes" style="display:none;">
-      <div class="pagehead"><div><h2>Clientes</h2><p>Leads convertidos (etapa "Cliente ativo" ou "Fechado - Ganho"). As clientes de viagem ficam em Transporte › Clientes transporte.</p></div></div>
+      <!-- Lista geral (23/10/2026): uma linha por pessoa (código do cadastro
+           único), juntando lead e cliente transporte. Entra quem tem viagem
+           concluída, lead em "Fechado - Ganho"/"Cliente ativo", orçamento
+           aceito ou venda. A visão da operação continua em Clientes transporte. -->
+      <div class="pagehead">
+        <div><h2>Clientes</h2><p>Todo mundo que já comprou da Go Ladies, uma linha por pessoa. A operação das viagens fica em Transporte › Clientes transporte.</p></div>
+        <button class="btn secondary" onclick="exportarClientesGeralCsv()"><svg class=ic aria-hidden=true><use href=#i-download /></svg> CSV</button>
+      </div>
+      <div class="filters">
+        <select id="filter-cg-comprou" onchange="renderClientes()">
+          <option value="">Comprou: tudo</option>
+          <option value="viagem">Transporte</option>
+          <option value="servico">Outros serviços</option>
+          <option value="dois">Transporte e outros serviços</option>
+        </select>
+        <select id="filter-cg-periodo" onchange="renderClientes()">
+          <option value="">Última compra: qualquer data</option>
+          <option value="30">Nos últimos 30 dias</option>
+          <option value="90">Nos últimos 90 dias</option>
+          <option value="365">Nos últimos 12 meses</option>
+        </select>
+        <select id="filter-pessoa-clientes" onchange="renderClientes()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
+        <input type="text" id="filter-cg-busca" placeholder="Buscar por nome ou telefone..." oninput="renderClientes()">
+      </div>
+      <p id="clientes-resumo" style="color:var(--muted); font-size:12.5px; margin:0 0 10px;"></p>
       <div class="panel">
         <table class="tbl">
           <thead><tr id="thead-clientes"></tr></thead>
@@ -6771,23 +6795,132 @@ async function pausarAssistente(tel, horas){
   desenharConversas();
 }
 
+// Contatos › Clientes (23/10/2026): todo mundo que já comprou, uma linha por
+// pessoa. Lead e cliente transporte da mesma pessoa (mesmo cadastro_id)
+// viram uma linha só. Comprou = viagens concluídas + serviços de orçamento
+// aceito e de venda; total pago = viagens pagas + parcelas pagas.
+const ETAPAS_CLIENTE = ["Fechado - Ganho","Cliente ativo"];
+let clientesGeral = [];
+function montarClientesGeral(){
+  const pessoas = new Map();
+  const pessoa = (cadId, chave) => {
+    const k = cadId != null ? "cad:" + cadId : chave;
+    if(!pessoas.has(k)) pessoas.set(k, { lead: null, ct: null, viagens: 0, servicos: new Set(), datas: [], pago: 0, cliente: false });
+    return pessoas.get(k);
+  };
+  leads.filter(leadReal).forEach(l=>{
+    const p = pessoa(l.cadastro_id, "lead:" + l.id);
+    if(!p.lead) p.lead = l;
+    if(ETAPAS_CLIENTE.includes(l.etapa)) p.cliente = true;
+    orcamentos.filter(o=>o.lead_id===l.id && o.status==="Aceito").forEach(o=>{
+      p.cliente = true;
+      if(o.servico) p.servicos.add(o.servico);
+      if(o.data) p.datas.push(String(o.data).slice(0,10));
+    });
+    vendas.filter(v=>v.lead_id===l.id).forEach(v=>{
+      p.cliente = true;
+      if(v.servico_produto) p.servicos.add(v.servico_produto);
+      vendaParcelas.filter(pc=>pc.venda_id===v.id).forEach(pc=>{
+        const d = pc.data_realizada || pc.data_prevista;
+        if(d) p.datas.push(String(d).slice(0,10));
+        if(pc.status==="Pago") p.pago += Number(pc.valor) || 0;
+      });
+    });
+  });
+  clientesTransporte.filter(c=>!c.teste).forEach(c=>{
+    const feitas = viagens.filter(v=>v.cliente_id===c.id && v.status==="Concluída");
+    if(!feitas.length) return;   // transporte só conta quem já viajou
+    const p = pessoa(c.cadastro_id, "ct:" + c.id);
+    if(!p.ct) p.ct = c;
+    p.cliente = true;
+    p.viagens += feitas.length;
+    feitas.forEach(v=>{ const d = diaDaViagem(v); if(d) p.datas.push(d); });
+    pagamentosCliente.filter(pg=>pg.status==="Pago" && feitas.some(v=>v.id===pg.viagem_id))
+      .forEach(pg=>{ p.pago += Number(pg.valor_recebido) || 0; });
+  });
+  clientesGeral = [...pessoas.values()].filter(p=>p.cliente).map(p=>{
+    const base = p.lead || p.ct;
+    const datas = p.datas.sort();
+    return {
+      ...p, base,
+      nome: base.nome, whatsapp: base.whatsapp || (p.ct && p.ct.whatsapp) || "",
+      tipo_pessoa: base.tipo_pessoa,
+      primeira: datas[0] || "", ultima: datas[datas.length-1] || "",
+      temViagem: p.viagens > 0, temServico: p.servicos.size > 0,
+    };
+  });
+  return clientesGeral;
+}
+function filtrarClientesGeral(lista){
+  const comprou = document.getElementById("filter-cg-comprou").value;
+  const dias = Number(document.getElementById("filter-cg-periodo").value) || 0;
+  const busca = document.getElementById("filter-cg-busca").value.trim().toLowerCase();
+  const buscaDig = busca.replace(/\D/g, "");
+  const desde = dias ? isoLocal(somarDias(new Date(), -dias)) : "";
+  return lista.filter(c=>{
+    if(comprou==="viagem" && !c.temViagem) return false;
+    if(comprou==="servico" && !c.temServico) return false;
+    if(comprou==="dois" && !(c.temViagem && c.temServico)) return false;
+    if(desde && !(c.ultima && c.ultima >= desde)) return false;
+    if(!filtroPessoaOk("filter-pessoa-clientes", c)) return false;
+    if(busca && !String(c.nome).toLowerCase().includes(busca) && !(buscaDig.length >= 4 && String(c.whatsapp).replace(/\D/g,"").includes(buscaDig))) return false;
+    return true;
+  });
+}
 function renderClientes(){
   renderCabecalho("thead-clientes", [
-    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Cidade", campo:"cidade"},
-    {label:"Serviços já solicitados", campo:null}, {label:"Etapa", campo:"etapa"}, {label:"", campo:null}
+    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Comprou", campo:null},
+    {label:"Primeira", campo:"primeira"}, {label:"Última", campo:"ultima"}, {label:"Total pago", campo:"pago", tipo:"numero"}, {label:"", campo:null}
   ], "clientes");
-  const clientes = aplicarOrdenacao("clientes", leads.filter(l=>leadReal(l) && ["Fechado - Ganho","Cliente ativo"].includes(l.etapa)));
-  document.getElementById("clientes-body").innerHTML = clientes.map(l=>{
-    const qtdServicos = orcamentos.filter(o=>o.lead_id===l.id).length;
-    return `<tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td>${escapeHtml(l.nome)}${numId(l)}${etiquetaPJ(l)}</td>
-      <td>${numeroClicavel(l.whatsapp)}</td>
-      <td>${escapeHtml(l.cidade||"-")}</td>
-      <td>${qtdServicos}</td>
-      <td><span class="status-badge ${ETAPA_CLASS[l.etapa]}">${escapeHtml(l.etapa)}</span></td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
+  const todos = montarClientesGeral();
+  const base = sortState.clientes ? todos : [...todos].sort((a,b)=>String(b.ultima).localeCompare(String(a.ultima)));
+  const lista = aplicarOrdenacao("clientes", filtrarClientesGeral(base));
+  const soViagem = todos.filter(c=>c.temViagem && !c.temServico).length;
+  const soServ = todos.filter(c=>c.temServico && !c.temViagem).length;
+  const dois = todos.filter(c=>c.temViagem && c.temServico).length;
+  const semCompra = todos.length - soViagem - soServ - dois;
+  document.getElementById("clientes-resumo").textContent =
+    `${todos.length} cliente${todos.length===1?"":"s"} · ${soViagem} só transporte · ${soServ} só outros serviços · ${dois} os dois`
+    + (semCompra ? ` · ${semCompra} sem compra lançada (etapa marcada à mão)` : "")
+    + (lista.length !== todos.length ? ` · mostrando ${lista.length}` : "");
+  const dataTxt = d => d ? dataComSemana(new Date(d + "T12:00:00")) : "-";
+  document.getElementById("clientes-body").innerHTML = lista.map(c=>{
+    const chips = [];
+    if(c.viagens) chips.push(`<span class="tag">Viagem ${c.viagens}x</span>`);
+    c.servicos.forEach(s=>chips.push(`<span class="tag">${escapeHtml(s)}</span>`));
+    if(!chips.length && c.lead) chips.push(`<span class="status-badge ${ETAPA_CLASS[c.lead.etapa]||""}" title="Etapa marcada à mão, sem compra lançada">${escapeHtml(c.lead.etapa)}</span>`);
+    const abrirPrimeiro = c.lead ? `openLeadModal(${c.lead.id})` : `openClienteTransporteModal(${c.ct.id})`;
+    const botoes = [
+      c.lead ? `<button class="act act-edit" onclick="openLeadModal(${c.lead.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Ficha lead</button>` : "",
+      c.ct ? `<button class="act act-edit" onclick="openClienteTransporteModal(${c.ct.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Ficha transporte</button>` : "",
+    ].filter(Boolean).join(" ");
+    return `<tr class="tr-click" onclick="${abrirPrimeiro}">
+      <td>${escapeHtml(c.nome)}${numId(c.base)}${etiquetaPJ(c.base)}</td>
+      <td>${numeroClicavel(c.whatsapp)}</td>
+      <td>${chips.join(" ")}</td>
+      <td>${dataTxt(c.primeira)}</td>
+      <td>${dataTxt(c.ultima)}</td>
+      <td style="white-space:nowrap;">${c.pago ? formatarMoedaBR(c.pago) : "-"}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(c.whatsapp, c.nome)} ${botoes}</td>
     </tr>`;
-  }).join("") || `<tr><td class="empty" colspan="6">Nenhum cliente convertido ainda</td></tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">${todos.length ? "Ninguém com esses filtros" : "Nenhuma cliente ainda"}</td></tr>`;
+}
+function exportarClientesGeralCsv(){
+  const lista = aplicarOrdenacao("clientes", filtrarClientesGeral(montarClientesGeral()));
+  const cols = [
+    ["Código", c=>codigoCadastro(c.base)], ["Nome", c=>c.nome], ["WhatsApp", c=>c.whatsapp],
+    ["Viagens", c=>c.viagens], ["Outros serviços", c=>[...c.servicos].join(", ")],
+    ["Primeira compra", c=>c.primeira ? formatarDataBR(c.primeira) : ""], ["Última compra", c=>c.ultima ? formatarDataBR(c.ultima) : ""],
+    ["Total pago", c=>c.pago.toFixed(2).replace(".",",")], ["Etapa (lead)", c=>c.lead ? c.lead.etapa : ""],
+  ];
+  const cel = v => { const s = (v??"").toString(); return /[";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const linhas = [cols.map(c=>c[0]).join(";"), ...lista.map(r=>cols.map(c=>cel(c[1](r))).join(";"))];
+  const blob = new Blob(["﻿" + linhas.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `clientes-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function primeiroCelularParceiro(parceiroId){
