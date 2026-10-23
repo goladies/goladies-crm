@@ -1159,6 +1159,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-cobrar{margin-top:12px; padding:11px 13px; border-radius:10px; border:1px solid var(--rosa); border-left-width:4px; font-size:12.5px; line-height:1.55; color:var(--text2);}
 #ft-sim .sim-cobrar .sim-cobrar-valor{font-size:15px; color:var(--text1);}
 #ft-sim .sim-cobrar .sim-cobrar-valor b{font-size:20px; color:var(--rosa-texto);}
+#ft-sim .sim-guardar{margin-top:10px; display:grid; gap:6px;}
+#ft-sim .sim-guardar label{margin:0;}
+#cotacoes-guardadas-lista .cot-item{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:10px 0; border-bottom:1px solid var(--border);}
+#cotacoes-guardadas-lista .cot-item:last-child{border-bottom:0;}
+#cotacoes-guardadas-lista .cot-info{flex:1 1 260px; min-width:0; font-size:12.5px; color:var(--text3); line-height:1.5;}
+#cotacoes-guardadas-lista .cot-info a{font-size:14px; font-weight:600; color:var(--text1);}
+#cotacoes-guardadas-lista .cot-preco{font-size:15px; font-weight:700; color:var(--rosa-texto); white-space:nowrap;}
+#cotacoes-guardadas-lista .cot-acoes{display:flex; flex-wrap:wrap; gap:6px;}
 #ft-sim .sim-check{display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text2); margin-top:8px; cursor:pointer; line-height:1.4;}
 #ft-sim .sim-check input{margin:1px 0 0; flex:0 0 auto;}
 #ft-sim .sim-fixo{display:grid; grid-template-columns:auto 1fr 74px; align-items:center; gap:7px; margin-top:6px;}
@@ -1867,6 +1875,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 </div>
                 <p class="sim-nota" id="sim-end-resumo" style="display:none;"></p>
                 <div class="sim-cobrar" id="sim-cobrar"></div>
+                <!-- Guardar cotação (schema_cotacoes_guardadas.sql): vai pra lista
+                     "Cotações guardadas" logo abaixo do Simulador, por 30 dias. -->
+                <div class="sim-guardar">
+                  <label>Guardar esta cotação</label>
+                  <input type="text" id="sim-guardar-nome" placeholder="Nome, ex.: Patrícia mecânica">
+                  <select id="sim-guardar-cliente"></select>
+                  <button type="button" class="btn small" id="sim-guardar-btn" onclick="guardarCotacaoSimulador()"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Guardar cotação</button>
+                </div>
               </div>
               <div class="sim-grid">
                 <div><label>Km com a cliente</label><input type="number" id="sim-km-cliente" step="0.1" min="0" value="10" oninput="simular()"></div>
@@ -1932,6 +1948,12 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <div id="sim-aviso"></div>
             </div>
           </div>
+        </div>
+
+        <div class="panel" id="ft-cotacoes-guardadas">
+          <h3><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Cotações guardadas</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">As dos últimos 30 dias. Aconteceu? Lance como viagem já feita com o preço que você cobrou. Clique no nome pra abrir de novo no Simulador.</p>
+          <div id="cotacoes-guardadas-lista"></div>
         </div>
 
         <div class="panel">
@@ -7071,9 +7093,14 @@ const SIM_CHAVE_COTACAO = "sim-ultima-cotacao";
 let simRestaurado = false;
 function simGuardar(){
   if(!simRestaurado) return; // antes de restaurar, os campos ainda são os padrões
+  try{ localStorage.setItem(SIM_CHAVE_COTACAO, JSON.stringify(simDadosAtuais())); }catch(e){}
+}
+// A tela do Simulador como objeto: vai pro navegador (última cotação) e pra
+// cotacoes_simulador.dados (cotação guardada).
+function simDadosAtuais(){
   const campos = {};
   document.querySelectorAll("#ft-sim input[id], #ft-sim select[id]").forEach(el=>{
-    if(el.id === "sim-end-saida" || el.readOnly) return;
+    if(el.id === "sim-end-saida" || el.id.startsWith("sim-guardar") || el.readOnly) return;
     campos[el.id] = el.type === "checkbox" ? el.checked : el.value;
   });
   const resumo = document.getElementById("sim-end-resumo");
@@ -7083,7 +7110,7 @@ function simGuardar(){
     repasseManual: !!document.getElementById("sim-repasse").dataset.manual,
     resumo: resumo.style.display === "none" ? "" : resumo.innerHTML,
   };
-  try{ localStorage.setItem(SIM_CHAVE_COTACAO, JSON.stringify(dados)); }catch(e){}
+  return dados;
 }
 function simRestaurar(){
   if(simRestaurado) return;
@@ -7091,6 +7118,13 @@ function simRestaurar(){
   let dados = null;
   try{ dados = JSON.parse(localStorage.getItem(SIM_CHAVE_COTACAO) || "null"); }catch(e){}
   if(!dados) return;
+  simAplicarDados(dados);
+}
+function simAplicarDados(dados){
+  delete document.getElementById("sim-cobrado").dataset.manual;
+  delete document.getElementById("sim-repasse").dataset.manual;
+  const resumoEl = document.getElementById("sim-end-resumo");
+  resumoEl.innerHTML = ""; resumoEl.style.display = "none";
   Object.entries(dados.campos || {}).forEach(([id, val])=>{
     const el = document.getElementById(id);
     if(!el) return;
@@ -7117,6 +7151,170 @@ function simNovaCotacao(){
   const resumo = document.getElementById("sim-end-resumo");
   resumo.innerHTML = ""; resumo.style.display = "none";
   simTabelaTrocada();
+}
+
+// ── Cotações guardadas (23/10/2026, schema_cotacoes_guardadas.sql) ──
+// "Guardar cotação" grava a tela do Simulador com nome e cliente; a lista
+// mostra as dos últimos 30 dias (expira_em). Aconteceu: abre "Lançar viagem
+// já feita" preenchido com o trajeto, o km e o preço cobrado; ao salvar a
+// viagem a cotação vira "Virou viagem" e sai da lista.
+let simUltimoResultado = null;     // { tabela, cobrado, repasse } da última conta do Simulador
+let cotacoesGuardadas = [];
+let cotacoesSqlFaltando = false;
+function prepararGuardarCotacao(){
+  const sel = document.getElementById("sim-guardar-cliente");
+  if(!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = `<option value="">Cliente: ainda sem cadastro</option>` +
+    clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("");
+  sel.value = clientesTransporte.some(c=>String(c.id) === atual) ? atual : "";
+}
+async function guardarCotacaoSimulador(){
+  const pontos = simEnderecos.map(e=>e.trim()).filter(Boolean);
+  const km = simNum("sim-km-cliente");
+  const clienteId = Number(document.getElementById("sim-guardar-cliente").value) || null;
+  const cliente = clienteId ? clientesTransporte.find(c=>c.id === clienteId) : null;
+  const nome = document.getElementById("sim-guardar-nome").value.trim() || (cliente ? cliente.nome : "");
+  if(!nome){ alert("Dê um nome pra cotação (ex.: Patrícia mecânica) ou escolha a cliente."); return; }
+  if(pontos.length < 2 || !km){ alert("Preencha o embarque e o destino e calcule a rota antes de guardar."); return; }
+  simular();
+  const r = simUltimoResultado || {};
+  const btn = document.getElementById("sim-guardar-btn");
+  btn.disabled = true;
+  const { error } = await sb.from("cotacoes_simulador").insert({
+    nome, cliente_id: clienteId,
+    origem: pontos[0], destino: pontos[pontos.length - 1],
+    km, minutos: Math.round(simNum("sim-min-cliente")),
+    preco_tabela: r.tabela != null ? Math.round(r.tabela * 100) / 100 : null,
+    preco_cobrado: r.cobrado != null ? Math.round(r.cobrado * 100) / 100 : null,
+    repasse: r.repasse != null ? Math.round(r.repasse * 100) / 100 : null,
+    dados: simDadosAtuais(),
+  });
+  btn.disabled = false;
+  if(error){
+    alert(/cotacoes_simulador/.test(error.message)
+      ? "Falta rodar o schema_cotacoes_guardadas.sql no Supabase (SQL Editor)."
+      : "Erro ao guardar a cotação: " + error.message);
+    return;
+  }
+  document.getElementById("sim-guardar-nome").value = "";
+  document.getElementById("sim-guardar-cliente").value = "";
+  showToast("Cotação guardada por 30 dias.");
+  carregarCotacoesGuardadas();
+}
+async function carregarCotacoesGuardadas(){
+  const { data, error } = await sb.from("cotacoes_simulador").select("*")
+    .eq("situacao", "Guardada").gt("expira_em", new Date().toISOString())
+    .order("criado_em", { ascending: false });
+  cotacoesSqlFaltando = !!error;
+  cotacoesGuardadas = error ? [] : (data || []);
+  renderCotacoesGuardadas();
+}
+function renderCotacoesGuardadas(){
+  const el = document.getElementById("cotacoes-guardadas-lista");
+  if(!el) return;
+  if(cotacoesSqlFaltando){
+    el.innerHTML = `<p class="sim-nota" style="margin:0;">Falta rodar o <b>schema_cotacoes_guardadas.sql</b> no Supabase (SQL Editor) pra guardar cotações.</p>`;
+    return;
+  }
+  if(!cotacoesGuardadas.length){
+    el.innerHTML = `<p style="color:var(--muted); font-size:12.5px; margin:0;">Nenhuma cotação guardada. Use "Guardar esta cotação" no Simulador.</p>`;
+    return;
+  }
+  const curto = e => escapeHtml(String(e || "").split(",")[0]);
+  el.innerHTML = cotacoesGuardadas.map(c=>{
+    const cli = c.cliente_id ? clientesTransporte.find(x=>x.id === c.cliente_id) : null;
+    const idaVolta = !!(c.dados && c.dados.campos && c.dados.campos["sim-idavolta"]);
+    return `<div class="cot-item">
+      <div class="cot-info">
+        <a href="#" onclick="event.preventDefault(); abrirCotacaoNoSimulador(${Number(c.id)})" title="Abrir no Simulador">${escapeHtml(c.nome)}</a>
+        ${cli && cli.nome !== c.nome ? ` · ${escapeHtml(cli.nome)}` : ""}${c.cliente_id ? "" : ` · <span>sem cadastro</span>`}<br>
+        ${dataComSemana(new Date(c.criado_em))} · ${curto(c.origem)} → ${curto(c.destino)} · ${String(c.km ?? "").replace(".", ",")} km${idaVolta ? " · ida e volta" : ""}
+      </div>
+      <div class="cot-preco">${c.preco_cobrado != null ? formatarMoedaBR(Number(c.preco_cobrado)) : "-"}</div>
+      <div class="cot-acoes">
+        <button type="button" class="btn small" onclick="viagemDaCotacao(${Number(c.id)}, true)">${ic("clipboard-check")} Aconteceu: lançar viagem já feita</button>
+        <button type="button" class="btn secondary small" onclick="viagemDaCotacao(${Number(c.id)}, false)">Virou pedido</button>
+        <button type="button" class="btn ghost small" onclick="cotacaoNaoAconteceu(${Number(c.id)})">Não aconteceu</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+function abrirCotacaoNoSimulador(id){
+  const c = cotacoesGuardadas.find(x=>x.id === id);
+  if(!c) return;
+  simAplicarDados(c.dados || {});
+  simular();
+  document.getElementById("ft-sim").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function viagemDaCotacao(id, feita){
+  const c = cotacoesGuardadas.find(x=>x.id === id);
+  if(!c) return;
+  openViagemModal(null, { viagemFeita: feita, cotacao: c });
+}
+async function cotacaoNaoAconteceu(id){
+  const c = cotacoesGuardadas.find(x=>x.id === id);
+  if(!c || !confirm(`Tirar a cotação "${c.nome}" da lista? Ela fica marcada como "Não aconteceu".`)) return;
+  const { error } = await sb.from("cotacoes_simulador").update({ situacao: "Não aconteceu", resolvida_em: new Date().toISOString() }).eq("id", id);
+  if(error){ alert("Erro: " + error.message); return; }
+  carregarCotacoesGuardadas();
+}
+// Chamada no fim do openViagemModal: preenche a viagem nova com a cotação.
+// O preço que vale é o cobrado no Simulador (o desconto aparece sozinho se
+// ficou abaixo da tabela); o km e a duração entram como medidos.
+function preencherViagemDaCotacao(c){
+  const campos = (c.dados && c.dados.campos) || {};
+  const pontos = ((c.dados && c.dados.enderecos) || []).map(e=>String(e || "").trim()).filter(Boolean);
+  const origem = pontos[0] || c.origem || "", destino = pontos.length > 1 ? pontos[pontos.length - 1] : (c.destino || "");
+  if(c.cliente_id && clientesTransporte.some(x=>x.id === c.cliente_id)){
+    document.getElementById("vg-cliente").value = c.cliente_id;
+    clienteViagemMudou(); atualizarFotoClienteViagem();
+  }
+  if(campos["sim-tipo"] && TIPO_SERVICO_VIAGEM.includes(campos["sim-tipo"])){
+    document.getElementById("vg-tipo-servico").value = campos["sim-tipo"];
+    mostrarCampoEvento();
+  }
+  const selTab = document.getElementById("vg-tabela-preco");
+  if(campos["sim-tabela-preco"] && selTab && [...selTab.options].some(o=>o.value === campos["sim-tabela-preco"])) selTab.value = campos["sim-tabela-preco"];
+  document.getElementById("vg-origem-endereco").value = origem;
+  document.getElementById("vg-destino-endereco").value = destino;
+  paradasModal = pontos.slice(1, -1).map(e=>({ tipo: "Parada", endereco: e, passageira_nome: "", horario_previsto: "", observacao: "" }));
+  renderParadasModal();
+  const km = Number(c.km) || 0, min = Number(c.minutos) || 0;
+  preencherMedidaRota("vg-distancia-km", km, true);
+  if(min) preencherMedidaRota("vg-duracao-min", min, true);
+  const noturno = !!campos["sim-noturno"];
+  document.getElementById("vg-adicional-noturno").checked = noturno;
+  if(Number(campos["sim-espera"]) > 0) document.getElementById("vg-espera-extra-min").value = Number(campos["sim-espera"]);
+  if(campos["sim-idavolta"]){
+    // Ida e volta do Simulador = o mesmo trajeto de volta, mesmo km e tempo
+    document.getElementById("vg-tem-volta").checked = true;
+    alternarVoltaViagem();
+    preencherMedidaRota("vg-distancia-retorno-km", km, true);
+    if(min) preencherMedidaRota("vg-duracao-retorno-min", min, true);
+    document.getElementById("vg-adicional-noturno-retorno").checked = noturno;
+  }
+  aplicarTabelaNosCampos();
+  recalcularCotacao();
+  if(c.preco_cobrado != null){
+    document.getElementById("vg-preco-cotado").value = Number(c.preco_cobrado).toFixed(2);
+    cotadoEditado();
+  }
+  if(c.repasse != null) document.getElementById("vg-preco-motorista").value = Number(c.repasse).toFixed(2);
+  recalcularComissaoCotacao();
+  recalcularHorarioChegada();
+  const nota = document.getElementById("vg-rota-medida");
+  nota.style.display = "block";
+  nota.textContent = `Da cotação "${c.nome}" de ${dataComSemana(new Date(c.criado_em))}: ${String(km).replace(".", ",")} km${min ? ", " + min + " min" : ""}, cobrado ${c.preco_cobrado != null ? formatarMoedaBR(Number(c.preco_cobrado)) : "-"}. Confira data, horário e motorista.`;
+  marcarObrigatoriosViagem();
+  atualizarResumoViagem();
+}
+async function marcarCotacaoComoViagem(c, viagemId, feita){
+  const { error } = await sb.from("cotacoes_simulador").update({
+    situacao: feita ? "Virou viagem" : "Virou pedido", viagem_id: viagemId, resolvida_em: new Date().toISOString(),
+  }).eq("id", c.id);
+  if(error) console.warn("Cotação não marcada:", error.message);
+  carregarCotacoesGuardadas();
 }
 function simAdicionarEndereco(){
   if(simEnderecos.length >= SIM_MAX_ENDERECOS) return;
@@ -7310,6 +7508,7 @@ function simular(){
   const meta = simNum("sim-meta-hora");
   const euDirijo = document.getElementById("sim-quem").value === "eu";
   const totalCasa = cobrado - taxaMp - custoCarro;
+  simUltimoResultado = { tabela: p.total, cobrado, repasse };
 
   // ── Custo por km, aberto ──
   const partes = [`combustível ${fmt(custo.combustivel)}`, `manutenção ${fmt(custo.manutencao)}`];
@@ -7619,6 +7818,8 @@ function renderFinanceiroTransporte(){
   simPrepararTabelas();
   simRestaurar();
   simular();
+  prepararGuardarCotacao();
+  carregarCotacoesGuardadas();
   const dias = ftPeriodoDias();
   const cotacoes = ftCotacoes();
 
@@ -14121,6 +14322,7 @@ function renderTransporteViagens(){
   preencherFotosClientes(document.getElementById("kanban-viagens"));
 }
 let editingViagemId = null;
+let cotacaoDaViagem = null;   // cotação guardada que abriu esta viagem nova (preencherViagemDaCotacao)
 // ===== VIAGEM JÁ FEITA, LANÇADA DEPOIS (30/09/2026) =====
 // Viagem que aconteceu fora do app. Entra direto "Concluída", com uma
 // motorista só; nenhum aviso de saída, código, lembrete ou oferta sai (eles
@@ -14397,6 +14599,9 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-outros").open = !!(v.dias_semana || v.motivo_perda || v.cancelamento_cobrado || v.multa_cancelamento != null || v.repasse_multa != null);
   atualizarResumoViagem();
 
+  cotacaoDaViagem = (!id && opcoes && opcoes.cotacao) || null;
+  if(cotacaoDaViagem) preencherViagemDaCotacao(cotacaoDaViagem);
+
   document.getElementById("btn-excluir-viagem").style.display = id ? "inline-block" : "none";
   document.getElementById("viagem-modal").classList.add("open");
 }
@@ -14615,6 +14820,8 @@ async function saveViagem(){
     const { data, error } = await sb.from("viagens").insert(payload).select();
     if(error){ alert("Erro ao salvar viagem: " + error.message); return; }
     viagemId = data[0].id;
+    // Viagem aberta de uma cotação guardada: a cotação sai da lista
+    if(cotacaoDaViagem){ marcarCotacaoComoViagem(cotacaoDaViagem, viagemId, !!feita); cotacaoDaViagem = null; }
   }
   await gravarParadasViagem(viagemId);
 
