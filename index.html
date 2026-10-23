@@ -1420,9 +1420,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <div class="sidebar-sub">Painel administrativo</div>
     <div class="sidebar-nav">
       <div class="nav-item active" data-tab="dashboard" data-titulo="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></div>
-      <div class="nav-item" data-tab="leads" data-titulo="Leads"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h4v7H6zM14 3h4v7h-4z"/></svg><span>Leads</span></div>
+      <div class="nav-item" data-tab="contatos" data-titulo="Contatos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Contatos</span></div>
       <div class="nav-item" data-tab="conversas" data-titulo="Conversas do WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l1.3-3.9A9 9 0 1 1 7.7 19.3L3 20"/><path d="M8 10h8M8 14h5"/></svg><span>Conversas</span><b class="nav-conta" id="nav-conta-conversas" title="Conversas esperando você"></b></div>
-      <div class="nav-item" data-tab="clientes" data-titulo="Clientes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span>Clientes</span></div>
       <div class="nav-item" data-tab="parceiros" data-titulo="Rede de Parceiras (os)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Parceiras (os)</span></div>
       <div class="nav-item nav-destaque" data-tab="transporte" data-titulo="Transporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H3v-5l2-5h12l3 5v5h-2"/><path d="M5 12h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg><span>Transporte</span></div>
       <div class="nav-item" data-tab="orcamentos" data-titulo="Orçamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v7M9.5 13h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span>Orçamentos</span></div>
@@ -1558,7 +1557,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="tab-leads" style="display:none;">
+    <!-- Contatos (23/10/2026): Leads e Clientes, que eram dois itens do menu,
+         viraram abas de um só. irParaAba("leads"/"clientes") continua valendo. -->
+    <div id="tab-contatos" style="display:none;">
+      <div class="subnav">
+        <button type="button" class="subnav-item active" data-subcontato="leads" onclick="mostrarSubContatos('leads')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Leads<b class="nav-conta" id="subcontato-conta-leads"></b></button>
+        <button type="button" class="subnav-item" data-subcontato="clientes" onclick="mostrarSubContatos('clientes')"><svg class=ic aria-hidden=true><use href=#i-heart /></svg> Clientes</button>
+      </div>
+    <div id="contatos-leads">
       <div class="pagehead">
         <div><h2>Leads</h2><p>Todo contato recebido pelo site, WhatsApp ou indicação</p></div>
         <button class="btn" onclick="openLeadModal()">+ Novo lead</button>
@@ -1578,14 +1584,15 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="tab-clientes" style="display:none;">
-      <div class="pagehead"><div><h2>Clientes</h2><p>Leads convertidos (etapa "Cliente ativo" ou "Fechado - Ganho")</p></div></div>
+    <div id="contatos-clientes" style="display:none;">
+      <div class="pagehead"><div><h2>Clientes</h2><p>Leads convertidos (etapa "Cliente ativo" ou "Fechado - Ganho"). As clientes de viagem ficam em Transporte › Clientes transporte.</p></div></div>
       <div class="panel">
         <table class="tbl">
           <thead><tr id="thead-clientes"></tr></thead>
           <tbody id="clientes-body"></tbody>
         </table>
       </div>
+    </div>
     </div>
 
     <div id="tab-parceiros" style="display:none;">
@@ -1724,7 +1731,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, clientes de viagem, viagens e avaliações</p></div></div>
       <div class="subnav">
         <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Viagens</button>
-        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Clientes</button>
+        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Clientes transporte</button>
         <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
@@ -1764,7 +1771,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
       <div id="subtab-clientes-transporte" style="display:none;">
         <div class="pagehead">
-          <div><h2 style="font-size:16px;">Clientes de viagem</h2><p>Quem solicita viagens sob demanda, particular ou empresarial (separado dos leads de compra/venda/manutenção)</p></div>
+          <div><h2 style="font-size:16px;">Clientes transporte</h2><p>Quem solicita viagens sob demanda, particular ou empresarial (os leads e clientes de compra, venda e manutenção ficam em Contatos)</p></div>
           <button class="btn" onclick="openClienteTransporteModal()">+ Nova cliente</button>
         </div>
         <div class="filters">
@@ -4406,7 +4413,7 @@ renderDataHora();
 setInterval(renderDataHora, 15000);
 
 function irParaLeadsNovos(){
-  document.querySelector('.nav-item[data-tab="leads"]').click();
+  irParaAba("leads");
   const f = document.getElementById("filter-etapa");
   if(f){ f.value = "Novo lead"; renderLeads(); }
 }
@@ -4616,6 +4623,7 @@ async function liberarPainelCompleto(user){
   let ultimaAba = null;
   try{ ultimaAba = localStorage.getItem("crm-ultima-aba"); }catch(_){}
   if(ultimaAba==="documentos"){ ultimaAba = "sede"; lembrarSubAba("sede", "documentos"); }
+  if(ultimaAba==="leads" || ultimaAba==="clientes"){ lembrarSubAba("contatos", ultimaAba); ultimaAba = "contatos"; }
   if(ultimaAba && document.getElementById("tab-"+ultimaAba)){ mostrarAbaDireto(ultimaAba); restaurarSubAba(ultimaAba); }
   carregarFotosEquipe();
   await carregarDados();
@@ -6147,6 +6155,8 @@ function renderTransporteDashboard(){
 function irParaAba(tab){
   // Documentos virou sub-aba da Sede (11/10/2026); links antigos continuam funcionando
   if(tab==="documentos"){ irParaAba("sede"); mostrarSubSede("documentos"); return; }
+  // Leads e Clientes viraram abas de Contatos (23/10/2026)
+  if(tab==="leads" || tab==="clientes"){ irParaAba("contatos"); mostrarSubContatos(tab); return; }
   const nav = document.querySelector(`.nav-item[data-tab="${tab}"]`);
   if(nav) nav.click();
 }
@@ -6261,7 +6271,7 @@ function renderLeads(){
 // Cada número é clicável: abre a lista do que está esperando, e cada item
 // leva pra origem. Tudo sai do que o CRM já carrega (sem SQL próprio).
 const ATENCAO_MENUS = ["conversas","leads","transporte","orcamentos","financeiro","gestao","sede","vagas"];
-const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Leads", transporte:"Transporte", orcamentos:"Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
+const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Contatos › Leads", transporte:"Transporte", orcamentos:"Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
 const VIAGEM_BOLA_GO_LADIES = ["Solicitada","Cotando preço","Escolher motoristas","Preço recusado pela cliente"];
 let atencaoAtual = {};
 
@@ -6367,8 +6377,15 @@ function atualizarAtencao(){
   let itens;
   try{ itens = itensAtencao(); }catch(e){ console.warn("atenção:", e); return; }
   atencaoAtual = itens;
+  // Leads mora em Contatos (23/10/2026): o número vai no item Contatos e na aba Leads
+  const subLeads = document.getElementById("subcontato-conta-leads");
+  if(subLeads){
+    const l = itens.leads || [];
+    subLeads.textContent = l.length || "";
+    subLeads.classList.toggle("verm", l.some(i=>i.nivel==="vermelho"));
+  }
   ATENCAO_MENUS.forEach(menu=>{
-    const nav = document.querySelector(`.nav-item[data-tab="${menu}"]`);
+    const nav = document.querySelector(`.nav-item[data-tab="${menu === "leads" ? "contatos" : menu}"]`);
     if(!nav) return;
     let b = nav.querySelector(".nav-conta");
     if(!b){ b = document.createElement("b"); b.className = "nav-conta"; nav.appendChild(b); }
@@ -8256,6 +8273,12 @@ function restaurarSubAba(aba){
   if(aba==="transporte" && document.querySelector(`#tab-transporte #subtab-${CSS.escape(sub)}`)) mostrarSubTab(sub);
   else if(aba==="financeiro" && document.querySelector(`#tab-financeiro #subtab-${CSS.escape(sub)}`)) mostrarSubTabFinanceiro(sub);
   else if(aba==="sede" && SEDE_ABAS.includes(sub)) mostrarSubSede(sub);
+  else if(aba==="contatos" && (sub==="leads" || sub==="clientes")) mostrarSubContatos(sub);
+}
+function mostrarSubContatos(nome){
+  lembrarSubAba("contatos", nome);
+  document.querySelectorAll("#tab-contatos .subnav-item[data-subcontato]").forEach(b=>b.classList.toggle("active", b.dataset.subcontato===nome));
+  ["leads","clientes"].forEach(n=>{ document.getElementById("contatos-"+n).style.display = n===nome ? "block" : "none"; });
 }
 function mostrarSubTab(nome){
   lembrarSubAba("transporte", nome);
@@ -9570,6 +9593,8 @@ function rotuloAba(destino){
     const nomes = { equipe:"Equipe", agenda:"Agenda", hoje:"Hoje", trabalhos:"Trabalhos", documentos:"Documentos", pedidos:"Pedidos", decisoes:"Decisões", pendencias:"Pendências" };
     return "Sede › " + (nomes[sub] || sub);
   }
+  if(destino === "leads") return "Contatos › Leads";
+  if(destino === "clientes") return "Contatos › Clientes";
   const nav = document.querySelector(`.nav-item[data-tab="${destino}"]`);
   return nav ? (nav.dataset.titulo || nav.textContent.trim()) : destino;
 }
