@@ -3,7 +3,7 @@
 --
 -- Antes: o Simulador guardava só a última cotação, no navegador.
 -- Agora: o botão "Guardar cotação" grava a simulação aqui, com nome e (se
--- tiver) a cliente. A lista "Cotações guardadas" mostra as dos últimos 30
+-- tiver) a cliente de viagem ou a lead. A lista "Cotações guardadas" mostra as dos últimos 30
 -- dias; cada uma pode virar "viagem já feita", "pedido" ou "não aconteceu".
 -- Passado o prazo, ela some da lista, mas a linha fica (é histórico de
 -- cotação, serve pra ver quantas viraram viagem).
@@ -38,6 +38,12 @@ comment on column public.cotacoes_simulador.dados is
   'Campos do Simulador (endereços, km, minutos, tipo, tabela, noite, ida e volta, espera, cobrado, repasse)';
 comment on column public.cotacoes_simulador.expira_em is
   'Até quando aparece na lista do Simulador (30 dias depois de guardada)';
+
+-- Lead escolhida na cotação (23/10/2026): quem ainda não é cliente de
+-- viagem. No "Aconteceu", o CRM cria a ficha de cliente de viagem e liga as
+-- duas como mesma pessoa.
+alter table public.cotacoes_simulador
+  add column if not exists lead_id bigint references public.leads(id) on delete set null;
 
 create index if not exists cotacoes_simulador_lista_idx
   on public.cotacoes_simulador (situacao, expira_em desc);

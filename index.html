@@ -1880,7 +1880,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div class="sim-guardar">
                   <label>Guardar esta cotação</label>
                   <input type="text" id="sim-guardar-nome" placeholder="Nome de quem pediu">
-                  <select id="sim-guardar-cliente"></select>
+                  <select id="sim-guardar-cliente" onchange="cotacaoClienteEscolhido()"></select>
                   <button type="button" class="btn small" id="sim-guardar-btn" onclick="guardarCotacaoSimulador()"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Guardar cotação</button>
                 </div>
               </div>
@@ -7161,27 +7161,44 @@ function simNovaCotacao(){
 let simUltimoResultado = null;     // { tabela, cobrado, repasse } da última conta do Simulador
 let cotacoesGuardadas = [];
 let cotacoesSqlFaltando = false;
+// Valor do select: "c:<id>" = cliente de viagem, "l:<id>" = lead, "" = sem cadastro
 function prepararGuardarCotacao(){
   const sel = document.getElementById("sim-guardar-cliente");
   if(!sel) return;
   const atual = sel.value;
+  const ordem = (a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
   sel.innerHTML = `<option value="">Cliente: ainda sem cadastro</option>` +
-    clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("");
-  sel.value = clientesTransporte.some(c=>String(c.id) === atual) ? atual : "";
+    (clientesTransporte.length ? `<optgroup label="Clientes de viagem">${[...clientesTransporte].sort(ordem).map(c=>`<option value="c:${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("")}</optgroup>` : "") +
+    (leads.length ? `<optgroup label="Leads">${[...leads].sort(ordem).map(l=>`<option value="l:${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("")}</optgroup>` : "");
+  sel.value = [...sel.options].some(o=>o.value === atual) ? atual : "";
+}
+function cadastroEscolhidoCotacao(){
+  const [tipo, id] = (document.getElementById("sim-guardar-cliente").value || "").split(":");
+  const n = Number(id) || null;
+  if(tipo === "c") return { clienteId: n, leadId: null, pessoa: clientesTransporte.find(c=>c.id === n) || null };
+  if(tipo === "l") return { clienteId: null, leadId: n, pessoa: leads.find(l=>l.id === n) || null };
+  return { clienteId: null, leadId: null, pessoa: null };
+}
+// Escolher alguém preenche o nome; o que ela digitou à mão fica.
+function cotacaoClienteEscolhido(){
+  const campo = document.getElementById("sim-guardar-nome");
+  const { pessoa } = cadastroEscolhidoCotacao();
+  if(campo.value.trim() && campo.value !== campo.dataset.autoValor) return;
+  campo.value = pessoa ? pessoa.nome : "";
+  campo.dataset.autoValor = campo.value;
 }
 async function guardarCotacaoSimulador(){
   const pontos = simEnderecos.map(e=>e.trim()).filter(Boolean);
   const km = simNum("sim-km-cliente");
-  const clienteId = Number(document.getElementById("sim-guardar-cliente").value) || null;
-  const cliente = clienteId ? clientesTransporte.find(c=>c.id === clienteId) : null;
-  const nome = document.getElementById("sim-guardar-nome").value.trim() || (cliente ? cliente.nome : "");
+  const { clienteId, leadId, pessoa } = cadastroEscolhidoCotacao();
+  const nome = document.getElementById("sim-guardar-nome").value.trim() || (pessoa ? pessoa.nome : "");
   if(!nome){ alert("Dê um nome pra cotação ou escolha a cliente."); return; }
   if(pontos.length < 2 || !km){ alert("Preencha o embarque e o destino e calcule a rota antes de guardar."); return; }
   simular();
   const r = simUltimoResultado || {};
   const btn = document.getElementById("sim-guardar-btn");
   btn.disabled = true;
-  const { error } = await sb.from("cotacoes_simulador").insert({
+  const linha = {
     nome, cliente_id: clienteId,
     origem: pontos[0], destino: pontos[pontos.length - 1],
     km, minutos: Math.round(simNum("sim-min-cliente")),
@@ -7189,7 +7206,9 @@ async function guardarCotacaoSimulador(){
     preco_cobrado: r.cobrado != null ? Math.round(r.cobrado * 100) / 100 : null,
     repasse: r.repasse != null ? Math.round(r.repasse * 100) / 100 : null,
     dados: simDadosAtuais(),
-  });
+  };
+  if(leadId) linha.lead_id = leadId;   // coluna nova: sem ela, só falha quem escolheu lead
+  const { error } = await sb.from("cotacoes_simulador").insert(linha);
   btn.disabled = false;
   if(error){
     alert(/cotacoes_simulador/.test(error.message)
@@ -7198,6 +7217,7 @@ async function guardarCotacaoSimulador(){
     return;
   }
   document.getElementById("sim-guardar-nome").value = "";
+  delete document.getElementById("sim-guardar-nome").dataset.autoValor;
   document.getElementById("sim-guardar-cliente").value = "";
   showToast("Cotação guardada por 30 dias.");
   carregarCotacoesGuardadas();
@@ -7224,11 +7244,14 @@ function renderCotacoesGuardadas(){
   const curto = e => escapeHtml(String(e || "").split(",")[0]);
   el.innerHTML = cotacoesGuardadas.map(c=>{
     const cli = c.cliente_id ? clientesTransporte.find(x=>x.id === c.cliente_id) : null;
+    const lead = !cli && c.lead_id ? leads.find(x=>x.id === c.lead_id) : null;
+    // Nome igual ao da cotação não se repete: fica só o código
+    const pessoaTxt = p => (p.nome === c.nome ? "" : escapeHtml(p.nome)) + numId(p);
+    const quem = cli ? `cliente de viagem ${pessoaTxt(cli)}` : lead ? `lead ${pessoaTxt(lead)}` : "sem cadastro";
     const idaVolta = !!(c.dados && c.dados.campos && c.dados.campos["sim-idavolta"]);
     return `<div class="cot-item">
       <div class="cot-info">
-        <a href="#" onclick="event.preventDefault(); abrirCotacaoNoSimulador(${Number(c.id)})" title="Abrir no Simulador">${escapeHtml(c.nome)}</a>
-        ${cli && cli.nome !== c.nome ? ` · ${escapeHtml(cli.nome)}` : ""}${c.cliente_id ? "" : ` · <span>sem cadastro</span>`}<br>
+        <a href="#" onclick="event.preventDefault(); abrirCotacaoNoSimulador(${Number(c.id)})" title="Abrir no Simulador">${escapeHtml(c.nome)}</a> · ${quem}<br>
         ${dataComSemana(new Date(c.criado_em))} · ${curto(c.origem)} → ${curto(c.destino)} · ${String(c.km ?? "").replace(".", ",")} km${idaVolta ? " · ida e volta" : ""}
       </div>
       <div class="cot-preco">${c.preco_cobrado != null ? formatarMoedaBR(Number(c.preco_cobrado)) : "-"}</div>
@@ -7247,10 +7270,46 @@ function abrirCotacaoNoSimulador(id){
   simular();
   document.getElementById("ft-sim").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-function viagemDaCotacao(id, feita){
+async function viagemDaCotacao(id, feita){
   const c = cotacoesGuardadas.find(x=>x.id === id);
   if(!c) return;
+  if(!c.cliente_id && c.lead_id){
+    const clienteId = await clienteDeViagemDaLead(c);
+    if(clienteId === undefined) return;   // desistiu ou deu erro
+    c.cliente_id = clienteId;
+  }
   openViagemModal(null, { viagemFeita: feita, cotacao: c });
+}
+// A viagem só aceita cliente de viagem. Lead da cotação: usa a cliente com o
+// mesmo WhatsApp, ou (no OK dela) cria a ficha com nome, WhatsApp e e-mail e
+// liga as duas como mesma pessoa (mesmo código). null = seguir sem cliente;
+// undefined = parar.
+async function clienteDeViagemDaLead(c){
+  const lead = leads.find(l=>l.id === c.lead_id);
+  const codTxt = r => { const cod = codigoCadastro(r); return cod ? " " + cod : ""; };
+  if(!lead) return null;
+  const existente = lead.whatsapp && clientesTransporte.find(x=>mesmoTelefone(x.whatsapp, lead.whatsapp));
+  if(existente){
+    showToast(`Usando a cliente de viagem ${existente.nome}${codTxt(existente)} (mesmo WhatsApp da lead)`);
+    await sb.from("cotacoes_simulador").update({ cliente_id: existente.id }).eq("id", c.id);
+    return existente.id;
+  }
+  if(!confirm(`${lead.nome}${codTxt(lead)} é lead. Criar a ficha de cliente de viagem com nome e WhatsApp dela?\n\nAs duas ficam ligadas como mesma pessoa (mesmo código).`)) return undefined;
+  const origens = ["Indicação", "Instagram", "Facebook", "Site"];
+  const { data, error } = await sb.from("clientes_transporte").insert({
+    nome: lead.nome, whatsapp: lead.whatsapp || "", email: lead.email || "",
+    regiao: [lead.bairro, lead.cidade, lead.estado].filter(Boolean).join(" / "),
+    origem: origens.includes(lead.origem) ? lead.origem : "Outro",
+    notas: `Criada da lead ${lead.nome}${codTxt(lead)} pela cotação "${c.nome}" em ${dataComSemana(new Date(), true)}.`,
+  }).select();
+  if(error){ alert("Erro ao criar a cliente de viagem: " + error.message); return undefined; }
+  const novo = data[0];
+  const lig = await sb.from("vinculos_cadastros").insert({ tipo: "mesma_pessoa", a_tabela: "clientes_transporte", a_id: novo.id, b_tabela: "leads", b_id: lead.id });
+  if(lig.error) alert(`A cliente de viagem foi criada, mas não consegui ligar com a lead: ${lig.error.message}\n\nLigue depois na ficha dela (Ligações).`);
+  await sb.from("cotacoes_simulador").update({ cliente_id: novo.id }).eq("id", c.id);
+  await recarregarTabelas("clientes_transporte", "vinculos_cadastros");
+  showToast(`Cliente de viagem criada: ${novo.nome}`);
+  return novo.id;
 }
 async function cotacaoNaoAconteceu(id){
   const c = cotacoesGuardadas.find(x=>x.id === id);
