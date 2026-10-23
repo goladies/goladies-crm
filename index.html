@@ -3303,7 +3303,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg>1. Pedido</span><span class="vg-pend"></span></div>
       <div class="formgrid">
-        <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemMudou(); atualizarFotoClienteViagem()"></select>
+        <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemEscolhido()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
         <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
         <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado()"></select></div>
@@ -7287,18 +7287,23 @@ async function viagemDaCotacao(id, feita){
   }
   openViagemModal(null, { viagemFeita: feita, cotacao: c });
 }
-// A viagem só aceita cliente de viagem. Lead da cotação: usa a cliente com o
-// mesmo WhatsApp, ou (no OK dela) cria a ficha com nome, WhatsApp e e-mail e
-// liga as duas como mesma pessoa (mesmo código). null = seguir sem cliente;
-// undefined = parar.
+// Cotação de lead: acha ou cria a cliente de viagem e grava na cotação.
 async function clienteDeViagemDaLead(c){
-  const lead = leads.find(l=>l.id === c.lead_id);
+  const id = await clienteDeViagemDeLead(c.lead_id, `pela cotação "${c.nome}"`);
+  if(id) await sb.from("cotacoes_simulador").update({ cliente_id: id }).eq("id", c.id);
+  return id;
+}
+// A viagem só aceita cliente de viagem. Lead (da cotação ou escolhida na
+// viagem): usa a cliente com o mesmo WhatsApp, ou (no OK dela) cria a ficha
+// com nome, WhatsApp, e-mail e região e liga as duas como mesma pessoa (mesmo
+// código). id = cliente de viagem; null = lead não achada; undefined = parar.
+async function clienteDeViagemDeLead(leadId, ondeTxt){
+  const lead = leads.find(l=>l.id === leadId);
   const codTxt = r => { const cod = codigoCadastro(r); return cod ? " " + cod : ""; };
   if(!lead) return null;
   const existente = lead.whatsapp && clientesTransporte.find(x=>mesmoTelefone(x.whatsapp, lead.whatsapp));
   if(existente){
     showToast(`Usando a cliente de viagem ${existente.nome}${codTxt(existente)} (mesmo WhatsApp da lead)`);
-    await sb.from("cotacoes_simulador").update({ cliente_id: existente.id }).eq("id", c.id);
     return existente.id;
   }
   if(!confirm(`${lead.nome}${codTxt(lead)} é lead. Criar a ficha de cliente de viagem com nome e WhatsApp dela?\n\nAs duas ficam ligadas como mesma pessoa (mesmo código).`)) return undefined;
@@ -7307,13 +7312,12 @@ async function clienteDeViagemDaLead(c){
     nome: lead.nome, whatsapp: lead.whatsapp || "", email: lead.email || "",
     regiao: [lead.bairro, lead.cidade, lead.estado].filter(Boolean).join(" / "),
     origem: origens.includes(lead.origem) ? lead.origem : "Outro",
-    notas: `Criada da lead ${lead.nome}${codTxt(lead)} pela cotação "${c.nome}" em ${dataComSemana(new Date(), true)}.`,
+    notas: `Criada da lead ${lead.nome}${codTxt(lead)} ${ondeTxt} em ${dataComSemana(new Date(), true)}.`,
   }).select();
   if(error){ alert("Erro ao criar a cliente de viagem: " + error.message); return undefined; }
   const novo = data[0];
   const lig = await sb.from("vinculos_cadastros").insert({ tipo: "mesma_pessoa", a_tabela: "clientes_transporte", a_id: novo.id, b_tabela: "leads", b_id: lead.id });
   if(lig.error) alert(`A cliente de viagem foi criada, mas não consegui ligar com a lead: ${lig.error.message}\n\nLigue depois na ficha dela (Ligações).`);
-  await sb.from("cotacoes_simulador").update({ cliente_id: novo.id }).eq("id", c.id);
   await recarregarTabelas("clientes_transporte", "vinculos_cadastros");
   showToast(`Cliente de viagem criada: ${novo.nome}`);
   return novo.id;
@@ -13901,6 +13905,28 @@ function clienteDaViagemNoModal(){
   return clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value)) || null;
 }
 // Viagem nova: trocar a cliente traz o padrão dela.
+// Cliente da viagem (23/10/2026): Clientes de viagem e Leads, em grupos e em
+// ordem alfabética. Lead não pode ser cliente da viagem direto: escolher uma
+// acha ou cria a ficha de cliente de viagem dela (clienteDeViagemDeLead).
+function preencherSelectClienteViagem(selecionado){
+  const ordem = (a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
+  const sel = document.getElementById("vg-cliente");
+  sel.innerHTML = `<option value="">-</option>` +
+    `<optgroup label="Clientes de viagem">${[...clientesTransporte].sort(ordem).map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("")}</optgroup>` +
+    (leads.length ? `<optgroup label="Leads e clientes do CRM (viram cliente de viagem ao escolher)">${[...leads].sort(ordem).map(l=>`<option value="l:${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("")}</optgroup>` : "");
+  if(selecionado != null) sel.value = String(selecionado);
+}
+async function clienteViagemEscolhido(){
+  const sel = document.getElementById("vg-cliente");
+  if(sel.value.startsWith("l:")){
+    const leadId = Number(sel.value.slice(2));
+    sel.value = "";
+    const id = await clienteDeViagemDeLead(leadId, editingViagemId ? `na viagem #${editingViagemId}` : "ao lançar uma viagem");
+    preencherSelectClienteViagem(id || "");
+  }
+  clienteViagemMudou();
+  atualizarFotoClienteViagem();
+}
 function clienteViagemMudou(){
   if(!editingViagemId){
     const cli = clienteDaViagemNoModal();
@@ -14521,7 +14547,7 @@ setInterval(()=>{
 function openViagemModal(id, opcoes){
   editingViagemId = id || null;
   lancandoViagemFeita = !id && !!(opcoes && opcoes.viagemFeita);
-  document.getElementById("vg-cliente").innerHTML = `<option value="">-</option>` + clientesTransporte.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("");
+  preencherSelectClienteViagem();
   fillSelect(document.getElementById("vg-tipo-servico"), TIPO_SERVICO_VIAGEM, "Padrão");
   fillSelect(document.getElementById("vg-canal"), CANAL_RECEPCAO, "Telefone");
   fillSelect(document.getElementById("vg-viagem-status"), VIAGEM_STATUS, "Solicitada");
