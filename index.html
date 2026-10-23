@@ -3303,6 +3303,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
             <label style="margin:0; display:flex; align-items:center; gap:6px;"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg>Trajeto <span style="font-weight:400; color:var(--muted);">(na ordem da corrida)</span></label>
             <div style="display:flex; gap:8px;">
+              <button type="button" class="btn ghost small" onclick="medirRotaViagem(true)" title="Mede de novo no Google e troca km e duração, mesmo os digitados"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg> Medir rota</button>
               <button type="button" class="btn ghost small" onclick="abrirRotaMaps()"><svg class="ic" aria-hidden="true"><use href="#i-map-pin"/></svg> Ver rota</button>
               <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
             </div>
@@ -3322,6 +3323,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             </div>
             <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
           </div>
+          <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
         </div>
         <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
@@ -7134,9 +7136,9 @@ function simSalvarSaida(){
   try{ localStorage.setItem("sim-end-saida", document.getElementById("sim-end-saida").value.trim()); }catch(e){}
 }
 
-// Uma rota no Google. Sem paradas no meio, pede os caminhos alternativos e
+// Uma rota no Google (Simulador e modal de Viagem). Sem paradas no meio, pede os caminhos alternativos e
 // fica com o maior km e o maior tempo (regra das cotações).
-async function simMedirRota(origem, destino, meio){
+async function medirRotaGoogle(origem, destino, meio){
   const corpo = {
     origin: { address: origem }, destination: { address: destino },
     intermediates: (meio || []).map(e=>({ address: e })),
@@ -7175,9 +7177,9 @@ async function simCalcularRota(){
   // Na ida e volta a corrida termina de novo no embarque
   const fimCorrida = idaVolta ? pontos[0] : pontos[pontos.length-1];
   const [corrida, ate, retorno] = await Promise.all([
-    simMedirRota(pontos[0], pontos[pontos.length-1], pontos.slice(1, -1)),
-    saida ? simMedirRota(saida, pontos[0]) : null,
-    saida && volta ? simMedirRota(fimCorrida, saida) : null,
+    medirRotaGoogle(pontos[0], pontos[pontos.length-1], pontos.slice(1, -1)),
+    saida ? medirRotaGoogle(saida, pontos[0]) : null,
+    saida && volta ? medirRotaGoogle(fimCorrida, saida) : null,
   ]);
   btn.disabled = false; btn.textContent = "Calcular rota";
   if(!corrida){ alert("Não consegui medir a rota com a cliente. Confira os endereços."); return; }
@@ -12938,7 +12940,11 @@ async function selecionarEnderecoGoogle(pred, input, lista, sessionToken){
     const dados = await resp.json();
     if(dados.formattedAddress){ input.value = dados.formattedAddress; input.dispatchEvent(new Event("input", { bubbles: true })); }
   }catch(err){ console.error("Não foi possível obter detalhes do endereço:", err); }
-  finally{ if(wrap && wrap._proximaSessaoEndereco) wrap._proximaSessaoEndereco(); }
+  finally{
+    if(wrap && wrap._proximaSessaoEndereco) wrap._proximaSessaoEndereco();
+    // Endereço escolhido: avisa quem mede rota (modal de Viagem), já com o endereço completo
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 }
 
 document.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
@@ -12988,6 +12994,7 @@ async function abrirListaEnderecosCliente(input, wrap){
     e.preventDefault();
     input.value = itens[Number(el.dataset.i)].end;
     input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
     lista.classList.remove("aberta"); lista.innerHTML = "";
   }));
 }
@@ -13003,6 +13010,71 @@ function abrirRotaMaps(){
   const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}${waypoints}`;
   window.open(url, "_blank");
 }
+
+// Mede km e duração no Google (23/10/2026), mesma regra do Simulador: maior
+// km e maior tempo, trânsito de agora. Roda sozinho quando um endereço muda
+// (evento change: escolher da lista ou sair do campo) e só preenche campo
+// vazio ou que ele mesmo preencheu (dataset.autoValor, igual à chegada
+// prevista); o botão "Medir rota" (forcar) troca até o que foi digitado.
+// Abrir uma viagem salva não mede nada.
+let medicaoRotaViagem = 0;
+function preencherMedidaRota(id, valor, forcar){
+  const campo = document.getElementById(id);
+  if(!forcar && !(campo.value === "" || campo.value === campo.dataset.autoValor)) return false;
+  campo.value = valor;
+  campo.dataset.autoValor = String(valor);
+  return true;
+}
+async function medirRotaViagem(forcar){
+  const origem = document.getElementById("vg-origem-endereco").value.trim();
+  const destino = document.getElementById("vg-destino-endereco").value.trim();
+  const nota = document.getElementById("vg-rota-medida");
+  if(!origem || !destino){
+    if(forcar) alert("Preencha o embarque e o destino antes.");
+    return;
+  }
+  const paradas = paradasModal.map(p=>p.endereco.trim()).filter(Boolean);
+  const temVolta = document.getElementById("vg-tem-volta").checked;
+  const origemVolta = document.getElementById("vg-origem-retorno").value.trim() || destino;
+  const destinoVolta = document.getElementById("vg-destino-retorno").value.trim() || origem;
+  const minha = ++medicaoRotaViagem;
+  nota.style.display = "block";
+  nota.textContent = "Medindo a rota no Google...";
+  const [ida, volta] = await Promise.all([
+    medirRotaGoogle(origem, destino, paradas),
+    temVolta ? medirRotaGoogle(origemVolta, destinoVolta) : null,
+  ]);
+  if(minha !== medicaoRotaViagem) return; // mudou endereço no meio: vale a medição mais nova
+  const kmTxt = n => String(n).replace(".", ",");
+  // Preenche km e minutos de um trecho; o que foi digitado à mão fica e é avisado
+  const trecho = (rotulo, medida, idKm, idMin)=>{
+    const km = Math.round(medida.km * 10) / 10, min = Math.ceil(medida.min);
+    const ficou = [];
+    if(!preencherMedidaRota(idKm, km, forcar)) ficou.push("o km");
+    if(!preencherMedidaRota(idMin, min, forcar)) ficou.push("a duração");
+    return `${rotulo}: ${kmTxt(km)} km, ${min} min` + (ficou.length ? ` (${ficou.join(" e ")} que você digitou ${ficou.length > 1 ? "ficaram" : "ficou"})` : "");
+  };
+  const partes = [];
+  if(ida){
+    partes.push(trecho("Ida", ida, "vg-distancia-km", "vg-duracao-min"));
+    recalcularHorarioChegada();
+  }else partes.push("Ida: não consegui medir, confira os endereços");
+  if(temVolta){
+    if(volta){
+      partes.push(trecho("Volta", volta, "vg-distancia-retorno-km", "vg-duracao-retorno-min"));
+      recalcularHorarioChegadaRetorno();
+    }else partes.push("Volta: não consegui medir");
+  }
+  recalcularCotacao();
+  atualizarAlertaMargem();
+  nota.textContent = partes.join(" · ") + ". Medido no Google com o trânsito de agora, pelo maior caminho. Dá pra trocar à mão.";
+}
+document.getElementById("vg-trajeto-wrap").addEventListener("change", e=>{
+  if(e.target.closest(".campo-endereco")) medirRotaViagem(false);
+});
+["vg-origem-retorno","vg-destino-retorno","vg-tem-volta"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", ()=>medirRotaViagem(false));
+});
 
 // ── Paradas (garupa) dentro do modal de Viagem ──
 // A lista vive em memória enquanto o modal está aberto e é gravada inteira
@@ -14204,6 +14276,10 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-codigo-inicio").value = v.codigo_inicio || "(ainda não gerado)";
   document.getElementById("vg-distancia-km").value = v.distancia_km ?? "";
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
+  // Medição da rota (medirRotaViagem) recomeça do zero a cada abertura
+  medicaoRotaViagem++;
+  ["vg-distancia-km","vg-duracao-min","vg-distancia-retorno-km","vg-duracao-retorno-min"].forEach(c=>{ delete document.getElementById(c).dataset.autoValor; });
+  document.getElementById("vg-rota-medida").style.display = "none";
   // Ida e volta criadas antes de 26/09/2026: o km da ida guardava a soma dos dois trechos
   document.getElementById("vg-distancia-km-dica").textContent = v.data_retorno && v.distancia_km && v.distancia_km_retorno == null
     ? "Viagem antiga: este km é a soma de ida e volta (a volta não foi medida separada)."
