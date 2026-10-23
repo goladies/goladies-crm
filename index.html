@@ -1879,7 +1879,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                      "Cotações guardadas" logo abaixo do Simulador, por 30 dias. -->
                 <div class="sim-guardar">
                   <label>Guardar esta cotação</label>
-                  <input type="text" id="sim-guardar-nome" placeholder="Nome, ex.: Patrícia mecânica">
+                  <input type="text" id="sim-guardar-nome" placeholder="Nome de quem pediu">
                   <select id="sim-guardar-cliente"></select>
                   <button type="button" class="btn small" id="sim-guardar-btn" onclick="guardarCotacaoSimulador()"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Guardar cotação</button>
                 </div>
@@ -7175,7 +7175,7 @@ async function guardarCotacaoSimulador(){
   const clienteId = Number(document.getElementById("sim-guardar-cliente").value) || null;
   const cliente = clienteId ? clientesTransporte.find(c=>c.id === clienteId) : null;
   const nome = document.getElementById("sim-guardar-nome").value.trim() || (cliente ? cliente.nome : "");
-  if(!nome){ alert("Dê um nome pra cotação (ex.: Patrícia mecânica) ou escolha a cliente."); return; }
+  if(!nome){ alert("Dê um nome pra cotação ou escolha a cliente."); return; }
   if(pontos.length < 2 || !km){ alert("Preencha o embarque e o destino e calcule a rota antes de guardar."); return; }
   simular();
   const r = simUltimoResultado || {};
