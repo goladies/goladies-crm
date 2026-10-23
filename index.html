@@ -6631,8 +6631,10 @@ let conversas = [];
 let conversasCarregadoEm = 0;
 let conversasCarregando = false;
 let conversasErro = "";
-let convFiltro = "esperando";
-let convAberta = null;           // telefone da conversa aberta
+// Filtro e conversa aberta ficam no navegador: ao atualizar a página, volta
+// no mesmo lugar (23/10/2026).
+let convFiltro = (()=>{ try{ return localStorage.getItem("crm-conv-filtro") || "esperando"; }catch(_){ return "esperando"; } })();
+let convAberta = (()=>{ try{ return localStorage.getItem("crm-conv-aberta") || null; }catch(_){ return null; } })();   // telefone da conversa aberta
 let convMensagens = [];
 let convMensagensTel = null;
 
@@ -6739,7 +6741,8 @@ async function carregarConversas(forcar){
     conversasCarregando = false;
   }
   desenharConversas();
-  if(forcar && convAberta) abrirConversa(convAberta, true);
+  // Atualizou a página com uma conversa aberta: busca as mensagens dela
+  if(convAberta && (forcar || convMensagensTel !== convAberta)) abrirConversa(convAberta, true);
 }
 
 function renderConversas(){
@@ -6747,7 +6750,7 @@ function renderConversas(){
   carregarConversas(false);
 }
 
-function filtrarConversas(f){ convFiltro = f; desenharConversas(); }
+function filtrarConversas(f){ convFiltro = f; try{ localStorage.setItem("crm-conv-filtro", f); }catch(_){} desenharConversas(); }
 
 // Filtros: "Todas" é só quem é ou pode virar cadastro; Outro assunto vai pra
 // "Outros assuntos" e spam pra "Ignoradas" (fora de todos os outros).
@@ -6825,6 +6828,7 @@ function desenharConversas(){
 
 async function abrirConversa(tel, silencioso){
   convAberta = tel;
+  try{ localStorage.setItem("crm-conv-aberta", tel); }catch(_){}
   document.getElementById("conv-layout").classList.add("aberta");
   if(convMensagensTel !== tel){ convMensagens = []; convMensagensTel = tel; }
   if(!silencioso) desenharConversas();
@@ -6841,6 +6845,7 @@ async function abrirConversa(tel, silencioso){
 
 function fecharConversa(){
   convAberta = null;
+  try{ localStorage.removeItem("crm-conv-aberta"); }catch(_){}
   document.getElementById("conv-layout").classList.remove("aberta");
   desenharConversas();
 }
