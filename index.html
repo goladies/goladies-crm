@@ -1351,6 +1351,12 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 @media (max-width:700px){ .doc-linha{flex-wrap:wrap;} .doc-acoes{width:100%;} }
 .drive-pastas{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
 .drive-pasta{border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
+.mat-campos{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px;}
+.mat-campos label{display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted);}
+.mat-campos textarea{resize:vertical; min-height:52px; font-size:13px;}
+.mat-caixa{border:1px dashed var(--border2); border-radius:10px; padding:8px 10px; margin-top:8px;}
+.mat-hist{margin-top:6px; border-left:3px solid var(--border); padding-left:10px;}
+.mat-hist-item{padding:4px 0;}
 .nd-grade{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
 .nd-degrau{display:flex; align-items:center; gap:10px; font-size:13px; margin:5px 0; cursor:pointer;}
 .nd-degrau .nd-rot{width:170px; flex:none;}
@@ -2432,7 +2438,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="subnav">
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="agenda" onclick="mostrarSubSede('agenda')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Agenda</button>
-        <button type="button" class="subnav-item" data-sede="maturidade" onclick="mostrarSubSede('maturidade')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Maturidade</button>
+        <button type="button" class="subnav-item" data-sede="maturidade" onclick="mostrarSubSede('maturidade')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Maturidade <span class="sede-conta" id="sede-conta-maturidade"></span></button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
         <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Trabalhos</button>
         <button type="button" class="subnav-item" data-sede="documentos" onclick="mostrarSubSede('documentos')"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</button>
@@ -5071,6 +5077,7 @@ async function carregarDadosInterno(){
       sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
       sb.from("sede_maturidade").select("*").order("ordem"),
       sb.from("drive_pastas").select("*").order("ordem").order("nome"),
+      sb.from("sede_maturidade_sugestoes").select("*").eq("status", "Pendente").order("criado_em"),
     ]),
     sb.from("tabelas_preco").select("*").order("ordem").order("id"),
   ].map(c=>Promise.resolve(c));
@@ -5181,7 +5188,7 @@ async function carregarDadosInterno(){
   sedeTrabalhosSqlFaltando = !!rst.error;
   if(!rst.error) sedeTrabalhos = rst.data || [];
   // Documentos e conversa nas pendências (schema_documentos_e_prints.sql): tolerante.
-  const [rdoc, rdpa, rspm, rmat, rdrv] = await q[16];
+  const [rdoc, rdpa, rspm, rmat, rdrv, rmsg] = await q[16];
   documentosSqlFaltando = !!rdoc.error;
   if(!rdoc.error) documentos = rdoc.data || [];
   if(!rdpa.error) documentosPastas = rdpa.data || [];
@@ -5190,6 +5197,7 @@ async function carregarDadosInterno(){
   maturidadeSqlFaltando = !!rmat.error;
   if(!rmat.error) sedeMaturidade = rmat.data || [];
   if(!rdrv.error) drivePastas = rdrv.data || [];
+  if(!rmsg.error) matSugestoes = rmsg.data || [];
   // Tabelas de preço (schema_tabelas_preco.sql): sem o SQL, a cotação segue
   // pela regra antiga (constantes) e a seção mostra o aviso.
   const rtp = await q[17];
@@ -10126,9 +10134,26 @@ function renderDocumentos(){
 const MAT_SITUACOES = ["Sei explicar","Tem lacuna","Hipótese","A avaliar"];
 const MAT_COR = { "Sei explicar":"green", "Tem lacuna":"amber", "Hipótese":"pink", "A avaliar":"gray" };
 const MAT_ARQUIVO = "Planos e estratégia/Checklist de maturidade.md";
+// Respostas (schema_maturidade_respostas.sql): dado, hipótese e o que falta
+// verificar (coluna observacao), quem respondeu, sugestões das agentes e do
+// Claude (Aceitar/Descartar) e a versão do documento quando o CRM e o Drive
+// mudaram no mesmo dia (conflito_drive). A rotina das 18h faz a ponte com o Drive.
+const MAT_CAMPOS = [
+  { campo: "dado", rotulo: "O que já é dado", dica: "Número ou fato, com desde quando e por qual canal" },
+  { campo: "hipotese", rotulo: "O que é hipótese", dica: "O que achamos, mas ainda não testamos" },
+  { campo: "observacao", rotulo: "O que falta verificar", dica: "O que precisa conferir ou medir" },
+];
+const MAT_QUEM = { "documento no drive": "Documento no Drive", claude: "Claude" };
+function matNomeQuem(q){ if(!q) return ""; const k = String(q).toLowerCase(); const a = sedeAgente(k); return MAT_QUEM[k] || (a ? a.nome : q); }
+let matSugestoes = [];
+let matHistoricoAberto = {};   // id do ponto → lista carregada
+function matContaPendentes(){ return matSugestoes.length + sedeMaturidade.filter(m=>m.conflito_drive).length; }
 function renderMaturidade(){
   const lista = document.getElementById("mat-lista"); if(!lista) return;
   document.getElementById("mat-sql-aviso").style.display = maturidadeSqlFaltando ? "block" : "none";
+  const pend = matContaPendentes();
+  const contaEl = document.getElementById("sede-conta-maturidade");
+  if(contaEl) contaEl.textContent = pend || "";
   const total = sedeMaturidade.length;
   const sei = sedeMaturidade.filter(m=>m.situacao==="Sei explicar").length;
   const faixa = sei <= 4 ? "Fundamentos pra organizar" : sei <= 8 ? "Tem base, mas com lacunas" : "Hora de testar a história com investidoras (es)";
@@ -10137,32 +10162,127 @@ function renderMaturidade(){
     <div class="cards" style="margin-bottom:12px;">
       <div class="card"><div class="num">${sei} de ${total}</div><div class="label">Sei explicar · ${escapeHtml(faixa)}</div></div>
       ${MAT_SITUACOES.slice(1).map(s=>`<div class="card"><div class="num">${conta(s)}</div><div class="label">${escapeHtml(s)}</div></div>`).join("")}
-    </div>` : "";
-  lista.innerHTML = sedeMaturidade.map(m=>`
-    <div class="doc-linha" style="cursor:default; align-items:flex-start;">
+    </div>
+    ${pend ? `<p style="font-size:12.5px; margin:-4px 0 12px;"><span class="status-badge amber">${pend} esperando você</span> sugestão de agente ou versão diferente no documento, marcadas nos pontos abaixo.</p>` : ""}` : "";
+  lista.innerHTML = sedeMaturidade.map(m=>{
+    const sugs = matSugestoes.filter(s=>s.maturidade_id===m.id);
+    const hist = matHistoricoAberto[m.id];
+    return `
+    <div class="doc-linha mat-ponto" style="cursor:default; align-items:flex-start;" id="mat-ponto-${m.id}">
       <span class="status-badge ${MAT_COR[m.situacao]||"gray"}" style="min-width:22px; text-align:center;">${m.ordem}</span>
       <div class="doc-txt">
-        <div><b>${escapeHtml(m.ponto)}</b></div>
-        ${m.pergunta ? `<div class="doc-desc">${escapeHtml(m.pergunta)}</div>` : ""}
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><b>${escapeHtml(m.ponto)}</b>
           <select onchange="salvarMaturidade(${m.id}, {situacao:this.value})" style="max-width:150px;" aria-label="Situação de ${escapeHtml(m.ponto)}">
             ${MAT_SITUACOES.map(s=>`<option${s===m.situacao?" selected":""}>${escapeHtml(s)}</option>`).join("")}
           </select>
+        </div>
+        ${m.pergunta ? `<div class="doc-desc">${escapeHtml(m.pergunta)}</div>` : ""}
+        ${m.conflito_drive ? matHtmlConflito(m) : ""}
+        <div class="mat-campos">
+          ${MAT_CAMPOS.map(c=>`<label>${c.rotulo}<textarea rows="2" placeholder="${escapeHtml(c.dica)}" onchange="salvarMaturidade(${m.id}, {${c.campo}:this.value.trim()||null})">${escapeHtml(m[c.campo]||"")}</textarea></label>`).join("")}
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
           <input type="text" value="${escapeHtml(m.onde||"")}" placeholder="Onde está a resposta" style="flex:1; min-width:180px;" onchange="salvarMaturidade(${m.id}, {onde:this.value.trim()||null})" aria-label="Onde está a resposta">
           <input type="url" value="${escapeHtml(m.link||"")}" placeholder="Link (opcional)" style="flex:1; min-width:160px;" onchange="salvarMaturidade(${m.id}, {link:this.value.trim()||null})" aria-label="Link da resposta">
           ${m.link ? `<a class="btn ghost small" href="${escapeHtml(m.link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>` : ""}
         </div>
-        <input type="text" value="${escapeHtml(m.observacao||"")}" placeholder="O que falta verificar (opcional)" style="margin-top:6px; width:100%;" onchange="salvarMaturidade(${m.id}, {observacao:this.value.trim()||null})" aria-label="O que falta verificar">
-        <div class="doc-meta">atualizado em ${sedeData(m.atualizado_em)}</div>
+        ${sugs.map(matHtmlSugestao).join("")}
+        <div class="doc-meta">${m.respondido_por ? `Respondido por ${escapeHtml(matNomeQuem(m.respondido_por))} · ` : ""}atualizado em ${sedeData(m.atualizado_em)}
+          · <a href="#" onclick="alternarHistoricoMaturidade(${m.id}); return false;">${hist ? "Esconder histórico" : "Ver histórico"}</a></div>
+        ${hist ? matHtmlHistorico(hist) : ""}
       </div>
-    </div>`).join("") || (maturidadeSqlFaltando ? "" : `<div class="sede-vazio">Nenhum ponto ainda.</div>`);
+    </div>`;
+  }).join("") || (maturidadeSqlFaltando ? "" : `<div class="sede-vazio">Nenhum ponto ainda.</div>`);
+}
+function matResumoCampos(x){
+  const linhas = [];
+  if(x.situacao) linhas.push(`<b>Situação:</b> ${escapeHtml(x.situacao)}`);
+  MAT_CAMPOS.forEach(c=>{
+    const v = c.campo === "observacao" ? (x.observacao ?? x.falta_verificar) : x[c.campo];
+    if(v) linhas.push(`<b>${c.rotulo}:</b> ${escapeHtml(v)}`);
+  });
+  if(x.onde) linhas.push(`<b>Onde está:</b> ${escapeHtml(x.onde)}`);
+  if(x.link) linhas.push(`<b>Link:</b> ${escapeHtml(x.link)}`);
+  return linhas.join("<br>") || "<i>sem texto</i>";
+}
+function matHtmlSugestao(s){
+  return `<div class="mat-caixa">
+    <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+      <b><svg class=ic aria-hidden=true><use href=#i-sparkles /></svg> Sugestão de ${escapeHtml(matNomeQuem(s.agente))} · ${sedeData(s.criado_em)}</b>
+      <span style="display:flex; gap:6px;">
+        <button type="button" class="btn small" onclick="decidirSugestaoMaturidade(${s.id}, true)">Aceitar</button>
+        <button type="button" class="btn ghost small" onclick="decidirSugestaoMaturidade(${s.id}, false)">Descartar</button>
+      </span>
+    </div>
+    ${s.motivo ? `<div class="doc-desc" style="margin:4px 0;">${escapeHtml(s.motivo)}</div>` : ""}
+    <div style="font-size:12.5px;">${matResumoCampos(s)}</div>
+    <div class="doc-meta">Aceitar troca só os campos que a sugestão preenche; os outros ficam como estão.</div>
+  </div>`;
+}
+function matHtmlConflito(m){
+  const c = m.conflito_drive || {};
+  return `<div class="mat-caixa" style="border-color:var(--c-amber);">
+    <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+      <b><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> O documento do Drive tinha outra versão (${sedeData(c.em)})</b>
+      <span style="display:flex; gap:6px;">
+        <button type="button" class="btn small" onclick="resolverConflitoMaturidade(${m.id}, true)">Usar a do documento</button>
+        <button type="button" class="btn ghost small" onclick="resolverConflitoMaturidade(${m.id}, false)">Manter a do CRM</button>
+      </span>
+    </div>
+    <div style="font-size:12.5px; margin-top:4px;">${matResumoCampos(c)}</div>
+    <div class="doc-meta">O CRM e o documento mudaram no mesmo dia. Por enquanto vale a do CRM, que já foi pro documento.</div>
+  </div>`;
+}
+function matHtmlHistorico(lista){
+  if(!lista.length) return `<div class="doc-meta">Nenhuma versão anterior ainda.</div>`;
+  return `<div class="mat-hist">${lista.map(h=>`<div class="mat-hist-item">
+    <div class="doc-meta">Até ${sedeData(h.valido_ate)}${h.respondido_por ? ` · por ${escapeHtml(matNomeQuem(h.respondido_por))}` : ""}</div>
+    <div style="font-size:12.5px;">${matResumoCampos(h)}</div></div>`).join("")}</div>`;
+}
+async function alternarHistoricoMaturidade(id){
+  if(matHistoricoAberto[id]){ delete matHistoricoAberto[id]; renderMaturidade(); return; }
+  const { data, error } = await sb.from("sede_maturidade_historico").select("*").eq("maturidade_id", id).order("valido_ate", { ascending: false }).limit(30);
+  if(error){ alert(/sede_maturidade_historico/.test(error.message) ? "Falta rodar o schema_maturidade_respostas.sql no Supabase (SQL Editor)." : "Erro: " + error.message); return; }
+  matHistoricoAberto[id] = data || [];
+  renderMaturidade();
 }
 async function salvarMaturidade(id, mudanca){
-  const { data, error } = await sb.from("sede_maturidade").update({ ...mudanca, atualizado_em: new Date().toISOString() }).eq("id", id).select().single();
+  const { data, error } = await sb.from("sede_maturidade").update({ ...mudanca, respondido_por: sagEu(), atualizado_em: new Date().toISOString() }).eq("id", id).select().single();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   sedeMaturidade = sedeMaturidade.map(m=>m.id===id ? data : m);
+  if(matHistoricoAberto[id]) delete matHistoricoAberto[id];
   renderMaturidade();
   showToast("Salvo!");
+}
+async function decidirSugestaoMaturidade(sid, aceitar){
+  const s = matSugestoes.find(x=>x.id===sid); if(!s) return;
+  if(aceitar){
+    const mudanca = {};
+    ["situacao","dado","hipotese","observacao","onde","link"].forEach(k=>{ if(s[k] != null && s[k] !== "") mudanca[k] = s[k]; });
+    const { data, error } = await sb.from("sede_maturidade").update({ ...mudanca, respondido_por: s.agente, atualizado_em: new Date().toISOString() }).eq("id", s.maturidade_id).select().single();
+    if(error){ alert("Erro ao aceitar: " + error.message); return; }
+    sedeMaturidade = sedeMaturidade.map(m=>m.id===s.maturidade_id ? data : m);
+    delete matHistoricoAberto[s.maturidade_id];
+  }
+  const r = await sb.from("sede_maturidade_sugestoes").update({ status: aceitar ? "Aceita" : "Descartada", decidido_em: new Date().toISOString(), decidido_por: usuariaAtual ? usuariaAtual.id : null }).eq("id", sid);
+  if(r.error){ alert("Erro: " + r.error.message); return; }
+  matSugestoes = matSugestoes.filter(x=>x.id!==sid);
+  renderMaturidade();
+  showToast(aceitar ? "Sugestão aceita" : "Sugestão descartada");
+}
+async function resolverConflitoMaturidade(id, usarDocumento){
+  const m = sedeMaturidade.find(x=>x.id===id); if(!m || !m.conflito_drive) return;
+  const c = m.conflito_drive;
+  // Manter a do CRM também carimba a hora: a rotina leva o CRM pro documento de novo.
+  const mudanca = usarDocumento
+    ? { situacao: c.situacao || m.situacao, dado: c.dado || null, hipotese: c.hipotese || null, observacao: c.falta_verificar || null, onde: c.onde || null, link: c.link || null, respondido_por: "Documento no Drive" }
+    : {};
+  const { data, error } = await sb.from("sede_maturidade").update({ ...mudanca, conflito_drive: null, atualizado_em: new Date().toISOString() }).eq("id", id).select().single();
+  if(error){ alert("Erro: " + error.message); return; }
+  sedeMaturidade = sedeMaturidade.map(x=>x.id===id ? data : x);
+  delete matHistoricoAberto[id];
+  renderMaturidade();
+  showToast(usarDocumento ? "Ficou a versão do documento" : "Ficou a versão do CRM");
 }
 function abrirChecklistMaturidade(){
   const d = documentos.find(x=>x.arquivo===MAT_ARQUIVO);
