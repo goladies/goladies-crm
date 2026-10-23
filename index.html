@@ -1349,6 +1349,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .doc-meta{font-size:12px; color:var(--muted); margin-top:2px; word-break:break-word;}
 .doc-acoes{flex:none;}
 @media (max-width:700px){ .doc-linha{flex-wrap:wrap;} .doc-acoes{width:100%;} }
+.drive-pastas{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
+.drive-pasta{border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
+.nd-grade{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+.nd-degrau{display:flex; align-items:center; gap:10px; font-size:13px; margin:5px 0; cursor:pointer;}
+.nd-degrau .nd-rot{width:170px; flex:none;}
+.nd-degrau .nd-barra{height:16px; border-radius:4px; background:var(--pink); opacity:.75; min-width:2px;}
+.nd-degrau:hover .nd-barra{opacity:1;}
+.nd-linha{display:flex; justify-content:space-between; gap:8px; font-size:12.5px; padding:5px 0; border-top:1px solid var(--border);}
 .sede-pergunta-form{margin-top:8px; cursor:default;}
 .sede-pergunta-form textarea{width:100%;}
 .sede-trabalho{border:1px solid var(--border); border-radius:10px; background:var(--bg-card); margin-bottom:8px;}
@@ -1569,7 +1577,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     <div id="contatos-leads">
       <div class="pagehead">
-        <div><h2>Leads</h2><p>Todo contato recebido pelo site, WhatsApp ou indicação</p></div>
+        <div><h2>Leads</h2><p>Todo contato recebido pelo site, WhatsApp ou indicação. Quem se cadastrou no transporte e ainda não viajou aparece com a etiqueta Transporte.</p></div>
         <button class="btn" onclick="openLeadModal()">+ Novo lead</button>
       </div>
       <div class="filters">
@@ -1593,7 +1601,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
            concluída, lead em "Fechado - Ganho"/"Cliente ativo", orçamento
            aceito ou venda. A visão da operação continua em Clientes transporte. -->
       <div class="pagehead">
-        <div><h2>Clientes</h2><p>Todo mundo que já comprou da Go Ladies, uma linha por pessoa. A operação das viagens fica em Transporte › Clientes transporte.</p></div>
+        <div><h2>Clientes</h2><p>Todo mundo que já comprou da Go Ladies, uma linha por pessoa. A operação das viagens fica em Transporte › Contatos transporte.</p></div>
         <button class="btn secondary" onclick="exportarClientesGeralCsv()"><svg class=ic aria-hidden=true><use href=#i-download /></svg> CSV</button>
       </div>
       <div class="filters">
@@ -1755,10 +1763,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
 
     <div id="tab-transporte" style="display:none;">
-      <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, clientes de viagem, viagens e avaliações</p></div></div>
+      <div class="pagehead"><div><h2>Transporte</h2><p>Motoristas, contatos de viagem, viagens e avaliações</p></div></div>
       <div class="subnav">
         <button type="button" class="subnav-item active" data-subtab="viagens" onclick="mostrarSubTab('viagens')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Viagens</button>
-        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Clientes transporte</button>
+        <button type="button" class="subnav-item" data-subtab="clientes-transporte" onclick="mostrarSubTab('clientes-transporte')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Contatos transporte</button>
         <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
@@ -1796,14 +1804,37 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
       </div>
 
+      <!-- Contatos transporte (23/10/2026): Leads transporte = cadastro sem
+           viagem concluída + cotação guardada ligada a uma lead; Clientes
+           transporte = pelo menos 1 viagem concluída (paga ou "a receber"). -->
       <div id="subtab-clientes-transporte" style="display:none;">
         <div class="pagehead">
-          <div><h2 style="font-size:16px;">Clientes transporte</h2><p>Quem solicita viagens sob demanda, particular ou empresarial (os leads e clientes de compra, venda e manutenção ficam em Contatos)</p></div>
-          <button class="btn" onclick="openClienteTransporteModal()">+ Nova cliente</button>
+          <div><h2 style="font-size:16px;">Contatos transporte</h2><p>Quem se cadastrou ou pediu cotação de viagem. Os leads e clientes de todos os serviços ficam em Contatos.</p></div>
+          <button class="btn" onclick="openClienteTransporteModal()">+ Novo cadastro</button>
         </div>
+        <div class="subnav" style="margin-bottom:10px;">
+          <button type="button" class="subnav-item" data-ctsub="leads" onclick="mostrarContatosTransporte('leads')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Leads transporte <span class="sede-conta" id="ct-conta-leads"></span></button>
+          <button type="button" class="subnav-item active" data-ctsub="clientes" onclick="mostrarContatosTransporte('clientes')"><svg class=ic aria-hidden=true><use href=#i-heart /></svg> Clientes transporte <span class="sede-conta" id="ct-conta-clientes"></span></button>
+        </div>
+        <div id="ct-leads-wrap" style="display:none;">
+          <div class="filters">
+            <select id="filter-ct-situacao" onchange="renderLeadsTransporte()">
+              <option value="">Todas as situações</option>
+              <option>Ainda não viajou</option><option>Viagem marcada</option><option>Só cancelou</option><option>Cotou</option>
+            </select>
+            <input type="text" id="filter-ct-busca" placeholder="Buscar por nome ou telefone..." oninput="renderLeadsTransporte()">
+          </div>
+          <div class="panel">
+            <table class="tbl">
+              <thead><tr id="thead-leads-transporte"></tr></thead>
+              <tbody id="leads-transporte-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="ct-clientes-wrap">
         <div class="filters">
           <select id="filter-cliente-segmento" onchange="renderTransporteClientes()"><option value="">Todos os segmentos</option></select>
-          <select id="filter-pessoa-clientes" onchange="renderTransporteClientes()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
+          <select id="filter-pessoa-ct" onchange="renderTransporteClientes()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">Viagens de <input type="date" id="filter-cliente-de" onchange="renderTransporteClientes()"></label>
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);">até <input type="date" id="filter-cliente-ate" onchange="renderTransporteClientes()"></label>
           <button type="button" class="act" onclick="limparPeriodoClientes()">Limpar período</button>
@@ -1815,6 +1846,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <thead><tr id="thead-clientes-transporte"></tr></thead>
             <tbody id="clientes-transporte-body"></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -2310,6 +2342,34 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="cards" id="gestao-cards"></div>
       <div class="panel" id="gestao-detalhe" style="display:none;"></div>
 
+      <!-- Números do negócio (23/10/2026): o que a aula da Julia Cohen pede pra
+           contar a história das clientes (escada da validação, quanto pagaram,
+           em quanto tempo, quantas voltaram, de onde vieram). Lê o que o CRM já
+           carrega; não tem tabela própria. -->
+      <div class="panel" id="nd-painel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div><h3><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Números do negócio</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">A história das clientes em cada serviço: quem chegou no período e o que fez depois. Clique num número para ver as pessoas.</p></div>
+          <select id="nd-periodo" onchange="renderNumerosNegocio()" aria-label="Quem chegou">
+            <option value="">Quem chegou: desde o início</option>
+            <option value="365">Nos últimos 12 meses</option>
+            <option value="90">Nos últimos 90 dias</option>
+            <option value="30">Nos últimos 30 dias</option>
+          </select>
+        </div>
+        <div class="filters" id="nd-servicos"></div>
+        <div class="cards" id="nd-cards"></div>
+        <h4 style="margin:14px 0 6px; font-size:13px;">Escada da validação</h4>
+        <div id="nd-escada"></div>
+        <div id="nd-detalhe" style="display:none; margin-top:12px;"></div>
+        <div class="nd-grade">
+          <div><h4 style="margin:14px 0 6px; font-size:13px;">De onde vieram as clientes que pagaram</h4><div id="nd-origem"></div></div>
+          <div><h4 style="margin:14px 0 6px; font-size:13px;">Pago por mês (últimos 6)</h4><div id="nd-meses"></div></div>
+        </div>
+        <h4 style="margin:14px 0 6px; font-size:13px;">Fôlego e motoristas</h4>
+        <div class="cards" id="nd-folego"></div>
+      </div>
+
       <div class="panel">
         <h3><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Pendências</h3>
         <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O que está previsto e ainda não foi registrado. Enquanto isso não for resolvido, os números acima ficam incompletos.</p>
@@ -2372,6 +2432,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="subnav">
         <button type="button" class="subnav-item active" data-sede="equipe" onclick="mostrarSubSede('equipe')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Equipe</button>
         <button type="button" class="subnav-item" data-sede="agenda" onclick="mostrarSubSede('agenda')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Agenda</button>
+        <button type="button" class="subnav-item" data-sede="maturidade" onclick="mostrarSubSede('maturidade')"><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> Maturidade</button>
         <button type="button" class="subnav-item" data-sede="hoje" onclick="mostrarSubSede('hoje')"><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Hoje</button>
         <button type="button" class="subnav-item" data-sede="trabalhos" onclick="mostrarSubSede('trabalhos')"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Trabalhos</button>
         <button type="button" class="subnav-item" data-sede="documentos" onclick="mostrarSubSede('documentos')"><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Documentos</button>
@@ -2433,6 +2494,22 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
       </div>
 
+      <!-- Maturidade (23/10/2026, schema_maturidade_e_pastas_drive.sql): os 11
+           pontos da aula da Julia Cohen. O guia fica no Drive (Checklist de
+           maturidade.md); aqui fica a situação de cada ponto e o placar. -->
+      <div id="sede-maturidade" style="display:none;">
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div><h3><svg class=ic aria-hidden=true><use href=#i-chart-bar /></svg> A Go Ladies se explica sozinha?</h3>
+            <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">Os 11 pontos que uma investidora (or) olha. Marque o que já dá pra explicar e sustentar hoje, separando dado, hipótese e o que falta verificar. O guia de cada ponto está no checklist do Drive.</p></div>
+            <button type="button" class="btn secondary small" onclick="abrirChecklistMaturidade()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Abrir o checklist</button>
+          </div>
+          <div class="sede-vazio" id="mat-sql-aviso" style="display:none; border:1px dashed var(--c-amber); border-radius:10px; padding:10px 12px; margin-bottom:12px;">Para marcar os pontos aqui, falta rodar o <b>crm/schema_maturidade_e_pastas_drive.sql</b> no SQL Editor do Supabase.</div>
+          <div id="mat-placar"></div>
+          <div id="mat-lista"></div>
+        </div>
+      </div>
+
       <div id="sede-hoje" style="display:none;">
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-sunrise /></svg> Resumo da Gabi</h3>
@@ -2474,6 +2551,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <option>Rascunho</option><option>Revisar com advogado</option><option>Vigente</option><option>Referência</option><option>Antigo</option>
             </select>
           </div>
+        </div>
+        <div class="panel" id="drive-pastas-box" style="display:none;">
+          <h3><svg class=ic aria-hidden=true><use href=#i-folder /></svg> Pastas importantes do Drive</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">O que fica fora de Sede › Documentos. Cole o link de cada pasta uma vez e ela passa a abrir direto daqui.</p>
+          <div class="drive-pastas" id="drive-pastas"></div>
         </div>
         <div id="doc-lista"></div>
       </div>
@@ -4312,6 +4394,7 @@ let finConferencias = [];
 let lcSqlFaltando = false;
 let sedePedidos = [], sedeResumos = [], sedePendencias = [], sedeDecisoes = [];
 let documentos = [], documentosPastas = [], documentosSqlFaltando = false, sedePendMensagens = [];
+let sedeMaturidade = [], maturidadeSqlFaltando = false, drivePastas = [];
 let sedeTrabalhos = [], sedeTrabalhosSqlFaltando = false;
 let sedeAgenda = [], sedeAgendaSqlFaltando = false;
 let sedeSqlFaltando = false;
@@ -4986,6 +5069,8 @@ async function carregarDadosInterno(){
       sb.from("documentos").select("*").order("categoria").order("nome"),
       sb.from("documentos_pastas").select("*"),
       sb.from("sede_pendencia_mensagens").select("*").order("criado_em"),
+      sb.from("sede_maturidade").select("*").order("ordem"),
+      sb.from("drive_pastas").select("*").order("ordem").order("nome"),
     ]),
     sb.from("tabelas_preco").select("*").order("ordem").order("id"),
   ].map(c=>Promise.resolve(c));
@@ -5096,11 +5181,15 @@ async function carregarDadosInterno(){
   sedeTrabalhosSqlFaltando = !!rst.error;
   if(!rst.error) sedeTrabalhos = rst.data || [];
   // Documentos e conversa nas pendências (schema_documentos_e_prints.sql): tolerante.
-  const [rdoc, rdpa, rspm] = await q[16];
+  const [rdoc, rdpa, rspm, rmat, rdrv] = await q[16];
   documentosSqlFaltando = !!rdoc.error;
   if(!rdoc.error) documentos = rdoc.data || [];
   if(!rdpa.error) documentosPastas = rdpa.data || [];
   if(!rspm.error) sedePendMensagens = rspm.data || [];
+  // Maturidade e pastas do Drive (schema_maturidade_e_pastas_drive.sql): tolerante.
+  maturidadeSqlFaltando = !!rmat.error;
+  if(!rmat.error) sedeMaturidade = rmat.data || [];
+  if(!rdrv.error) drivePastas = rdrv.data || [];
   // Tabelas de preço (schema_tabelas_preco.sql): sem o SQL, a cotação segue
   // pela regra antiga (constantes) e a seção mostra o aviso.
   const rtp = await q[17];
@@ -6262,7 +6351,7 @@ function mensagemAniversario(c){
 function renderLeads(){
   const fe = document.getElementById("filter-etapa"), fc = document.getElementById("filter-categoria");
   if(!fe.dataset.filled){ fillSelect(fe, ["",...ETAPAS], ""); fe.querySelector("option").textContent="Todas as etapas"; fe.dataset.filled=1; }
-  if(!fc.dataset.filled){ fillSelect(fc, ["",...CATEGORIAS], ""); fc.querySelector("option").textContent="Todas as categorias"; fc.dataset.filled=1; }
+  if(!fc.dataset.filled){ fillSelect(fc, ["",...new Set([...CATEGORIAS, "Transporte"])], ""); fc.querySelector("option").textContent="Todas as categorias"; fc.dataset.filled=1; }
   const etapaF = fe.value, catF = fc.value, buscaF = document.getElementById("filter-busca").value.toLowerCase();
   renderCabecalho("thead-leads", [
     {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Categoria / Serviço", campo:"categoria"},
@@ -6272,12 +6361,30 @@ function renderLeads(){
   const chip = document.getElementById("filter-servico-chip");
   chip.style.display = filtroServicoLeads ? "" : "none";
   chip.innerHTML = filtroServicoLeads ? `Serviço: ${escapeHtml(filtroServicoLeads)} <button type="button" class="icon-btn" style="font-size:11px;" aria-label="Tirar filtro" onclick="filtroServicoLeads=''; renderLeads();">✕</button>` : "";
-  const filtered = aplicarOrdenacao("leads", leads.filter(l=>
-    (!filtroServicoLeads || l.servico===filtroServicoLeads) &&
-    (!etapaF || l.etapa===etapaF) && (!catF || l.categoria===catF) &&
+  // Leads transporte (cadastro sem viagem concluída) entram aqui com a etiqueta
+  // Transporte, menos quem já tem lead (mesmo cadastro_id). Só sem filtro de etapa.
+  const cadLeads = new Set(leads.filter(l=>l.cadastro_id != null).map(l=>l.cadastro_id));
+  const doTransporte = (etapaF || filtroServicoLeads || (catF && catF!=="Transporte")) ? [] :
+    montarLeadsTransporte().filter(t=>t.tipo==="ct" && (t.cadastro_id == null || !cadLeads.has(t.cadastro_id))).map(t=>({
+      ...t.base, _ct: true, categoria: "Transporte", etapa: t.situacao, origem: t.entrou, data: t.desde
+    }));
+  const filtered = aplicarOrdenacao("leads", [...leads, ...doTransporte].filter(l=>
+    (l._ct || (
+      (!filtroServicoLeads || l.servico===filtroServicoLeads) &&
+      (!etapaF || l.etapa===etapaF) && (!catF || l.categoria===catF))) &&
     (!buscaF || l.nome.toLowerCase().includes(buscaF)) && filtroPessoaOk("filter-pessoa-leads", l)
   ));
-  document.getElementById("leads-body").innerHTML = filtered.map(l=>`
+  document.getElementById("leads-body").innerHTML = filtered.map(l=>l._ct ? `
+    <tr class="tr-click" onclick="openClienteTransporteModal(${l.id})">
+      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)} <span class="tag novo">Transporte</span></td>
+      <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
+      <td>Transporte</td>
+      <td>-</td>
+      <td><span class="status-badge ${SITUACAO_LEAD_TRANSPORTE_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td>
+      <td>${escapeHtml(l.origem||"-")}</td>
+      <td>${l.data ? formatarDataBR(l.data) : "-"}</td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Abrir</button></td>
+    </tr>` : `
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
       <td><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
@@ -7077,7 +7184,7 @@ function aplicarRotulos(){
   });
 }
 
-function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderSede(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderNumerosNegocio(); renderSede(); renderMaturidade(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -7389,6 +7496,7 @@ async function carregarCotacoesGuardadas(){
   cotacoesSqlFaltando = !!error;
   cotacoesGuardadas = error ? [] : (data || []);
   renderCotacoesGuardadas();
+  renderLeadsTransporte();
 }
 function renderCotacoesGuardadas(){
   const el = document.getElementById("cotacoes-guardadas-lista");
@@ -8406,7 +8514,11 @@ function restaurarSubAba(aba){
   let sub = null;
   try{ sub = localStorage.getItem("crm-ultima-sub-"+aba); }catch(_){}
   if(!sub) return;
-  if(aba==="transporte" && document.querySelector(`#tab-transporte #subtab-${CSS.escape(sub)}`)) mostrarSubTab(sub);
+  if(aba==="transporte" && document.querySelector(`#tab-transporte #subtab-${CSS.escape(sub)}`)){
+    mostrarSubTab(sub);
+    if(sub==="clientes-transporte") restaurarSubAba("contatos-transporte");
+  }
+  else if(aba==="contatos-transporte" && (sub==="leads" || sub==="clientes")) mostrarContatosTransporte(sub);
   else if(aba==="financeiro" && document.querySelector(`#tab-financeiro #subtab-${CSS.escape(sub)}`)) mostrarSubTabFinanceiro(sub);
   else if(aba==="sede" && SEDE_ABAS.includes(sub)) mostrarSubSede(sub);
   else if(aba==="contatos" && (sub==="leads" || sub==="clientes")) mostrarSubContatos(sub);
@@ -8688,7 +8800,7 @@ const SEDE_PESSOAS = [
 ];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
   green:["var(--c-green)","var(--c-green-bg)"], teal:["var(--c-teal)","var(--c-teal-bg)"], gray:["var(--c-gray)","var(--c-gray-bg)"] };
-const SEDE_ABAS = ["equipe","agenda","hoje","trabalhos","documentos","pedidos","decisoes","pendencias"];
+const SEDE_ABAS = ["equipe","agenda","maturidade","hoje","trabalhos","documentos","pedidos","decisoes","pendencias"];
 
 function sedeAgente(id){ return SEDE_AGENTES.find(a=>a.id===id); }
 function sedeMembro(id){ return SEDE_PESSOAS.find(a=>a.id===id) || sedeAgente(id); }
@@ -9928,7 +10040,40 @@ const DOC_SITUACAO_COR = { "Rascunho":"gray", "Revisar com advogado":"amber", "V
 const DOC_DRIVE_RAIZ = "Meu Drive › Sede › Documentos";
 let documentoEditando = null;
 function docLinkPasta(cat){ const p = documentosPastas.find(x=>x.categoria===cat); return p && p.link ? p.link : ""; }
+// Pastas importantes do Drive fora de Sede › Documentos (drive_pastas,
+// schema_maturidade_e_pastas_drive.sql). Sem o SQL, a caixa some.
+function renderDrivePastas(){
+  const box = document.getElementById("drive-pastas-box"); if(!box) return;
+  box.style.display = drivePastas.length ? "block" : "none";
+  document.getElementById("drive-pastas").innerHTML = drivePastas.map(p=>`
+    <div class="drive-pasta">
+      <div><b><svg class=ic aria-hidden=true><use href=#i-folder /></svg> ${escapeHtml(p.nome)}</b></div>
+      ${p.descricao ? `<div class="doc-desc">${escapeHtml(p.descricao)}</div>` : ""}
+      <div class="doc-meta">${escapeHtml(p.caminho)}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+        ${p.link ? `<a class="btn secondary small" href="${escapeHtml(p.link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>`
+          : `<button type="button" class="btn ghost small" onclick="copiarCaminhoDrivePasta(${p.id})"><svg class=ic aria-hidden=true><use href=#i-copy /></svg> Onde está</button>`}
+        <button type="button" class="btn ghost small" onclick="definirLinkDrivePasta(${p.id})">${p.link ? "Trocar link" : "Colar link"}</button>
+      </div>
+    </div>`).join("");
+}
+function copiarCaminhoDrivePasta(id){
+  const p = drivePastas.find(x=>x.id===id); if(!p) return;
+  navigator.clipboard?.writeText(p.caminho);
+  showToast("Copiado: " + p.caminho);
+}
+async function definirLinkDrivePasta(id){
+  const p = drivePastas.find(x=>x.id===id); if(!p) return;
+  const link = prompt(`Link da pasta "${p.nome}" no Google Drive (deixe vazio para tirar):`, p.link || "");
+  if(link === null) return;
+  const r = await sb.from("drive_pastas").update({ link: link.trim() || null }).eq("id", id).select().single();
+  if(r.error){ alert("Erro ao salvar: " + r.error.message); return; }
+  drivePastas = drivePastas.map(x=>x.id===id ? r.data : x);
+  renderDrivePastas();
+  showToast("Link salvo!");
+}
 function renderDocumentos(){
+  renderDrivePastas();
   const box = document.getElementById("doc-lista"); if(!box) return;
   document.getElementById("doc-aviso-sql").style.display = documentosSqlFaltando ? "block" : "none";
   const cats = [...new Set([...documentosPastas.map(p=>p.categoria), ...documentos.map(d=>d.categoria)])].sort((a,b)=>(a==="Versões antigas")-(b==="Versões antigas") || a.localeCompare(b));
@@ -9975,6 +10120,59 @@ function renderDocumentos(){
     </div>`;
   }).join("");
 }
+// ===== SEDE › MATURIDADE (23/10/2026) =====
+// Os 11 pontos do checklist da aula da Julia Cohen. Placar = quantos estão em
+// "Sei explicar"; as faixas (0-4, 5-8, 9-11) são as da aula.
+const MAT_SITUACOES = ["Sei explicar","Tem lacuna","Hipótese","A avaliar"];
+const MAT_COR = { "Sei explicar":"green", "Tem lacuna":"amber", "Hipótese":"pink", "A avaliar":"gray" };
+const MAT_ARQUIVO = "Planos e estratégia/Checklist de maturidade.md";
+function renderMaturidade(){
+  const lista = document.getElementById("mat-lista"); if(!lista) return;
+  document.getElementById("mat-sql-aviso").style.display = maturidadeSqlFaltando ? "block" : "none";
+  const total = sedeMaturidade.length;
+  const sei = sedeMaturidade.filter(m=>m.situacao==="Sei explicar").length;
+  const faixa = sei <= 4 ? "Fundamentos pra organizar" : sei <= 8 ? "Tem base, mas com lacunas" : "Hora de testar a história com investidoras (es)";
+  const conta = s => sedeMaturidade.filter(m=>m.situacao===s).length;
+  document.getElementById("mat-placar").innerHTML = total ? `
+    <div class="cards" style="margin-bottom:12px;">
+      <div class="card"><div class="num">${sei} de ${total}</div><div class="label">Sei explicar · ${escapeHtml(faixa)}</div></div>
+      ${MAT_SITUACOES.slice(1).map(s=>`<div class="card"><div class="num">${conta(s)}</div><div class="label">${escapeHtml(s)}</div></div>`).join("")}
+    </div>` : "";
+  lista.innerHTML = sedeMaturidade.map(m=>`
+    <div class="doc-linha" style="cursor:default; align-items:flex-start;">
+      <span class="status-badge ${MAT_COR[m.situacao]||"gray"}" style="min-width:22px; text-align:center;">${m.ordem}</span>
+      <div class="doc-txt">
+        <div><b>${escapeHtml(m.ponto)}</b></div>
+        ${m.pergunta ? `<div class="doc-desc">${escapeHtml(m.pergunta)}</div>` : ""}
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <select onchange="salvarMaturidade(${m.id}, {situacao:this.value})" style="max-width:150px;" aria-label="Situação de ${escapeHtml(m.ponto)}">
+            ${MAT_SITUACOES.map(s=>`<option${s===m.situacao?" selected":""}>${escapeHtml(s)}</option>`).join("")}
+          </select>
+          <input type="text" value="${escapeHtml(m.onde||"")}" placeholder="Onde está a resposta" style="flex:1; min-width:180px;" onchange="salvarMaturidade(${m.id}, {onde:this.value.trim()||null})" aria-label="Onde está a resposta">
+          <input type="url" value="${escapeHtml(m.link||"")}" placeholder="Link (opcional)" style="flex:1; min-width:160px;" onchange="salvarMaturidade(${m.id}, {link:this.value.trim()||null})" aria-label="Link da resposta">
+          ${m.link ? `<a class="btn ghost small" href="${escapeHtml(m.link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>` : ""}
+        </div>
+        <input type="text" value="${escapeHtml(m.observacao||"")}" placeholder="O que falta verificar (opcional)" style="margin-top:6px; width:100%;" onchange="salvarMaturidade(${m.id}, {observacao:this.value.trim()||null})" aria-label="O que falta verificar">
+        <div class="doc-meta">atualizado em ${sedeData(m.atualizado_em)}</div>
+      </div>
+    </div>`).join("") || (maturidadeSqlFaltando ? "" : `<div class="sede-vazio">Nenhum ponto ainda.</div>`);
+}
+async function salvarMaturidade(id, mudanca){
+  const { data, error } = await sb.from("sede_maturidade").update({ ...mudanca, atualizado_em: new Date().toISOString() }).eq("id", id).select().single();
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  sedeMaturidade = sedeMaturidade.map(m=>m.id===id ? data : m);
+  renderMaturidade();
+  showToast("Salvo!");
+}
+function abrirChecklistMaturidade(){
+  const d = documentos.find(x=>x.arquivo===MAT_ARQUIVO);
+  const link = d ? (d.link || docLinkPasta(d.categoria)) : docLinkPasta("Planos e estratégia");
+  if(link){ window.open(link, "_blank", "noopener"); return; }
+  const caminho = `${DOC_DRIVE_RAIZ} › ${MAT_ARQUIVO.split("/").join(" › ")}`;
+  navigator.clipboard?.writeText(caminho);
+  showToast("Ainda sem link. Copiado: " + caminho);
+}
+
 function copiarCaminhoDoc(id){
   const d = documentos.find(x=>x.id===id); if(!d) return;
   const caminho = `${DOC_DRIVE_RAIZ} › ${(d.arquivo||"").split("/").join(" › ")}`;
@@ -12789,7 +12987,10 @@ function renderTransporteClientes(){
     {label:"Pago", campo:"pago", tipo:"numero"}, {label:"Pendente", campo:"pendente", tipo:"numero"},
     {label:"Nota", campo:"nota", tipo:"numero"}, {label:"Motorista", campo:"motorista_top"}, {label:"", campo:null}
   ], "clientesTransporte");
-  const base = clientesTransporte.filter(c=>(!segF || c.segmento===segF) && filtroPessoaOk("filter-pessoa-clientes", c)).map(c=>resumoClienteViagem(c, de, ate)).filter(r=>!temPeriodo || r.qtd_viagens>0);
+  // Cliente transporte = pelo menos 1 viagem concluída; quem não tem fica em Leads transporte.
+  const base = clientesTransporte.filter(c=>ehClienteTransporte(c) && (!segF || c.segmento===segF) && filtroPessoaOk("filter-pessoa-ct", c)).map(c=>resumoClienteViagem(c, de, ate)).filter(r=>!temPeriodo || r.qtd_viagens>0);
+  document.getElementById("ct-conta-clientes").textContent = clientesTransporte.filter(ehClienteTransporte).length || "";
+  renderLeadsTransporte();
   const filtradas = aplicarOrdenacao("clientesTransporte", base);
   clientesTransporteRelatorio = filtradas;
   const tot = base.reduce((t,r)=>({viagens:t.viagens+r.qtd_viagens, pago:t.pago+r.pago, pendente:t.pendente+r.pendente}), {viagens:0,pago:0,pendente:0});
@@ -12797,7 +12998,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${numId(r)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${numId(r)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.pendente && !r.pago ? ` <span class="tag" title="Viagem concluída e ainda não paga">a receber</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)"><svg class=ic aria-hidden=true><use href=#i-star /></svg></span>`:""}</td>
@@ -12808,8 +13009,77 @@ function renderTransporteClientes(){
       <td>${r.motorista_top ? `${escapeHtml(r.motorista_top.split(" ")[0])} <small style="color:var(--muted);">(${r.motorista_top_qtd}x)</small>` : "-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(r.whatsapp, r.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${r.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteClienteTransporte(${r.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
-  `).join("") || `<tr><td class="empty" colspan="10">${temPeriodo ? "Nenhuma cliente viajou nesse período" : "Nenhuma cliente de viagem cadastrada ainda"}</td></tr>`;
+  `).join("") || `<tr><td class="empty" colspan="10">${temPeriodo ? "Nenhuma cliente viajou nesse período" : "Nenhuma cliente com viagem concluída ainda"}</td></tr>`;
   preencherFotosClientes(document.getElementById("clientes-transporte-body"));
+}
+
+// ===== TRANSPORTE: LEADS TRANSPORTE (23/10/2026) =====
+// Cadastro de viagem sem nenhuma viagem concluída, mais a cotação guardada
+// no Simulador que está ligada a uma lead (cotação sem cadastro não entra:
+// não tem como falar com a pessoa). A mesma lista aparece em Contatos › Leads
+// com a etiqueta Transporte, menos quem já é lead lá (mesmo cadastro_id).
+function ehClienteTransporte(c){
+  return viagens.some(v=>v.cliente_id===c.id && v.status==="Concluída");
+}
+function situacaoLeadTransporte(c){
+  const vs = viagens.filter(v=>v.cliente_id===c.id);
+  if(vs.some(v=>!["Concluída","Cancelada"].includes(v.status))) return "Viagem marcada";
+  if(vs.length) return "Só cancelou";
+  if(cotacoesGuardadas.some(q=>q.cliente_id===c.id)) return "Cotou";
+  return "Ainda não viajou";
+}
+function entrouPorTransporte(c){
+  return c.origem || (c.auth_user_id ? "Cadastro no app" : "Cadastro no CRM");
+}
+function montarLeadsTransporte(){
+  const linhas = clientesTransporte.filter(c=>!c.teste && !ehClienteTransporte(c)).map(c=>({
+    tipo: "ct", id: c.id, base: c, nome: c.nome, whatsapp: c.whatsapp, cadastro_id: c.cadastro_id, tipo_pessoa: c.tipo_pessoa,
+    entrou: entrouPorTransporte(c), desde: String(c.criado_em||"").slice(0,10), situacao: situacaoLeadTransporte(c)
+  }));
+  // Mesma pessoa (mesmo cadastro_id) ou mesma lead com várias cotações: uma linha só.
+  const jaTem = new Set(linhas.filter(l=>l.cadastro_id != null).map(l=>"cad:" + l.cadastro_id));
+  cotacoesGuardadas.filter(q=>q.lead_id && !q.cliente_id).forEach(q=>{
+    const l = leads.find(x=>x.id===q.lead_id);
+    if(!l || l.teste || jaTem.has("lead:" + l.id) || (l.cadastro_id != null && jaTem.has("cad:" + l.cadastro_id))) return;
+    jaTem.add("lead:" + l.id);
+    linhas.push({ tipo: "lead", id: l.id, base: l, nome: l.nome, whatsapp: l.whatsapp, cadastro_id: l.cadastro_id, tipo_pessoa: l.tipo_pessoa,
+      entrou: "Cotação", desde: String(q.criado_em||"").slice(0,10), situacao: "Cotou" });
+  });
+  return linhas.sort((a,b)=>(b.desde||"").localeCompare(a.desde||""));
+}
+const SITUACAO_LEAD_TRANSPORTE_CLASS = { "Ainda não viajou":"amber", "Viagem marcada":"blue", "Só cancelou":"gray", "Cotou":"pink" };
+function renderLeadsTransporte(){
+  const todas = montarLeadsTransporte();
+  document.getElementById("ct-conta-leads").textContent = todas.length || "";
+  const sitF = document.getElementById("filter-ct-situacao").value;
+  const busca = document.getElementById("filter-ct-busca").value.trim().toLowerCase();
+  const buscaDig = busca.replace(/\D/g, "");
+  renderCabecalho("thead-leads-transporte", [
+    {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Entrou por", campo:"entrou"},
+    {label:"Desde", campo:"desde"}, {label:"Situação", campo:"situacao"}, {label:"", campo:null}
+  ], "leadsTransporte");
+  const lista = aplicarOrdenacao("leadsTransporte", todas.filter(l=>
+    (!sitF || l.situacao===sitF) &&
+    (!busca || String(l.nome).toLowerCase().includes(busca) || (buscaDig.length >= 4 && String(l.whatsapp||"").replace(/\D/g,"").includes(buscaDig)))
+  ));
+  document.getElementById("leads-transporte-body").innerHTML = lista.map(l=>{
+    const abrir = l.tipo==="ct" ? `openClienteTransporteModal(${l.id})` : `openLeadModal(${l.id})`;
+    return `
+    <tr class="tr-click" onclick="${abrir}">
+      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l.base)}${etiquetaPJ(l.base)}</td>
+      <td>${numeroClicavel(l.whatsapp)}</td>
+      <td>${escapeHtml(l.entrou)}</td>
+      <td>${l.desde ? formatarDataBR(l.desde) : "-"}</td>
+      <td><span class="status-badge ${SITUACAO_LEAD_TRANSPORTE_CLASS[l.situacao]||""}">${escapeHtml(l.situacao)}</span></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="${abrir}"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Abrir</button></td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="6">Nenhum lead do transporte${sitF||busca ? " com esse filtro" : ""}</td></tr>`;
+}
+function mostrarContatosTransporte(nome){
+  lembrarSubAba("contatos-transporte", nome);
+  document.querySelectorAll("#subtab-clientes-transporte .subnav-item[data-ctsub]").forEach(b=>b.classList.toggle("active", b.dataset.ctsub===nome));
+  document.getElementById("ct-leads-wrap").style.display = nome==="leads" ? "block" : "none";
+  document.getElementById("ct-clientes-wrap").style.display = nome==="clientes" ? "block" : "none";
 }
 function limparPeriodoClientes(){
   document.getElementById("filter-cliente-de").value = "";
@@ -17963,6 +18233,179 @@ function lancarRecorrente(id, mes, ano){
   const dia = Math.min(diaBase, new Date(ano, mes, 0).getDate());
   document.getElementById("cp-vencimento").value = `${ano}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
 }
+// ===== GESTÃO › NÚMEROS DO NEGÓCIO (23/10/2026) =====
+// Uma lista de pessoas por serviço, cada uma com os 4 degraus da escada da
+// validação (aula da Julia Cohen): chegou, se comprometeu, pagou, voltou.
+// O período filtra por quando a pessoa chegou (turma), e tudo o que ela fez
+// depois conta. Margem da Go Ladies = mesma regra do livro-caixa (lcDeveria):
+// viagem = líquido do Mercado Pago menos o repasse; outros = parte_go_ladies.
+const ND_SERVICOS = [
+  { id: "", nome: "Todos", degraus: ["Chegou (interesse)", "Se comprometeu", "Pagou", "Voltou"] },
+  { id: "transporte", nome: "Transporte", degraus: ["Cadastrou", "Pediu viagem", "Pagou a 1ª viagem", "Voltou (2ª viagem paga)"] },
+  { id: "servicos", nome: "Outros serviços", degraus: ["Fez contato", "Pediu orçamento", "Pagou", "Comprou de novo"] },
+  { id: "parceiras", nome: "Assinatura das parceiras (os)", degraus: ["Na prospecção", "Apresentação ou proposta", "Pagou a 1ª", "Renovou"] },
+];
+let ndServico = "";
+let ndDetalheAberto = null;
+const ndDia = d => d ? String(d).slice(0,10) : "";
+function ndPessoasTransporte(){
+  return clientesTransporte.filter(c=>!c.teste).map(c=>{
+    const vs = viagens.filter(v=>v.cliente_id===c.id);
+    const pgs = pagamentosCliente.filter(p=>p.status==="Pago" && vs.some(v=>v.id===p.viagem_id));
+    const viagensPagas = new Set(pgs.map(p=>p.viagem_id));
+    let gl = 0;
+    pgs.forEach(p=>{
+      const v = vs.find(x=>x.id===p.viagem_id);
+      const pg = pagamentosMotorista.find(m=>m.viagem_id===p.viagem_id);
+      const liquido = (p.valor_liquido != null ? Number(p.valor_liquido) : Number(p.valor_recebido || 0) - Number(p.taxa_mp || 0)) - devolvidoDe(p);
+      gl += liquido - repasseDaViagem(v, pg);
+    });
+    const datasPg = pgs.map(p=>ndDia(p.data_pagamento) || ndDia(diaDaViagem(vs.find(v=>v.id===p.viagem_id)||{}))).filter(Boolean).sort();
+    const canal = vs.map(v=>v.canal_recepcao).find(Boolean);
+    return { servico: "transporte", nome: c.nome, abrir: `openClienteTransporteModal(${c.id})`,
+      entrou: ndDia(c.criado_em), origem: c.origem || canal || (c.auth_user_id ? "Cadastro no app" : "Cadastro no CRM"),
+      compromisso: vs.length > 0, pagou: viagensPagas.size > 0, voltou: viagensPagas.size >= 2,
+      pago: pgs.reduce((s,p)=>s + Number(p.valor_recebido || 0) - devolvidoDe(p), 0), gl, glDefinir: false, primeiraPaga: datasPg[0] || "", datasPg };
+  });
+}
+function ndPessoasServicos(){
+  return leads.filter(leadReal).map(l=>{
+    const vds = vendas.filter(v=>v.lead_id===l.id);
+    const parcelasPagas = vendaParcelas.filter(p=>p.status==="Pago" && vds.some(v=>v.id===p.venda_id));
+    const vendasPagas = new Set(parcelasPagas.map(p=>p.venda_id));
+    const datasPg = parcelasPagas.map(p=>ndDia(p.data_realizada || p.data_prevista)).filter(Boolean).sort();
+    return { servico: "servicos", nome: l.nome, abrir: `openLeadModal(${l.id})`,
+      entrou: ndDia(l.data || l.criado_em), origem: l.origem || l.canal || "Sem origem",
+      compromisso: orcamentos.some(o=>o.lead_id===l.id) || vds.length > 0 || ["Orçamento solicitado","Orçamento enviado","Negociação","Fechado - Ganho","Cliente ativo"].includes(l.etapa),
+      pagou: vendasPagas.size > 0, voltou: vendasPagas.size >= 2,
+      pago: parcelasPagas.reduce((s,p)=>s + Number(p.valor || 0), 0),
+      gl: parcelasPagas.reduce((s,p)=>s + Number(p.parte_go_ladies || 0), 0),
+      glDefinir: parcelasPagas.some(p=>p.parte_go_ladies == null), primeiraPaga: datasPg[0] || "", datasPg };
+  });
+}
+function ndPessoasParceiras(){
+  return parceiros.filter(p=>!p.exemplo).map(p=>{
+    const ents = finEntradas.filter(e=>e.parceiro_id===p.id && e.status==="Recebido");
+    const datasPg = ents.map(e=>ndDia(e.data_recebimento)).filter(Boolean).sort();
+    return { servico: "parceiras", nome: p.nome, abrir: `openParceiroModal(${p.id})`,
+      entrou: ndDia(p.criado_em), origem: p.tipo_parceria || p.categoria || "Sem origem",
+      compromisso: ents.length > 0 || ["Apresentação","Proposta","Parceria ativa"].includes(p.status),
+      pagou: ents.length > 0, voltou: ents.length >= 2,
+      pago: ents.reduce((s,e)=>s + Number(e.valor || 0), 0),
+      gl: ents.reduce((s,e)=>s + Number(e.parte_go_ladies != null ? e.parte_go_ladies : e.valor || 0), 0),
+      glDefinir: false, primeiraPaga: datasPg[0] || "", datasPg };
+  });
+}
+function ndPessoas(){
+  const dias = Number(document.getElementById("nd-periodo").value) || 0;
+  const desde = dias ? isoLocal(somarDias(new Date(), -dias)) : "";
+  const todas = [
+    ...(!ndServico || ndServico==="transporte" ? ndPessoasTransporte() : []),
+    ...(!ndServico || ndServico==="servicos" ? ndPessoasServicos() : []),
+    ...(!ndServico || ndServico==="parceiras" ? ndPessoasParceiras() : []),
+  ];
+  return todas.filter(p=>!desde || (p.entrou && p.entrou >= desde));
+}
+function ndMediana(nums){
+  if(!nums.length) return null;
+  const s = [...nums].sort((a,b)=>a-b), m = Math.floor(s.length/2);
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
+}
+function renderNumerosNegocio(){
+  if(!document.getElementById("nd-painel")) return;
+  const serv = ND_SERVICOS.find(s=>s.id===ndServico) || ND_SERVICOS[0];
+  document.getElementById("nd-servicos").innerHTML = ND_SERVICOS.map(s=>
+    `<button type="button" class="subnav-item${s.id===ndServico ? " active" : ""}" onclick="ndServico='${s.id}'; ndDetalheAberto=null; renderNumerosNegocio();">${escapeHtml(s.nome)}</button>`).join("");
+  const ps = ndPessoas();
+  const pagaram = ps.filter(p=>p.pagou);
+  const total = pagaram.reduce((s,p)=>s + p.pago, 0);
+  const gl = pagaram.reduce((s,p)=>s + p.gl, 0);
+  const temDefinir = pagaram.some(p=>p.glDefinir);
+  const diasAtePagar = ndMediana(pagaram.filter(p=>p.entrou && p.primeiraPaga)
+    .map(p=>Math.max(0, Math.round((new Date(p.primeiraPaga+"T00:00:00") - new Date(p.entrou+"T00:00:00")) / 86400000))));
+  const voltaram = pagaram.filter(p=>p.voltou).length;
+  const card = (chave, num, label) => `<div class="card card-link${ndDetalheAberto===chave ? " card-ativo" : ""}" title="Ver as pessoas" onclick="abrirDetalheNumeros('${chave}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+  document.getElementById("nd-cards").innerHTML = [
+    card("pagou", pagaram.length, `Clientes que pagaram · de ${ps.length} que chegaram`),
+    card("pagou", formatarMoedaBR(total), "Total pago por elas"),
+    card("pagou", pagaram.length ? formatarMoedaBR(total / pagaram.length) : "-", "Média paga por cliente"),
+    card("pagou", diasAtePagar != null ? `${Math.round(diasAtePagar)} ${Math.round(diasAtePagar)===1 ? "dia" : "dias"}` : "-", "Tempo até pagar (mediana, da chegada ao 1º pagamento)"),
+    card("voltou", pagaram.length ? Math.round(voltaram / pagaram.length * 100) + "%" : "-", `Voltaram · ${voltaram} de ${pagaram.length}`),
+    card("pagou", formatarMoedaBR(gl), `Ficou para a Go Ladies${temDefinir ? " · tem venda com a parte a definir" : ""}`),
+  ].join("");
+  // Escada: cada degrau conta quem chegou até ele; % = em relação ao degrau anterior.
+  const degraus = [ps, ps.filter(p=>p.compromisso), pagaram, pagaram.filter(p=>p.voltou)];
+  const chaves = ["chegou","compromisso","pagou","voltou"];
+  const maior = Math.max(1, degraus[0].length);
+  document.getElementById("nd-escada").innerHTML = degraus.map((lista, i)=>{
+    const pct = i && degraus[i-1].length ? ` · ${Math.round(lista.length / degraus[i-1].length * 100)}% do degrau anterior` : "";
+    return `<div class="nd-degrau" onclick="abrirDetalheNumeros('${chaves[i]}')" title="Ver as pessoas">
+      <span class="nd-rot">${i+1}. ${escapeHtml(serv.degraus[i])}</span>
+      <div class="nd-barra" style="width:${Math.round(lista.length / maior * 60)}%;"></div>
+      <span><b>${lista.length}</b><small style="color:var(--muted);">${pct}</small></span>
+    </div>`;
+  }).join("");
+  // Origem de quem pagou
+  const porOrigem = {};
+  pagaram.forEach(p=>{ porOrigem[p.origem] = (porOrigem[p.origem] || 0) + 1; });
+  document.getElementById("nd-origem").innerHTML = Object.entries(porOrigem).sort((a,b)=>b[1]-a[1])
+    .map(([o,n])=>`<div class="nd-linha"><span>${escapeHtml(o)}</span><b>${n}</b></div>`).join("")
+    || `<div class="sede-vazio">Ninguém pagou ainda nesse recorte.</div>`;
+  // Pago por mês (pela data do pagamento), últimos 6 meses
+  const meses = [];
+  for(let i = 5; i >= 0; i--){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); meses.push(isoLocal(d).slice(0,7)); }
+  const porMes = {};
+  pagaram.forEach(p=>{
+    const novos = p.datasPg.filter(d=>meses.includes(d.slice(0,7)));
+    novos.forEach(d=>{ porMes[d.slice(0,7)] = porMes[d.slice(0,7)] || { pagamentos: 0, pessoas: new Set() }; porMes[d.slice(0,7)].pagamentos++; porMes[d.slice(0,7)].pessoas.add(p.nome); });
+  });
+  document.getElementById("nd-meses").innerHTML = meses.map(m=>{
+    const x = porMes[m];
+    const [a, mm] = m.split("-");
+    return `<div class="nd-linha"><span>${LC_MESES[Number(mm)-1]} de ${a}</span><span>${x ? `<b>${x.pagamentos}</b> ${x.pagamentos===1 ? "pagamento" : "pagamentos"} · ${x.pessoas.size} ${x.pessoas.size===1 ? "pessoa" : "pessoas"}` : "-"}</span></div>`;
+  }).join("");
+  // Fôlego: caixa ÷ quanto a Go Ladies perdeu por mês (média dos últimos 3 meses fechados).
+  const cx = caixaAtual();
+  let soma = 0;
+  for(let i = 1; i <= 3; i++){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); soma += gestaoMes(d.getMonth() + 1, d.getFullYear()).lucro; }
+  const lucroMedio = soma / 3;
+  const folego = !cx.lista.length ? "-" : lucroMedio >= 0 ? "Caixa não está caindo" : `${Math.floor(cx.total / -lucroMedio)} meses`;
+  const hoje = hojeLocalISO();
+  const ativas = motoristas.filter(m=>m.status==="Ativa");
+  const emProcesso = motoristas.filter(m=>["Contato","Documentos","Veículo","Referências","Entrevista","Aceite"].includes(m.status));
+  const certificadas = motoristas.filter(m=>m.certificada_ate && m.certificada_ate >= hoje);
+  const desde90 = isoLocal(somarDias(new Date(), -90));
+  const concl = viagens.filter(v=>v.status==="Concluída" && (diaDaViagem(v)||"") >= desde90);
+  const daJu = concl.filter(v=>idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id===id)))).length;
+  const pctJu = concl.length ? Math.round(daJu / concl.length * 100) : null;
+  document.getElementById("nd-folego").innerHTML = [
+    `<div class="card card-link" title="Abrir o saldo de caixa" onclick="abrirDetalheGestao('caixa')"><div class="num">${folego}</div><div class="label">Fôlego do caixa · caixa ÷ resultado médio dos últimos 3 meses</div></div>`,
+    `<div class="card card-link" title="Abrir as motoristas" onclick="irParaTransporte('motoristas')"><div class="num">${emProcesso.length}</div><div class="label">Motoristas no funil (contato até aceite)</div></div>`,
+    `<div class="card card-link" title="Abrir as motoristas" onclick="irParaTransporte('motoristas')"><div class="num">${ativas.length}</div><div class="label">Motoristas ativas · ${certificadas.length} com certificação em dia</div></div>`,
+    `<div class="card card-link" title="Abrir as viagens" onclick="irParaTransporte('viagens')"><div class="num"${pctJu != null && pctJu > 50 ? ' style="color:var(--c-red);"' : ""}>${pctJu != null ? pctJu + "%" : "-"}</div><div class="label">Viagens que a Jú dirigiu (90 dias) · meta: no máximo 50%</div></div>`,
+  ].join("");
+  renderDetalheNumeros(ps);
+}
+function abrirDetalheNumeros(chave){
+  ndDetalheAberto = ndDetalheAberto === chave ? null : chave;
+  renderNumerosNegocio();
+}
+function renderDetalheNumeros(ps){
+  const box = document.getElementById("nd-detalhe");
+  if(!ndDetalheAberto){ box.style.display = "none"; return; }
+  const filtro = { chegou: p=>true, compromisso: p=>p.compromisso, pagou: p=>p.pagou, voltou: p=>p.voltou }[ndDetalheAberto] || (p=>true);
+  const serv = ND_SERVICOS.find(s=>s.id===ndServico) || ND_SERVICOS[0];
+  const titulo = serv.degraus[["chegou","compromisso","pagou","voltou"].indexOf(ndDetalheAberto)] || "";
+  const nomeServ = { transporte: "Transporte", servicos: "Outros serviços", parceiras: "Parceira (o)" };
+  const lista = ps.filter(filtro).sort((a,b)=>b.pago - a.pago || (b.entrou||"").localeCompare(a.entrou||""));
+  box.style.display = "block";
+  box.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><b>${escapeHtml(titulo)} · ${lista.length}</b><button type="button" class="btn ghost small" onclick="abrirDetalheNumeros('${ndDetalheAberto}')">Fechar</button></div>
+    <table class="tbl" style="margin-top:8px;"><thead><tr><th>Nome</th><th>Serviço</th><th>Chegou</th><th>Origem</th><th>1º pagamento</th><th>Pago</th></tr></thead><tbody>
+    ${lista.map(p=>`<tr class="tr-click" onclick="${p.abrir}"><td><strong>${escapeHtml(p.nome)}</strong></td><td>${nomeServ[p.servico]}</td><td>${p.entrou ? formatarDataBR(p.entrou) : "-"}</td><td>${escapeHtml(p.origem)}</td><td>${p.primeiraPaga ? formatarDataBR(p.primeiraPaga) : "-"}</td><td>${p.pago ? formatarMoedaBR(p.pago) : "-"}</td></tr>`).join("")
+      || `<tr><td class="empty" colspan="6">Ninguém nesse degrau.</td></tr>`}
+    </tbody></table>`;
+}
+
 function renderGestao(){
   const cardsEl = document.getElementById("gestao-cards");
   if(!cardsEl) return;
