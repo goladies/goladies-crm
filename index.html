@@ -1728,6 +1728,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item" data-subtab="motoristas" onclick="mostrarSubTab('motoristas')"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motoristas</button>
         <button type="button" class="subnav-item" data-subtab="avaliacoes" onclick="mostrarSubTab('avaliacoes')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações</button>
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
+        <button type="button" class="subnav-item" data-subtab="simulador" onclick="mostrarSubTab('simulador')"><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map-pin-off /></svg> Fora da área</button>
         <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos aos apps (cliente e motorista)</button>
@@ -1826,32 +1827,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
       </div>
 
-      <div id="subtab-financeiro-transporte" style="display:none;">
-        <div class="pagehead">
-          <div><h2 style="font-size:16px;">Financeiro do transporte</h2><p>A saúde da operação de viagens: o que entra, o que vai pra motorista, o que sobra, e a que preço as clientes dizem sim. O Financeiro do menu lateral é o consolidado de tudo (transporte, parceiras (os), vendas e despesas).</p></div>
-          <select id="filter-ft-periodo" onchange="renderFinanceiroTransporte()">
-            <option value="30">Últimos 30 dias</option>
-            <option value="90" selected>Últimos 90 dias</option>
-            <option value="365">Últimos 12 meses</option>
-            <option value="0">Desde o começo</option>
-          </select>
-        </div>
-        <div class="cards" id="ft-cards"></div>
-        <div class="panel" id="ft-detalhe" style="display:none;"></div>
-
-        <!-- Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026): a cotação
-             automática do CRM e do app escolhe a tabela pelo tipo de serviço e
-             pelo horário de cada trecho. Salvar sempre pede confirmação. -->
-        <div class="panel" id="ft-tabelas">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-            <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
-            <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
-          </div>
-          <p style="color:var(--muted); font-size:12.5px; margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o tipo de serviço e o horário: tipo exato vale mais que "Todos", dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h, ou quando você marca feriado na viagem. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
-          <div id="tp-conteudo"></div>
-          <div id="tp-editor" class="tp-editor" style="display:none;"></div>
-        </div>
-
+      <!-- Simulador e cotações guardadas (23/10/2026): saíram do Financeiro do
+           transporte pra um menu próprio, que lá tinha informação demais junta. -->
+      <div id="subtab-simulador" style="display:none;">
+        <div class="pagehead"><div><h2 style="font-size:16px;">Simulador</h2><p>Cote uma viagem antes de dar o preço, guarde a cotação e, se ela acontecer, lance como viagem já feita.</p></div></div>
         <div class="panel" id="ft-sim">
           <h3><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador de preço</h3>
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 14px;">Antes de dar um preço ou aceitar um desconto: quanto sobra pra motorista por hora, quanto fica pra Go Ladies e até onde dá pra descontar sem trabalhar de graça. É rascunho, nada aqui é salvo nem mexe em viagem nenhuma.</p>
@@ -1955,6 +1934,34 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <p style="color:var(--muted); font-size:12.5px; margin:-6px 0 12px;">As dos últimos 30 dias. Aconteceu? Lance como viagem já feita com o preço que você cobrou. Clique no nome pra abrir de novo no Simulador.</p>
           <div id="cotacoes-guardadas-lista"></div>
         </div>
+      </div>
+
+      <div id="subtab-financeiro-transporte" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:16px;">Financeiro do transporte</h2><p>A saúde da operação de viagens: o que entra, o que vai pra motorista, o que sobra, e a que preço as clientes dizem sim. O Financeiro do menu lateral é o consolidado de tudo (transporte, parceiras (os), vendas e despesas).</p></div>
+          <select id="filter-ft-periodo" onchange="renderFinanceiroTransporte()">
+            <option value="30">Últimos 30 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="365">Últimos 12 meses</option>
+            <option value="0">Desde o começo</option>
+          </select>
+        </div>
+        <div class="cards" id="ft-cards"></div>
+        <div class="panel" id="ft-detalhe" style="display:none;"></div>
+
+        <!-- Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026): a cotação
+             automática do CRM e do app escolhe a tabela pelo tipo de serviço e
+             pelo horário de cada trecho. Salvar sempre pede confirmação. -->
+        <div class="panel" id="ft-tabelas">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
+            <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
+          </div>
+          <p style="color:var(--muted); font-size:12.5px; margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o tipo de serviço e o horário: tipo exato vale mais que "Todos", dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h, ou quando você marca feriado na viagem. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <div id="tp-conteudo"></div>
+          <div id="tp-editor" class="tp-editor" style="display:none;"></div>
+        </div>
+
 
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-target /></svg> Validação de preço</h3>
@@ -7412,14 +7419,29 @@ async function medirRotaGoogle(origem, destino, meio){
       body: JSON.stringify(corpo)
     });
     const dados = await resp.json();
-    const rotas = (dados.routes || []).filter(r=>r.distanceMeters);
+    const rotas = (dados.routes || []).filter(r=>r.distanceMeters).map(r=>({
+      km: Math.round(r.distanceMeters / 100) / 10,
+      min: Math.ceil((parseFloat(String(r.duration || "0").replace("s","")) || 0) / 60),
+    }));
     if(!rotas.length){ console.warn("Rota sem resultado:", dados); return null; }
+    // km e min são o maior de cada, e podem vir de caminhos diferentes;
+    // "caminhos" guarda todos pra mostrar de onde saiu (caminhosGoogleTxt)
     return {
-      km: Math.max(...rotas.map(r=>r.distanceMeters)) / 1000,
-      min: Math.max(...rotas.map(r=>parseFloat(String(r.duration || "0").replace("s","")) || 0)) / 60,
+      km: Math.max(...rotas.map(r=>r.km)),
+      min: Math.max(...rotas.map(r=>r.min)),
+      caminhos: rotas.sort((a,b)=>a.min - b.min || a.km - b.km),
     };
   }catch(err){ console.error("Não foi possível medir a rota:", err); return null; }
   finally{ clearTimeout(prazo); }
+}
+// "Google achou 3 caminhos: 4,9 km 15 min · 4,1 km 16 min · 5,7 km 18 min.
+// Usei 5,7 km e 18 min (o maior de cada)." Mesmo texto no Simulador e na viagem.
+function caminhosGoogleTxt(medida){
+  if(!medida || !medida.caminhos) return "";
+  const kmTxt = n => String(n).replace(".", ",");
+  const lista = medida.caminhos.map(r=>`${kmTxt(r.km)} km ${r.min} min`).join(" · ");
+  if(medida.caminhos.length === 1) return `Google achou 1 caminho: ${lista}.`;
+  return `Google achou ${medida.caminhos.length} caminhos: ${lista}. Usei ${kmTxt(medida.km)} km e ${medida.min} min (o maior de cada).`;
 }
 
 async function simCalcularRota(){
@@ -7461,7 +7483,7 @@ async function simCalcularRota(){
   }else{
     partes.push("Sem ponto de saída: km e minutos vazios ficaram como estavam");
   }
-  resumo.innerHTML = partes.map(escapeHtml).join(" · ") + `<br>Trânsito de agora. Dá pra ajustar os números à mão.`;
+  resumo.innerHTML = partes.map(escapeHtml).join(" · ") + `<br>${escapeHtml(caminhosGoogleTxt(corrida))}<br>Trânsito de agora. Dá pra ajustar os números à mão.`;
   resumo.style.display = "";
   simular();
 }
@@ -13312,7 +13334,8 @@ async function medirRotaViagem(forcar){
     const ficou = [];
     if(!preencherMedidaRota(idKm, km, forcar)) ficou.push("o km");
     if(!preencherMedidaRota(idMin, min, forcar)) ficou.push("a duração");
-    return `${rotulo}: ${kmTxt(km)} km, ${min} min` + (ficou.length ? ` (${ficou.join(" e ")} que você digitou ${ficou.length > 1 ? "ficaram" : "ficou"})` : "");
+    return `${rotulo}: ${kmTxt(km)} km, ${min} min` + (ficou.length ? ` (${ficou.join(" e ")} que você digitou ${ficou.length > 1 ? "ficaram" : "ficou"})` : "")
+      + `. ${caminhosGoogleTxt(medida)}`;
   };
   const partes = [];
   if(ida){
@@ -13327,7 +13350,8 @@ async function medirRotaViagem(forcar){
   }
   recalcularCotacao();
   atualizarAlertaMargem();
-  nota.textContent = partes.join(" · ") + ". Medido no Google com o trânsito de agora, pelo maior caminho. Dá pra trocar à mão.";
+  // Um trecho por linha (ida e volta), cada um com os caminhos do Google
+  nota.innerHTML = partes.map(escapeHtml).join("<br>") + "<br>Trânsito de agora. Dá pra trocar à mão.";
 }
 document.getElementById("vg-trajeto-wrap").addEventListener("change", e=>{
   if(e.target.closest(".campo-endereco")) medirRotaViagem(false);
