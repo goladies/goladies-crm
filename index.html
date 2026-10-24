@@ -323,6 +323,14 @@ td{padding:11px 10px; border-bottom:1px solid var(--border); vertical-align:top;
 tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:var(--bg-hover);}
 .tag{display:inline-block; padding:2px 9px; border-radius:6px; font-size:11px; font-weight:600;}
+/* Dado que a cliente preencheu no app (schema_dados_da_cliente.sql) */
+.marca-cliente{display:block; margin-top:3px; font-size:11px; color:var(--c-blue, var(--muted));}
+.unificar-tabela{width:100%; border-collapse:collapse; font-size:13px;}
+.unificar-tabela th, .unificar-tabela td{padding:7px 8px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; overflow-wrap:anywhere;}
+.unificar-tabela th{font-weight:600; color:var(--muted); white-space:nowrap;}
+.unificar-tabela tr.unificar-dif{background:var(--c-amber-bg);}
+.unificar-tabela label{display:flex; gap:6px; align-items:flex-start; font-weight:400; color:var(--ink); margin:0; cursor:pointer;}
+.unificar-tabela input[type=radio]{width:auto; margin-top:3px;}
 .num-id{color:var(--muted); font-size:11px; font-weight:500; margin-left:4px; white-space:nowrap;}
 .kc-num{font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.02em; margin-bottom:3px;}
 .tag.novo{background:var(--c-indigo-bg); color:var(--c-indigo);}
@@ -3435,6 +3443,22 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('cliente-transporte-modal')">Sair</button>
       <button class="btn" onclick="saveClienteTransporte()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Unificar duas fichas de cliente de viagem: as duas lado a lado, campo a
+     campo. Onde for diferente, a Jú escolhe (já vem marcado o que a cliente
+     preencheu no app). abrirUnificarClientes() preenche. -->
+<div class="modal-backdrop" id="unificar-modal">
+  <div class="modal" style="width:680px;">
+    <h3 id="unificar-titulo">Unificar fichas</h3>
+    <p id="unificar-resumo" style="font-size:13px; color:var(--muted); margin:0 0 12px;"></p>
+    <div style="overflow-x:auto;"><table class="unificar-tabela" id="unificar-tabela"></table></div>
+    <p id="unificar-rodape" style="font-size:12px; color:var(--muted); margin:12px 0 0;"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('unificar-modal')">Cancelar</button>
+      <button class="btn" id="unificar-confirmar" onclick="confirmarUnificarClientes()">Unificar</button>
     </div>
   </div>
 </div>
@@ -7257,9 +7281,11 @@ function montarClientesGeral(){
   clientesGeral = [...pessoas.values()].filter(p=>p.cliente).map(p=>{
     const base = p.lead || p.ct;
     const datas = p.datas.sort();
+    // Nome que a própria cliente preencheu no app vale mais que o da ficha lead.
+    const nome = p.ct && marcaDaCliente(p.ct, "nome") ? p.ct.nome : base.nome;
     return {
       ...p, base,
-      nome: base.nome, whatsapp: base.whatsapp || (p.ct && p.ct.whatsapp) || "",
+      nome, whatsapp: base.whatsapp || (p.ct && p.ct.whatsapp) || "",
       tipo_pessoa: base.tipo_pessoa,
       primeira: datas[0] || "", ultima: datas[datas.length-1] || "",
       temViagem: p.viagens > 0, temServico: p.servicos.size > 0,
@@ -13535,6 +13561,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-regiao").value = c.regiao||"";
   document.getElementById("ct-aniversario").value = c.aniversario||"";
   carregarTipoPessoa("ct", c);
+  marcarCamposDaCliente(c);
   document.getElementById("ct-segmento").value = c.segmento||"";
   document.getElementById("ct-origem").value = c.origem||"Indicação";
   document.getElementById("ct-familiares").value = c.familiares||"";
@@ -13544,6 +13571,35 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) + htmlGarupaCliente(c) : "";
   renderAvaliacoesCliente();
   document.getElementById("cliente-transporte-modal").classList.add("open");
+}
+// O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
+// campo a campo em preenchido_pela_cliente. A ficha mostra a etiqueta embaixo
+// do campo e pergunta antes de a equipe trocar; o Unificar usa pra escolher.
+const CAMPOS_DA_CLIENTE = { nome:"ct-nome", whatsapp:"ct-whatsapp", email:"ct-email", regiao:"ct-regiao", aniversario:"ct-aniversario" };
+const ROTULO_CAMPO_CLIENTE = { nome:"nome", whatsapp:"WhatsApp", email:"e-mail", regiao:"região", aniversario:"aniversário", familiares:"familiares", segmento:"segmento", origem:"origem", cnpj:"CNPJ", foto_path:"foto" };
+function marcaDaCliente(c, campo){
+  const m = c && c.preenchido_pela_cliente;
+  return m && m[campo] ? m[campo] : null;
+}
+function textoMarcaCliente(quando){ return `preenchido pela cliente em ${dataComSemana(new Date(quando))}`; }
+function marcarCamposDaCliente(c){
+  Object.entries(CAMPOS_DA_CLIENTE).forEach(([campo, id])=>{
+    const input = document.getElementById(id);
+    let tag = input.nextElementSibling && input.nextElementSibling.classList.contains("marca-cliente") ? input.nextElementSibling : null;
+    const quando = marcaDaCliente(c, campo);
+    if(!quando){ if(tag) tag.remove(); return; }
+    if(!tag){ tag = document.createElement("small"); tag.className = "marca-cliente"; input.insertAdjacentElement("afterend", tag); }
+    tag.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-device-mobile /></svg> ${textoMarcaCliente(quando)}`;
+  });
+}
+// Campos que a cliente preencheu e a equipe está trocando agora.
+function trocasDeDadoDaCliente(c, payload){
+  const igual = (a, b) => String(a ?? "").trim() === String(b ?? "").trim();
+  return Object.keys(CAMPOS_DA_CLIENTE).filter(k=>marcaDaCliente(c, k) && !igual(c[k], payload[k]));
+}
+function valorCampoCliente(k, v){
+  if(v == null || String(v).trim() === "") return "(vazio)";
+  return k === "aniversario" ? formatarDataBR(String(v).slice(0,10)) : String(v);
 }
 // Duplicatas: outra cliente com o mesmo WhatsApp (últimos 8 dígitos). Acontece
 // quando a cliente já existia pelo site/WhatsApp e depois criou login no
@@ -13668,7 +13724,7 @@ function htmlAcessoPainelCliente(c){
   if(dups.length){
     html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp de: ` +
       dups.map(d=>`<b>${escapeHtml(nomeCod(d))}</b> (ficha nº ${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
-      `.<br><small>Unificar traz tudo da outra pra esta (viagens, lugares salvos, pedidos, ligações), completa o que estiver vazio, guarda nas notas o que for diferente e apaga a outra.</small><br>` +
+      `.<br><small>Unificar traz tudo da outra pra esta (viagens, lugares salvos, pedidos, ligações), completa o que estiver vazio e apaga a outra. Antes, mostra as duas lado a lado pra você escolher o que fica onde for diferente.</small><br>` +
       dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (ficha nº ${c.id}) e apagando a nº ${d.id}</button>`).join(" ") +
       `</div>`;
   }
@@ -13714,35 +13770,72 @@ function htmlContaAdolescente(c){
   if(c.termos_aceitos_em) partes.push(`<small style="color:var(--muted)">Aceitou as regras da conta (${escapeHtml(c.termos_versao||"")}) em ${formatarDataBR(c.termos_aceitos_em.slice(0,10))}.</small>`);
   return partes.length ? `<div style="margin-top:8px;">${partes.join("<br>")}</div>` : "";
 }
-async function unificarClientes(manter, remover){
+// Mesma regra do schema_dados_da_cliente.sql: tudo da que some vai pra que
+// fica; campo vazio é completado; campo diferente é escolha da equipe (já vem
+// marcado o que a cliente preencheu no app) e o que não ficar vai pras notas.
+let unificarPar = null;
+function unificarClientes(manter, remover){
   const m = clientesTransporte.find(x=>x.id===manter), r = clientesTransporte.find(x=>x.id===remover);
   if(!m || !r) return;
-  // Mesma regra do schema_unificar_clientes_completo.sql: tudo da que some vai
-  // pra que fica; campo vazio é completado; campo diferente vai pras notas.
+  unificarPar = { manter, remover };
   const cheio = v => v != null && String(v).trim() !== "";
-  const rotulos = { nome:"nome", whatsapp:"WhatsApp", email:"e-mail", regiao:"região", aniversario:"aniversário", familiares:"familiares", segmento:"segmento", origem:"origem", cnpj:"CNPJ", foto_path:"foto" };
-  const completa = [], nasNotas = [];
-  Object.keys(rotulos).forEach(k=>{
-    if(!cheio(r[k])) return;
-    if(!cheio(m[k])) completa.push(rotulos[k]);
-    else if(String(r[k]).trim().toLowerCase() !== String(m[k]).trim().toLowerCase()) nasNotas.push(k === "foto_path" ? "foto" : `${rotulos[k]} "${r[k]}"`);
+  const mostrar = (k, c) => {
+    if(!cheio(c[k])) return `<span style="color:var(--muted)">(vazio)</span>`;
+    const txt = k === "foto_path" ? "tem foto" : escapeHtml(valorCampoCliente(k, c[k]));
+    const marca = marcaDaCliente(c, k);
+    return txt + (marca ? `<br><small class="marca-cliente"><svg class=ic aria-hidden=true><use href=#i-device-mobile /></svg> ${textoMarcaCliente(marca)}</small>` : "");
+  };
+  let linhas = "", difs = 0;
+  Object.keys(ROTULO_CAMPO_CLIENTE).forEach(k=>{
+    if(!cheio(m[k]) && !cheio(r[k])) return;
+    const diferente = cheio(m[k]) && cheio(r[k]) && String(m[k]).trim().toLowerCase() !== String(r[k]).trim().toLowerCase();
+    if(!diferente){
+      const de = cheio(m[k]) ? m : r;
+      linhas += `<tr><th>${ROTULO_CAMPO_CLIENTE[k]}</th><td colspan="2">${mostrar(k, de)} <small style="color:var(--muted)">${cheio(m[k]) ? "" : `(vem da ficha nº ${remover})`}</small></td></tr>`;
+      return;
+    }
+    difs++;
+    const usarR = !!marcaDaCliente(r, k) && !marcaDaCliente(m, k);
+    linhas += `<tr class="unificar-dif"><th>${ROTULO_CAMPO_CLIENTE[k]}</th>
+      <td><label><input type="radio" name="unif-${k}" value="manter" ${usarR ? "" : "checked"}> ${mostrar(k, m)}</label></td>
+      <td><label><input type="radio" name="unif-${k}" value="remover" ${usarR ? "checked" : ""}> ${mostrar(k, r)}</label></td></tr>`;
   });
-  if(r.auth_user_id && !m.auth_user_id) completa.push("login do app");
   const qtdViagens = viagens.filter(v=>v.cliente_id===remover).length;
-  const linhas = [
-    `Unificar "${nomeCod(r)}" (ficha nº ${remover}) em "${nomeCod(m)}" (ficha nº ${manter})?`,
-    "",
-    `Vai para a ficha nº ${manter}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros.`,
-    completa.length ? `Completa na ficha nº ${manter}: ${completa.join(", ")}.` : "",
-    nasNotas.length ? `Fica nas notas da ficha nº ${manter} (era diferente): ${nasNotas.join("; ")}.` : "",
-    "",
-    `Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`
-  ].filter((l,i,a)=>l || (i>0 && a[i-1]));
-  if(!confirm(linhas.join("\n"))) return;
-  // Quem foi junto em viagens: passa antes, porque apagar a ficha que some desliga a ligação
-  await sb.from("viagem_passageiros").update({ cliente_id: manter }).eq("cliente_id", remover);
-  const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
-  if(error){ alert("Não foi possível unificar: " + error.message); return; }
+  document.getElementById("unificar-titulo").textContent = `Unificar ${nomeCod(r)} em ${nomeCod(m)}`;
+  document.getElementById("unificar-resumo").innerHTML = difs
+    ? `<b>${difs} ${difs===1 ? "dado está diferente" : "dados estão diferentes"}</b> nas duas fichas. Escolha qual fica; já vem marcado o que a cliente preencheu no app. O outro valor fica guardado nas notas.`
+    : "Nenhum dado diferente: o que estiver vazio numa ficha é completado com o da outra.";
+  document.getElementById("unificar-tabela").innerHTML =
+    `<tr><th></th><th>Ficha nº ${manter} <small>(fica)</small></th><th>Ficha nº ${remover} <small>(é apagada)</small></th></tr>` + linhas;
+  document.getElementById("unificar-rodape").textContent =
+    `Vai para a ficha nº ${manter}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros`
+    + (r.auth_user_id && !m.auth_user_id ? ", e o login do app" : "")
+    + `. Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`;
+  document.getElementById("unificar-modal").classList.add("open");
+}
+async function confirmarUnificarClientes(){
+  if(!unificarPar) return;
+  const { manter, remover } = unificarPar;
+  const escolhas = {};
+  document.querySelectorAll('#unificar-tabela input[type=radio]:checked').forEach(i=>{ escolhas[i.name.replace("unif-","")] = i.value; });
+  const botao = document.getElementById("unificar-confirmar");
+  botao.disabled = true;
+  try {
+    // Quem foi junto em viagens: passa antes, porque apagar a ficha que some desliga a ligação
+    await sb.from("viagem_passageiros").update({ cliente_id: manter }).eq("cliente_id", remover);
+    const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover, p_escolhas: escolhas });
+    if(error){
+      alert(/p_escolhas|function .* does not exist|schema cache/i.test(error.message || "")
+        ? "Falta rodar o schema_dados_da_cliente.sql no Supabase antes de unificar."
+        : "Não foi possível unificar: " + error.message);
+      return;
+    }
+    closeModal("unificar-modal");
+    unificarPar = null;
+    aposUnificarClientes(manter, resumo);
+  } finally { botao.disabled = false; }
+}
+async function aposUnificarClientes(manter, resumo){
   showToast(resumo && typeof resumo === "object"
     ? `Unificadas! ${resumo.viagens||0} viagem(ns), ${resumo.lugares||0} lugar(es) salvo(s) e ${resumo.ligacoes||0} ligação(ões) passaram para a ficha nº ${manter}.`
     : "Clientes unificadas!");
@@ -13764,7 +13857,19 @@ async function saveClienteTransporte(){
     pos_pago: document.getElementById("ct-pos-pago").checked,
     notas: document.getElementById("ct-notas").value,
   };
-  Object.assign(payload, camposPJ("ct", clientesTransporte.find(x=>x.id===editingClienteTransporteId)));
+  const antes = clientesTransporte.find(x=>x.id===editingClienteTransporteId);
+  Object.assign(payload, camposPJ("ct", antes));
+  const trocas = antes ? trocasDeDadoDaCliente(antes, payload) : [];
+  if(trocas.length){
+    const primeiroNome = String(antes.nome||"").split(" ")[0] || "A cliente";
+    const lista = trocas.map(k=>`${ROTULO_CAMPO_CLIENTE[k]}: "${valorCampoCliente(k, antes[k])}" vai virar "${valorCampoCliente(k, payload[k])}"`).join("\n");
+    if(!confirm(`${primeiroNome} preencheu ${trocas.length===1 ? "este dado" : "estes dados"} no app:\n\n${lista}\n\nTrocar mesmo? O que ela tinha preenchido fica guardado nas notas.`)) return;
+    const hoje = dataComSemana(new Date(), true);
+    payload.notas = [String(payload.notas||"").trim(),
+      `Trocado pela equipe em ${hoje}, era o que a cliente tinha preenchido no app: ` +
+      trocas.map(k=>`${ROTULO_CAMPO_CLIENTE[k]} "${valorCampoCliente(k, antes[k])}"`).join("; ") + "."
+    ].filter(Boolean).join("\n");
+  }
   const { data, error } = editingClienteTransporteId
     ? await sb.from("clientes_transporte").update(payload).eq("id", editingClienteTransporteId).select()
     : await sb.from("clientes_transporte").insert(payload).select();
