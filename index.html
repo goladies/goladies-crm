@@ -664,6 +664,11 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .subnav-item{background:var(--bg-input); border:1px solid var(--border2); color:var(--text2); padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s;}
 .subnav-item:hover{color:var(--text1); border-color:var(--rosa);}
 .subnav-item.active{background:var(--rosa); border-color:var(--rosa); color:#fff;}
+.subnav-item{display:inline-flex; align-items:center; gap:6px; line-height:1.2;}
+.subnav-item > .ic{flex-shrink:0; font-size:14px; opacity:.85;}
+.subnav-item.active > .ic{opacity:1;}
+.subnav-item .sede-conta{margin-left:2px; min-width:20px; padding:1px 6px; line-height:15px; background:rgba(255,45,156,.16); color:var(--rosa); border:1px solid rgba(255,45,156,.4);}
+.subnav-item.active .sede-conta{background:#fff; color:var(--rosa); border-color:#fff;}
 
 /* ---------- LIVRO-CAIXA (Financeiro, no jeito da Vida Financeira do Lapidar) ---------- */
 .lc-topo{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
@@ -13797,8 +13802,8 @@ function unificarClientes(manter, remover){
     difs++;
     const usarR = !!marcaDaCliente(r, k) && !marcaDaCliente(m, k);
     linhas += `<tr class="unificar-dif"><th>${ROTULO_CAMPO_CLIENTE[k]}</th>
-      <td><label><input type="radio" name="unif-${k}" value="manter" ${usarR ? "" : "checked"}> ${mostrar(k, m)}</label></td>
-      <td><label><input type="radio" name="unif-${k}" value="remover" ${usarR ? "checked" : ""}> ${mostrar(k, r)}</label></td></tr>`;
+      <td><label><input type="radio" name="unif-${k}" value="manter" ${usarR ? "" : "checked"}> <span>${mostrar(k, m)}</span></label></td>
+      <td><label><input type="radio" name="unif-${k}" value="remover" ${usarR ? "checked" : ""}> <span>${mostrar(k, r)}</span></label></td></tr>`;
   });
   const qtdViagens = viagens.filter(v=>v.cliente_id===remover).length;
   document.getElementById("unificar-titulo").textContent = `Unificar ${nomeCod(r)} em ${nomeCod(m)}`;
