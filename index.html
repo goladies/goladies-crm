@@ -1533,6 +1533,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="sag-mini" id="dss-semana"></div>
         <div id="dss-legenda"></div>
       </div>
+      <h3 class="dash-grupo">Pessoas</h3>
+      <div class="cards" id="dash-cards-pessoas"></div>
       <h3 class="dash-grupo">Serviços automotivos</h3>
       <div class="cards" id="dash-cards"></div>
       <h3 class="dash-grupo">Transporte</h3>
@@ -5483,15 +5485,34 @@ function fillSelectGrupos(el, grupos, selected, primeiraOpcao){
 function renderDashboard(){
   const cards = document.getElementById("dash-cards");
   const reais = leads.filter(leadReal);
-  const totalLeads = reais.length;
-  const totalClientes = reais.filter(l=>["Fechado - Ganho","Cliente ativo"].includes(l.etapa)).length;
+  // Regra única (23/10/2026), a mesma de Contatos › Clientes: cliente é quem
+  // já comprou de verdade (viagem concluída, orçamento aceito ou venda). Etapa
+  // marcada à mão no lead não conta. Uma pessoa = um código (cadastro_id).
+  const chavePessoa = (r, tipo) => r.cadastro_id != null ? "cad:" + r.cadastro_id : tipo + ":" + r.id;
+  const compradores = montarClientesGeral().filter(c=>c.temViagem || c.temServico);
+  const chaveComprador = c => c.base.cadastro_id != null ? "cad:" + c.base.cadastro_id : (c.lead ? "lead:" + c.lead.id : "ct:" + c.ct.id);
+  const compraramViagem = new Set(compradores.filter(c=>c.temViagem).map(chaveComprador));
+  const compraramServico = new Set(compradores.filter(c=>c.temServico).map(chaveComprador));
+  const pessoas = new Set([...reais.map(l=>chavePessoa(l, "lead")), ...clientesTransporte.filter(c=>!c.teste).map(c=>chavePessoa(c, "ct"))]);
+  const todosCompradores = new Set(compradores.map(chaveComprador));
+  const qtdLeads = [...pessoas].filter(k=>!todosCompradores.has(k)).length;
+  const qtdOsDois = compradores.filter(c=>c.temViagem && c.temServico).length;
+  const ehViagem = l => ["Viagem","Transporte"].includes(l.categoria);
+  const interesseServico = reais.filter(l=>!ehViagem(l) && !compraramServico.has(chavePessoa(l, "lead"))).length;
+  const interesseViagem = reais.filter(l=>ehViagem(l) && !compraramViagem.has(chavePessoa(l, "lead"))).length;
+  const cardsPessoas = document.getElementById("dash-cards-pessoas");
+  if(cardsPessoas) cardsPessoas.innerHTML = `
+    <div class="card card-link" title="Abrir os leads" onclick="irParaLeads('')"><div class="num">${qtdLeads}</div><div class="label">Leads (ainda não compraram)</div></div>
+    <div class="card card-link" title="Abrir os clientes" onclick="irParaClientesComprou('')"><div class="num">${compradores.length}</div><div class="label">Clientes (já compraram)</div></div>
+    <div class="card card-link" title="Abrir quem comprou transporte e serviço" onclick="irParaClientesComprou('dois')"><div class="num">${qtdOsDois}</div><div class="label">Compraram os dois</div></div>
+  `;
   const parceirosAtivos = parceiros.filter(p=>p.status==="Parceria ativa").length;
   const orcAbertos = orcamentos.filter(o=>["Solicitado","Enviado"].includes(o.status)).length;
   const coracao = document.getElementById("bv-coracao-num");
   if(coracao) coracao.textContent = reais.filter(l=>l.etapa==="Novo lead").length;
   cards.innerHTML = `
-    <div class="card card-link" title="Abrir a lista de leads" onclick="irParaLeads('')"><div class="num">${totalLeads}</div><div class="label">Leads no total</div></div>
-    <div class="card card-link" title="Abrir a lista de clientes" onclick="irParaAba('clientes')"><div class="num">${totalClientes}</div><div class="label">Clientes convertidos</div></div>
+    <div class="card card-link" title="Abrir os leads" onclick="irParaLeads('')"><div class="num">${interesseServico}</div><div class="label">Interessadas em serviço</div></div>
+    <div class="card card-link" title="Abrir quem comprou serviço" onclick="irParaClientesComprou('servico')"><div class="num">${compraramServico.size}</div><div class="label">Clientes de serviço</div></div>
     <div class="card card-link" title="Abrir a rede de parceiras (os)" onclick="irParaAba('parceiros')"><div class="num">${parceirosAtivos}</div><div class="label">Parcerias ativas</div></div>
     <div class="card card-link" title="Abrir os orçamentos" onclick="irParaAba('orcamentos')"><div class="num">${orcAbertos}</div><div class="label">Orçamentos em aberto</div></div>
   `;
@@ -5508,6 +5529,7 @@ function renderDashboard(){
     const pct = cliReais.length ? Math.round(viajaram / cliReais.length * 100) : 0;
     const motAtivas = motoristas.filter(m=>m.status==="Ativa").length;
     cardsTransp.innerHTML = `
+      <div class="card card-link" title="Abrir os leads de viagem" onclick="irParaLeadsCategoria('Viagem')"><div class="num">${interesseViagem}</div><div class="label">Interessadas em viagem</div></div>
       <div class="card card-link" title="Abrir as clientes de viagem" onclick="irParaTransporte('clientes-transporte')"><div class="num">${cliReais.length}</div><div class="label">Clientes cadastradas</div></div>
       <div class="card card-link" title="Abrir as clientes de viagem" onclick="irParaTransporte('clientes-transporte')"><div class="num">${viajaram}</div><div class="label">Clientes que já viajaram${cliReais.length ? ` (${pct}%)` : ""}</div></div>
       <div class="card card-link" title="Abrir as motoristas" onclick="irParaTransporte('motoristas')"><div class="num">${motAtivas}</div><div class="label">Motoristas ativas</div></div>
@@ -6487,6 +6509,16 @@ function irParaLeadsServico(servico){
   irParaLeads("");
   filtroServicoLeads = servico;
   renderLeads();
+}
+function irParaLeadsCategoria(categoria){
+  irParaLeads("");
+  document.getElementById("filter-categoria").value = categoria;
+  renderLeads();
+}
+function irParaClientesComprou(comprou){
+  irParaAba("clientes");
+  document.getElementById("filter-cg-comprou").value = comprou;
+  renderClientes();
 }
 function irParaTransporte(subtab){
   irParaAba("transporte");
