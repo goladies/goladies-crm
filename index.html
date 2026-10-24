@@ -1632,7 +1632,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     <div id="contatos-leads">
       <div class="pagehead">
-        <div><h2>Leads</h2><p>Todo contato recebido pelo site, WhatsApp ou indicação. Quem se cadastrou no transporte e ainda não viajou aparece com a etiqueta Transporte.</p></div>
+        <div><h2>Leads</h2><p>Quem entrou em contato pelo site, WhatsApp ou indicação e ainda não comprou. Quem se cadastrou no transporte e ainda não viajou aparece com a etiqueta Transporte. Quem já comprou fica em <a href="#" onclick="irParaClientesGeral(); return false;">Clientes</a>.</p></div>
         <button class="btn" onclick="openLeadModal()">+ Novo lead</button>
       </div>
       <div class="filters">
@@ -6494,6 +6494,7 @@ function irParaAba(tab){
   if(nav) nav.click();
 }
 function irParaLeads(etapa){
+  if(ETAPAS_CLIENTE.includes(etapa)){ irParaClientesGeral(); return; }
   filtroServicoLeads = "";
   irParaAba("leads");
   const fe = document.getElementById("filter-etapa");
@@ -6501,6 +6502,12 @@ function irParaLeads(etapa){
   document.getElementById("filter-categoria").value = "";
   document.getElementById("filter-busca").value = "";
   renderLeads();
+}
+// Quem já comprou (lead em "Fechado - Ganho"/"Cliente ativo", viagem feita,
+// orçamento aceito ou venda) fica em Contatos › Clientes, não em Leads.
+function irParaClientesGeral(){
+  irParaAba("clientes");
+  showToast("Quem já comprou fica aqui em Clientes, inclusive as clientes de viagem.");
 }
 // Filtro por serviço só existe vindo do gráfico do Dashboard; aparece como
 // etiqueta com ✕ ao lado dos filtros de Leads.
@@ -6577,9 +6584,18 @@ function mensagemAniversario(c){
 
 function renderLeads(){
   const fe = document.getElementById("filter-etapa"), fc = document.getElementById("filter-categoria");
-  if(!fe.dataset.filled){ fillSelect(fe, ["",...ETAPAS], ""); fe.querySelector("option").textContent="Todas as etapas"; fe.dataset.filled=1; }
+  if(!fe.dataset.filled){
+    fillSelect(fe, ["",...ETAPAS], ""); fe.querySelector("option").textContent="Todas as etapas";
+    // Etapas de cliente não filtram aqui: escolher leva pra aba Clientes
+    [...fe.options].filter(o=>ETAPAS_CLIENTE.includes(o.value)).forEach(o=>{ o.textContent = o.value + " → ver em Clientes"; });
+    fe.dataset.filled=1;
+  }
   if(!fc.dataset.filled){ fillSelect(fc, ["",...new Set([...CATEGORIAS, "Transporte"])], ""); fc.querySelector("option").textContent="Todas as categorias"; fc.dataset.filled=1; }
+  if(ETAPAS_CLIENTE.includes(fe.value)){ fe.value = ""; irParaClientesGeral(); return; }
   const etapaF = fe.value, catF = fc.value, buscaF = document.getElementById("filter-busca").value.toLowerCase();
+  // Leads = só quem ainda não comprou (23/10/2026). Quem já comprou (mesma regra
+  // da aba Clientes) sai daqui, senão o filtro parecia mostrar todas as clientes.
+  const leadsCompraram = new Set(montarClientesGeral().filter(c=>c.lead).map(c=>c.lead.id));
   renderCabecalho("thead-leads", [
     {label:"Nome", campo:"nome"}, {label:"Contato", campo:"whatsapp"}, {label:"Categoria / Serviço", campo:"categoria"},
     {label:"Urgência", campo:"urgencia"}, {label:"Etapa", campo:"etapa"}, {label:"Origem", campo:"origem"},
@@ -6595,7 +6611,7 @@ function renderLeads(){
     montarLeadsTransporte().filter(t=>t.tipo==="ct" && (t.cadastro_id == null || !cadLeads.has(t.cadastro_id))).map(t=>({
       ...t.base, _ct: true, categoria: "Transporte", etapa: t.situacao, origem: t.entrou, data: t.desde
     }));
-  const filtered = aplicarOrdenacao("leads", [...leads, ...doTransporte].filter(l=>
+  const filtered = aplicarOrdenacao("leads", [...leads.filter(l=>!leadsCompraram.has(l.id)), ...doTransporte].filter(l=>
     (l._ct || (
       (!filtroServicoLeads || l.servico===filtroServicoLeads) &&
       (!etapaF || l.etapa===etapaF) && (!catF || l.categoria===catF))) &&
