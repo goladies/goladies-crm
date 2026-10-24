@@ -576,6 +576,22 @@ select.conv-acao.conv-menu{padding-right:8px; max-width:220px;}
 .vg-check{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text1); font-weight:400; margin:0;}
 .vg-check input{width:auto !important; accent-color:var(--rosa);}
 .vg-trajeto{border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;}
+.vg-ponto{padding:10px 0; border-top:1px solid var(--border);}
+.vg-ponto:first-of-type{border-top:none;}
+.vg-ponto > label, .vg-ponto .obrig label{display:block; margin-top:8px;}
+.vg-ponto-tit{display:flex; align-items:center; gap:6px; font-weight:700; font-size:13px; color:var(--text1);}
+.vg-ponto-linha{display:grid; grid-template-columns:140px 1fr; gap:10px; margin-top:8px;}
+@media (max-width:600px){ .vg-ponto-linha{grid-template-columns:1fr;} }
+.vg-pass-lista{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+.vg-pass{border:1px solid var(--border); border-radius:9px; padding:8px 10px; background:var(--bg-card2);}
+.vg-pass-topo{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12.5px;}
+.vg-pass-acao{font-weight:700; padding:1px 8px; border-radius:10px; font-size:11.5px;}
+.vg-pass-acao.emb{background:var(--c-green-bg, #dcfce7); color:var(--c-green, #15803d);}
+.vg-pass-acao.des{background:var(--c-amber-bg); color:var(--ink, inherit);}
+.vg-pass-campos{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:6px;}
+.vg-pass-campos label{font-size:11.5px; margin-bottom:2px;}
+.vg-pass-lig{margin-top:6px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;}
+.vg-pass-botoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
 details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
 details.vg-sec:not([open]){padding-bottom:0;}
 details.vg-sec:not([open])>summary{border-bottom:none;}
@@ -3479,22 +3495,36 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
             </div>
           </div>
-          <div style="margin-top:10px;">
+          <!-- Todo ponto igual (23/10/2026): Endereço, Horário previsto,
+               Observação e Passageiras (os), com o nome do campo sempre à
+               vista. O horário do embarque e a chegada prevista são os mesmos
+               campos de mais abaixo (espelhados, sem duplicar no banco). -->
+          <div class="vg-ponto" style="margin-top:10px;">
+            <div class="vg-ponto-tit">1. Embarque (origem)</div>
             <div class="obrig destaque">
-              <label>1. Embarque (origem)</label>
+              <label>Endereço</label>
               <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
             </div>
-            <input type="text" id="vg-origem-obs" placeholder="Observação do embarque (opcional)" style="margin-top:6px;">
-            <div class="vg-ponto-pass" style="margin-top:6px;"><input type="text" id="vg-origem-pass" placeholder="Passageira que embarca aqui (opcional)" oninput="pontosPassageira.origem.passageira_nome=this.value; atualizarLigacaoPassageira('origem')"><div id="vg-origem-pass-lig" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;"></div></div>
+            <div class="vg-ponto-linha">
+              <div><label>Horário previsto</label><input type="time" id="vg-origem-horario" oninput="espelharHorario(this.id)"></div>
+              <div><label>Observação</label><input type="text" id="vg-origem-obs" placeholder="Ex.: portaria 2"></div>
+            </div>
+            <label>Passageiras (os) neste ponto</label>
+            <div id="vg-pass-origem" class="vg-pass-lista"></div>
           </div>
-          <div id="vg-paradas-lista" style="margin-top:8px;"></div>
-          <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+          <div id="vg-paradas-lista"></div>
+          <div class="vg-ponto">
+            <div class="vg-ponto-tit"><span id="vg-destino-num">2</span>. Destino</div>
             <div class="obrig destaque">
-              <label><span id="vg-destino-num">2</span>. Destino</label>
+              <label>Endereço</label>
               <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
             </div>
-            <input type="text" id="vg-destino-obs" placeholder="Observação do destino (opcional)" style="margin-top:6px;">
-            <div class="vg-ponto-pass" style="margin-top:6px;"><input type="text" id="vg-destino-pass" placeholder="Passageira que desce aqui (opcional)" oninput="pontosPassageira.destino.passageira_nome=this.value; atualizarLigacaoPassageira('destino')"><div id="vg-destino-pass-lig" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;"></div></div>
+            <div class="vg-ponto-linha">
+              <div><label>Horário previsto</label><input type="time" id="vg-destino-horario" oninput="espelharHorario(this.id)"></div>
+              <div><label>Observação</label><input type="text" id="vg-destino-obs" placeholder="Ex.: entrada pela rua de trás"></div>
+            </div>
+            <label>Passageiras (os) neste ponto</label>
+            <div id="vg-pass-destino" class="vg-pass-lista"></div>
           </div>
           <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
         </div>
@@ -3503,7 +3533,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
         <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
-        <div><label>Pessoas na ida</label><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
+        <div><label>Pessoas na ida</label><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span class="dica" id="vg-pessoas-dica">Contando a cliente. Vazio = não informado.</span></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h) ou feriado: +30% na ida</span></label></div>
       </div>
     </section>
@@ -4397,6 +4427,7 @@ let clientesTransporte = [];
 let viagens = [];
 let viagemOfertas = [];
 let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
+let viagemPassageiros = []; // quem vai no carro e onde entra/desce, schema_garupa_lista_passageiros.sql
 let tabelasPreco = [];          // tabelas de preço por tipo e horário (schema_tabelas_preco.sql)
 let tabelasPrecoSqlFaltando = true;
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
@@ -5064,7 +5095,10 @@ async function carregarDadosInterno(){
       sb.from("evento_interacoes").select("*").order("id"),
       sb.from("evento_arquivos").select("*").order("id"),
     ]),
-    sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem"),
+    Promise.all([
+      sb.from("viagem_paradas").select("*").order("viagem_id").order("ordem"),
+      sb.from("viagem_passageiros").select("*").order("viagem_id").order("id"),
+    ]),
     Promise.all([
       sb.from("areas_atendimento").select("*").order("id"),
       sb.from("demandas_fora_area").select("*").order("criado_em", { ascending: false }),
@@ -5150,8 +5184,9 @@ async function carregarDadosInterno(){
   eventoArquivos = aplicarConsulta("evento_arquivos", reva, eventoArquivos);
 
   // Paradas das viagens (schema_viagem_paradas.sql), separado pelo mesmo motivo
-  const rvpa = await q[3];
+  const [rvpa, rvps] = await q[3];
   viagemParadas = aplicarConsulta("viagem_paradas", rvpa, viagemParadas);
+  viagemPassageiros = aplicarConsulta("viagem_passageiros", rvps, viagemPassageiros);
 
   // Área de atendimento e demanda de fora dela (schema_area_atendimento.sql), idem
   const [rar, rdfa] = await q[4];
@@ -5366,6 +5401,7 @@ const TABELA_ATUALIZA = {
   motorista_observacoes: v => motoristaObservacoes = v,
   viagem_ofertas: v => viagemOfertas = v,
   viagem_paradas: v => viagemParadas = v,
+  viagem_passageiros: v => viagemPassageiros = v,
   eventos: v => eventos = v,
   evento_contatos: v => eventoContatos = v,
   evento_links: v => eventoLinks = v,
@@ -13703,12 +13739,8 @@ async function unificarClientes(manter, remover){
     `Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`
   ].filter((l,i,a)=>l || (i>0 && a[i-1]));
   if(!confirm(linhas.join("\n"))) return;
-  // Garupa: passa antes, porque apagar a ficha que some desliga as paradas dela
-  if(colunaPassageiraFichaExiste()) await sb.from("viagem_paradas").update({ passageira_cliente_id: manter }).eq("passageira_cliente_id", remover);
-  if(colunasPassageiraPontoExistem()){
-    await sb.from("viagens").update({ origem_passageira_cliente_id: manter }).eq("origem_passageira_cliente_id", remover);
-    await sb.from("viagens").update({ destino_passageira_cliente_id: manter }).eq("destino_passageira_cliente_id", remover);
-  }
+  // Quem foi junto em viagens: passa antes, porque apagar a ficha que some desliga a ligação
+  await sb.from("viagem_passageiros").update({ cliente_id: manter }).eq("cliente_id", remover);
   const { data: resumo, error } = await sb.rpc("unificar_clientes_transporte", { p_manter: manter, p_remover: remover });
   if(error){ alert("Não foi possível unificar: " + error.message); return; }
   showToast(resumo && typeof resumo === "object"
@@ -14187,7 +14219,6 @@ document.getElementById("vg-trajeto-wrap").addEventListener("change", e=>{
 // A lista vive em memória enquanto o modal está aberto e é gravada inteira
 // ao Salvar (apaga e reinsere na ordem), o que dispensa sincronizar item a item.
 let paradasModal = [];
-const PARADA_TIPOS = ["Embarque", "Desembarque", "Parada"];
 // A cliente pede pelo app/site com um trajeto único (embarque, paradas,
 // destino), mas o banco grava tudo junto em observacoes_cliente, prefixado
 // "Embarque: "/"Destino: " (ver montarObservacoes() no site). O modal separa
@@ -14197,29 +14228,14 @@ const PARADA_TIPOS = ["Embarque", "Desembarque", "Parada"];
 let obsGeralClienteAtual = "";
 // Viagem da Conta Adolescente (a cliente da viagem é a responsável) e quem
 // vai junto (viagem_passageiros). Busca na hora: é pouco e só abre no modal.
-async function mostrarPassageirosViagem(v){
+// Viagem da Conta Adolescente: a cliente da viagem é a responsável e quem
+// viaja é a (o) adolescente. Quem vai junto fica no trajeto, ponto a ponto.
+function mostrarPassageirosViagem(v){
   const el = document.getElementById("vg-passageiros-wrap");
   el.style.display = "none"; el.innerHTML = "";
-  if(!v || !v.id) return;
-  const linhas = [];
-  if(v.passageira_cliente_id){
-    const p = clientesTransporte.find(c=>c.id===v.passageira_cliente_id);
-    linhas.push(`<b><svg class=ic aria-hidden=true><use href=#i-user /></svg> Quem viaja:</b> <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(v.passageira_cliente_id)})">${escapeHtml(p ? p.nome : "#" + v.passageira_cliente_id)}</a> (Conta Adolescente${p && p.aniversario ? ", " + idadeAnos(p.aniversario) + " anos" : ""}). A cliente da viagem é a responsável.`);
-  }
-  try{
-    const { data, error } = await sb.from("viagem_passageiros").select("*").eq("viagem_id", v.id).order("id");
-    if(error) throw error;
-    if(data && data.length){
-      linhas.push(`<b><svg class=ic aria-hidden=true><use href=#i-users /></svg> Vai junto:</b>`);
-      data.forEach(p=>{
-        if(p.tipo === "conta") linhas.push(`• ${escapeHtml(p.nome)} (tem conta${p.cliente_id ? `, <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.cliente_id)})">abrir</a>` : ""})`);
-        else if(p.tipo === "sem_conta") linhas.push(`• ${escapeHtml(p.nome)} · CPF ${escapeHtml(formatarCpf(p.cpf))} · ${numeroClicavel(p.telefone)}`);
-        else linhas.push(`• ${escapeHtml(p.nome)} (criança, ${p.idade} anos)`);
-      });
-    }
-  }catch(e){ /* sem o SQL rodado a tabela não existe: só não mostra */ }
-  if(editingViagemId !== v.id || !linhas.length) return;
-  el.innerHTML = linhas.join("<br>");
+  if(!v || !v.passageira_cliente_id) return;
+  const p = clientesTransporte.find(c=>c.id===v.passageira_cliente_id);
+  el.innerHTML = `<b><svg class=ic aria-hidden=true><use href=#i-user /></svg> Quem viaja:</b> <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(v.passageira_cliente_id)})">${escapeHtml(p ? p.nome : "#" + v.passageira_cliente_id)}</a> (Conta Adolescente${p && p.aniversario ? ", " + idadeAnos(p.aniversario) + " anos" : ""}). A cliente da viagem é a responsável.`;
   el.style.display = "block";
 }
 function formatarCpf(c){
@@ -14255,136 +14271,288 @@ function montarObservacaoCliente(){
 }
 function carregarParadasModal(viagemId){
   paradasModal = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem)
-    .map(p=>({ tipo: p.tipo, endereco: p.endereco||"", passageira_nome: p.passageira_nome||"", passageira_cliente_id: p.passageira_cliente_id||null, horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
+    .map(p=>({ endereco: p.endereco||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
   renderParadasModal();
 }
-// Passageira da parada ligada a uma ficha de cliente de viagem
-// (schema_garupa_pessoas.sql). Opcional: sem ficha, o nome fica só como texto.
-// Antes do SQL rodado a coluna não existe e a ligação não aparece.
-const colunaPassageiraFichaExiste = () => !viagemParadas.length || ("passageira_cliente_id" in viagemParadas[0]);
-// Embarque (origem) e destino também têm passageira (schema_garupa_embarque_destino.sql).
-// k = índice da parada (número) ou "origem"/"destino".
-let pontosPassageira = { origem: { passageira_nome: "", passageira_cliente_id: null }, destino: { passageira_nome: "", passageira_cliente_id: null } };
-const colunasPassageiraPontoExistem = () => !viagens.length || ("origem_passageira_nome" in viagens[0]);
-const pontoPassageira = k => typeof k === "number" ? paradasModal[k] : pontosPassageira[k];
-const argPonto = k => typeof k === "number" ? k : `'${k}'`;
+// ── Quem vai no carro, ponto a ponto (schema_garupa_lista_passageiros.sql) ──
+// Uma lista só por viagem (viagem_passageiros, a mesma do "Quem vai junto?"
+// do app): cada pessoa tem onde entra e onde desce. Ponto = "origem",
+// "destino" ou "p1", "p2"... (parada 1, 2... na ordem). No modal a pessoa
+// aparece nos dois pontos dela (Embarca e Desce). A cliente da viagem também
+// tem os dois pontos (viagens.cliente_embarque_ponto/desembarque_ponto).
+let pessoasModal = [];
+let clientePontosModal = { embarque: "origem", desembarque: "destino" };
+const TIPOS_PASSAGEIRA = [
+  ["conta", "Tem conta"], ["sem_conta", "Adulta (o) sem conta"], ["adolescente", "Adolescente (12 a 17)"],
+  ["crianca", "Criança (até 11)"], ["idosa", "Pessoa idosa"], ["nao_informado", "Tipo a confirmar"],
+];
+const listaPassageirosExiste = () => !viagens.length || ("cliente_embarque_ponto" in viagens[0]);
 const semAcentoMin = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-function htmlLigacaoPassageira(k){
-  const p = pontoPassageira(k);
-  if(!p || !(typeof k === "number" ? colunaPassageiraFichaExiste() : colunasPassageiraPontoExistem())) return "";
-  if(p.passageira_cliente_id){
-    const c = clientesTransporte.find(x=>x.id===p.passageira_cliente_id);
-    return `<svg class=ic aria-hidden=true><use href=#i-link /></svg> Ficha: <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.passageira_cliente_id)})">${escapeHtml(c ? nomeCod(c) : "#" + p.passageira_cliente_id)}</a> · <a href="#" onclick="event.preventDefault(); ligarPassageiraParada(${argPonto(k)}, null)">desligar</a>`;
+const posicaoPonto = k => k === "origem" ? 0 : k === "destino" ? 1000 : Number(String(k).slice(1));
+function pontosDoTrajeto(){
+  return [["origem", "1. Embarque"], ...paradasModal.map((p,i)=>["p" + (i+1), `${i+2}. Parada`]), ["destino", `${paradasModal.length+2}. Destino`]];
+}
+function carregarPassageirosModal(v){
+  pessoasModal = viagemPassageiros.filter(p=>p.viagem_id===v.id).sort((a,b)=>a.id-b.id).map(p=>({
+    tipo: p.tipo, nome: p.nome || "", cliente_id: p.cliente_id || null, telefone: p.telefone || "", cpf: p.cpf || "",
+    idade: p.idade ?? "", precisa_ajuda: !!p.precisa_ajuda, embarque_ponto: p.embarque_ponto || "origem", desembarque_ponto: p.desembarque_ponto || "destino",
+  }));
+  clientePontosModal = { embarque: v.cliente_embarque_ponto || "origem", desembarque: v.cliente_desembarque_ponto || "destino" };
+}
+function htmlPessoaNoPonto(j, ponto){
+  const ehCliente = j === "cliente";
+  const p = ehCliente ? null : pessoasModal[j];
+  const embarca = ehCliente ? clientePontosModal.embarque === ponto : p.embarque_ponto === ponto;
+  const outro = ehCliente ? (embarca ? clientePontosModal.desembarque : clientePontosModal.embarque) : (embarca ? p.desembarque_ponto : p.embarque_ponto);
+  const opcoes = pontosDoTrajeto().filter(([k])=> embarca ? posicaoPonto(k) > posicaoPonto(ponto) : posicaoPonto(k) < posicaoPonto(ponto))
+    .map(([k, r])=>`<option value="${k}" ${k===outro?"selected":""}>${r}</option>`).join("");
+  const arg = ehCliente ? "'cliente'" : j;
+  const outroSel = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap;">${embarca ? "desce em" : "embarcou em"} <select onchange="mudarOutroPonto(${arg}, ${embarca}, this.value)">${opcoes}</select></label>`;
+  const acao = `<span class="vg-pass-acao ${embarca ? "emb" : "des"}">${embarca ? "Embarca" : "Desce"}</span>`;
+  if(ehCliente){
+    const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
+    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem</span> ${outroSel}</div></div>`;
   }
-  const busca = semAcentoMin(p.passageira_nome);
-  if(busca.length < 3) return "";
-  const achadas = clientesTransporte.filter(c=>semAcentoMin(c.nome).includes(busca)).slice(0, 4);
-  return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPassageiraParada(${argPonto(k)}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
-    + ` <button type="button" class="btn ghost small" onclick="criarFichaPassageiraParada(${argPonto(k)})">+ Criar ficha</button>`;
+  const t = p.tipo;
+  const campo = (rot, html) => `<div><label>${rot}</label>${html}</div>`;
+  const inp = (k, tipo, extra) => `<input type="${tipo}" value="${escapeHtml(String(p[k] ?? ""))}" ${extra||""} oninput="pessoasModal[${j}].${k}=this.value" onchange="renderPontosPassageiros()">`;
+  let campos = campo("Nome", `<input type="text" value="${escapeHtml(p.nome)}" oninput="pessoasModal[${j}].nome=this.value; atualizarLigacaoPessoa(${j}, '${ponto}')" onchange="renderPontosPassageiros()">`)
+    + campo("Tipo", `<select onchange="pessoasModal[${j}].tipo=this.value; renderPontosPassageiros()">${TIPOS_PASSAGEIRA.map(([k,r])=>`<option value="${k}" ${k===t?"selected":""}>${r}</option>`).join("")}</select>`);
+  if(t !== "crianca") campos += campo(["sem_conta","adolescente"].includes(t) ? "Telefone" : "Telefone (opcional)", inp("telefone", "text", 'inputmode="tel"'));
+  if(["sem_conta","adolescente","idosa"].includes(t)) campos += campo("CPF (opcional)", inp("cpf", "text", 'maxlength="14"'));
+  if(t === "crianca") campos += campo("Idade", inp("idade", "number", 'min="0" max="11"'));
+  if(t === "idosa") campos += `<div style="display:flex; align-items:flex-end;"><label class="vg-check" style="margin:0;"><input type="checkbox" ${p.precisa_ajuda?"checked":""} onchange="pessoasModal[${j}].precisa_ajuda=this.checked; renderPontosPassageiros()"> Precisa de ajuda pra entrar ou sair</label></div>`;
+  return `<div class="vg-pass"><div class="vg-pass-topo">${acao} ${outroSel}<span style="flex:1"></span><button type="button" class="icon-btn" title="Tirar esta pessoa da viagem" onclick="removerPessoaViagem(${j})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div>
+    <div class="vg-pass-campos">${campos}</div>
+    <div class="vg-pass-lig" id="vg-pass-lig-${j}-${ponto}">${htmlLigacaoPessoa(j)}</div></div>`;
 }
-function atualizarLigacaoPassageira(k){
-  const el = document.getElementById(typeof k === "number" ? "vg-parada-lig-" + k : `vg-${k}-pass-lig`);
-  if(el) el.innerHTML = htmlLigacaoPassageira(k);
-}
-function ligarPassageiraParada(k, clienteId){
-  const p = pontoPassageira(k);
-  p.passageira_cliente_id = clienteId;
-  if(clienteId){
-    const c = clientesTransporte.find(x=>x.id===clienteId);
-    if(c) p.passageira_nome = c.nome;
-  }
-  if(typeof k === "number"){ renderParadasModal(); return; }
-  document.getElementById(`vg-${k}-pass`).value = p.passageira_nome;
-  atualizarLigacaoPassageira(k);
-}
-function carregarPassageirasPontos(v){
-  const sqlOk = colunasPassageiraPontoExistem();
-  ["origem","destino"].forEach(k=>{
-    pontosPassageira[k] = { passageira_nome: v[k + "_passageira_nome"] || "", passageira_cliente_id: v[k + "_passageira_cliente_id"] || null };
-    document.getElementById(`vg-${k}-pass`).value = pontosPassageira[k].passageira_nome;
-    document.getElementById(`vg-${k}-pass`).closest(".vg-ponto-pass").style.display = sqlOk ? "" : "none";
-    atualizarLigacaoPassageira(k);
-  });
-}
-function dadosPassageirasPontos(){
-  const d = {};
-  ["origem","destino"].forEach(k=>{
-    const p = pontosPassageira[k];
-    d[k + "_passageira_nome"] = p.passageira_nome.trim() || null;
-    d[k + "_passageira_cliente_id"] = p.passageira_nome.trim() ? p.passageira_cliente_id : null;
-  });
-  return d;
-}
-async function criarFichaPassageiraParada(i){
-  const nome = pontoPassageira(i).passageira_nome.trim();
-  if(!nome) return;
-  const whats = prompt(`Criar a ficha de cliente de viagem de ${nome}.\n\nWhatsApp dela (opcional, pode deixar vazio):`);
-  if(whats === null) return;
-  const mesma = whats.trim() && clientesTransporte.find(c=>mesmoTelefone(c.whatsapp, whats));
-  if(mesma){
-    if(confirm(`Esse WhatsApp já é de ${nomeCod(mesma)}. Ligar a parada a essa ficha?`)) ligarPassageiraParada(i, mesma.id);
+function renderPontosPassageiros(){
+  if(!listaPassageirosExiste()){
+    document.querySelectorAll(".vg-pass-lista").forEach(el=>{ el.innerHTML = `<div class="dica">Falta rodar o schema_garupa_lista_passageiros.sql no Supabase.</div>`; });
     return;
   }
+  pontosDoTrajeto().forEach(([k])=>{
+    const el = document.getElementById("vg-pass-" + k);
+    if(!el) return;
+    const linhas = [];
+    if(clientePontosModal.embarque === k || clientePontosModal.desembarque === k) linhas.push(htmlPessoaNoPonto("cliente", k));
+    pessoasModal.forEach((p,j)=>{ if(p.embarque_ponto === k || p.desembarque_ponto === k) linhas.push(htmlPessoaNoPonto(j, k)); });
+    const botoes = [];
+    if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Embarca aqui</button>`);
+    if(k !== "origem") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Desce aqui</button>`);
+    el.innerHTML = linhas.join("") + `<div class="vg-pass-botoes">${botoes.join("")}</div>`;
+  });
+  const dica = document.getElementById("vg-pessoas-dica");
+  if(dica) dica.textContent = `Contando a cliente. Na lista do trajeto: ${pessoasModal.length + 1} ${pessoasModal.length ? "pessoas" : "pessoa"}.`;
+}
+function adicionarPessoaViagem(ponto, embarca){
+  pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
+    embarque_ponto: embarca ? ponto : "origem", desembarque_ponto: embarca ? "destino" : ponto });
+  renderPontosPassageiros();
+  const cartoes = document.querySelectorAll(`#vg-pass-${ponto} .vg-pass`);
+  const campo = cartoes.length && cartoes[cartoes.length-1].querySelector(".vg-pass-campos input[type=text]");
+  if(campo) campo.focus();
+}
+function removerPessoaViagem(j){
+  const p = pessoasModal[j];
+  if(p.nome.trim() && !confirm(`Tirar ${p.nome.trim()} desta viagem? Ela (e) sai do embarque e do desembarque.`)) return;
+  pessoasModal.splice(j, 1);
+  renderPontosPassageiros();
+}
+function mudarOutroPonto(j, embarca, valor){
+  if(j === "cliente") clientePontosModal[embarca ? "desembarque" : "embarque"] = valor;
+  else pessoasModal[j][embarca ? "desembarque_ponto" : "embarque_ponto"] = valor;
+  renderPontosPassageiros();
+}
+// Mover ou tirar parada: quem entrava ou descia nela acompanha a parada
+function remapearPontosParadas(mapa){
+  const troca = k => k in mapa ? mapa[k] : k;
+  pessoasModal.forEach(p=>{ p.embarque_ponto = troca(p.embarque_ponto); p.desembarque_ponto = troca(p.desembarque_ponto); });
+  clientePontosModal.embarque = troca(clientePontosModal.embarque);
+  clientePontosModal.desembarque = troca(clientePontosModal.desembarque);
+  [...pessoasModal, null].forEach(p=>{
+    const o = p || clientePontosModal, e = p ? "embarque_ponto" : "embarque", d = p ? "desembarque_ponto" : "desembarque";
+    if(posicaoPonto(o[e]) >= posicaoPonto(o[d])){ o[e] = "origem"; o[d] = "destino"; }
+  });
+}
+function htmlLigacaoPessoa(j){
+  const p = pessoasModal[j];
+  if(p.cliente_id){
+    const c = clientesTransporte.find(x=>x.id===p.cliente_id);
+    return `<svg class=ic aria-hidden=true><use href=#i-link /></svg> Ficha: <a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.cliente_id)})">${escapeHtml(c ? nomeCod(c) : "#" + p.cliente_id)}</a> · <a href="#" onclick="event.preventDefault(); ligarPessoaFicha(${j}, null)">desligar</a>`;
+  }
+  const busca = semAcentoMin(p.nome);
+  if(!busca) return "";
+  const achadas = busca.length >= 2 ? clientesTransporte.filter(c=>semAcentoMin(c.nome).includes(busca)).slice(0, 4) : [];
+  return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPessoaFicha(${j}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
+    + ` <button type="button" class="btn ghost small" onclick="criarFichaPessoa(${j})">+ Criar ficha</button>`;
+}
+function atualizarLigacaoPessoa(j, ponto){
+  const el = document.getElementById(`vg-pass-lig-${j}-${ponto}`);
+  if(el) el.innerHTML = htmlLigacaoPessoa(j);
+}
+function ligarPessoaFicha(j, clienteId){
+  const p = pessoasModal[j];
+  p.cliente_id = clienteId;
+  if(clienteId){
+    const c = clientesTransporte.find(x=>x.id===clienteId);
+    if(c){
+      p.nome = c.nome;
+      if(!p.telefone && c.whatsapp) p.telefone = c.whatsapp;
+      if(p.tipo === "nao_informado" && c.auth_user_id) p.tipo = "conta";
+    }
+  }
+  renderPontosPassageiros();
+}
+async function criarFichaPessoa(j){
+  const p = pessoasModal[j];
+  const nome = p.nome.trim();
+  if(!nome) return;
+  let whats = p.telefone.trim();
+  if(!whats){
+    whats = prompt(`Criar a ficha de cliente de viagem de ${nome}.\n\nWhatsApp (opcional, pode deixar vazio):`);
+    if(whats === null) return;
+    whats = whats.trim();
+  }
+  const mesma = whats && clientesTransporte.find(c=>mesmoTelefone(c.whatsapp, whats));
+  if(mesma){
+    if(confirm(`Esse WhatsApp já é de ${nomeCod(mesma)}. Ligar a esta ficha?`)) ligarPessoaFicha(j, mesma.id);
+    return;
+  }
+  if(!confirm(`Criar a ficha de ${nome}${whats ? " (" + whats + ")" : ""}?`)) return;
   const cliente = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
   const { data, error } = await sb.from("clientes_transporte").insert({
-    nome, whatsapp: whats.trim(), origem: "Indicação",
-    notas: `Criada como passageira da garupa${editingViagemId ? " da viagem #" + editingViagemId : ""}${cliente ? " (cliente " + nomeCod(cliente) + ")" : ""} em ${dataComSemana(new Date(), true)}.`,
+    nome, whatsapp: whats, origem: "Indicação",
+    notas: `Criada como passageira (o) da viagem${editingViagemId ? " #" + editingViagemId : ""}${cliente ? " de " + nomeCod(cliente) : ""} em ${dataComSemana(new Date(), true)}.`,
   }).select();
   if(error){ alert("Erro ao criar a ficha: " + error.message); return; }
   await recarregarTabelas("clientes_transporte");
   showToast(`Ficha criada: ${data[0].nome}`);
-  ligarPassageiraParada(i, data[0].id);
+  ligarPessoaFicha(j, data[0].id);
 }
-// Na ficha da cliente: viagens em que ela foi passageira de garupa
+// Grava a lista inteira (apaga e reinsere), como as paradas
+async function gravarPassageirosViagem(viagemId){
+  if(!listaPassageirosExiste()) return true;
+  const existiam = viagemPassageiros.some(p=>p.viagem_id===viagemId);
+  if(!pessoasModal.length && !existiam) return true;
+  const del = await sb.from("viagem_passageiros").delete().eq("viagem_id", viagemId);
+  if(del.error){ alert("Erro ao salvar quem vai no carro: " + del.error.message); return false; }
+  if(pessoasModal.length){
+    const ins = await sb.from("viagem_passageiros").insert(pessoasModal.map(p=>({
+      viagem_id: viagemId, tipo: p.tipo, nome: p.nome.trim() || "(a confirmar)", cliente_id: p.cliente_id,
+      telefone: p.tipo !== "crianca" && p.telefone.trim() ? p.telefone.trim() : null,
+      cpf: ["sem_conta","adolescente","idosa"].includes(p.tipo) ? (String(p.cpf||"").replace(/\D/g,"") || null) : null,
+      idade: p.tipo === "crianca" && p.idade !== "" ? Number(p.idade) : null,
+      precisa_ajuda: p.tipo === "idosa" ? !!p.precisa_ajuda : null,
+      embarque_ponto: p.embarque_ponto, desembarque_ponto: p.desembarque_ponto,
+    })));
+    if(ins.error){ alert("Erro ao salvar quem vai no carro: " + ins.error.message); return false; }
+  }
+  return true;
+}
+// Antes de salvar: cada pessoa embarca antes de descer; sem nome só com "Tipo a confirmar"
+function conferirPassageirosModal(){
+  for(const p of pessoasModal){
+    const quem = p.nome.trim() || "Uma pessoa sem nome";
+    if(!p.nome.trim() && p.tipo !== "nao_informado") return `${quem} no trajeto: escreva o nome, ou deixe o tipo como "Tipo a confirmar".`;
+    if(posicaoPonto(p.embarque_ponto) >= posicaoPonto(p.desembarque_ponto)) return `${quem}: o ponto onde desce precisa vir depois do ponto onde embarca.`;
+    if(p.tipo === "crianca" && (p.idade === "" || Number(p.idade) < 0 || Number(p.idade) > 11)) return `${quem}: criança precisa da idade (até 11 anos).`;
+  }
+  if(posicaoPonto(clientePontosModal.embarque) >= posicaoPonto(clientePontosModal.desembarque)) return "Cliente da viagem: o ponto onde desce precisa vir depois do ponto onde embarca.";
+  return "";
+}
+// Horário do embarque e chegada prevista aparecem também no trajeto
+// (são os mesmos campos de mais abaixo, só espelhados)
+const HORARIO_ESPELHO = { "vg-origem-horario": "vg-horario-partida", "vg-destino-horario": "vg-horario-chegada" };
+function espelharHorario(id){
+  document.getElementById(HORARIO_ESPELHO[id]).value = document.getElementById(id).value;
+  if(id === "vg-origem-horario") recalcularHorarioChegada();
+  sincronizarHorariosTrajeto();
+}
+function sincronizarHorariosTrajeto(){
+  Object.entries(HORARIO_ESPELHO).forEach(([a,b])=>{ document.getElementById(a).value = document.getElementById(b).value; });
+}
+["vg-horario-partida","vg-horario-chegada"].forEach(id=>document.getElementById(id).addEventListener("input", sincronizarHorariosTrajeto));
+// Na ficha da cliente: viagens em que foi junto (pagas por outra pessoa)
+// e quem ela levou junto nas viagens dela
 function htmlGarupaCliente(c){
   if(!c || !c.id) return "";
-  const ids = [...new Set(viagemParadas.filter(p=>p.passageira_cliente_id===c.id).map(p=>p.viagem_id))];
-  const vs = viagens.filter(v=>v.cliente_id!==c.id && (ids.includes(v.id) || v.origem_passageira_cliente_id===c.id || v.destino_passageira_cliente_id===c.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
-  if(!vs.length) return "";
-  return `<div style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-users /></svg> <b>Foi de garupa</b> (${vs.length} ${vs.length===1 ? "viagem" : "viagens"}, pagas por outra pessoa): ` +
-    vs.map(v=>{
-      const dona = clientesTransporte.find(x=>x.id===v.cliente_id);
-      return `<a href="#" onclick="event.preventDefault(); closeModal('cliente-transporte-modal'); openViagemModal(${Number(v.id)})">${v.data ? dataComSemana(new Date(String(v.data).slice(0,10) + "T12:00:00"), true) : "#" + v.id}${dona ? " com " + escapeHtml(dona.nome.split(" ")[0]) : ""}</a>`;
-    }).join(", ") + ".</div>";
+  const dataV = v => v.data ? dataComSemana(new Date(String(v.data).slice(0,10) + "T12:00:00"), true) : "#" + v.id;
+  const abrir = (v, txt) => `<a href="#" onclick="event.preventDefault(); closeModal('cliente-transporte-modal'); openViagemModal(${Number(v.id)})">${txt}</a>`;
+  const partes = [];
+  const ids = new Set(viagemPassageiros.filter(p=>p.cliente_id===c.id).map(p=>p.viagem_id));
+  const foi = viagens.filter(v=>ids.has(v.id) && v.cliente_id!==c.id).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  if(foi.length) partes.push(`<svg class=ic aria-hidden=true><use href=#i-users /></svg> <b>Foi junto</b> (${foi.length} ${foi.length===1 ? "viagem" : "viagens"}, pagas por outra pessoa): ` +
+    foi.map(v=>{ const dona = clientesTransporte.find(x=>x.id===v.cliente_id); return abrir(v, dataV(v) + (dona ? " com " + escapeHtml(dona.nome.split(" ")[0]) : "")); }).join(", ") + ".");
+  const minhas = new Set(viagens.filter(v=>v.cliente_id===c.id).map(v=>v.id));
+  const levou = new Map();
+  viagemPassageiros.filter(p=>minhas.has(p.viagem_id)).forEach(p=>{
+    const k = p.cliente_id ? "c" + p.cliente_id : "n" + semAcentoMin(p.nome);
+    if(!levou.has(k)) levou.set(k, { p, n: 0 });
+    levou.get(k).n++;
+  });
+  if(levou.size) partes.push(`<svg class=ic aria-hidden=true><use href=#i-users /></svg> <b>Levou junto:</b> ` +
+    [...levou.values()].map(({p, n})=>{
+      const nome = escapeHtml(p.nome) + (n > 1 ? ` (${n}x)` : "");
+      return p.cliente_id ? `<a href="#" onclick="event.preventDefault(); openClienteTransporteModal(${Number(p.cliente_id)})">${nome}</a>` : nome;
+    }).join(", ") + ".");
+  return partes.length ? `<div style="margin-top:8px;">${partes.join("<br>")}</div>` : "";
+}
+// Etiqueta de quantas pessoas, pro cartão da viagem e pro topo do modal
+function textoPessoasViagem(v){
+  if(v.pessoas_ida && v.pessoas_volta && v.pessoas_ida !== v.pessoas_volta) return `${v.pessoas_ida} na ida · ${v.pessoas_volta} na volta`;
+  if(v.pessoas_ida || v.pessoas_volta) return `${v.pessoas_ida || v.pessoas_volta} pessoas`;
+  const n = viagemPassageiros.filter(p=>p.viagem_id===v.id).length;
+  return n ? `${n + 1} pessoas` : "";
 }
 function renderParadasModal(){
   const el = document.getElementById("vg-paradas-lista");
-  // Numeração contínua com o embarque (que é sempre "1"): a 1ª parada é "2",
-  // e o destino (atualizado aqui embaixo) fecha a lista.
   document.getElementById("vg-destino-num").textContent = paradasModal.length + 2;
-  if(!paradasModal.length){
-    el.innerHTML = `<div style="color:var(--muted); font-size:12px; padding:6px 0;">Sem paradas: a corrida vai direto do embarque ao destino.</div>`;
-    return;
-  }
   el.innerHTML = paradasModal.map((p,i)=>`
-    <div class="formgrid" style="align-items:end; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">
-      <div style="grid-column:1 / -1; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
-        <strong style="color:var(--text1);">${i+2}. Parada</strong>
+    <div class="vg-ponto">
+      <div class="vg-ponto-tit">${i+2}. Parada
         <span style="flex:1;"></span>
         <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
         <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
-        <button type="button" class="icon-btn" title="Remover" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
+        <button type="button" class="icon-btn" title="Remover parada" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
-      <div><label>Tipo</label><select onchange="paradasModal[${i}].tipo=this.value">${PARADA_TIPOS.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
-      <div><label>Passageira</label><input type="text" value="${escapeHtml(p.passageira_nome)}" placeholder="Nome" oninput="paradasModal[${i}].passageira_nome=this.value; atualizarLigacaoPassageira(${i})"><div id="vg-parada-lig-${i}" style="margin-top:4px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">${htmlLigacaoPassageira(i)}</div></div>
-      <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
-      <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
-      <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
+      <label>Endereço</label>
+      <div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div>
+      <div class="vg-ponto-linha">
+        <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
+        <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
+      </div>
+      <label>Passageiras (os) neste ponto</label>
+      <div id="vg-pass-p${i+1}" class="vg-pass-lista"></div>
     </div>`).join("");
   el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+  renderPontosPassageiros();
 }
 function adicionarParadaViagem(){
-  paradasModal.push({ tipo: "Embarque", endereco: "", passageira_nome: "", passageira_cliente_id: null, horario_previsto: "", observacao: "" });
+  paradasModal.push({ endereco: "", horario_previsto: "", observacao: "" });
   renderParadasModal();
-  const inputs = document.querySelectorAll("#vg-paradas-lista input[type=text]");
-  const ultimoEndereco = [...inputs].filter(i=>i.placeholder.startsWith("Rua")).pop();
-  if(ultimoEndereco) ultimoEndereco.focus();
+  const campos = document.querySelectorAll("#vg-paradas-lista .campo-endereco input[type=text]");
+  if(campos.length) campos[campos.length-1].focus();
 }
-function removerParadaViagem(i){ paradasModal.splice(i,1); renderParadasModal(); }
+function removerParadaViagem(i){
+  const k = "p" + (i+1);
+  const afetadas = pessoasModal.filter(p=>p.embarque_ponto===k || p.desembarque_ponto===k).length
+    + (clientePontosModal.embarque===k || clientePontosModal.desembarque===k ? 1 : 0);
+  if(afetadas && !confirm(`${afetadas} ${afetadas===1 ? "pessoa embarca ou desce" : "pessoas embarcam ou descem"} nesta parada. Elas passam pro embarque e pro destino. Tirar a parada?`)) return;
+  pessoasModal.forEach(p=>{ if(p.embarque_ponto===k) p.embarque_ponto = "origem"; if(p.desembarque_ponto===k) p.desembarque_ponto = "destino"; });
+  if(clientePontosModal.embarque===k) clientePontosModal.embarque = "origem";
+  if(clientePontosModal.desembarque===k) clientePontosModal.desembarque = "destino";
+  const mapa = {};
+  for(let n = i+2; n <= paradasModal.length; n++) mapa["p" + n] = "p" + (n-1);
+  remapearPontosParadas(mapa);
+  paradasModal.splice(i,1);
+  renderParadasModal();
+}
 function moverParadaViagem(i, delta){
   const j = i + delta;
   if(j < 0 || j >= paradasModal.length) return;
   [paradasModal[i], paradasModal[j]] = [paradasModal[j], paradasModal[i]];
+  remapearPontosParadas({ ["p" + (i+1)]: "p" + (j+1), ["p" + (j+1)]: "p" + (i+1) });
   renderParadasModal();
 }
 async function gravarParadasViagem(viagemId){
@@ -14395,10 +14563,8 @@ async function gravarParadasViagem(viagemId){
   if(del.error){ alert("Erro ao salvar paradas: " + del.error.message); return; }
   if(validas.length){
     const ins = await sb.from("viagem_paradas").insert(validas.map((p,i)=>({
-      viagem_id: viagemId, ordem: i+1, tipo: p.tipo, endereco: p.endereco.trim(),
-      passageira_nome: p.passageira_nome.trim() || null, horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
-      // Só manda a coluna quando tem ligação: sem o schema_garupa_pessoas.sql ela não existe
-      ...(p.passageira_cliente_id ? { passageira_cliente_id: p.passageira_cliente_id } : {}),
+      viagem_id: viagemId, ordem: i+1, tipo: "Parada", endereco: p.endereco.trim(),
+      horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
     })));
     if(ins.error){ alert("Erro ao salvar paradas: " + ins.error.message); return; }
   }
@@ -14843,6 +15009,7 @@ function preencherSelectClienteViagem(selecionado){
 }
 async function clienteViagemEscolhido(){
   const sel = document.getElementById("vg-cliente");
+  setTimeout(renderPontosPassageiros, 0);
   if(sel.value.startsWith("l:")){
     const leadId = Number(sel.value.slice(2));
     sel.value = "";
@@ -15347,7 +15514,7 @@ function renderTransporteViagens(){
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:11px;">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
-          ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; return n ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${n} parada${n===1?"":"s"}</span>` : ""; })()}
+          ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; const pes = textoPessoasViagem(v); const txt = [n ? `${n} parada${n===1?"":"s"}` : "", pes].filter(Boolean).join(" · "); return txt ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${txt}</span>` : ""; })()}
           ${btnPix}${btnEnviar}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
@@ -15496,11 +15663,13 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-viagem-status").value = v.status||"Solicitada";
   document.getElementById("vg-origem-endereco").value = v.origem_endereco||"";
   document.getElementById("vg-destino-endereco").value = v.destino_endereco||"";
+  carregarPassageirosModal(v);
   carregarParadasModal(id);
   document.getElementById("vg-data").value = v.data || "";
   document.getElementById("vg-horario-partida").value = v.horario_partida ? v.horario_partida.slice(0,5) : "";
   document.getElementById("vg-duracao-min").value = v.duracao_prevista_min ?? "";
   document.getElementById("vg-horario-chegada").value = v.horario_chegada ? v.horario_chegada.slice(0,5) : "";
+  sincronizarHorariosTrajeto();
   document.getElementById("vg-data-retorno").value = v.data_retorno || "";
   document.getElementById("vg-horario-retorno").value = v.horario_retorno ? v.horario_retorno.slice(0,5) : "";
   document.getElementById("vg-duracao-retorno-min").value = v.duracao_prevista_retorno_min ?? "";
@@ -15514,7 +15683,6 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-distancia-retorno-km").value = v.distancia_km_retorno ?? "";
   document.getElementById("vg-pessoas-ida").value = v.pessoas_ida ?? "";
   document.getElementById("vg-pessoas-volta").value = v.pessoas_volta ?? "";
-  carregarPassageirasPontos(v);
   // Medição da rota (medirRotaViagem) recomeça do zero a cada abertura
   medicaoRotaViagem++;
   ["vg-distancia-km","vg-duracao-min","vg-distancia-retorno-km","vg-duracao-retorno-min"].forEach(c=>{ delete document.getElementById(c).dataset.autoValor; });
@@ -15685,6 +15853,8 @@ function atualizarResumoViagem(){
   const partes = [`<b>${escapeHtml(nome)}</b>`];
   partes.push(ic("calendar") + " " + (val("vg-data") ? `${formatarDataBR(val("vg-data"))}${val("vg-horario-partida") ? " às " + val("vg-horario-partida") : ""}` : "sem data"));
   partes.push(document.getElementById("vg-tem-volta").checked ? ic("arrows-left-right") + " ida e volta" : ic("arrow-right") + " só ida");
+  const pessoas = textoPessoasViagem({ id: editingViagemId, pessoas_ida: Number(val("vg-pessoas-ida")) || null, pessoas_volta: Number(val("vg-pessoas-volta")) || null });
+  if(pessoas) partes.push(ic("users") + " " + pessoas);
   if(val("vg-preco-cotado")) partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(val("vg-preco-cotado")))}</span>`);
   partes.push(`<span class="tag">${escapeHtml(rotuloStatusViagem(val("vg-viagem-status")))}</span>`);
   if(obrigatoriosFaltandoViagem) partes.push(`<span class="vg-resumo-falta" onclick="irParaPrimeiroObrigatorioVazio()" title="Ir pro primeiro campo vazio">${ic("alert-circle")} falta ${obrigatoriosFaltandoViagem} obrigatório${obrigatoriosFaltandoViagem === 1 ? "" : "s"}</span>`);
@@ -15821,8 +15991,13 @@ async function saveViagem(){
     Object.assign(payload, pessoas);
   }
   // Colunas de schema_garupa_embarque_destino.sql (23/10/2026): mesmo cuidado.
-  const passPontos = dadosPassageirasPontos();
-  if(viagens.length > 0 && ("origem_passageira_nome" in viagens[0])) Object.assign(payload, passPontos);
+  // Onde a cliente da viagem embarca e desce (schema_garupa_lista_passageiros.sql)
+  const problemaPassageiros = conferirPassageirosModal();
+  if(problemaPassageiros){ alert(problemaPassageiros); return; }
+  if(viagens.length > 0 && ("cliente_embarque_ponto" in viagens[0])){
+    payload.cliente_embarque_ponto = clientePontosModal.embarque === "origem" ? null : clientePontosModal.embarque;
+    payload.cliente_desembarque_ponto = clientePontosModal.desembarque === "destino" ? null : clientePontosModal.desembarque;
+  }
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
@@ -15873,6 +16048,7 @@ async function saveViagem(){
     if(cotacaoDaViagem){ marcarCotacaoComoViagem(cotacaoDaViagem, viagemId, !!feita); cotacaoDaViagem = null; }
   }
   await gravarParadasViagem(viagemId);
+  await gravarPassageirosViagem(viagemId);
 
   const lidLiquidoStr = document.getElementById("vg-lid-liquido").value;
   const lidRecebidoStr = document.getElementById("vg-lid-valor").value;
@@ -15965,19 +16141,19 @@ async function saveViagem(){
     if(error){
       alert(`A viagem #${viagemId} foi salva, mas o histórico não foi acertado: ${error.message}\n\nAbra a viagem e use "Confirmar motorista marcada nesta viagem".`);
       closeModal("viagem-modal");
-      await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_ofertas");
+      await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_passageiros", "viagem_ofertas");
       return;
     }
     lancandoViagemFeita = false;
     showToast(feita.cobranca === "enviar" ? "Viagem lançada! A cobrança sai em até 2 minutos." : "Viagem lançada, sem mensagens.");
     closeModal("viagem-modal");
-    await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_ofertas");
+    await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_passageiros", "viagem_ofertas");
     return;
   }
 
   showToast("Salvo!");
   closeModal("viagem-modal");
-  await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas");
+  await recarregarTabelas("viagens", "pagamentos_cliente", "pagamentos_motorista", "viagem_paradas", "viagem_passageiros");
 }
 // ===== REENVIO DE WHATSAPP =====
 // As duas mensagens automáticas param sozinhas depois de 3 tentativas (trava
