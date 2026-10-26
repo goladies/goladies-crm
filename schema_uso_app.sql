@@ -138,7 +138,7 @@ Texto da Política de Privacidade em vigor (goladies.com.br/politica-de-privacid
 
 Política de Privacidade
 
-Última atualização: 23 de outubro de 2026
+Última atualização: 26 de outubro de 2026
 
 A sua privacidade é importante para nós. Esta Política de Privacidade explica como a Go Ladies coleta, usa, armazena e protege os seus dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, a "LGPD"). Ela vale para o site goladies.com.br e para os aplicativos Go Ladies (clientes, app.goladies.com.br) e Motora Go Ladies (motoristas, motora.goladies.com.br).
 
@@ -165,7 +165,7 @@ Coletamos apenas os dados necessários para oferecer nossos serviços e melhorar
 
 • Nos aplicativos, dados da conta e das viagens: e-mail e senha de login, foto de perfil (opcional para clientes), endereços de origem e destino, datas, horários, valores, avaliações e mensagens trocadas sobre a viagem.
 
-• Da motorista: documentos exigidos para a certificação (CNH, CRLV, antecedentes, comprovante de endereço), dados do veículo e a localização aproximada enquanto ela está com o painel aberto e marcada como disponível, usada apenas para a cliente acompanhar a chegada e para a equipe organizar as corridas. A localização não é coletada em segundo plano nem quando ela não está marcada como disponível.
+• Da motorista: documentos exigidos para a certificação (CNH, CRLV, antecedentes, comprovante de endereço), dados do veículo e a localização aproximada em dois momentos: quando ela está com o painel aberto e marcada como disponível, para a equipe saber quem está mais perto da cliente e oferecer a corrida; e durante uma corrida, para a cliente (e quem ela escolher) acompanhar a chegada e o trajeto. Com o painel fechado, ou fora desses dois momentos, a localização não é coletada.
 
 2. Como usamos os seus dados
 
