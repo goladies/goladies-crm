@@ -1190,6 +1190,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-end-acoes{display:flex; gap:2px;}
 #ft-sim .sim-end-acoes button{width:26px; height:26px; padding:0;}
 #ft-sim #sim-end-mais{margin-top:8px;}
+#ft-sim .sim-end-hora{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px 28px; font-size:11.5px; color:var(--text3);}
+#ft-sim .sim-end-hora input[type=time]{width:auto; padding:3px 6px; font-size:12px;}
+#ft-sim .sim-end-hora select{width:auto; padding:3px 6px; font-size:12px;}
+#ft-sim .sim-end-hora .campo-endereco{flex:1 1 100%;}
+#ft-sim .sim-dia{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+#ft-sim .sim-dia label{margin:0;}
+#ft-sim .sim-dia input{width:auto;}
 #ft-sim .sim-end-botoes{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
 #ft-sim .sim-cobrar{margin-top:12px; padding:11px 13px; border-radius:10px; border:1px solid var(--rosa); border-left-width:4px; font-size:12.5px; line-height:1.55; color:var(--text2);}
 #ft-sim .sim-cobrar .sim-cobrar-valor{font-size:15px; color:var(--text1);}
@@ -1965,6 +1972,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
               <!-- Endereços só pra cotação (21/10/2026): mede a rota no Google e
                    preenche os 4 campos de km e minutos; nada é salvo. -->
               <div class="sim-enderecos">
+                <!-- Horários (26/10/2026): dia + "sai às" no embarque e "volta a
+                     sair às" nas paradas; o Calcular rota usa o trânsito previsto,
+                     o intervalo de cada parada e a noite trecho por trecho. -->
+                <div class="sim-dia"><label for="sim-dia">Dia da viagem</label><input type="date" id="sim-dia" onchange="simGuardar()"></div>
                 <label>Motorista sai de</label>
                 <div class="campo-endereco"><input type="text" id="sim-end-saida" placeholder="Rua, número, bairro" autocomplete="off" oninput="simSalvarSaida()"><div class="sugestoes-endereco"></div></div>
                 <div id="sim-end-lista"></div>
@@ -1991,6 +2002,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Minutos com a cliente</label><input type="number" id="sim-min-cliente" step="1" min="0" value="20" oninput="simular()"></div>
                 <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
                 <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
+                <div class="full"><label>Desses, km com a cliente das 22h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simular()"></div>
                 <div class="full"><label>Espera combinada, além dos 10 min inclusos (min)</label><input type="number" id="sim-espera" step="1" min="0" value="0" oninput="simular()"></div>
                 <!-- Tabelas de preço (21/10/2026): mesma escolha da viagem -->
                 <div class="sim-tabela-preco"><label>Tipo de serviço</label><select id="sim-tipo" onchange="simTabelaTrocada()"></select></div>
@@ -7712,6 +7724,27 @@ function simViagem(){
 // Nada é salvo; o ponto de saída fica lembrado só neste navegador.
 const SIM_MAX_ENDERECOS = 5;
 let simEnderecos = ["", ""];
+// Horários (26/10/2026), lado a lado com simEnderecos: no embarque "hora" é
+// quando sai; numa parada é quando volta a sair, e o tempo até lá é o
+// intervalo. "intervalo" diz o que a motorista faz nele: espera (cobra a
+// espera), perto (fica por perto, sem custo), casa (volta pro ponto de saída
+// e vem buscar) ou outro (vai pro endereço "outro").
+let simHoras = [];
+const SIM_INTERVALOS = [
+  ["perto", "Fica por perto"],
+  ["casa", "Volta pro ponto de saída e vem buscar"],
+  ["outro", "Vai pra outro endereço e vem buscar"],
+  ["espera", "Espera no local (cobra espera)"],
+];
+function simHoraNova(){ return { hora: "", intervalo: "perto", outro: "" }; }
+function simAjustarHoras(){
+  while(simHoras.length < simEnderecos.length) simHoras.push(simHoraNova());
+  simHoras.length = simEnderecos.length;
+}
+function simHoraMudou(i, campo, valor){
+  simHoras[i][campo] = valor;
+  if(campo === "outro") simGuardar(); else simRenderEnderecos();
+}
 
 function simRenderEnderecos(){
   const lista = document.getElementById("sim-end-lista");
@@ -7722,6 +7755,19 @@ function simRenderEnderecos(){
     try{ saida.value = localStorage.getItem("sim-end-saida") || ""; }catch(e){}
   }
   const n = simEnderecos.length;
+  simAjustarHoras();
+  const linhaHora = i => {
+    if(i === n-1) return "";
+    const h = simHoras[i];
+    const hora = `<input type="time" value="${escapeHtml(h.hora)}" onchange="simHoraMudou(${i},'hora',this.value)">`;
+    if(i === 0) return `<div class="sim-end-hora">Sai às ${hora}</div>`;
+    if(!h.hora) return `<div class="sim-end-hora">Volta a sair às ${hora} <span>(vazio = só passa)</span></div>`;
+    const sel = `<select onchange="simHoraMudou(${i},'intervalo',this.value)">${SIM_INTERVALOS.map(([v, r])=>`<option value="${v}" ${h.intervalo===v?"selected":""}>${r}</option>`).join("")}</select>`;
+    const outro = h.intervalo === "outro"
+      ? `<div class="campo-endereco"><input type="text" class="sim-end-outro" value="${escapeHtml(h.outro)}" placeholder="Pra onde a motorista vai no intervalo" autocomplete="off" oninput="simHoraMudou(${i},'outro',this.value)"><div class="sugestoes-endereco"></div></div>`
+      : "";
+    return `<div class="sim-end-hora">Volta a sair às ${hora} ${sel}${outro}</div>`;
+  };
   lista.innerHTML = simEnderecos.map((end, i)=>`
     <div class="sim-end-item">
       <span class="sim-end-num">${i+1}</span>
@@ -7731,7 +7777,7 @@ function simRenderEnderecos(){
         <button type="button" class="icon-btn" title="Descer" onclick="simMoverEndereco(${i},1)" ${i===n-1?"disabled":""}>↓</button>
         <button type="button" class="icon-btn" title="Tirar" onclick="simTirarEndereco(${i})" ${n<=2?"disabled":""}>✕</button>
       </div>
-    </div>`).join("");
+    </div>${linhaHora(i)}`).join("");
   lista.querySelectorAll(".campo-endereco input").forEach(configurarBuscaEndereco);
   // (a busca do "Motorista sai de" já liga sozinha no carregamento, com os outros campos fixos)
   document.getElementById("sim-end-mais").style.display = n >= SIM_MAX_ENDERECOS ? "none" : "";
@@ -7757,7 +7803,7 @@ function simDadosAtuais(){
   });
   const resumo = document.getElementById("sim-end-resumo");
   const dados = {
-    campos, enderecos: simEnderecos,
+    campos, enderecos: simEnderecos, horas: simHoras,
     cobradoManual: !!document.getElementById("sim-cobrado").dataset.manual,
     repasseManual: !!document.getElementById("sim-repasse").dataset.manual,
     resumo: resumo.style.display === "none" ? "" : resumo.innerHTML,
@@ -7786,6 +7832,7 @@ function simAplicarDados(dados){
   if(dados.cobradoManual) document.getElementById("sim-cobrado").dataset.manual = "1";
   if(dados.repasseManual) document.getElementById("sim-repasse").dataset.manual = "1";
   if(Array.isArray(dados.enderecos) && dados.enderecos.length >= 2) simEnderecos = dados.enderecos.slice(0, SIM_MAX_ENDERECOS);
+  simHoras = Array.isArray(dados.horas) ? dados.horas.map(h=>Object.assign(simHoraNova(), h)) : [];
   simRenderEnderecos();
   if(dados.resumo){
     const resumo = document.getElementById("sim-end-resumo");
@@ -7795,8 +7842,10 @@ function simAplicarDados(dados){
 }
 function simNovaCotacao(){
   simEnderecos = ["", ""];
+  simHoras = [];
+  document.getElementById("sim-dia").value = "";
   simRenderEnderecos();
-  ["sim-km-cliente","sim-min-cliente","sim-km-vazio","sim-min-vazio","sim-espera"].forEach(id=>{ document.getElementById(id).value = 0; });
+  ["sim-km-cliente","sim-min-cliente","sim-km-vazio","sim-min-vazio","sim-espera","sim-km-noite"].forEach(id=>{ document.getElementById(id).value = 0; });
   ["sim-idavolta","sim-noturno","sim-premium"].forEach(id=>{ document.getElementById(id).checked = false; });
   const elCobrado = document.getElementById("sim-cobrado");
   delete elCobrado.dataset.manual;
@@ -7994,7 +8043,11 @@ function preencherViagemDaCotacao(c){
   if(campos["sim-tabela-preco"] && selTab && [...selTab.options].some(o=>o.value === campos["sim-tabela-preco"])) selTab.value = campos["sim-tabela-preco"];
   document.getElementById("vg-origem-endereco").value = origem;
   document.getElementById("vg-destino-endereco").value = destino;
-  paradasModal = pontos.slice(1, -1).map(e=>({ tipo: "Parada", endereco: e, passageira_nome: "", horario_previsto: "", observacao: "" }));
+  // Horários do Simulador (26/10/2026): dia e "sai às" viram data e partida; o "volta a sair às" da parada vira o horário previsto dela
+  const horas = ((c.dados && c.dados.horas) || []).filter((h, i)=>String(((c.dados.enderecos || [])[i]) || "").trim());
+  if(campos["sim-dia"]) document.getElementById("vg-data").value = campos["sim-dia"];
+  if(horas[0] && horas[0].hora) document.getElementById("vg-horario-partida").value = horas[0].hora;
+  paradasModal = pontos.slice(1, -1).map((e, i)=>({ tipo: "Parada", endereco: e, passageira_nome: "", horario_previsto: (horas[i+1] && horas[i+1].hora) || "", observacao: "" }));
   renderParadasModal();
   const km = Number(c.km) || 0, min = Number(c.minutos) || 0;
   preencherMedidaRota("vg-distancia-km", km, true);
@@ -8034,16 +8087,20 @@ async function marcarCotacaoComoViagem(c, viagemId, feita){
 }
 function simAdicionarEndereco(){
   if(simEnderecos.length >= SIM_MAX_ENDERECOS) return;
+  simAjustarHoras();
   simEnderecos.push("");
+  simHoras.push(simHoraNova());
   simRenderEnderecos();
   const inputs = document.querySelectorAll("#sim-end-lista input");
   inputs[inputs.length-1].focus();
 }
-function simTirarEndereco(i){ if(simEnderecos.length > 2){ simEnderecos.splice(i,1); simRenderEnderecos(); } }
+function simTirarEndereco(i){ if(simEnderecos.length > 2){ simAjustarHoras(); simEnderecos.splice(i,1); simHoras.splice(i,1); simRenderEnderecos(); } }
 function simMoverEndereco(i, d){
   const j = i + d;
   if(j < 0 || j >= simEnderecos.length) return;
+  simAjustarHoras();
   [simEnderecos[i], simEnderecos[j]] = [simEnderecos[j], simEnderecos[i]];
+  [simHoras[i], simHoras[j]] = [simHoras[j], simHoras[i]];
   simRenderEnderecos();
 }
 function simSalvarSaida(){
@@ -8051,8 +8108,10 @@ function simSalvarSaida(){
 }
 
 // Uma rota no Google (Simulador e modal de Viagem). Sem paradas no meio, pede os caminhos alternativos e
-// fica com o maior km e o maior tempo (regra das cotações).
-async function medirRotaGoogle(origem, destino, meio){
+// fica com o maior km e o maior tempo (regra das cotações). "partida" (Date)
+// pede o trânsito previsto pra esse horário; no passado o Google recusa, então
+// aí fica o trânsito de agora.
+async function medirRotaGoogle(origem, destino, meio, partida){
   const corpo = {
     origin: { address: origem }, destination: { address: destino },
     intermediates: (meio || []).map(e=>({ address: e })),
@@ -8060,6 +8119,7 @@ async function medirRotaGoogle(origem, destino, meio){
     computeAlternativeRoutes: !(meio && meio.length),
     languageCode: "pt-BR", regionCode: "BR", units: "METRIC"
   };
+  if(partida && partida.getTime() > Date.now() + 60000) corpo.departureTime = partida.toISOString();
   const controle = new AbortController();
   const prazo = setTimeout(()=>controle.abort(), 10000);
   try{
@@ -8094,7 +8154,127 @@ function caminhosGoogleTxt(medida){
   return `Google achou ${medida.caminhos.length} caminhos: ${lista}. Usei ${kmTxt(medida.km)} km e ${medida.min} min (o maior de cada).`;
 }
 
+// Minutos de um trajeto que caem das 22h às 6h, contando minuto a minuto.
+function simMinutosNoite(inicio, min){
+  let n = 0;
+  for(let m = 0; m < min; m++){ const h = new Date(inicio.getTime() + m * 60000).getHours(); if(h >= 22 || h < 6) n++; }
+  return n;
+}
+function simHoraTxt(d){ return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
+// Com horário (26/10/2026): mede trecho por trecho na hora em que cada um
+// sai, pra ter o trânsito previsto, os intervalos e a noite. Cada trecho
+// fica com o maior km e o maior tempo dos caminhos do Google.
+async function simCalcularRotaComHorario(pts, saida, volta){
+  const btn = document.getElementById("sim-end-calcular");
+  const resumo = document.getElementById("sim-end-resumo");
+  const kmTxt = n => n.toFixed(1).replace(".", ",");
+  const diaTxt = document.getElementById("sim-dia").value;
+  const base = diaTxt ? new Date(diaTxt + "T00:00") : new Date();
+  const naHora = hhmm => { const [h, m] = hhmm.split(":").map(Number); const d = new Date(base); d.setHours(h, m, 0, 0); return d; };
+  const inicio = pts[0].h.hora ? naHora(pts[0].h.hora) : new Date();
+  btn.disabled = true; btn.textContent = "Medindo a rota...";
+  const linhas = [], avisos = [];
+  // Com horário cada trecho é um endereço: a volta da ida e volta entra como último endereço
+  if(simCheck("sim-idavolta")){
+    document.getElementById("sim-idavolta").checked = false;
+    avisos.push("Tirei o Ida e volta: com horário, ponha o embarque de novo como último endereço.");
+  }
+  let falhou = false;
+  const medir = async (a, b, quando) => { const r = await medirRotaGoogle(a, b, null, quando); if(!r) falhou = true; return r; };
+  let kmCliente = 0, minCliente = 0, kmVazio = 0, minVazio = 0, esperaMin = 0, kmNoite = 0;
+  // Até a cliente: sai uns 30 min antes do embarque (só pra pegar o trânsito daquela hora)
+  if(saida){
+    const ate = await medir(saida, pts[0].end, new Date(inicio.getTime() - 30 * 60000));
+    if(ate){ kmVazio += ate.km; minVazio += ate.min; linhas.push(`Até a cliente: ${kmTxt(ate.km)} km, ${ate.min} min`); }
+    else linhas.push("Até a cliente: não consegui medir");
+  }
+  let hora = inicio;
+  for(let k = 0; k < pts.length - 1; k++){
+    const leg = await medir(pts[k].end, pts[k+1].end, hora);
+    if(!leg){ linhas.push(`${k+1} → ${k+2}: não consegui medir`); break; }
+    const chega = new Date(hora.getTime() + leg.min * 60000);
+    const noite = leg.min ? simMinutosNoite(hora, leg.min) : 0;
+    kmCliente += leg.km; minCliente += leg.min;
+    kmNoite += leg.min ? leg.km * noite / leg.min : 0;
+    linhas.push(`${k+1} → ${k+2}: ${simHoraTxt(hora)} às ${simHoraTxt(chega)}, ${kmTxt(leg.km)} km, ${leg.min} min${noite ? ` (${noite} min depois das 22h)` : ""}`);
+    hora = chega;
+    // Intervalo na parada k+2 (não existe no último endereço)
+    const h = pts[k+1].h;
+    if(k + 1 === pts.length - 1 || !h.hora) continue;
+    const sai = naHora(h.hora);
+    const intervalo = Math.round((sai - chega) / 60000);
+    if(intervalo <= 0){
+      avisos.push(`Em ${k+2}: a motorista chega ${simHoraTxt(chega)}, depois do horário de sair (${h.hora}). Segui do horário de chegada.`);
+      continue;
+    }
+    let txt = `Em ${k+2}: ${intervalo} min de intervalo (${simHoraTxt(chega)} às ${h.hora}). `;
+    // Ir e voltar de um lugar: ida sai na chegada, volta sai a tempo de chegar no horário
+    const irEVoltar = async destino => {
+      const ida = await medir(pts[k+1].end, destino, chega);
+      const vt = await medir(destino, pts[k+1].end, new Date(sai.getTime() - (ida ? ida.min : 30) * 60000));
+      if(!ida || !vt) return null;
+      return { km: ida.km + vt.km, min: ida.min + vt.min, ida, vt, sobra: intervalo - ida.min - vt.min };
+    };
+    const descreve = r => `${kmTxt(r.ida.km)} km e ${r.ida.min} min pra ir, ${kmTxt(r.vt.km)} km e ${r.vt.min} min pra voltar, ` +
+      (r.sobra >= 0 ? `sobram ${r.sobra} min lá` : `não dá tempo (faltam ${-r.sobra} min)`);
+    const op = h.intervalo;
+    if(op === "casa" || op === "outro"){
+      const destino = op === "casa" ? saida : (h.outro || "").trim();
+      if(!destino){
+        txt += op === "casa" ? "Sem ponto de saída, não deu pra medir a ida e volta." : "Falta o endereço de pra onde ela vai.";
+      }else{
+        const r = await irEVoltar(destino);
+        if(r){
+          kmVazio += r.km; minVazio += r.min;
+          txt += `${op === "casa" ? "Volta pro ponto de saída" : "Vai pro outro endereço"}: ${descreve(r)}. Entrou no vazio.`;
+          if(r.sobra < 0) avisos.push(`Em ${k+2}: ir e voltar leva mais que o intervalo.`);
+        }else txt += "Não consegui medir a ida e volta.";
+      }
+    }else{
+      if(op === "espera"){ esperaMin += intervalo; txt += "Espera no local: entrou na espera."; }
+      else{ minVazio += intervalo; txt += "Fica por perto: os minutos entram no vazio (é tempo dela comprometido), sem km."; }
+      // Pra comparar: quanto seria voltar pro ponto de saída
+      if(saida){
+        const r = await irEVoltar(saida);
+        if(r) txt += ` Se voltasse pro ponto de saída: ${descreve(r)}, +${kmTxt(r.km)} km no vazio.`;
+      }
+    }
+    linhas.push(txt);
+    hora = sai;
+  }
+  if(saida && volta){
+    const fim = await medir(pts[pts.length-1].end, saida, hora);
+    if(fim){
+      kmVazio += fim.km; minVazio += fim.min;
+      linhas.push(`Volta pra casa: ${simHoraTxt(hora)} às ${simHoraTxt(new Date(hora.getTime() + fim.min * 60000))}, ${kmTxt(fim.km)} km, ${fim.min} min`);
+    }else linhas.push("Volta pra casa: não consegui medir");
+  }
+  btn.disabled = false; btn.textContent = "Calcular rota";
+  if(!kmCliente){ alert("Não consegui medir a rota com a cliente. Confira os endereços."); return; }
+  document.getElementById("sim-km-cliente").value = Math.round(kmCliente * 10) / 10;
+  document.getElementById("sim-min-cliente").value = Math.ceil(minCliente);
+  if(saida){
+    document.getElementById("sim-km-vazio").value = Math.round(kmVazio * 10) / 10;
+    document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
+  }else linhas.push("Sem ponto de saída: km vazio ficou como estava");
+  if(!saida && minVazio) document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
+  document.getElementById("sim-espera").value = Math.max(0, esperaMin - (esperaMin ? ESPERA_INCLUSA_MIN : 0));
+  document.getElementById("sim-km-noite").value = Math.round(kmNoite * 10) / 10;
+  if(kmNoite >= 0.1) avisos.push(`${kmTxt(kmNoite)} km com a cliente caem das 22h às 6h: essa parte usa a tabela da noite.`);
+  const futuro = inicio.getTime() > Date.now() + 60000;
+  const quando = `${dataComSemana(inicio)} saindo às ${simHoraTxt(inicio)}`;
+  const transito = futuro ? `Trânsito previsto pra ${quando}.` : `Trânsito de agora (o horário ${quando} já passou ou é agora).`;
+  if(falhou) avisos.push("Algum trecho não foi medido; confira os números.");
+  resumo.innerHTML = [...linhas, ...avisos, transito + " Dá pra ajustar os números à mão."].map(escapeHtml).join("<br>");
+  resumo.style.display = "";
+  simTabelaTrocada();
+}
+
 async function simCalcularRota(){
+  const pts = simEnderecos.map((e, i)=>({ end: e.trim(), h: simHoras[i] || simHoraNova() })).filter(p=>p.end);
+  if(pts.length >= 2 && pts.slice(0, -1).some(p=>p.h.hora)){
+    return simCalcularRotaComHorario(pts, document.getElementById("sim-end-saida").value.trim(), simCheck("sim-end-volta"));
+  }
   const pontos = simEnderecos.map(e=>e.trim()).filter(Boolean);
   const saida = document.getElementById("sim-end-saida").value.trim();
   const volta = simCheck("sim-end-volta");
@@ -8124,6 +8304,7 @@ async function simCalcularRota(){
     else partes.push(`Volta pra casa: não consegui medir`);
   }
   document.getElementById("sim-km-cliente").value = Math.round(corrida.km * 10) / 10;
+  document.getElementById("sim-km-noite").value = 0;
   document.getElementById("sim-min-cliente").value = Math.ceil(corrida.min);
   if(saida){
     const kmVazio = (ate ? ate.km : 0) + (retorno ? retorno.km : 0);
@@ -8183,9 +8364,22 @@ function simTabelaTrocada(){
 }
 function simPrecoTabela(v){
   const t = simTabelaAtual();
-  const base = precoTrechoTabela(t, simNum("sim-km-cliente"), Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0) * v.trechos;
+  const km = simNum("sim-km-cliente");
+  const precoCom = tab => precoTrechoTabela(tab, km, Number(tab.tarifa_fixa) || 0, Number(tab.valor_km) || 0);
+  let base = precoCom(t) * v.trechos;
   const info = document.getElementById("sim-tabela-info");
-  if(info) info.textContent = "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
+  let infoTxt = "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
+  // Parte da corrida depois das 22h (26/10/2026): o preço é dividido pelos km,
+  // cada parte com a sua tabela, sem cobrar a tarifa fixa duas vezes. Com a
+  // noite marcada ou a tabela escolhida na mão, vale uma tabela só.
+  const kmNoite = Math.min(simNum("sim-km-noite"), km);
+  const sel = document.getElementById("sim-tabela-preco");
+  if(kmNoite > 0 && km > 0 && !simCheck("sim-noturno") && !(sel && sel.value)){
+    const tNoite = escolherTabelaPreco((document.getElementById("sim-tipo") || {}).value || "Padrão", true);
+    base = (precoCom(t) * (km - kmNoite) / km + precoCom(tNoite) * kmNoite / km) * v.trechos;
+    infoTxt += ` ${String(kmNoite).replace(".", ",")} de ${String(km).replace(".", ",")} km na noite: essa parte usa ${tNoite.nome} (${resumoTabelaPreco(tNoite)}).`;
+  }
+  if(info) info.textContent = infoTxt;
   const elRep = document.getElementById("sim-repasse");
   if(elRep && !elRep.dataset.manual) elRep.value = String(Math.round((100 - taxaTabelaPreco(t)) * 100) / 100);
   const espera = v.esperaMin * VALOR_MIN_ESPERA;
