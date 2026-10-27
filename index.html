@@ -9002,6 +9002,9 @@ const COR_TIPO_ACESSO = {
   senha_redefinida: "green",
   email_troca_pedida: "amber"
 };
+// Cadastro de novo com e-mail que já tinha conta sem confirmar: o app grava
+// como cadastro_erro com esse motivo (a senha que vale é a do 1º cadastro).
+const voltouContaAntiga = e => e.tipo === "cadastro_erro" && /^Já tinha conta sem confirmar/.test(e.motivo || "");
 function renderAcessosApp(){
   const corpo = document.getElementById("acessos-app-body");
   if(!corpo) return;
@@ -9040,7 +9043,9 @@ function renderAcessosApp(){
     <tr>
       <td>${e.criado_em ? new Date(e.criado_em).toLocaleString("pt-BR") : "-"}</td>
       <td>${e.app==="motorista" ? "<svg class=ic aria-hidden=true><use href=#i-car /></svg> Motorista" : "<svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente"}</td>
-      <td><span class="status-badge ${COR_TIPO_ACESSO[e.tipo]||"gray"}">${ROTULO_TIPO_ACESSO[e.tipo]||e.tipo}</span></td>
+      <td>${voltouContaAntiga(e)
+        ? `<span class="status-badge amber">Já tinha conta (falta confirmar e-mail)</span>`
+        : `<span class="status-badge ${COR_TIPO_ACESSO[e.tipo]||"gray"}">${ROTULO_TIPO_ACESSO[e.tipo]||e.tipo}</span>`}</td>
       <td>${escapeHtml(e.nome || "-")}</td>
       <td>${e.whatsapp ? `<a href="${escapeHtml(linkWhats(e.whatsapp) || "#")}" target="_blank" rel="noopener">${escapeHtml(e.whatsapp)}</a>` : escapeHtml(e.email || "-")}</td>
       <td>${escapeHtml(e.motivo || "")}</td>
