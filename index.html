@@ -11208,7 +11208,10 @@ let editingLeadId = null;
 function openLeadModal(id){
   editingLeadId = id || null;
   datasPendentes.f = [];
+  // Lead novo começa sem categoria nem serviço (pedido dela 27/10/2026)
   fillSelect(document.getElementById("f-categoria"), CATEGORIAS, "");
+  document.getElementById("f-categoria").insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
+  document.getElementById("f-categoria").value = "";
   document.getElementById("f-categoria").onchange = ()=>fillServicoOptions();
   fillServicoOptions();
   fillSelect(document.getElementById("f-etapa"), ETAPAS, "Novo lead");
@@ -11263,7 +11266,10 @@ function toggleOrigemOutro(){
 function fillServicoOptions(selected){
   const cat = document.getElementById("f-categoria").value;
   const opts = SERVICOS.filter(s=>!cat || s.categoria===cat).map(s=>s.nome);
-  fillSelect(document.getElementById("f-servico"), opts, selected||"");
+  const sel = document.getElementById("f-servico");
+  fillSelect(sel, opts, selected||"");
+  sel.insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
+  sel.value = selected && opts.includes(selected) ? selected : "";
 }
 async function saveLead(){
   const nome = document.getElementById("f-nome").value.trim();
