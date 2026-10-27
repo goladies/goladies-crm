@@ -6677,7 +6677,7 @@ function renderLeads(){
   ));
   document.getElementById("leads-body").innerHTML = filtered.map(l=>l._ct ? `
     <tr class="tr-click" onclick="openClienteTransporteModal(${l.id})">
-      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)} <span class="tag novo">Transporte</span></td>
+      <td>${htmlAvatarContato(l)}<strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)} <span class="tag novo">Transporte</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>Transporte</td>
       <td>-</td>
@@ -6687,7 +6687,7 @@ function renderLeads(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Abrir</button></td>
     </tr>` : `
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></td>
+      <td><div style="display:flex; align-items:flex-start;">${htmlAvatarContato(l)}<div><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:11px;">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:12px;">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></div></div></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
@@ -6697,6 +6697,7 @@ function renderLeads(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhum lead encontrado</td></tr>`;
+  preencherFotosClientes(document.getElementById("leads-body"));
   aplicarRotulos();
 }
 
@@ -7456,7 +7457,7 @@ function renderClientes(){
       c.ct ? `<button class="act act-edit" onclick="openClienteTransporteModal(${c.ct.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Ficha transporte</button>` : "",
     ].filter(Boolean).join(" ");
     return `<tr class="tr-click" onclick="${abrirPrimeiro}">
-      <td>${escapeHtml(c.nome)}${numId(c.base)}${etiquetaPJ(c.base)}</td>
+      <td>${htmlAvatarContato({ ...(c.ct && c.ct.foto_path ? c.ct : c.base), nome: c.nome })}${escapeHtml(c.nome)}${numId(c.base)}${etiquetaPJ(c.base)}</td>
       <td>${numeroClicavel(c.whatsapp)}</td>
       <td>${chips.join(" ")}</td>
       <td>${dataTxt(c.primeira)}</td>
@@ -7465,6 +7466,7 @@ function renderClientes(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(c.whatsapp, c.nome)} ${botoes}</td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">${todos.length ? "Ninguém com esses filtros" : "Nenhuma cliente ainda"}</td></tr>`;
+  preencherFotosClientes(document.getElementById("clientes-body"));
 }
 function exportarClientesGeralCsv(){
   const lista = aplicarOrdenacao("clientes", filtrarClientesGeral(montarClientesGeral()));
@@ -13249,7 +13251,26 @@ function htmlAvatarCliente(c, estilo){
   const cache = path ? fotoClienteUrlCache[path] : null;
   const url = cache && cache.expira > Date.now() ? cache.url : null;
   const attr = path && !url ? ` data-foto-cliente="${escapeHtml(path)}"` : "";
-  return `<span class="avatar-mini"${attr}${estilo ? ` style="${estilo}"` : ""}>${url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(c?.nome))}</span>`;
+  const dica = path ? ` title="${origemFoto(path)}"` : "";
+  return `<span class="avatar-mini"${attr}${dica}${estilo ? ` style="${estilo}"` : ""}>${url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(iniciaisOuGL(c?.nome))}</span>`;
+}
+// O CRM não puxa foto do WhatsApp: toda foto vem do app (a própria pessoa
+// colocou) ou da equipe pela ficha. Desde 27/10/2026 a da equipe tem "crm-"
+// no nome do arquivo; as anteriores aparecem como do app.
+function origemFoto(path){
+  return /\/crm-/.test(path || "") ? "Foto colocada pela equipe na ficha" : "Foto que ela colocou no app";
+}
+// Foto de qualquer contato (lead, cliente, cliente de viagem): procura o
+// cadastro do app pelo cadastro único e, se não achar, pelo WhatsApp. Sem foto
+// de cliente, usa a de motorista (mesma pessoa). Sem nada, iniciais.
+function htmlAvatarContato(base){
+  if(!base) return htmlAvatarMini(null, "");
+  const mesmo = c => (base.cadastro_id != null && c.cadastro_id === base.cadastro_id) || (base.whatsapp && c.whatsapp && mesmoTelefone(c.whatsapp, base.whatsapp));
+  const ct = clientesTransporte.find(c=>c.foto_path && c.id===base.id && c.nome===base.nome) || clientesTransporte.find(c=>c.foto_path && mesmo(c));
+  if(ct) return htmlAvatarCliente({ ...ct, nome: base.nome });
+  const mt = motoristas.find(m=>m.foto_path && mesmo(m));
+  if(mt) return `<span class="avatar-mini" title="${origemFoto(mt.foto_path)} de motorista"><img src="${escapeHtml(urlFotoMotorista(mt.foto_path))}" alt=""></span>`;
+  return htmlAvatarMini(null, base.nome);
 }
 async function preencherFotosClientes(raiz){
   const spans = (raiz || document).querySelectorAll("[data-foto-cliente]");
@@ -13332,7 +13353,7 @@ async function salvarFotoPerfil(prefixo, id, pathAtual){
   const cfg = FOTO_PERFIL_CONFIG[prefixo];
   let novoPath = null;
   if(pend !== "remover"){
-    novoPath = `${id}/${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}.jpg`;
+    novoPath = `${id}/crm-${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}.jpg`;   // "crm-" = subida pela equipe
     const { error: ue } = await sb.storage.from(cfg.bucket).upload(novoPath, pend, { contentType: "image/jpeg" });
     if(ue){ alert("Erro ao subir a foto: " + ue.message); return false; }
   }
@@ -13836,7 +13857,7 @@ function renderLeadsTransporte(){
     const abrir = l.tipo==="ct" ? `openClienteTransporteModal(${l.id})` : `openLeadModal(${l.id})`;
     return `
     <tr class="tr-click" onclick="${abrir}">
-      <td><strong>${escapeHtml(l.nome)}</strong>${numId(l.base)}${etiquetaPJ(l.base)}</td>
+      <td>${htmlAvatarContato(l.base)}<strong>${escapeHtml(l.nome)}</strong>${numId(l.base)}${etiquetaPJ(l.base)}</td>
       <td>${numeroClicavel(l.whatsapp)}</td>
       <td>${escapeHtml(l.entrou)}</td>
       <td>${l.desde ? formatarDataBR(l.desde) : "-"}</td>
@@ -13844,6 +13865,7 @@ function renderLeadsTransporte(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="${abrir}"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Abrir</button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="6">Nenhum lead do transporte${sitF||busca ? " com esse filtro" : ""}</td></tr>`;
+  preencherFotosClientes(document.getElementById("leads-transporte-body"));
 }
 function mostrarContatosTransporte(nome){
   lembrarSubAba("contatos-transporte", nome);
