@@ -19,7 +19,9 @@
 --                     (dia de Porto Alegre)
 -- Nada disso: devolve tipo null e o n8n não manda nada.
 --
--- Rodar no Supabase: SQL Editor do projeto go-ladies-crm. Seguro rodar de novo.
+-- Rodar no Supabase: SQL Editor do projeto go-ladies-crm.
+-- JÁ RODADO em 27/10/2026. NÃO rodar de novo: a função whatsapp_alerta_ju
+-- foi atualizada em schema_whatsapp_nome_contato.sql.
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ── 1. Registro dos alertas mandados ──────────────────────────────────
