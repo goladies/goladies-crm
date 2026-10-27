@@ -7162,9 +7162,9 @@ function desenharConversaAberta(){
       <select class="conv-acao conv-menu" aria-label="Cadastrar como" onchange="convCadastrar('${tel}', this.value); this.value='';">
         <option value="">+ Cadastrar como…</option>
         <option value="servico">Pedido de serviço (lead)</option>
-        ${cad.cliente ? "" : `<option value="cliente">Pedido de viagem (lead)</option>`}
-        ${cad.parceiro ? "" : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
-        ${cad.motorista ? "" : `<option value="motorista">Motorista</option>`}
+        ${cad.cliente ? `<option disabled>Viagem: já tem cadastro${escapeHtml(optCod(cad.cliente))}</option>` : `<option value="cliente">Pedido de viagem (lead)</option>`}
+        ${cad.parceiro ? `<option disabled>Parceira (o): já tem cadastro${escapeHtml(optCod(cad.parceiro))}</option>` : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
+        ${cad.motorista ? `<option disabled>Motorista: já tem cadastro${escapeHtml(optCod(cad.motorista))}</option>` : `<option value="motorista">Motorista</option>`}
       </select>
       ${assunto ? "" : `<select class="conv-acao conv-menu" aria-label="Outro assunto" onchange="if(this.value) convMarcarAssunto('${tel}', this.value); this.value='';">
         <option value="">Outro assunto…</option>
