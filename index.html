@@ -8138,10 +8138,10 @@ async function clienteDeViagemDeLead(leadId, ondeTxt){
   if(!lead) return null;
   const existente = lead.whatsapp && clientesTransporte.find(x=>mesmoTelefone(x.whatsapp, lead.whatsapp));
   if(existente){
-    showToast(`Usando a cliente de viagem ${existente.nome}${codTxt(existente)} (mesmo WhatsApp da lead)`);
+    showToast(`Usando a ficha de viagem de ${existente.nome}${codTxt(existente)} (mesmo WhatsApp da lead)`);
     return existente.id;
   }
-  if(!confirm(`${lead.nome}${codTxt(lead)} é lead. Criar a ficha de cliente de viagem com nome e WhatsApp dela?\n\nAs duas ficam ligadas como mesma pessoa (mesmo código).`)) return undefined;
+  if(!confirm(`${lead.nome}${codTxt(lead)} ainda é lead. Para lançar esta viagem, vou criar a ficha de viagem dela (e), com o nome e o WhatsApp da lead.\n\nAs duas fichas ficam ligadas como a mesma pessoa, com o mesmo código${codTxt(lead)}, e nenhuma mensagem é enviada. Criar agora?`)) return undefined;
   const origens = ["Indicação", "Instagram", "Facebook", "Site"];
   const { data, error } = await sb.from("clientes_transporte").insert({
     nome: lead.nome, whatsapp: lead.whatsapp || "", email: lead.email || "",
@@ -8149,12 +8149,12 @@ async function clienteDeViagemDeLead(leadId, ondeTxt){
     origem: origens.includes(lead.origem) ? lead.origem : "Outro",
     notas: `Criada da lead ${lead.nome}${codTxt(lead)} ${ondeTxt} em ${dataComSemana(new Date(), true)}.`,
   }).select();
-  if(error){ alert("Erro ao criar a cliente de viagem: " + error.message); return undefined; }
+  if(error){ alert("Não conseguimos criar a ficha de viagem: " + error.message); return undefined; }
   const novo = data[0];
   const lig = await sb.from("vinculos_cadastros").insert({ tipo: "mesma_pessoa", a_tabela: "clientes_transporte", a_id: novo.id, b_tabela: "leads", b_id: lead.id });
-  if(lig.error) alert(`A cliente de viagem foi criada, mas não consegui ligar com a lead: ${lig.error.message}\n\nLigue depois na ficha dela (Ligações).`);
+  if(lig.error) alert(`A ficha de viagem foi criada, mas não consegui ligar com a lead: ${lig.error.message}\n\nLigue depois na ficha dela (Ligações).`);
   await recarregarTabelas("clientes_transporte", "vinculos_cadastros");
-  showToast(`Cliente de viagem criada: ${novo.nome}`);
+  showToast(`Ficha de viagem criada: ${novo.nome}`);
   return novo.id;
 }
 async function cotacaoNaoAconteceu(id){
@@ -15188,7 +15188,7 @@ async function criarFichaPessoa(j){
   if(!nome) return;
   let whats = p.telefone.trim();
   if(!whats){
-    whats = prompt(`Criar a ficha de cliente de viagem de ${nome}.\n\nWhatsApp (opcional, pode deixar vazio):`);
+    whats = prompt(`Criar a ficha de viagem de ${nome}.\n\nWhatsApp (opcional, pode deixar vazio):`);
     if(whats === null) return;
     whats = whats.trim();
   }
@@ -15782,7 +15782,7 @@ function preencherSelectClienteViagem(selecionado){
   const sel = document.getElementById("vg-cliente");
   sel.innerHTML = `<option value="">-</option>` +
     `<optgroup label="Clientes de viagem">${[...clientesTransporte].sort(ordem).map(c=>`<option value="${c.id}">${escapeHtml(c.nome)}${optCod(c)}</option>`).join("")}</optgroup>` +
-    (leads.length ? `<optgroup label="Leads e clientes do CRM (viram cliente de viagem ao escolher)">${[...leads].sort(ordem).map(l=>`<option value="l:${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("")}</optgroup>` : "");
+    (leads.length ? `<optgroup label="Leads e clientes do CRM (ganham a ficha de viagem ao escolher)">${[...leads].sort(ordem).map(l=>`<option value="l:${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("")}</optgroup>` : "");
   if(selecionado != null) sel.value = String(selecionado);
 }
 async function clienteViagemEscolhido(){
@@ -16075,6 +16075,7 @@ async function confirmarMotoristaManualmente(){
 async function enviarCotacaoCliente(id){
   const v = viagens.find(x=>x.id===id);
   if(!v) return;
+  if(precisaAutorizacao(v)) return avisoSemAutorizacao();
   const c = clientesTransporte.find(x=>x.id===v.cliente_id);
   if(!confirm(`Enviar ${formatarMoedaBR(v.preco_cotado)} pra ${c ? c.nome : "a cliente"} confirmar (viagem #${id})?
 
@@ -16428,10 +16429,26 @@ function motivoPadraoEscolhido(){
 
 // ===== AUTORIZAÇÃO DO RESPONSÁVEL LEGAL (27/10/2026) =====
 // Adolescente sem responsável ligado pede pelo app informando o responsável
-// legal; a viagem fica "pendente" até a Jú conversar e registrar aqui.
+// legal; a viagem fica "pendente" até a Jú conversar e registrar aqui. Vale
+// também pra viagem de adolescente lançada no CRM: tipo "Adolescente" sem
+// responsável ligado à conta (Conta Adolescente já veio autorizada pelo convite)
+// e sem ser uma adulta (o) pedindo pra adolescente.
+const STATUS_ANDANDO_SEM_AUTORIZACAO = ["Aguardando cliente confirmar preço", "Aguardando pagamento", "Escolher motoristas", "Aguardando aceite de motorista", "Confirmada", "Em andamento"];
+function precisaAutorizacao(v){
+  if(!v || v.autorizacao_status === "autorizada") return false;
+  if(v.autorizacao_status === "pendente") return true;
+  if(v.tipo_servico !== "Adolescente" || v.status === "Concluída" || v.status === "Cancelada") return false;
+  const teen = clientesTransporte.find(c=>c.id === (v.passageira_cliente_id || v.cliente_id));
+  if(teen && teen.responsavel_cliente_id) return false;
+  if(!v.passageira_cliente_id && teen && teen.aniversario && idadeAnos(teen.aniversario) >= 18) return false;
+  return true;
+}
+function avisoSemAutorizacao(){
+  alert("Esta viagem é de adolescente e ainda não tem a autorização do responsável legal.\n\nPor favor, registre a autorização no quadro do topo da viagem antes de seguir.");
+}
 function renderAutorizacaoViagem(v){
   const box = document.getElementById("vg-autorizacao-box");
-  if(!v || !v.autorizacao_status){ box.style.display = "none"; box.innerHTML = ""; return; }
+  if(!v || !(precisaAutorizacao(v) || v.autorizacao_status === "autorizada")){ box.style.display = "none"; box.innerHTML = ""; return; }
   const teenId = v.passageira_cliente_id || v.cliente_id;
   const teen = clientesTransporte.find(c=>c.id===teenId);
   const primeiro = teen ? String(teen.nome||"").split(" ")[0] : "a (o) adolescente";
@@ -16450,8 +16467,8 @@ function renderAutorizacaoViagem(v){
     + `Como tem menos de 18 anos, gostaria de conversar com você antes, para apresentar como cuidamos de cada viagem e combinar tudo com a sua autorização. `
     + `Posso te ligar? Se preferir, me diga o melhor horário.`;
   const lk = linkWhats(v.responsavel_whatsapp, msg);
-  box.innerHTML = `<b>🧒 Adolescente aguardando autorização do responsável legal</b>
-    <div style="margin-top:4px;">${escapeHtml(primeiro)} pediu esta viagem e informou o responsável abaixo. A viagem só segue depois que você registrar a autorização.</div>
+  box.innerHTML = `<b>🧒 Adolescente: falta a autorização do responsável legal</b>
+    <div style="margin-top:4px;">${v.autorizacao_status === "pendente" ? `${escapeHtml(primeiro)} pediu esta viagem pelo app e informou o responsável abaixo. ` : ""}A viagem só segue depois que você registrar a autorização.</div>
     ${lk?`<div style="margin:8px 0;"><a class="btn sec" href="${escapeHtml(lk)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Chamar o responsável no WhatsApp</a></div>`:""}
     <div class="formgrid" style="margin-top:8px;">
       <div><label>Nome do responsável legal</label><input type="text" id="vg-aut-nome" value="${escapeHtml(v.responsavel_nome||"")}"></div>
@@ -16473,7 +16490,7 @@ async function registrarAutorizacaoViagem(id){
   const proximo = (v.status === "Solicitada" && v.preco_cotado && !v.cotacao_especial) ? "vai para Cotando preço, pra você conferir e enviar o valor" : "continua onde está, pra você cotar";
   if(!confirm(`Registrar a autorização de ${nome} para a viagem #${id}?\n\n• A viagem ${proximo}.\n`
     + (ligar ? `• ${nome} vira o responsável da conta e a viagem passa pro nome dele (a): o valor e os avisos vão pra ele (a).\n` : `• A viagem continua no nome da (o) adolescente.\n`)
-    + `• Nenhuma mensagem sai agora.`)) return;
+    + `• Nenhuma mensagem sai agora.\n\nSe você mudou outra coisa nesta viagem, salve antes: a viagem vai recarregar.`)) return;
   const { error } = await sb.rpc("autorizar_viagem_adolescente", {
     p_viagem_id: id, p_nome: nome, p_whatsapp: whats,
     p_vinculo: document.getElementById("vg-aut-vinculo").value || null,
@@ -16493,7 +16510,7 @@ async function registrarAutorizacaoViagem(id){
 function selosViagem(v){
   const selo = (txt, fundo, cor, titulo) => `<span class="tag kc-tag" style="background:${fundo}; color:${cor};"${titulo?` title="${escapeHtml(titulo)}"`:""}>${txt}</span>`;
   let h = "";
-  if (v.autorizacao_status === "pendente") h += selo("🧒 Aguardando autorização", "var(--c-amber-bg)", "var(--c-amber)", "Adolescente: registre a autorização do responsável legal no modal da viagem");
+  if (precisaAutorizacao(v)) h += selo("🧒 Aguardando autorização", "var(--c-amber-bg)", "var(--c-amber)", "Adolescente: registre a autorização do responsável legal no modal da viagem");
   if (v.cotacao_especial) h += selo(`⭐ Cotação especial${v.regiao ? " · " + escapeHtml(v.regiao) : ""}`, "var(--rosa-bg)", "var(--rosa-texto)", "Origem ou destino fora dos 30 km: preço feito por você");
   else if (v.regiao === "Vizinhas") h += selo("Vizinhas", "var(--c-blue-bg)", "var(--c-blue)");
   if (v.prazo_curto && v.status !== "Concluída" && v.status !== "Cancelada") h += selo("⏰ Prazo curto", "var(--c-red-bg)", "var(--c-red)", "Cotação especial pedida com menos de 24 horas");
@@ -16927,6 +16944,10 @@ async function saveViagem(){
     saida_confirmada: document.getElementById("vg-saida").checked,
     grupo_whatsapp_criado: document.getElementById("vg-grupo-whats").checked,
   };
+  if(!lancandoViagemFeita && STATUS_ANDANDO_SEM_AUTORIZACAO.includes(payload.status)){
+    const atual = viagens.find(x=>x.id===editingViagemId) || {};
+    if(precisaAutorizacao({ ...atual, ...payload, id: editingViagemId })) return avisoSemAutorizacao();
+  }
   // Colunas de schema_adicionais_viagem.sql. Enquanto o SQL não roda, só vão
   // no payload se ela preencheu algo (aí o erro de coluna avisa que falta rodar);
   // depois que existem, vão sempre, pra conseguir voltar a zero/nenhum.
