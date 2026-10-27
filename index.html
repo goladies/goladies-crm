@@ -11245,12 +11245,12 @@ function openLeadModal(id){
   document.getElementById("f-descricao").value = l.descricao||"";
   document.getElementById("f-etapa").value = l.etapa||"Novo lead";
   const origensPadrao = ORIGENS_LEAD;
-  document.getElementById("f-origem").innerHTML = [...ORIGENS_LEAD, "Outro"].map(o=>`<option>${o}</option>`).join("");
+  document.getElementById("f-origem").innerHTML = `<option value="">Escolha</option>` + [...ORIGENS_LEAD, "Outro"].map(o=>`<option>${o}</option>`).join("");
   if(l.origem && !origensPadrao.includes(l.origem)){
     document.getElementById("f-origem").value = "Outro";
     document.getElementById("f-origem-outro").value = l.origem;
   } else {
-    document.getElementById("f-origem").value = l.origem||"Instagram";
+    document.getElementById("f-origem").value = l.origem||"";
     document.getElementById("f-origem-outro").value = "";
   }
   toggleOrigemOutro();
