@@ -6570,7 +6570,7 @@ function renderAniversariosDashboard(){
   const candidatos = [
     ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), empresa:ehEmpresa(l), whats:l.whatsapp, aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
     ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
-    ...clientesTransporte.map(c=>({nome:c.nome, tipo:"Cliente de viagem"+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
+    ...clientesTransporte.map(c=>({nome:c.nome, tipo:rotuloCadastro(CADASTROS.ct, c)+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
     ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", empresa:false, whats:m.whatsapp, aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
   ];
   const proximos = candidatos
@@ -6948,11 +6948,13 @@ function convCadastros(tel){
 // cliente depois (ou só falou com a Jú) ficava como "Contato".
 function convPerfil(c){
   const k = convCadastros(c.telefone);
-  if(k.cliente && k.motorista) return "cliente_e_motorista";
+  // Cadastro de viagem só é Cliente depois da 1ª viagem concluída; antes é Lead
+  const ehCliente = k.cliente && ehClienteTransporte(k.cliente);
+  if(ehCliente && k.motorista) return "cliente_e_motorista";
   if(k.motorista) return k.motorista.status==="Ativa" ? "motorista_ativa" : "motorista_cadastro";
-  if(k.cliente) return "cliente";
+  if(ehCliente) return "cliente";
   if(k.parceiro) return "parceira";
-  if(k.leads.length) return "lead";
+  if(k.leads.length || k.cliente) return "lead";
   return "novo";
 }
 function convNome(c){
@@ -7105,7 +7107,7 @@ function desenharConversaAberta(){
   const telFmt = convFormatarTel(c.telefone);
   const tel = escapeHtml(c.telefone);
   const ligacoes = [
-    cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> Cliente</span>` : "",
+    cad.cliente ? `<span class="conv-ligacao" onclick="openClienteTransporteModal(${cad.cliente.id})"><svg class=ic aria-hidden=true><use href=#i-user /></svg> ${ehClienteTransporte(cad.cliente) ? "Cliente" : "Lead"}</span>` : "",
     cad.motorista ? `<span class="conv-ligacao" onclick="openMotoristaModal(${cad.motorista.id})"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Motorista</span>` : "",
     cad.parceiro ? `<span class="conv-ligacao" onclick="openParceiroModal(${cad.parceiro.id})"><svg class=ic aria-hidden=true><use href=#i-tool /></svg> ${escapeHtml(cad.parceiro.nome||"Parceira (o)")}</span>` : "",
     ...cad.leads.slice(0,4).map(l=>`<span class="conv-ligacao" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> ${escapeHtml(l.servico||l.categoria||"Lead")} <span class="conv-pill">${escapeHtml(l.etapa||"")}</span></span>`)
@@ -7160,7 +7162,7 @@ function desenharConversaAberta(){
       <select class="conv-acao conv-menu" aria-label="Cadastrar como" onchange="convCadastrar('${tel}', this.value); this.value='';">
         <option value="">+ Cadastrar como…</option>
         <option value="servico">Pedido de serviço (lead)</option>
-        ${cad.cliente ? "" : `<option value="cliente">Cliente de viagem</option>`}
+        ${cad.cliente ? "" : `<option value="cliente">Pedido de viagem (lead)</option>`}
         ${cad.parceiro ? "" : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
         ${cad.motorista ? "" : `<option value="motorista">Motorista</option>`}
       </select>
@@ -10449,7 +10451,7 @@ function htmlLigadosSede(p, textoVazio){
     return `<li class="${l.feito?"feito":""}">
         <span class="marca" title="${l.feito?"Feito":"Falta"}">${l.feito?"✓":"•"}</span>
         <button type="button" class="nome" ${abrir?`onclick="${abrir}"`:"disabled"}>${nome ? escapeHtml(nome) : "Código não encontrado"} #${escapeHtml(l.codigo)}</button>
-        ${papeis.length>1 ? papeis.map(x=>`<button type="button" class="papel" onclick="abrirLigadoPendencia('${x.cad.tabela}', ${x.r.id})">${escapeHtml(x.cad.rotulo)}</button>`).join("") : ""}
+        ${papeis.length>1 ? papeis.map(x=>`<button type="button" class="papel" onclick="abrirLigadoPendencia('${x.cad.tabela}', ${x.r.id})">${escapeHtml(rotuloCadastro(x.cad, x.r))}</button>`).join("") : ""}
         ${l.nota?`<span class="nota">${escapeHtml(l.nota)}</span>`:""}
       </li>`;
   }).join("");
@@ -12747,7 +12749,7 @@ function renderResultadoAssistente(acao, d){
   const titulos = { criar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Novo evento", editar_evento:"<svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Alterar evento", criar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Nova viagem", editar_viagem:"<svg class=ic aria-hidden=true><use href=#i-car /></svg> Alterar viagem", criar_cadastro:"<svg class=ic aria-hidden=true><use href=#i-users /></svg> Novo cadastro", editar_cadastro:"<svg class=ic aria-hidden=true><use href=#i-users /></svg> Alterar cadastro" };
   const alvo = acao === "editar_evento" ? (eventos.find(e=>e.id===d.evento_id)||{}).nome
              : acao === "editar_viagem" ? (()=>{ const v = viagens.find(x=>x.id===d.viagem_id); return v ? `#${v.id} · ${(clientesTransporte.find(c=>c.id===v.cliente_id)||{}).nome||"sem cliente"} · ${fmtDataBR(v.data)||""}` : null; })()
-             : acao === "editar_cadastro" ? (()=>{ const cad = cadastroDaTabela(d.tabela); const r = cad && cad.lista().find(x=>x.id===d.cadastro_id); return r ? `${cad.rotulo} · ${r.nome}` : null; })()
+             : acao === "editar_cadastro" ? (()=>{ const cad = cadastroDaTabela(d.tabela); const r = cad && cad.lista().find(x=>x.id===d.cadastro_id); return r ? `${rotuloCadastro(cad, r)} · ${r.nome}` : null; })()
              : null;
   const ocultar = ["resumo","evento_id","viagem_id","cadastro_id"];
   const itens = Object.keys(d).filter(k=>!ocultar.includes(k) && valorPreenchido(d[k]) && !(k==="cliente_nome" && valorPreenchido(d.cliente_id)))
@@ -14148,6 +14150,12 @@ const CADASTROS = {
   ct: { tabela:"clientes_transporte", rotulo:"Cliente de viagem", lista:()=>clientesTransporte, aberto:()=>editingClienteTransporteId, abrir:id=>openClienteTransporteModal(id), modal:"cliente-transporte-modal" },
   mt: { tabela:"motoristas",          rotulo:"Motorista",         lista:()=>motoristas,         aberto:()=>editingMotoristaId,         abrir:id=>openMotoristaModal(id),         modal:"motorista-modal" },
 };
+// Rótulo de um cadastro específico: o de viagem só diz "Cliente" depois da
+// 1ª viagem concluída; antes é "Lead de viagem" (27/10/2026).
+function rotuloCadastro(cad, r){
+  if(cad && cad.tabela==="clientes_transporte" && r) return ehClienteTransporte(r) ? "Cliente de viagem" : "Lead de viagem";
+  return cad ? cad.rotulo : "";
+}
 function cadastroDaTabela(tabela){ return Object.values(CADASTROS).find(c=>c.tabela===tabela); }
 function ehEmpresa(r){ return !!r && r.tipo_pessoa==="PJ"; }
 function etiquetaPJ(r){ return ehEmpresa(r) ? ' <span class="tag" title="Empresa (CNPJ)">PJ</span>' : ""; }
@@ -14265,7 +14273,7 @@ function renderLigacoes(pre){
       const [t, i] = [k.split(":")[0], Number(k.split(":")[1])];
       const cad = cadastroDaTabela(t), outro = cad && cad.lista().find(r=>r.id===i);
       if(!outro) return "";
-      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">Mesma pessoa: ${escapeHtml(outro.nome)}</span>${numId(outro)}<small>${cad.rotulo} · ligada pela ${cadastroDaTabela(via.tabela).rotulo.toLowerCase()}</small></div><div class="lig-acoes">
+      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">Mesma pessoa: ${escapeHtml(outro.nome)}</span>${numId(outro)}<small>${rotuloCadastro(cad, outro)} · ligada pela ${cadastroDaTabela(via.tabela).rotulo.toLowerCase()}</small></div><div class="lig-acoes">
         <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${t}',${i})">Abrir</button></div></div>`;
     }).join("");
 
@@ -14285,7 +14293,7 @@ function renderLigacoes(pre){
       });
     });
     sugestoes = outros.map(({cad, r})=>`<div class="lig-sugestao"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg>
-      <div class="lig-txt"><b>${escapeHtml(r.nome)}</b>${numId(r)} tem o mesmo WhatsApp ou e-mail<small>${cad.rotulo}. É a mesma pessoa?</small></div>
+      <div class="lig-txt"><b>${escapeHtml(r.nome)}</b>${numId(r)} tem o mesmo WhatsApp ou e-mail<small>${rotuloCadastro(cad, r)}. É a mesma pessoa?</small></div>
       <button type="button" class="act act-edit" onclick="ligarMesmaPessoa('${pre}','${cad.tabela}',${r.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Ligar como mesma pessoa</button></div>`).join("");
   }
 
@@ -17467,7 +17475,7 @@ function contatoParaLead(d){
 }
 function contatoParaClienteViagem(d){
   const existente = d.telefone && clientesTransporte.find(c=>mesmoTelefone(c.whatsapp, d.telefone));
-  if(existente){ openClienteTransporteModal(existente.id); showToast("Esse contato já é cliente de viagem: " + existente.nome); return; }
+  if(existente){ openClienteTransporteModal(existente.id); showToast("Esse contato já tem cadastro de viagem: " + existente.nome); return; }
   openClienteTransporteModal(null);
   document.getElementById("ct-nome").value = d.nome;
   document.getElementById("ct-whatsapp").value = d.telefone;
@@ -17475,11 +17483,11 @@ function contatoParaClienteViagem(d){
   document.getElementById("ct-regiao").value = d.regiao;
   document.getElementById("ct-origem").value = "Outro";
   document.getElementById("ct-notas").value = d.nota + " (" + d.origem + ")";
-  showToast("Cliente de viagem pré-preenchida com os dados do contato");
+  showToast("Cadastro de viagem pré-preenchido com os dados do contato");
 }
 function selectPromoverContato(fonte, id){
-  return `<select class="select-promover" title="Criar lead ou cliente de viagem a partir deste contato" onchange="promoverContato(this,'${fonte}',${id})">
-    <option value="">Virar...</option><option value="lead">Lead</option><option value="cliente">Cliente de viagem</option></select>`;
+  return `<select class="select-promover" title="Criar lead ou cadastro de viagem a partir deste contato" onchange="promoverContato(this,'${fonte}',${id})">
+    <option value="">Virar...</option><option value="lead">Lead</option><option value="cliente">Lead de viagem</option></select>`;
 }
 
 // --- Contatos do organizador ---
