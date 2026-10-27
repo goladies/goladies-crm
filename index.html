@@ -468,6 +468,7 @@ a.icon-btn{text-decoration:none; display:inline-block;}
 .conv-faixa:not(.azul):not(.amar){background:var(--bg-card2); border:1px solid var(--border2);}
 .conv-faixa:not(.azul):not(.amar) > .ic{color:var(--text3);}
 select.conv-acao.conv-menu{padding-right:8px; max-width:220px;}
+select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
 .conv-faixa.azul{background:var(--c-blue-bg); border:1px solid rgba(91,157,255,.45);}
 .conv-faixa.azul > .ic{color:var(--c-blue);}
 .conv-faixa-btn{flex-shrink:0; height:28px; padding:0 10px; border-radius:7px; border:1px solid var(--border2); background:var(--bg-card); color:var(--text1); font:inherit; font-size:12px; font-weight:600; cursor:pointer;}
@@ -7162,9 +7163,9 @@ function desenharConversaAberta(){
       <select class="conv-acao conv-menu" aria-label="Cadastrar como" onchange="convCadastrar('${tel}', this.value); this.value='';">
         <option value="">+ Cadastrar como…</option>
         <option value="servico">Pedido de serviço (lead)</option>
-        ${cad.cliente ? `<option disabled>Viagem: já tem cadastro${escapeHtml(optCod(cad.cliente))}</option>` : `<option value="cliente">Pedido de viagem (lead)</option>`}
-        ${cad.parceiro ? `<option disabled>Parceira (o): já tem cadastro${escapeHtml(optCod(cad.parceiro))}</option>` : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
-        ${cad.motorista ? `<option disabled>Motorista: já tem cadastro${escapeHtml(optCod(cad.motorista))}</option>` : `<option value="motorista">Motorista</option>`}
+        ${cad.cliente ? `<option class="ja-tem" disabled>Viagem: já tem cadastro${escapeHtml(optCod(cad.cliente))}</option>` : `<option value="cliente">Pedido de viagem (lead)</option>`}
+        ${cad.parceiro ? `<option class="ja-tem" disabled>Parceira (o): já tem cadastro${escapeHtml(optCod(cad.parceiro))}</option>` : `<option value="parceira">Parceira (o)</option><option value="patrocinio">Patrocinadora (or)</option>`}
+        ${cad.motorista ? `<option class="ja-tem" disabled>Motorista: já tem cadastro${escapeHtml(optCod(cad.motorista))}</option>` : `<option value="motorista">Motorista</option>`}
       </select>
       ${assunto ? "" : `<select class="conv-acao conv-menu" aria-label="Outro assunto" onchange="if(this.value) convMarcarAssunto('${tel}', this.value); this.value='';">
         <option value="">Outro assunto…</option>
