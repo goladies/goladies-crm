@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://ilhuhbcklvcdrggovmth.supabase.co; connect-src 'self' https://ilhuhbcklvcdrggovmth.supabase.co wss://ilhuhbcklvcdrggovmth.supabase.co https://cdn.jsdelivr.net https://places.googleapis.com https://routes.googleapis.com; base-uri 'self'; form-action 'self'; object-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://ilhuhbcklvcdrggovmth.supabase.co; connect-src 'self' https://ilhuhbcklvcdrggovmth.supabase.co wss://ilhuhbcklvcdrggovmth.supabase.co https://cdn.jsdelivr.net https://places.googleapis.com https://routes.googleapis.com https://brasilapi.com.br; base-uri 'self'; form-action 'self'; object-src 'none';">
 <title>CRM Go Ladies</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#141417">
@@ -2758,7 +2758,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
     <div class="formgrid">
       <div><label>Tipo de cadastro</label><select id="f-tipo" onchange="aplicarTipoPessoa('f')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="f-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div id="f-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('f')"></div>
       <div><label id="f-nome-lbl">Nome *</label><input type="text" id="f-nome"></div>
       <div><label>WhatsApp *</label><input type="text" id="f-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
       <div><label>E-mail</label><input type="text" id="f-email"></div>
@@ -2864,7 +2864,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
     <div class="formgrid">
       <div><label>Tipo de cadastro</label><select id="p-tipo" onchange="aplicarTipoPessoa('p')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="p-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div id="p-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('p')"></div>
       <div class="full"><label id="p-nome-lbl">Nome *</label>
         <div class="busca-contato">
           <input type="text" id="p-nome" autocomplete="off" placeholder="Digite para buscar nos cadastros ou escrever um nome novo" oninput="buscarContatoParceiro(this.value)" onfocus="buscarContatoParceiro(this.value)" onkeydown="if(event.key==='Escape') fecharBuscaContatoParceiro()">
@@ -3466,7 +3466,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
     <div class="formgrid">
       <div><label>Tipo de cadastro</label><select id="ct-tipo" onchange="aplicarTipoPessoa('ct')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="ct-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="ct-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value)"></div>
+      <div id="ct-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="ct-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('ct')"></div>
       <div class="full"><label id="ct-nome-lbl">Nome *</label><input type="text" id="ct-nome"></div>
       <div><label>WhatsApp</label><input type="text" id="ct-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
       <div><label>E-mail</label><input type="text" id="ct-email"></div>
@@ -11126,6 +11126,7 @@ function renderSedeDecisoes(){
 let editingLeadId = null;
 function openLeadModal(id){
   editingLeadId = id || null;
+  datasPendentes.f = [];
   fillSelect(document.getElementById("f-categoria"), CATEGORIAS, "");
   document.getElementById("f-categoria").onchange = ()=>fillServicoOptions();
   fillServicoOptions();
@@ -11220,8 +11221,9 @@ async function saveLead(){
     document.getElementById("lead-modal-title").textContent = "Editar lead";
     if(document.getElementById("fv-servico").value.trim()) await addVenda();
     if(document.getElementById("fi-assunto").value.trim()) await addInteracaoLead();
+    await gravarDatasPendentes("f", editingLeadId);
   }
-  await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes");
+  await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes", "datas_especiais");
   if(isNew){ renderVendasLead(); renderInteracoesLead(); renderLigacoes("f"); }
   else { closeModal("lead-modal"); }
 }
@@ -12059,6 +12061,7 @@ function renderProspeccaoParceiro(p){
 }
 function openParceiroModal(id){
   editingParceiroId = id || null;
+  datasPendentes.p = [];
   parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
   document.getElementById("parceiro-modal-title").textContent = id ? `Editar parceira (o) ${codigoCadastro(parceiros.find(p=>p.id===id))}`.trim() : "Nova parceira (o)";
@@ -12133,8 +12136,9 @@ async function saveParceiro(){
     await gravarLinksPendentesParceiro();
     await gravarEnderecosPendentesParceiro();
     if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
+    await gravarDatasPendentes("p", editingParceiroId);
   }
-  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes");
+  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes", "datas_especiais");
   if(isNew){ renderContatosParceiro(); renderLinksParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
   else { closeModal("parceiro-modal"); }
 }
@@ -13410,6 +13414,7 @@ async function salvarFotoPerfil(prefixo, id, pathAtual){
 let editingMotoristaId = null;
 function openMotoristaModal(id){
   editingMotoristaId = id || null;
+  datasPendentes.mt = [];
   fillSelect(document.getElementById("mt-status"), MOTORISTA_ETAPAS, MOTORISTA_STATUS_PADRAO);
   document.getElementById("motorista-modal-title").textContent = id ? `Editar motorista ${codigoCadastro(motoristas.find(m=>m.id===id))}`.trim() : "Nova motorista";
   const m = motoristas.find(x=>x.id===id) || {};
@@ -13751,13 +13756,14 @@ async function saveMotorista(){
     document.getElementById("motorista-modal-title").textContent = "Editar motorista";
     if(document.getElementById("mt-doc-validade").value.trim()) await addDocumentoMotorista();
     if(document.getElementById("mo-texto").value.trim()) await addObservacaoMotorista();
+    await gravarDatasPendentes("mt", editingMotoristaId);
   }
   await salvarDocPrincipal("cnh", editingMotoristaId);
   await salvarDocPrincipal("crlv", editingMotoristaId);
   await salvarDocPrincipal("antecedentes", editingMotoristaId);
   await salvarDocPrincipal("endereco", editingMotoristaId);
   await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
-  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes");
+  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "datas_especiais");
   if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); carregarPerfilMotorista(); }
   else { closeModal("motorista-modal"); }
 }
@@ -13946,6 +13952,7 @@ function exportarClientesCsv(){
 let editingClienteTransporteId = null;
 function openClienteTransporteModal(id){
   editingClienteTransporteId = id || null;
+  datasPendentes.ct = [];
   document.getElementById("cliente-transporte-modal-title").textContent = id ? `Editar cliente ${codigoCadastro(clientesTransporte.find(c=>c.id===id))}`.trim() : "Nova cliente de viagem";
   const c = clientesTransporte.find(x=>x.id===id) || {};
   document.getElementById("ct-nome").value = c.nome||"";
@@ -14269,9 +14276,10 @@ async function saveClienteTransporte(){
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   const idSalvo = editingClienteTransporteId || (data && data[0] && data[0].id);
   if(idSalvo) await salvarFotoPerfil("ct", idSalvo, (clientesTransporte.find(x=>x.id===idSalvo)||{}).foto_path);
+  if(!editingClienteTransporteId && idSalvo) await gravarDatasPendentes("ct", idSalvo);
   showToast("Salvo!");
   closeModal("cliente-transporte-modal");
-  await recarregarTabelas("clientes_transporte");
+  await recarregarTabelas("clientes_transporte", "datas_especiais");
 }
 async function deleteClienteTransporte(id){
   if(!confirm("Excluir esta cliente? As viagens ligadas a ela ficam sem cliente definido (não são apagadas).")) return;
@@ -14533,20 +14541,29 @@ function datasEspeciaisDoGrupo(tabela, id){
   const grupo = grupoMesmaPessoa(tabela, id);
   return datasEspeciais.filter(e=>grupo.has(e.tabela + ":" + e.registro_id));
 }
+// Ficha nova (27/10/2026): as datas ficam guardadas aqui até o Salvar da ficha,
+// que grava tudo junto (gravarDatasPendentes), igual aos contatos da parceira.
+const datasPendentes = { f:[], p:[], ct:[], mt:[] };
+function itemDataEspecial(e, extra, onRemover){
+  return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${escapeHtml(e.nome)}</span>${e.relacao ? ` <span style="color:var(--text2);">· ${escapeHtml(e.relacao)}</span>` : ""}<small>${dataEspecialTexto(e.data)}${extra}</small></div><div class="lig-acoes">
+        <button type="button" class="act act-del" title="Remover data" aria-label="Remover data" onclick="${onRemover}"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+}
 function renderDatasEspeciais(pre){
   const el = document.getElementById(pre+"-datas");
   if(!el) return;
   const c = CADASTROS[pre], id = c.aberto();
   const cab = `<h4>Datas especiais</h4><p class="lig-sub">Aniversário de quem é da família (filha, filho, companheira (o)...). Avisa no WhatsApp na véspera e no dia, às 9h.</p>`;
   if(datasEspeciaisSqlFaltando){ el.innerHTML = cab + `<p class="lig-vazio">Rode primeiro o SQL schema_datas_especiais.sql no Supabase (SQL Editor).</p>`; return; }
-  if(!id){ el.innerHTML = cab + `<p class="lig-vazio">Salve o cadastro primeiro. Depois dá pra adicionar as datas.</p>`; return; }
-  const itens = datasEspeciaisDoGrupo(c.tabela, id)
+  const itens = !id
+    ? datasPendentes[pre].map((e,i)=>({e,i}))
+        .sort((x,y)=>x.e.data.slice(5).localeCompare(y.e.data.slice(5)))
+        .map(({e,i})=>itemDataEspecial(e, " · entra quando salvar a ficha", `removerDataEspecial('${pre}',null,${i})`)).join("")
+    : datasEspeciaisDoGrupo(c.tabela, id)
     .sort((a,b)=>String(a.data).slice(5).localeCompare(String(b.data).slice(5)))
     .map(e=>{
       const daqui = e.tabela===c.tabela && e.registro_id===id;
       const outra = !daqui && cadastroDaTabela(e.tabela);
-      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${escapeHtml(e.nome)}</span>${e.relacao ? ` <span style="color:var(--text2);">· ${escapeHtml(e.relacao)}</span>` : ""}<small>${dataEspecialTexto(e.data)}${outra ? ` · lançada na ficha de ${outra.rotulo.toLowerCase()}` : ""}</small></div><div class="lig-acoes">
-        <button type="button" class="act act-del" title="Remover data" aria-label="Remover data" onclick="removerDataEspecial('${pre}',${e.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+      return itemDataEspecial(e, outra ? ` · lançada na ficha de ${outra.rotulo.toLowerCase()}` : "", `removerDataEspecial('${pre}',${e.id})`);
     }).join("");
   el.innerHTML = cab + (itens || `<p class="lig-vazio">Nenhuma data ainda.</p>`) + `<div class="lig-form">
       <div><label for="${pre}-de-nome">Nome</label><input type="text" id="${pre}-de-nome" placeholder="Ex: Lucas"></div>
@@ -14555,14 +14572,29 @@ function renderDatasEspeciais(pre){
       <div style="display:flex; align-items:flex-end;"><button type="button" class="btn secondary small" style="margin-bottom:10px;" onclick="adicionarDataEspecial('${pre}')">+ Adicionar data</button></div>
     </div>`;
 }
-async function adicionarDataEspecial(pre){
-  const c = CADASTROS[pre], id = c.aberto();
-  const nome = (document.getElementById(pre+"-de-nome").value||"").trim();
+// Lê o formulário de data; quieta=true não reclama (usado no Salvar da ficha).
+function lerFormDataEspecial(pre, quieta){
+  const nomeEl = document.getElementById(pre+"-de-nome");
+  if(!nomeEl) return null;
+  const nome = (nomeEl.value||"").trim();
   const relacao = document.getElementById(pre+"-de-relacao").value || null;
   const data = lerDataEspecial(document.getElementById(pre+"-de-data").value);
-  if(!nome){ alert("Escreva o nome."); return; }
-  if(!data){ alert("Data inválida. Use dia/mês (01/11) ou dia/mês/ano (01/11/2015)."); return; }
-  const { error } = await sb.from("datas_especiais").insert({ tabela:c.tabela, registro_id:id, nome, relacao, data });
+  if(quieta) return nome && data ? { nome, relacao, data } : null;
+  if(!nome){ alert("Escreva o nome."); return null; }
+  if(!data){ alert("Data inválida. Use dia/mês (01/11) ou dia/mês/ano (01/11/2015)."); return null; }
+  return { nome, relacao, data };
+}
+async function adicionarDataEspecial(pre){
+  const c = CADASTROS[pre], id = c.aberto();
+  const nova = lerFormDataEspecial(pre);
+  if(!nova) return;
+  if(!id){
+    datasPendentes[pre].push(nova);
+    renderDatasEspeciais(pre);
+    showToast("Data guardada. Ela entra quando você salvar a ficha.");
+    return;
+  }
+  const { error } = await sb.from("datas_especiais").insert({ tabela:c.tabela, registro_id:id, ...nova });
   if(error){
     alert(/does not exist|schema cache/i.test(error.message)
       ? "Rode primeiro o SQL schema_datas_especiais.sql no Supabase (SQL Editor)."
@@ -14573,12 +14605,78 @@ async function adicionarDataEspecial(pre){
   renderDatasEspeciais(pre);
   showToast("Data adicionada!");
 }
-async function removerDataEspecial(pre, did){
+// Chamada pelo Salvar de uma ficha nova, já com o id. Leva também a data que
+// ficou digitada sem clicar em "+ Adicionar data".
+async function gravarDatasPendentes(pre, id){
+  const lista = [...datasPendentes[pre]];
+  const digitada = lerFormDataEspecial(pre, true);
+  if(digitada) lista.push(digitada);
+  datasPendentes[pre] = [];
+  if(!lista.length || !id) return;
+  const tabela = CADASTROS[pre].tabela;
+  const { error } = await sb.from("datas_especiais").insert(lista.map(e=>({ tabela, registro_id:id, ...e })));
+  if(error) alert("A ficha foi salva, mas as datas especiais não entraram. Abra a ficha de novo e adicione as datas outra vez, por favor.");
+}
+async function removerDataEspecial(pre, did, idxPendente){
+  if(did==null){
+    datasPendentes[pre].splice(idxPendente, 1);
+    renderDatasEspeciais(pre);
+    return;
+  }
   if(!confirm("Remover esta data especial?")) return;
   const { error } = await sb.from("datas_especiais").delete().eq("id", did);
   if(error){ alert("Erro ao remover: " + error.message); return; }
   await recarregarTabelas("datas_especiais");
   renderDatasEspeciais(pre);
+}
+
+// ===== CNPJ NA BRASILAPI (27/10/2026) =====
+// Com os 14 números digitados, consulta os dados públicos da Receita e
+// preenche só os campos que estão vazios: nome, abertura do CNPJ, e-mail e
+// lugar. Nada do que já foi escrito é trocado.
+const cnpjConsultado = {};
+function nomeBonito(t){
+  return String(t||"").toLowerCase()
+    .replace(/(^|[\s\-\/(])([a-zà-ú])/g, (m,a,b)=>a+b.toUpperCase())
+    .replace(/(\s)(De|Da|Do|Das|Dos|E)(?=\s)/g, (m,a,b)=>a+b.toLowerCase());
+}
+async function buscarCNPJ(pre){
+  const num = document.getElementById(pre+"-cnpj").value.replace(/\D/g,"");
+  if(num.length !== 14 || cnpjConsultado[pre] === num) return;
+  cnpjConsultado[pre] = num;
+  let d;
+  try{
+    const r = await fetch("https://brasilapi.com.br/api/cnpj/v1/" + num);
+    if(r.status === 404 || r.status === 400){ showToast("Não encontrei esse CNPJ na Receita. Confira os números, por favor."); return; }
+    if(!r.ok) throw new Error(r.status);
+    d = await r.json();
+  }catch(e){
+    cnpjConsultado[pre] = null;
+    showToast("Não consegui consultar o CNPJ agora. Os campos podem ser preenchidos à mão.");
+    return;
+  }
+  if(document.getElementById(pre+"-cnpj").value.replace(/\D/g,"") !== num) return; // trocou no meio
+  const cidade = nomeBonito(d.municipio), bairro = nomeBonito(d.bairro), uf = d.uf || "";
+  const lugar = [bairro, cidade && uf ? `${cidade}/${uf}` : cidade].filter(Boolean).join(", ");
+  const campos = [
+    ["nome", pre+"-nome", nomeBonito(d.nome_fantasia || d.razao_social)],
+    ["abertura do CNPJ", pre+"-aniversario", d.data_inicio_atividade || ""],
+    ["e-mail", pre+"-email", String(d.email||"").toLowerCase()],
+    ["bairro", pre==="f" ? "f-bairro" : null, bairro],
+    ["cidade", pre==="f" ? "f-cidade" : null, cidade],
+    ["estado", pre==="f" ? "f-estado" : null, uf],
+    ["região", pre!=="f" ? pre+"-regiao" : null, lugar],
+  ];
+  const feitos = [];
+  for(const [rot, idCampo, valor] of campos){
+    const el = idCampo && document.getElementById(idCampo);
+    if(!el || !valor || String(el.value||"").trim()) continue;
+    el.value = valor;
+    feitos.push(rot);
+  }
+  showToast(feitos.length
+    ? `CNPJ encontrado. Preenchi: ${feitos.join(", ")}.`
+    : "CNPJ encontrado. Os campos já estavam preenchidos, não troquei nada.");
 }
 
 // ===== BUSCA DE ENDEREÇO (Google Places, mesmo padrão do site) =====
