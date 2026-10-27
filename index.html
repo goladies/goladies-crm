@@ -16119,7 +16119,7 @@ function renderTransporteViagens(){
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; const pes = textoPessoasViagem(v); const txt = [n ? `${n} parada${n===1?"":"s"}` : "", pes].filter(Boolean).join(" · "); return txt ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${txt}</span>` : ""; })()}
-          ${(()=>{ const pr = Preferencias.linhas(v.preferencias).precisa; return pr.length ? `<div style="font-size:var(--fs-xs); margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;" title="${escapeHtml(pr.map(x=>x[1]).join("; "))}"><svg class=ic aria-hidden=true><use href=#i-alert-circle /></svg> Precisa de: ${escapeHtml(pr.map(x=>x[1].split(":")[0]).join(" · "))}</div>` : ""; })()}
+          ${(()=>{ const pr = Preferencias.linhas(v.preferencias).precisa.filter(x=>x[0]!=="info-circle"); return pr.length ? `<div style="font-size:var(--fs-xs); margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;" title="${escapeHtml(pr.map(x=>x[1]).join("; "))}"><svg class=ic aria-hidden=true><use href=#i-alert-circle /></svg> Precisa de: ${escapeHtml(pr.map(x=>x[1].split(":")[0]).join(" · "))}</div>` : ""; })()}
           ${btnPix}${btnEnviar}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}

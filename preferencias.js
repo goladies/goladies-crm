@@ -23,7 +23,7 @@
   var CARREGADOR = { lightning: 'iPhone (Lightning)', usbc: 'USB-C', microusb: 'Micro-USB (Android mais antigo)', sem_fio: 'sem fio' };
   // Contran, Resolução 819/2021: o tipo muda com a idade
   var CADEIRINHA = {
-    bebe_conforto: { nome: 'bebê conforto', faixa: 'até 1 ano' },
+    bebe_conforto: { nome: 'bebê conforto', faixa: 'até 1 ano', como: 'instalado de costas para a frente do carro' },
     cadeirinha: { nome: 'cadeirinha', faixa: '1 a 4 anos' },
     elevacao: { nome: 'assento de elevação', faixa: '4 a 7 anos e meio' }
   };
@@ -50,14 +50,21 @@
     var precisa = [], conforto = [];
     if (!p || typeof p !== 'object') return { precisa: precisa, conforto: conforto };
     if (p.pet) precisa.push(['paw', 'Vai com pet pequeno, ' + (p.pet === 'com_caixa' ? 'com caixa de transporte' : 'sem caixa de transporte')]);
+    // A motorista pode não saber a regra: cada criança vem com o tipo que
+    // usa e a faixa de idade dele, e a lembrança do banco de trás.
     if (p.crianca && p.crianca.cadeirinha) {
       var ids = idadesDe(p.crianca);
-      var quem = ids.length ? 'Criança' + (ids.length > 1 ? 's' : '') + ' de ' + junta(ids.map(textoIdade)) : 'Criança';
-      if (p.crianca.cadeirinha === 'levo') precisa.push(['mood-kid', quem + ': leva a própria cadeirinha']);
-      else {
-        var tipos = ids.map(tipoCadeirinha).filter(Boolean).filter(function (t, i, a) { return a.indexOf(t) === i; });
-        precisa.push(['mood-kid', quem + ': precisa de ' + (tipos.length ? junta(tipos.map(function (t) { return CADEIRINHA[t].nome; })) : 'cadeirinha')]);
-      }
+      var levo = p.crianca.cadeirinha === 'levo';
+      if (!ids.length) precisa.push(['mood-kid', levo ? 'Vai criança: a cliente leva a própria cadeirinha' : 'Vai criança: precisa de cadeirinha (a idade a gente confirma com a cliente)']);
+      ids.forEach(function (n) {
+        var t = tipoCadeirinha(n);
+        var quem = n < 1 ? 'Bebê de menos de 1 ano' : 'Criança de ' + textoIdade(n);
+        var uso = t ? CADEIRINHA[t].nome + ' (para ' + CADEIRINHA[t].faixa + (CADEIRINHA[t].como ? ', ' + CADEIRINHA[t].como : '') + ')' : null;
+        if (!t) precisa.push(['mood-kid', quem + ': não precisa de cadeirinha, usa só o cinto de segurança']);
+        else if (levo) precisa.push(['mood-kid', quem + ': a cliente leva a própria cadeirinha. Pela idade, deve ser ' + uso]);
+        else precisa.push(['mood-kid', quem + ': precisa de ' + uso]);
+      });
+      if (ids.some(function (n) { return n < 10; }) || !ids.length) precisa.push(['info-circle', 'Pela lei, criança com menos de 10 anos viaja no banco de trás']);
     }
     if (p.cadeira_rodas) precisa.push(['wheelchair', 'Leva cadeira de rodas dobrável ou andador']);
     if (p.ajuda_entrar) precisa.push(['walk', 'Precisa de ajuda para entrar e sair do carro']);
