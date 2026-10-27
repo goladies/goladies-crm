@@ -921,6 +921,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-fer span{overflow:hidden; text-overflow:ellipsis;}
 .sag-fer .ic{width:12px; height:12px; flex-shrink:0;}
 .sag-fer.fac{background:transparent; border:1px dashed var(--c-purple); font-weight:500;}
+.sag-fer.aniv{background:var(--rosa-bg); color:var(--rosa-texto); cursor:pointer;}
+.sag-fer.aniv:hover{box-shadow:inset 0 0 0 1px var(--rosa-borda);}
+.sag-dot.aniv{background:var(--rosa);}
 .sag-dia-sel .sag-fer,.sag-linha .sag-fer,.sag-semana .sag-fer{white-space:normal; font-size:12.5px; padding:5px 9px;} .sag-dot.evento{background:var(--sag-evento);} .sag-dot.feito{background:var(--c-gray); opacity:.7;}
 /* chip de um item */
 .sag-it{display:flex; align-items:center; gap:5px; border-radius:7px; padding:3px 7px; font-size:12px; line-height:1.3; border-left:3px solid; cursor:pointer; overflow:hidden; white-space:nowrap; min-width:0; color:var(--text1);}
@@ -6575,12 +6578,10 @@ function proximoAniversario(dataStr){
   if(prox < hoje) prox = new Date(hoje.getFullYear()+1, nasc.getMonth(), nasc.getDate());
   return prox;
 }
-function renderAniversariosDashboard(){
-  const el = document.getElementById("dash-aniversarios");
-  if(!el) return;
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth()+2, 0);
-  const candidatos = [
+// Todo mundo com aniversário no CRM (fichas + Datas especiais). Usada pelo
+// quadro do Dashboard e pela Agenda da Sede.
+function aniversariantesCrm(){
+  return [
     ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), empresa:ehEmpresa(l), whats:l.whatsapp, aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
     ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
     ...clientesTransporte.map(c=>({nome:c.nome, tipo:rotuloCadastro(CADASTROS.ct, c)+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
@@ -6593,9 +6594,14 @@ function renderAniversariosDashboard(){
       return {nome:e.nome, tipo:`${e.relacao && e.relacao!=="Outra" ? e.relacao : "Data especial"} de ${dono.nome}`, empresa:false,
         whats:dono.whatsapp || (e.tabela==="parceiros" ? (parceiroContatos.find(x=>x.parceiro_id===dono.id && x.numero)||{}).numero : null), aniversario:e.data, familiar:{relacao:e.relacao, de:dono.nome}, abrir:`cadastroDaTabela('${e.tabela}').abrir(${dono.id})`};
     }).filter(Boolean),
-  ];
-  const proximos = candidatos
-    .filter(c=>c.aniversario)
+  ].filter(c=>c.aniversario);
+}
+function renderAniversariosDashboard(){
+  const el = document.getElementById("dash-aniversarios");
+  if(!el) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const fimProximoMes = new Date(hoje.getFullYear(), hoje.getMonth()+2, 0);
+  const proximos = aniversariantesCrm()
     .map(c=>({...c, proxima: proximoAniversario(c.aniversario)}))
     .filter(c=>c.proxima && c.proxima >= hoje && c.proxima <= fimProximoMes)
     .sort((a,b)=>a.proxima-b.proxima);
@@ -9683,7 +9689,7 @@ const SAG_VISOES = [["prox","Próximos dias"],["dia","Dia"],["semana","Semana"],
 const SAG_DOW = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 // "Feito" começa desmarcado: o histórico aparece só quando ela liga o filtro
 const SAG_TIPOS_PADRAO = () => Object.keys(SAG_TIPOS).filter(k=>k!=="feito");
-const sag = { modo:"junto", visao:"prox", ancora:null, diaSel:null, tipos:new Set(SAG_TIPOS_PADRAO()),cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, filtrosIni:false };
+const sag = { modo:"junto", visao:"prox", ancora:null, diaSel:null, tipos:new Set(SAG_TIPOS_PADRAO()),cores:new Set(SAG_ORDEM_COR), area:"", quem:"", feriados:true, aniversarios:true, filtrosIni:false };
 // Abre em Tudo junto + Próximos dias; depois lembra a última escolha de cada nível
 try{
   const m = localStorage.getItem("gl-sede-agenda-modo"), v = localStorage.getItem("gl-sede-agenda-periodo");
@@ -9800,8 +9806,27 @@ function sagFeriadosAno(ano){
   return sagFeriadosCache[ano] = map;
 }
 function sagFeriados(iso){ return sag.feriados && iso ? (sagFeriadosAno(Number(iso.slice(0,4)))[iso] || []) : []; }
+// Aniversários na agenda (27/10/2026): fichas do CRM e Datas especiais, todo
+// ano no mesmo dia. 29/02 aparece em 28/02 quando o ano não é bissexto.
+function sagAniversarios(iso){
+  if(!sag.aniversarios || !iso) return [];
+  const md = iso.slice(5), ano = Number(iso.slice(0,4));
+  const bissexto = new Date(ano, 1, 29).getMonth() === 1;
+  return aniversariantesCrm().filter(c=>{
+    const a = String(c.aniversario).slice(5);
+    return a === md || (!bissexto && a === "02-29" && md === "02-28");
+  }).map(c=>{
+    const nasc = Number(String(c.aniversario).slice(0,4));
+    return {...c, anos: !c.empresa && nasc > 1900 ? ano - nasc : null};
+  });
+}
+// Feriado ou aniversário no dia (pra não escrever "Livre").
+function sagTemFixo(iso){ return sagFeriados(iso).length > 0 || sagAniversarios(iso).length > 0; }
+function sagAniversarioHtml(iso, curto){
+  return sagAniversarios(iso).map(c=>`<div class="sag-fer aniv" role="button" tabindex="0" title="Aniversário · ${escapeHtml(c.tipo)}${c.anos > 0 && c.anos < 120 ? ` · faz ${c.anos} anos` : ""}" onclick="event.stopPropagation(); ${c.abrir}"><svg class=ic aria-hidden=true><use href=#i-cake /></svg><span>${escapeHtml(c.nome)}${curto?"":` · ${escapeHtml(c.tipo)}`}</span></div>`).join("");
+}
 function sagFeriadoHtml(iso, curto){
-  return sagFeriados(iso).map(f=>`<div class="sag-fer ${f.facultativo?"fac":""}" title="${escapeHtml(f.nome)} · ${f.facultativo?"ponto facultativo":"feriado "+(f.onde==="Brasil"?"nacional":f.onde==="RS"?"no RS":"em "+f.onde)}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span>${escapeHtml(f.nome)}${curto?"":` · ${escapeHtml(f.onde)}`}</span></div>`).join("");
+  return sagAniversarioHtml(iso, curto) + sagFeriados(iso).map(f=>`<div class="sag-fer ${f.facultativo?"fac":""}" title="${escapeHtml(f.nome)} · ${f.facultativo?"ponto facultativo":"feriado "+(f.onde==="Brasil"?"nacional":f.onde==="RS"?"no RS":"em "+f.onde)}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span>${escapeHtml(f.nome)}${curto?"":` · ${escapeHtml(f.onde)}`}</span></div>`).join("");
 }
 
 function sagPassa(x){
@@ -9875,7 +9900,7 @@ function sagQuadroHtml(lista){
 }
 function sagLegendaHtml(completa){
   const cores = Object.entries(SAG_CORES).map(([c,[n,d]])=>`<span><i class="sag-dot ${c}"></i><b>${n}</b> ${d}</span>`).join("")
-    + `<span><i class="sag-dot evento"></i><b>Azul</b> evento (transporte, live, curso)</span><span><i class="sag-dot feito"></i><b>Cinza</b> feito ou decidido</span><span><i class="sag-dot feriado"></i><b>Roxo</b> feriado (Brasil, RS e Porto Alegre) ou ponto facultativo</span>`;
+    + `<span><i class="sag-dot evento"></i><b>Azul</b> evento (transporte, live, curso)</span><span><i class="sag-dot feito"></i><b>Cinza</b> feito ou decidido</span><span><i class="sag-dot feriado"></i><b>Roxo</b> feriado (Brasil, RS e Porto Alegre) ou ponto facultativo</span><span><i class="sag-dot aniv"></i><b>Rosa</b> aniversário (fichas e Datas especiais)</span>`;
   const icones = Object.values(SAG_TIPOS).map(([n,ic])=>`<span><svg class=ic aria-hidden=true><use href=#${ic} /></svg> ${n}</span>`).join("")
     + `<span><svg class=ic aria-hidden=true><use href=#i-bell /></svg> Me avisar no dia</span>`;
   return `<div class="sag-legenda">${cores}</div>` + (completa ? `<div class="sag-legenda">${icones}</div>` : "");
@@ -9913,7 +9938,7 @@ function renderSedeAgenda(){
       const iso = isoLocal(d), l = doDia(iso), dif = Math.round((d - sagHojeData()) / 864e5);
       const nome = dif===0 ? "Hoje" : dif===1 ? "Amanhã" : capitalizar(d.toLocaleDateString("pt-BR",{weekday:"long"}));
       return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab"><b>${nome}</b>, ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}</div>
-        <div class="sag-lst">${sagFeriadoHtml(iso, true)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica" style="margin:0;">Livre</div>`)}</div>
+        <div class="sag-lst">${sagFeriadoHtml(iso, true)}${l.map(x=>sagChip(x, true)).join("") || (sagTemFixo(iso) ? "" : `<div class="sag-dica" style="margin:0;">Livre</div>`)}</div>
         <button type="button" class="sag-add" onclick="abrirItemAgenda(null, '${iso}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>`;
     }).join("")}</div>`;
   } else if(sag.visao==="dia"){
@@ -9921,13 +9946,13 @@ function renderSedeAgenda(){
     titulo = capitalizar(sag.ancora.toLocaleDateString("pt-BR",{weekday:"long", day:"numeric", month:"long"})) + (iso===hoje ? " · hoje" : "");
     html = `<div class="panel sag-dia-sel" data-dia="${iso}" style="margin:0;">
       <div style="display:flex; justify-content:flex-end;"><button class="btn ghost small" type="button" onclick="abrirItemAgenda(null, '${iso}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>
-      <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div></div>`;
+      <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagTemFixo(iso) ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div></div>`;
   } else if(sag.visao==="semana"){
     const ini = sagSegunda(sag.ancora), fim = somarDias(ini, 6);
     titulo = ini.getMonth()===fim.getMonth() ? `${ini.getDate()} a ${fim.getDate()} de ${fim.toLocaleDateString("pt-BR",{month:"long"})}` : `${ini.getDate()} de ${mesCurto(ini)} a ${fim.getDate()} de ${mesCurto(fim)}`;
     html = `<div class="sag-semana">${Array.from({length:7},(_,i)=>{
       const d = somarDias(ini, i), iso = isoLocal(d), l = doDia(iso);
-      return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab">${SAG_DOW[i]}<b>${d.getDate()}</b></div>${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagFeriados(iso).length ? "" : `<div class="sag-dica" style="text-align:center;">Livre</div>`)}</div>`;
+      return `<div class="col ${iso===hoje?"hoje":""}" data-dia="${iso}"><div class="cab">${SAG_DOW[i]}<b>${d.getDate()}</b></div>${sagFeriadoHtml(iso)}${l.map(x=>sagChip(x, true)).join("") || (sagTemFixo(iso) ? "" : `<div class="sag-dica" style="text-align:center;">Livre</div>`)}</div>`;
     }).join("")}</div>`;
   } else if(sag.visao==="linha"){
     const ano = sag.ancora.getFullYear(), mes = sag.ancora.getMonth();
@@ -9945,7 +9970,7 @@ function renderSedeAgenda(){
     let cel = SAG_DOW.map(d=>`<div class="dow">${d}</div>`).join("");
     for(let i=0; i<total; i++){
       const d = somarDias(ini, i), iso = isoLocal(d), l = doDia(iso), MAX = 4;
-      const dots = (sagFeriados(iso).length ? `<i class="sag-dot feriado"></i>` : "") + l.map(x=>`<i class="sag-dot ${x.feito?"feito":(x.tipo==="evento"?"evento":x.cor)}"></i>`).join("");
+      const dots = (sagAniversarios(iso).length ? `<i class="sag-dot aniv"></i>` : "") + (sagFeriados(iso).length ? `<i class="sag-dot feriado"></i>` : "") + l.map(x=>`<i class="sag-dot ${x.feito?"feito":(x.tipo==="evento"?"evento":x.cor)}"></i>`).join("");
       cel += `<div class="dia ${d.getMonth()!==mes?"fora":""} ${iso===hoje?"hoje":""} ${iso===sag.diaSel?"sel":""}" data-dia="${iso}" onclick="sagSelDia('${iso}')">
         <span class="n">${d.getDate()}</span><div class="dots">${dots}</div>${sagFeriadoHtml(iso, true)}${l.slice(0,MAX).map(x=>sagChip(x)).join("")}${l.length>MAX?`<span class="mais">+ ${l.length-MAX} mais</span>`:""}</div>`;
     }
@@ -9954,7 +9979,7 @@ function renderSedeAgenda(){
       <div class="panel sag-dia-sel" id="sag-dia-sel">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><h3 style="margin:0;">${capitalizar(ds.toLocaleDateString("pt-BR",{weekday:"long", day:"numeric", month:"long"}))}${sag.diaSel===hoje?" · hoje":""}</h3>
         <span style="flex:1;"></span><button class="btn ghost small" type="button" onclick="abrirItemAgenda(null, '${sag.diaSel}')"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Tarefa neste dia</button></div>
-        <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(sag.diaSel)}${lsel.map(x=>sagChip(x, true)).join("") || (sagFeriados(sag.diaSel).length ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div>
+        <div class="sag-lst" style="margin-top:8px;">${sagFeriadoHtml(sag.diaSel)}${lsel.map(x=>sagChip(x, true)).join("") || (sagTemFixo(sag.diaSel) ? "" : `<div class="sag-dica">Nada neste dia.</div>`)}</div>
       </div>`;
   }
   if(sag.modo==="junto") html += `<h3 class="sag-sec" style="margin-top:18px;">Quadro</h3>` + sagQuadroHtml(lista);
@@ -9992,6 +10017,7 @@ function sagRenderFiltros(){
     &nbsp; Prioridade: ${Object.entries(SAG_CORES).map(([k,[n]])=>`<button type="button" class="sag-fc ${sag.cores.has(k)?"":"off"}" onclick="sagAlternar('cores','${k}')"><i class="sag-dot ${k}"></i> ${n}</button>`).join("")}
     <button type="button" class="sag-fc ${sag.cores.has("evento")?"":"off"}" onclick="sagAlternar('cores','evento')"><i class="sag-dot evento"></i> Azul</button>
     <button type="button" class="sag-fc ${sag.feriados?"":"off"}" onclick="sag.feriados=!sag.feriados; renderSedeAgenda();"><i class="sag-dot feriado"></i> Feriados</button>
+    <button type="button" class="sag-fc ${sag.aniversarios?"":"off"}" onclick="sag.aniversarios=!sag.aniversarios; renderSedeAgenda();"><i class="sag-dot aniv"></i> Aniversários</button>
     &nbsp; <select class="sag-fc" onchange="sag.area=this.value; renderSedeAgenda();"><option value="">Todas as áreas</option>${SAG_AREAS.map(a=>`<option ${sag.area===a?"selected":""}>${a}</option>`).join("")}</select>
     <select class="sag-fc" onchange="sag.quem=this.value; renderSedeAgenda();"><option value="">Todo mundo</option>${quemOpc.map(q=>`<option value="${q}" ${sag.quem===q?"selected":""}>${escapeHtml(sagNomeQuem(q))}</option>`).join("")}</select>`;
 }
