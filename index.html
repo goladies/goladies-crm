@@ -783,6 +783,20 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .kc-alerta.urg-15,.kc-alerta.urg-atraso{color:var(--c-red);}
 .chip-check{display:inline-flex; align-items:center; gap:5px; background:var(--bg-input); border:1px solid var(--border2); border-radius:16px; padding:4px 10px; font-size:var(--fs-xs); cursor:pointer; user-select:none; color:var(--text2);}
 .chip-check input{margin:0; accent-color:var(--rosa);}
+/* Preferências da viagem e o que a motorista tem no carro (preferencias.js) */
+.pref-viagem{margin:0 0 14px; border-radius:10px; overflow:hidden; border:1px solid var(--border); font-size:var(--fs-sm);}
+.pref-viagem .pv-precisa{padding:10px 12px; background:var(--rosa-bg); border-left:4px solid var(--rosa);}
+.pref-viagem .pv-conforto{padding:10px 12px;}
+.pref-viagem .pv-tit{font-size:var(--fs-xs); font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--text3); margin-bottom:4px;}
+.pref-viagem .pv-precisa .pv-tit{color:var(--rosa-texto);}
+.pref-viagem .pv-linha{display:flex; gap:8px; align-items:baseline; line-height:1.5; color:var(--text1);}
+.pref-viagem .pv-precisa .pv-linha{font-weight:600;}
+.match-ok{color:var(--c-green); font-weight:700;}
+.match-falta{color:var(--c-amber); font-weight:600;}
+.gl-recursos .gl-rec-linha{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:var(--fs-sm); color:var(--text1); cursor:pointer;}
+.gl-recursos .gl-rec-linha input{width:16px; height:16px; accent-color:var(--rosa); flex:none; margin:0;}
+.gl-recursos .gl-rec-tit{margin-top:10px; font-size:var(--fs-xs); font-weight:700; color:var(--text3);}
+.gl-recursos .gl-rec-sub{color:var(--text3); font-size:var(--fs-xs);}
 /* Filtro por período (Transporte › Viagens) */
 .periodo-grupo{display:inline-flex; flex-wrap:wrap; border:1px solid var(--border2); border-radius:9px; overflow:hidden;}
 .periodo-grupo button{background:var(--bg-input); color:var(--text2); border:0; border-right:1px solid var(--border2); padding:7px 11px; font-size:var(--fs-sm); font-family:inherit; cursor:pointer;}
@@ -1439,6 +1453,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 @media (max-width:700px){ .sede-item{flex-direction:column;} .sede-ficha-cab .foto{width:72px; height:72px;} }
 </style>
 <script src="icones.js"></script>
+<script src="preferencias.js"></script>
 </head>
 <body>
 
@@ -3414,6 +3429,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <p style="color:var(--muted); font-size:var(--fs-xs); margin:4px 0 0;">
         Crie a pasta no Drive da Go Ladies, compartilhe com o e-mail dela e cole o link. Aparece no painel dela em Perfil e em Carro → Documentos.
       </p>
+      <h4 style="font-size:var(--fs-sm); margin:16px 0 4px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> O que tem no carro e o que topa</h4>
+      <p style="color:var(--muted); font-size:var(--fs-xs); margin:0 0 4px;">Ela também marca no painel dela (Meu carro). Serve para o ✓ ou o aviso ao escolher a motorista de uma viagem.</p>
+      <div id="mt-recursos"></div>
     </div>
 
     <!-- Avaliações que as clientes deram pra ela. "Liberar" é o que faz a
@@ -3514,6 +3532,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
          renderViagemFeita() preenche: escolha da cobrança ao lançar, ou a
          situação dela e o botão "Enviar cobrança agora" ao reabrir. -->
     <div id="vg-feita-box" style="display:none; margin:0 0 14px; padding:12px 14px; border-radius:10px; border-left:4px solid var(--c-purple); background:var(--c-purple-bg); font-size:var(--fs-sm);"></div>
+
+    <!-- Preferências que a cliente marcou no pedido (schema_preferencias_viagem.sql).
+         O que pede algo da motorista vem em destaque; o match fica em 5. Motorista. -->
+    <div id="vg-pref-box"></div>
 
     <!-- ── 1. Pedido ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
@@ -3672,6 +3694,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="full obrig">
           <label>Motorista(s) <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
           <div id="vg-motoristas-wrap" class="obrig-box" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px;"></div>
+          <div id="vg-match" style="margin-top:6px; font-size:var(--fs-sm);"></div>
           <div id="vg-oferta-status" style="margin-top:6px; font-size:var(--fs-sm); color:var(--muted);"></div>
           <div id="vg-confirmar-motorista-wrap" style="display:none; margin-top:6px;">
             <button type="button" class="btn secondary small" onclick="confirmarMotoristaManualmente()"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar motorista marcada nesta viagem</button>
@@ -13433,6 +13456,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-origem").value = m.origem||"Site";
   document.getElementById("mt-auth-uid").value = m.auth_user_id||"";
   document.getElementById("mt-pasta-drive").value = m.pasta_drive_url||"";
+  document.getElementById("mt-recursos").innerHTML = Preferencias.htmlRecursos(m.recursos);
   const cliDaMotorista = m.auth_user_id ? clientesTransporte.find(c=>c.auth_user_id===m.auth_user_id) : null;
   document.getElementById("mt-acesso-status").innerHTML = (m.auth_user_id
     ? '<span class="tag ativo">✓ Login vinculado</span>'
@@ -13710,6 +13734,7 @@ async function saveMotorista(){
     origem: document.getElementById("mt-origem").value,
     auth_user_id: document.getElementById("mt-auth-uid").value.trim() || null,
     pasta_drive_url: document.getElementById("mt-pasta-drive").value.trim() || null,
+    recursos: Preferencias.lerRecursos(document.getElementById("mt-recursos")),
   };
   const isNew = !editingMotoristaId;
   const { data, error } = editingMotoristaId
@@ -15673,11 +15698,42 @@ function nomesMotoristasViagem(v){
 }
 // Só motorista "Ativa" recebe oferta (cláusula 3.5 do Termo). Quem já estava
 // marcada numa viagem antiga continua aparecendo, pra não sumir da tela.
+// Preferências da viagem aberta no modal (viagens.preferencias)
+let prefViagemAberta = null;
+function renderPreferenciasViagem(){
+  const box = document.getElementById("vg-pref-box");
+  const l = Preferencias.linhas(prefViagemAberta);
+  if(!l.precisa.length && !l.conforto.length){ box.innerHTML = ""; return; }
+  const linha = x=>`<div class="pv-linha">${ic(x[0])}<span>${escapeHtml(x[1])}</span></div>`;
+  box.innerHTML = `<div class="pref-viagem">` +
+    (l.precisa.length ? `<div class="pv-precisa"><div class="pv-tit">A cliente precisa de</div>${l.precisa.map(linha).join("")}<div style="margin-top:6px; font-size:var(--fs-xs); color:var(--text2);">Confira em 5. Motorista quem atende tudo.</div></div>` : "") +
+    (l.conforto.length ? `<div class="pv-conforto"><div class="pv-tit">Preferências da cliente</div>${l.conforto.map(linha).join("")}</div>` : "") +
+    `</div>`;
+}
+// ✓ = a motorista atende tudo que a viagem pede; ⚠ = o que falta
+function viagemPedeRecurso(){
+  return !!(prefViagemAberta && Preferencias.linhas(prefViagemAberta).precisa.length);
+}
+function marcaMatch(m){
+  if(!viagemPedeRecurso()) return "";
+  const f = Preferencias.faltas(prefViagemAberta, m.recursos);
+  return f.length ? ` <span class="match-falta" title="${escapeHtml(f.join("; "))}">⚠</span>` : ` <span class="match-ok" title="Atende tudo que a cliente pediu">✓</span>`;
+}
+function renderMatchMotoristas(elegiveis){
+  const el = document.getElementById("vg-match");
+  if(!viagemPedeRecurso() || !elegiveis.length){ el.innerHTML = ""; return; }
+  const falta = m=>Preferencias.faltas(prefViagemAberta, m.recursos);
+  const ok = elegiveis.filter(m=>!falta(m).length);
+  const comFalta = elegiveis.filter(m=>falta(m).length);
+  el.innerHTML = (ok.length ? `<div><span class="match-ok">✓ Atende tudo:</span> ${ok.map(m=>escapeHtml(m.nome.split(" ")[0])).join(", ")}</div>` : `<div class="match-falta">Nenhuma motorista marcou que atende tudo o que a cliente pediu.</div>`) +
+    comFalta.map(m=>`<div><span class="match-falta">⚠ ${escapeHtml(m.nome.split(" ")[0])}:</span> ${escapeHtml(falta(m).join("; "))}</div>`).join("");
+}
 function renderMotoristasCheckboxes(selecionados){
   const wrap = document.getElementById("vg-motoristas-wrap");
   const elegiveis = motoristas.filter(m=>m.status==="Ativa" || selecionados.includes(m.id));
   const foraDoQuadro = motoristas.length - elegiveis.length;
-  wrap.innerHTML = elegiveis.map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${selecionados.includes(m.id)?"checked":""} onchange="atualizarStatusOferta()"> ${escapeHtml(m.nome)}${numId(m)}${m.status!=="Ativa"?` <span style="color:var(--muted); font-size:var(--fs-xs);">(${escapeHtml(m.status||"")})</span>`:""}</label>`).join("")
+  renderMatchMotoristas(elegiveis);
+  wrap.innerHTML = elegiveis.map(m=>`<label class="chip-check"><input type="checkbox" value="${m.id}" ${selecionados.includes(m.id)?"checked":""} onchange="atualizarStatusOferta()"> ${escapeHtml(m.nome)}${numId(m)}${marcaMatch(m)}${m.status!=="Ativa"?` <span style="color:var(--muted); font-size:var(--fs-xs);">(${escapeHtml(m.status||"")})</span>`:""}</label>`).join("")
     || `<span style="color:var(--muted); font-size:var(--fs-sm);">Nenhuma motorista Ativa ainda${motoristas.length?" (as cadastradas estão em certificação)":""}</span>`;
   if(foraDoQuadro > 0 && elegiveis.length){
     wrap.innerHTML += `<span style="color:var(--muted); font-size:var(--fs-xs); width:100%;">${foraDoQuadro} motorista${foraDoQuadro>1?"s":""} em certificação, inativa ou não aprovada não aparece${foraDoQuadro>1?"m":""} aqui.</span>`;
@@ -16063,6 +16119,7 @@ function renderTransporteViagens(){
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
           ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; const pes = textoPessoasViagem(v); const txt = [n ? `${n} parada${n===1?"":"s"}` : "", pes].filter(Boolean).join(" · "); return txt ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${txt}</span>` : ""; })()}
+          ${(()=>{ const pr = Preferencias.linhas(v.preferencias).precisa; return pr.length ? `<div style="font-size:var(--fs-xs); margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;" title="${escapeHtml(pr.map(x=>x[1]).join("; "))}"><svg class=ic aria-hidden=true><use href=#i-alert-circle /></svg> Precisa de: ${escapeHtml(pr.map(x=>x[1].split(":")[0]).join(" · "))}</div>` : ""; })()}
           ${btnPix}${btnEnviar}
         </div>`;
       }).join("") || `<p class="kanban-vazio">Vazio</p>`}
@@ -16196,6 +16253,8 @@ function openViagemModal(id, opcoes){
   const v = viagens.find(x=>x.id===id) || {};
   if(v.cliente_id) document.getElementById("vg-cliente").value = v.cliente_id;
   atualizarFotoClienteViagem();
+  prefViagemAberta = v.preferencias || null;
+  renderPreferenciasViagem();
   renderMotoristasCheckboxes(idsMotoristasViagem(v));
   document.getElementById("vg-tipo-servico").value = v.tipo_servico||"Padrão";
   document.getElementById("vg-evento-descricao").value = v.evento_descricao||"";
