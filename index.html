@@ -7636,6 +7636,15 @@ function aplicarRotulos(){
     });
   });
 }
+// Lista redesenhada sozinha (aba, filtro, busca, salvar) perdia os rótulos no
+// celular, porque só o renderAll chamava aplicarRotulos. Agora qualquer troca
+// de linhas numa table.tbl reaplica, uma vez só por rodada de mudanças.
+let rotulosAgendados = false;
+new MutationObserver(muds=>{
+  if(rotulosAgendados || !muds.some(m=>m.target.closest && m.target.closest("table.tbl"))) return;
+  rotulosAgendados = true;
+  setTimeout(()=>{ rotulosAgendados = false; aplicarRotulos(); }, 0);
+}).observe(document.body, { childList: true, subtree: true });
 
 function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderNumerosNegocio(); renderSede(); renderMaturidade(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
 
