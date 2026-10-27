@@ -4996,7 +4996,9 @@ async function carregarDados(){
 // Pedido de viagem, quero ser motorista, candidatura e publicar vaga
 // registram em crm_erros_cliente ("NÃO gravado (resumo): erro") quando a
 // gravação falha; a pessoa foi orientada a mandar pelo WhatsApp. Aqui vira
-// aviso no topo pra equipe cadastrar à mão. "Já cadastrei" grava
+// aviso no topo pra equipe cadastrar à mão. Foto de perfil que não subiu
+// (foto-perfil.js dos apps, 27/10/2026) entra igual, com o motivo em
+// português, e conta em "Precisa de você" (Transporte). "Já cadastrei" grava
 // resolvido_em (schema_erros_site_resolvido.sql); sem o SQL rodado, guarda
 // só neste navegador.
 const NOME_ENVIO_SITE = {
@@ -5006,7 +5008,10 @@ const NOME_ENVIO_SITE = {
   "site-publicar-vaga": "Publicar vaga",
   "app-pedir-viagem": "Pedido pelo app",
   "motora-aceitar-oferta": "Aceite de corrida (motorista)",
+  "app-foto-perfil": "Foto da cliente",
+  "motora-foto-perfil": "Foto da motorista",
 };
+const ENVIO_SITE_FOTO = ["app-foto-perfil", "motora-foto-perfil"];
 let errosSite = [];
 let avisoSiteAberto = false;
 function errosSiteResolvidosLocal(){
@@ -5016,7 +5021,7 @@ async function carregarErrosSite(){
   try{
     const r = await Promise.race([
       Promise.resolve(sb.from("crm_erros_cliente").select("*")
-        .in("contexto", Object.keys(NOME_ENVIO_SITE)).ilike("mensagem", "%NÃO gravado%")
+        .in("contexto", Object.keys(NOME_ENVIO_SITE)).ilike("mensagem", "%NÃO gravad%")
         .order("criado_em", { ascending: false }).limit(50)),
       new Promise((_, rej)=>setTimeout(()=>rej(new Error("Tempo esgotado")), 15000)),
     ]);
@@ -5024,6 +5029,7 @@ async function carregarErrosSite(){
     const locais = errosSiteResolvidosLocal();
     errosSite = (r.data || []).filter(e=>!e.resolvido_em && !locais.includes(e.id));
     renderAvisoSite();
+    atualizarAtencao();
   }catch(e){ console.error("carregarErrosSite:", e); }
 }
 function renderAvisoSite(){
@@ -5031,27 +5037,34 @@ function renderAvisoSite(){
   if(!errosSite.length){ el.hidden = true; el.innerHTML = ""; return; }
   const n = errosSite.length;
   let html = '<div class="aviso-site-topo"><span><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> <b>' + n + (n === 1 ? " envio não entrou" : " envios não entraram") +
-    ' no sistema.</b> Confira com a pessoa (botão WhatsApp) e resolva à mão: cadastrar o pedido ou confirmar a motorista na viagem.</span>' +
+    ' no sistema.</b> Confira com a pessoa (botão WhatsApp) e resolva à mão: cadastrar o pedido, confirmar a motorista na viagem ou subir a foto na ficha.</span>' +
     '<button type="button" class="btn secondary" onclick="avisoSiteAberto=!avisoSiteAberto;renderAvisoSite()">' + (avisoSiteAberto ? "Esconder" : "Ver") + '</button></div>';
   if(avisoSiteAberto){
     html += errosSite.map(e=>{
-      const m = String(e.mensagem || "").match(/NÃO gravado \((.*)\): ([\s\S]*)$/);
+      const m = String(e.mensagem || "").match(/NÃO gravad[oa] \((.*)\): ([\s\S]*)$/);
       const resumo = m ? m[1] : e.mensagem;
       const motivo = m ? m[2] : "";
       const tel = (resumo.match(/\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}/) || [""])[0].replace(/\D/g, "");
       const whats = tel.length >= 10 ? '<a class="btn secondary" target="_blank" rel="noopener" href="' + escapeHtml(linkWhats(tel)) + '"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> WhatsApp</a>' : "";
       const quando = new Date(e.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       return '<div class="aviso-site-item"><div><b>' + escapeHtml(NOME_ENVIO_SITE[e.contexto] || e.contexto) + '</b> · ' + quando +
-        '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") + '</div>' +
+        '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") +
+        (ENVIO_SITE_FOTO.includes(e.contexto) ? '<small>Ofereça ajuda: ela pode mandar a foto pelo WhatsApp e você sobe na ficha (Foto de perfil).</small>' : "") + '</div>' +
         '<div class="aviso-site-acoes">' + whats + '<button type="button" class="btn" onclick="resolverErroSite(' + Number(e.id) + ')">Resolvido</button></div></div>';
     }).join("");
   }
   el.innerHTML = html;
   el.hidden = false;
 }
+function abrirAvisoSite(){
+  avisoSiteAberto = true;
+  renderAvisoSite();
+  document.getElementById("aviso-site").scrollIntoView({ behavior: "smooth", block: "start" });
+}
 async function resolverErroSite(id){
   errosSite = errosSite.filter(e=>e.id !== id);
   renderAvisoSite();
+  atualizarAtencao();
   const r = await sb.from("crm_erros_cliente").update({ resolvido_em: new Date().toISOString() }).eq("id", id).select("id");
   if(r.error || !r.data || !r.data.length){
     // SQL ainda não rodado (sem coluna/permissão): guarda neste navegador
@@ -6755,6 +6768,12 @@ function itensAtencao(){
     add("transporte", "vermelho", contaAppSemConfirmar(c)
       ? `${c.nome || c.email}: criou a conta e não confirmou o e-mail`
       : `Conta nova no app: ${c.nome || c.email} (${dataHoraBR(c.criado_em)})`, `irParaContasApp()`);
+  });
+
+  // Foto de perfil que não subiu no app: oferecer ajuda (aviso no topo).
+  (errosSite||[]).filter(e=>ENVIO_SITE_FOTO.includes(e.contexto)).forEach(e=>{
+    const quem = (String(e.mensagem || "").match(/\(([^,)]*)/) || [])[1] || "alguém";
+    add("transporte", "amarelo", `${NOME_ENVIO_SITE[e.contexto]}: ${quem} não conseguiu enviar (${dataHoraBR(e.criado_em)})`, `abrirAvisoSite()`);
   });
 
   // Orçamentos pedidos, esperando você montar.
