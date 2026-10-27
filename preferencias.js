@@ -49,18 +49,20 @@
   function linhas(p) {
     var precisa = [], conforto = [];
     if (!p || typeof p !== 'object') return { precisa: precisa, conforto: conforto };
-    if (p.pet) precisa.push(['paw', 'Vai com pet pequeno, ' + (p.pet === 'com_caixa' ? 'com caixa de transporte' : 'sem caixa de transporte')]);
+    // Item marcado sem escolher a opção fica true (ou crianca.cadeirinha null)
+    if (p.pet) precisa.push(['paw', 'Vai com pet pequeno' + (p.pet === 'com_caixa' ? ', com caixa de transporte' : p.pet === 'sem_caixa' ? ', sem caixa de transporte' : '')]);
     // A motorista pode não saber a regra: cada criança vem com o tipo que
     // usa e a faixa de idade dele, e a lembrança do banco de trás.
-    if (p.crianca && p.crianca.cadeirinha) {
+    if (p.crianca) {
       var ids = idadesDe(p.crianca);
-      var levo = p.crianca.cadeirinha === 'levo';
-      if (!ids.length) precisa.push(['mood-kid', levo ? 'Vai criança: a cliente leva a própria cadeirinha' : 'Vai criança: precisa de cadeirinha (a idade a gente confirma com a cliente)']);
+      var levo = p.crianca.cadeirinha === 'levo', semInfo = !p.crianca.cadeirinha;
+      if (!ids.length) precisa.push(['mood-kid', semInfo ? 'Vai criança (a cadeirinha a gente confirma com a cliente)' : levo ? 'Vai criança: a cliente leva a própria cadeirinha' : 'Vai criança: precisa de cadeirinha (a idade a gente confirma com a cliente)']);
       ids.forEach(function (n) {
         var t = tipoCadeirinha(n);
         var quem = n < 1 ? 'Bebê de menos de 1 ano' : 'Criança de ' + textoIdade(n);
         var uso = t ? CADEIRINHA[t].nome + ' (para ' + CADEIRINHA[t].faixa + (CADEIRINHA[t].como ? ', ' + CADEIRINHA[t].como : '') + ')' : null;
         if (!t) precisa.push(['mood-kid', quem + ': não precisa de cadeirinha, usa só o cinto de segurança']);
+        else if (semInfo) precisa.push(['mood-kid', quem + ': pela idade, usa ' + uso + '. A cadeirinha a gente confirma com a cliente']);
         else if (levo) precisa.push(['mood-kid', quem + ': a cliente leva a própria cadeirinha. Pela idade, deve ser ' + uso]);
         else precisa.push(['mood-kid', quem + ': precisa de ' + uso]);
       });
@@ -69,9 +71,9 @@
     if (p.cadeira_rodas) precisa.push(['wheelchair', 'Leva cadeira de rodas dobrável ou andador']);
     if (p.ajuda_entrar) precisa.push(['walk', 'Precisa de ajuda para entrar e sair do carro']);
     if (p.gestante) precisa.push(['woman', 'Está gestante']);
-    if (p.compras) precisa.push(['shopping-cart', 'Está com compras de mercado: ' + (p.compras === 'muitas' ? 'muitas sacolas, precisa do porta-malas' : 'poucas sacolas')]);
+    if (p.compras) precisa.push(['shopping-cart', 'Está com compras de mercado' + (p.compras === 'muitas' ? ': muitas sacolas, precisa do porta-malas' : p.compras === 'poucas' ? ': poucas sacolas' : '')]);
     if (p.bagagem) precisa.push(['luggage', 'Precisa de ajuda com a bagagem']);
-    if (p.carregador) precisa.push(['plug', 'Gostaria de carregador de celular ' + (CARREGADOR[p.carregador] || '')]);
+    if (p.carregador) precisa.push(['plug', 'Gostaria de carregador de celular' + (CARREGADOR[p.carregador] ? ' ' + CARREGADOR[p.carregador] : '')]);
     if (p.ar === 'nao_pode') precisa.push(['snowflake', 'Não pode usar ar-condicionado']);
     if (p.cheiro) precisa.push(['spray', 'Sensível a cheiro: sem perfume nem aromatizante no carro']);
     if (p.direcao === 'suave') precisa.push(['steering-wheel', 'Direção bem suave (enjoo, gestação ou pós-cirurgia)']);
@@ -104,7 +106,8 @@
       if (!tipos.length && !idadesDe(p.crianca).length && !cads.length) f.push('não tem cadeirinha');
       tipos.forEach(function (t) { if (cads.indexOf(t) === -1 && f.indexOf('não tem ' + CADEIRINHA[t].nome) === -1) f.push('não tem ' + CADEIRINHA[t].nome); });
     }
-    if (p.carregador && cars.indexOf(p.carregador) === -1) f.push('não tem carregador ' + (CARREGADOR[p.carregador] || ''));
+    if (p.carregador === true && !cars.length) f.push('não tem carregador');
+    else if (CARREGADOR[p.carregador] && cars.indexOf(p.carregador) === -1) f.push('não tem carregador ' + CARREGADOR[p.carregador]);
     if (p.cadeira_rodas && !(r.porta_malas_grande && r.ajuda_cadeira_rodas)) f.push('não marcou cadeira de rodas');
     if (p.compras === 'muitas' && !r.porta_malas_grande) f.push('porta-malas pequeno');
     return f;
