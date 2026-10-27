@@ -3474,7 +3474,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
       <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
-      <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, idosos etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
+      <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, pessoas idosas etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Normalmente paga depois da viagem (pós-pago) <span style="color:var(--muted);">(é só o padrão: as viagens novas dela já vêm com "cobrar depois", e dá pra trocar em cada viagem. Mudar aqui não mexe nas viagens que já existem)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
       <!-- Login do painel da cliente (app.goladies.com.br): ela cria
@@ -4267,6 +4267,10 @@ function badgeCertificacao(m){
 const DOCUMENTOS_OBRIGATORIOS_MOTORISTA = ["CNH","CRLV","Antecedentes Criminais","Comprovante de Endereço"];
 // "Oficina parceira" (21/10/2026, ideia da Cris Piuga): a cliente deixa o carro
 // na oficina e a Go Ladies leva e busca; cada um tem a sua tabela de preço.
+// "Idoso" é o valor guardado no banco (tabelas de preço dependem dele);
+// na tela aparece sempre "Pessoa idosa" (rotuloOpcao).
+const ROTULO_OPCAO = { "Idoso": "Pessoa idosa" };
+function rotuloOpcao(o){ return ROTULO_OPCAO[o] || o; }
 const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento","Oficina parceira (com plano)","Oficina parceira (sem plano)"];
 const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E-mail"];
 // "Escolher motoristas" (schema_status_escolher_motoristas.sql): pagamento ok
@@ -5544,7 +5548,7 @@ async function recarregarTabelas(...nomes){
   renderAll();
 }
 function fillSelect(el, options, selected){
-  el.innerHTML = options.map(o=>`<option value="${o}" ${o===selected?"selected":""}>${o}</option>`).join("");
+  el.innerHTML = options.map(o=>`<option value="${o}" ${o===selected?"selected":""}>${rotuloOpcao(o)}</option>`).join("");
 }
 // Mesma coisa, mas com <optgroup>: grupos = {"Nome do grupo": [opções]}; primeiraOpcao (opcional) entra solta no topo.
 function fillSelectGrupos(el, grupos, selected, primeiraOpcao){
@@ -8708,7 +8712,7 @@ function renderTabelasPreco(){
     </tr></thead><tbody>` +
     tabelasPreco.map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
       <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:var(--fs-xs); color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
-      <td>${escapeHtml(t.tipo_servico || "Todos")}</td>
+      <td>${escapeHtml(rotuloOpcao(t.tipo_servico) || "Todos")}</td>
       <td>${QUANDO_TABELA_PRECO[t.quando] || escapeHtml(t.quando)}</td>
       <td>${formatarMoedaBR(Number(t.tarifa_fixa))}</td>
       <td>${formatarMoedaBR(Number(t.valor_km))}</td>
@@ -8727,7 +8731,7 @@ function editarTabelaPreco(id){
   if(!t) return;
   tabelaPrecoEditando = id || null;
   const ed = document.getElementById("tp-editor");
-  const opTipo = [["", "Todos os tipos"], ...TIPO_SERVICO_VIAGEM.map(x => [x, x])];
+  const opTipo = [["", "Todos os tipos"], ...TIPO_SERVICO_VIAGEM.map(x => [x, rotuloOpcao(x)])];
   ed.innerHTML = `<div style="font-weight:600; font-size:var(--fs-md); margin-bottom:10px; color:var(--text1);">${id ? "Editando: " + escapeHtml(t.nome) : "Nova tabela"}</div>
     <div class="tp-grid">
       <div><label>Nome</label><input type="text" id="tp-nome" value="${escapeHtml(t.nome)}" placeholder="Ex.: Criança à noite"></div>
@@ -9348,7 +9352,7 @@ const SEDE_AGENTES = [
     jeito:"Acolhedora e firme. Escuta antes de propor, fala de pessoas sem rótulo e diz não com carinho quando a ideia passa da linha.",
     missao:"Cuidar de quem faz a jornada acontecer: motoristas, gestoras e equipes das parceiras (os) do ecossistema.",
     faz:["Conhece o perfil de cada motorista (trajetória, experiências que ela quer contar, horários, corridas que aceita, onde se sente insegura), com consentimento",
-         "Sugere o match motorista × passageira (criança, adolescente, idosa, volta à noite) por competência e preferência; quem decide é você",
+         "Sugere o match motorista × passageira (criança, adolescente, pessoa idosa, volta à noite) por competência e preferência; quem decide é você",
          "Cuida do bem-estar de quem dirige: cansaço, jornada, pausas, segurança, apoio quando algo dá errado",
          "Monta a trilha de formação a partir da certificação, com o que é obrigatório e o que é oferecido",
          "Cuida da parte humana da certificação de parceiras (os) (oficinas, seguros, lavagem): práticas da empresa, respeito às mulheres, equipe, escuta",
@@ -14313,7 +14317,7 @@ function aplicarTipoPessoa(pre){
   document.getElementById(pre+"-nome-lbl").textContent = pj ? "Razão social / nome fantasia *" : "Nome *";
   document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
   const fam = document.getElementById(pre+"-fam-lbl");
-  if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, idosos etc.)";
+  if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, pessoas idosas etc.)";
   renderLigacoes(pre);
 }
 function carregarTipoPessoa(pre, reg){
@@ -16117,7 +16121,7 @@ function renderTransporteViagens(){
           ${(()=>{ if(!v.origem_endereco || !v.destino_endereco) return ""; const t = trechoLocais(v.origem_endereco, v.destino_endereco); return `<div style="font-size:var(--fs-xs); margin-top:3px;">${escapeHtml(t.linha)}</div>${t.cidade ? `<div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(t.cidade)}</div>` : ""}`; })()}
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:var(--fs-xs);">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
-          ${v.tipo_servico?`<span class="tag novo kc-tag">${v.tipo_servico}</span>`:""}
+          ${v.tipo_servico?`<span class="tag novo kc-tag">${escapeHtml(rotuloOpcao(v.tipo_servico))}</span>`:""}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; const pes = textoPessoasViagem(v); const txt = [n ? `${n} parada${n===1?"":"s"}` : "", pes].filter(Boolean).join(" · "); return txt ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${txt}</span>` : ""; })()}
           ${(()=>{ const pr = Preferencias.linhas(v.preferencias).precisa.filter(x=>x[0]!=="info-circle"); return pr.length ? `<div style="font-size:var(--fs-xs); margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;" title="${escapeHtml(pr.map(x=>x[1]).join("; "))}"><svg class=ic aria-hidden=true><use href=#i-alert-circle /></svg> Precisa de: ${escapeHtml(pr.map(x=>x[1].split(":")[0]).join(" · "))}</div>` : ""; })()}
           ${btnPix}${btnEnviar}
