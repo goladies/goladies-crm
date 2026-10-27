@@ -2797,7 +2797,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Urgência</label><select id="f-urgencia"><option>Urgente</option><option>Essa semana</option><option>Sem pressa</option></select></div>
       <div class="full"><label>Descrição</label><textarea id="f-descricao" rows="2"></textarea></div>
       <div><label>Etapa</label><select id="f-etapa"></select></div>
-      <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"><option>Instagram</option><option>Facebook</option><option>Google</option><option>Indicação</option><option>Grupo de networking</option><option>Outro</option></select></div>
+      <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"></select></div>
       <div id="f-origem-outro-wrap" style="display:none;"><label>Qual?</label><input type="text" id="f-origem-outro" placeholder="Descreva a origem"></div>
       <div><label>Data de entrada</label><input type="date" id="f-data"></div>
       <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
@@ -7409,7 +7409,7 @@ function convCadastrar(tel, tipo){
   if(tipo==="servico"){
     openLeadModal(null);
     set("f-nome", nome); set("f-whatsapp", whats);
-    set("f-origem", "Outro"); set("f-origem-outro", "WhatsApp");
+    set("f-origem", "WhatsApp"); set("f-origem-outro", "");
     toggleOrigemOutro();
   }else if(tipo==="cliente"){
     openClienteTransporteModal(null);
@@ -11214,6 +11214,11 @@ function renderSedeDecisoes(){
 }
 
 // Lead modal
+// De onde a pessoa veio (27/10/2026: entraram site, redes, WhatsApp, anúncio
+// e material impresso). O que não está na lista vai em "Outro" + texto.
+const ORIGENS_LEAD = ["Instagram", "Facebook", "Google", "Site", "WhatsApp", "LinkedIn", "TikTok", "YouTube",
+  "Anúncio", "Indicação", "Grupo de networking", "Evento ou feira", "Oficina parceira", "Folder", "Cartão de visita",
+  "Cartão no banco do carro", "Já é cliente"];
 let editingLeadId = null;
 function openLeadModal(id){
   editingLeadId = id || null;
@@ -11239,7 +11244,8 @@ function openLeadModal(id){
   document.getElementById("f-urgencia").value = l.urgencia||"Essa semana";
   document.getElementById("f-descricao").value = l.descricao||"";
   document.getElementById("f-etapa").value = l.etapa||"Novo lead";
-  const origensPadrao = ["Instagram","Facebook","Google","Indicação","Grupo de networking"];
+  const origensPadrao = ORIGENS_LEAD;
+  document.getElementById("f-origem").innerHTML = [...ORIGENS_LEAD, "Outro"].map(o=>`<option>${o}</option>`).join("");
   if(l.origem && !origensPadrao.includes(l.origem)){
     document.getElementById("f-origem").value = "Outro";
     document.getElementById("f-origem-outro").value = l.origem;
@@ -18082,8 +18088,9 @@ function contatoParaLead(d){
   document.getElementById("f-bairro").value = d.bairro;
   document.getElementById("f-cidade").value = d.cidade;
   document.getElementById("f-estado").value = d.estado;
-  document.getElementById("f-origem").value = "Outro";
-  document.getElementById("f-origem-outro").value = d.origem;
+  const naLista = ORIGENS_LEAD.includes(d.origem);
+  document.getElementById("f-origem").value = naLista ? d.origem : "Outro";
+  document.getElementById("f-origem-outro").value = naLista ? "" : d.origem;
   toggleOrigemOutro();
   document.getElementById("f-notas").value = d.nota;
   showToast("Lead pré-preenchido com os dados do contato");
