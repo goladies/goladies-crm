@@ -1862,7 +1862,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item" data-subtab="eventos" onclick="mostrarSubTab('eventos')"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Eventos</button>
         <button type="button" class="subnav-item" data-subtab="simulador" onclick="mostrarSubTab('simulador')"><svg class=ic aria-hidden=true><use href=#i-calculator /></svg> Simulador</button>
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
-        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map-pin-off /></svg> Fora da área</button>
+        <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Procura por região</button>
         <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos aos apps (cliente e motorista)</button>
       </div>
 
@@ -2123,6 +2123,22 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <div id="tp-editor" class="tp-editor" style="display:none;"></div>
         </div>
 
+        <!-- Feriados (schema_cotacao_especial.sql, 27/10/2026): o pedido pelo
+             app usa a tabela "Noite ou feriado" sozinho quando a data é feriado
+             na cidade de onde a viagem sai. -->
+        <div class="panel" id="ft-feriados">
+          <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Feriados</h3>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">Na data de um feriado, o pedido pelo app usa a tabela da noite ou feriado. Nacional vale em todo lugar; estadual, no RS; municipal, só quando a viagem sai daquela cidade. Ponto facultativo só aparece na lista, sem acréscimo.</p>
+          <div id="fer-conteudo"></div>
+          <div class="formgrid" style="margin-top:12px;">
+            <div><label>Data</label><input type="date" id="fer-data"></div>
+            <div><label>Nome</label><input type="text" id="fer-nome" placeholder="Ex.: Aniversário de Canoas"></div>
+            <div><label>Vale em</label><select id="fer-abrangencia" onchange="document.getElementById('fer-cidade-wrap').style.display = this.value === 'Municipal' ? '' : 'none'"><option>Municipal</option><option>Estadual</option><option>Nacional</option></select></div>
+            <div id="fer-cidade-wrap"><label>Cidade</label><input type="text" id="fer-cidade" placeholder="Ex.: Canoas"></div>
+          </div>
+          <button type="button" class="btn small" style="margin-top:8px;" onclick="adicionarFeriado()"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Adicionar feriado</button>
+        </div>
+
 
         <div class="panel">
           <h3><svg class=ic aria-hidden=true><use href=#i-target /></svg> Validação de preço</h3>
@@ -2156,8 +2172,18 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
       <div id="subtab-demandas" style="display:none;">
         <div class="pagehead">
-          <div><h2 style="font-size:var(--fs-lg);">Pedidos de fora da área</h2><p>Quem tentou pedir viagem onde a Go Ladies ainda não atende. É o seu mapa de expansão: onde tem procura é onde vale abrir praça e recrutar.</p></div>
+          <div><h2 style="font-size:var(--fs-lg);">Procura por região</h2><p>Todos os pedidos de viagem, por região: quantos chegaram, quantos viraram viagem e por que os outros não fecharam. Toque numa região pra ver os pedidos dela.</p></div>
         </div>
+        <div class="cards" id="procura-cards"></div>
+        <div id="procura-motivos" style="margin:0 0 12px; font-size:var(--fs-sm); color:var(--muted);"></div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr><th>Data</th><th>Viagem</th><th>Cliente</th><th>De → Para</th><th>Região</th><th>Situação</th><th>Motivo</th></tr></thead>
+            <tbody id="procura-body"></tbody>
+          </table>
+        </div>
+        <h3 style="font-size:var(--fs-md); margin:22px 0 4px;">Pedidos antigos da lista "Fora da área"</h3>
+        <p style="color:var(--muted); font-size:var(--fs-sm); margin:0 0 10px;">Até 27/10/2026 o app recusava o pedido de fora dos 30 km e ele ficava só nesta lista. Hoje todo pedido entra em Viagens.</p>
         <div class="cards" id="demandas-cards"></div>
         <div class="panel">
           <table class="tbl">
@@ -3537,6 +3563,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
          O que pede algo da motorista vem em destaque; o match fica em 5. Motorista. -->
     <div id="vg-pref-box"></div>
 
+    <!-- Adolescente sem responsável ligado (schema_cotacao_especial.sql):
+         renderAutorizacaoViagem() mostra o que ela (e) informou e o registro
+         da autorização. Só depois dele a viagem segue o fluxo. -->
+    <div id="vg-autorizacao-box" style="display:none; margin:0 0 14px; padding:12px 14px; border-radius:10px; border-left:4px solid var(--c-amber); background:var(--c-amber-bg); font-size:var(--fs-sm);"></div>
+
     <!-- ── 1. Pedido ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg>1. Pedido</span><span class="vg-pend"></span></div>
@@ -3608,7 +3639,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           </div>
           <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
         </div>
-        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data"></div>
+        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-adicional-noturno')"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada(); atualizarAlertaMargem()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
@@ -3626,7 +3657,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <label class="vg-check" style="font-weight:600;"><input type="checkbox" id="vg-tem-volta" onchange="alternarVoltaViagem()"> Tem volta</label>
       </div>
       <div class="formgrid" id="vg-volta-campos">
-        <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno"></div>
+        <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno" onchange="avisarFeriadoViagem('vg-data-retorno', 'vg-adicional-noturno-retorno')"></div>
         <div class="destaque"><label>Horário do embarque na volta</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno(); atualizarAlertaMargem()"><span class="dica">Do embarque da volta até o destino final.</span></div>
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
@@ -3790,7 +3821,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           </div>
         </div>
         <div class="full"><label class="vg-check"><input type="checkbox" id="vg-grupo-whats"> Grupo de WhatsApp criado</label></div>
-        <div class="full"><label>Motivo (se não fechou)</label><textarea id="vg-motivo-perda" rows="2" placeholder="Ex: preço, motorista indisponível, cliente desistiu, prazo, concorrência..."></textarea></div>
+        <div class="full"><label>Motivo (se não fechou)</label><select id="vg-motivo-padrao" onchange="motivoPadraoEscolhido()" style="margin-bottom:6px;"></select><textarea id="vg-motivo-perda" rows="2" placeholder="Detalhe, se quiser (ex.: pediu para março, achou caro pela distância...)"></textarea><span class="dica">O motivo da lista entra na contagem da Procura por região.</span></div>
         <!-- Cancelamento (05/10/2026): sem porcentagem fixa. A multa é
              combinada com a cliente caso a caso, e o repasse da motorista
              sobre ela também. O select antigo fica escondido só para não
@@ -4269,7 +4300,7 @@ const DOCUMENTOS_OBRIGATORIOS_MOTORISTA = ["CNH","CRLV","Antecedentes Criminais"
 // na oficina e a Go Ladies leva e busca; cada um tem a sua tabela de preço.
 // "Idoso" é o valor guardado no banco (tabelas de preço dependem dele);
 // na tela aparece sempre "Pessoa idosa" (rotuloOpcao).
-const ROTULO_OPCAO = { "Idoso": "Pessoa idosa" };
+const ROTULO_OPCAO = { "Idoso": "Pessoa idosa", "Padrão": "Adulta (o)" };
 function rotuloOpcao(o){ return ROTULO_OPCAO[o] || o; }
 const TIPO_SERVICO_VIAGEM = ["Padrão","Criança","Adolescente","Idoso","Recorrente","Diário","Evento","Oficina parceira (com plano)","Oficina parceira (sem plano)"];
 const CANAL_RECEPCAO = ["Telefone","Redes sociais","Site","Painel da cliente","E-mail"];
@@ -7680,7 +7711,7 @@ new MutationObserver(muds=>{
   setTimeout(()=>{ rotulosAgendados = false; aplicarRotulos(); }, 0);
 }).observe(document.body, { childList: true, subtree: true });
 
-function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderDemandasForaArea(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderNumerosNegocio(); renderSede(); renderMaturidade(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
+function renderAll(){ renderDashboard(); renderLeads(); renderConversas();renderClientes(); renderParceiros(); renderOrcamentos(); renderPecas(); renderDivulgacoes(); renderLinks(); renderVagas(); renderServicos(); renderTransporteMotoristas(); renderTransporteClientes(); renderTransporteViagens(); renderTransporteAvaliacoes(); renderEventos(); renderFinanceiroTransporte(); renderFeriados(); renderDemandasForaArea(); renderProcuraRegiao(); renderAcessosApp(); renderContasReceber(); renderContasPagar(); renderMetas(); renderResumoFinanceiro(); renderLivroCaixa(); renderGestao(); renderNumerosNegocio(); renderSede(); renderMaturidade(); renderDocumentos(); atualizarAtencao(); aplicarRotulos(); }
 
 // ===== FINANCEIRO DO TRANSPORTE =====
 // Fica aqui, e não no Financeiro do menu, porque a Go Ladies não é só
@@ -8980,6 +9011,56 @@ function enderecoCurtoCelula(end){
   const sub = [p.bairro, p.cidade].filter(Boolean).join(" · ");
   return `<span title="${escapeHtml(end)}">${escapeHtml(p.rua)}</span>${sub ? `<div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(sub)}</div>` : ""}`;
 }
+// ===== PROCURA POR REGIÃO (27/10/2026) =====
+// Lê as próprias viagens (região calculada no schema_cotacao_especial.sql).
+// Cada card filtra a lista; cada linha abre a viagem.
+const REGIOES_PROCURA = ["Porto Alegre", "Vizinhas", "Litoral", "Serra", "Interior RS", "Outro estado", "Sem região"];
+let procuraFiltro = "";
+function renderProcuraRegiao(){
+  const corpo = document.getElementById("procura-body");
+  if(!corpo) return;
+  const regiaoDe = v => v.regiao || "Sem região";
+  const feita = v => v.status === "Concluída";
+  const resumo = {};
+  viagens.forEach(v=>{
+    const r = regiaoDe(v);
+    resumo[r] = resumo[r] || { total: 0, feitas: 0, canceladas: 0 };
+    resumo[r].total++;
+    if(feita(v)) resumo[r].feitas++;
+    if(v.status === "Cancelada") resumo[r].canceladas++;
+  });
+  document.getElementById("procura-cards").innerHTML = REGIOES_PROCURA.filter(r=>resumo[r]).map(r=>{
+    const x = resumo[r];
+    const ativo = procuraFiltro === r;
+    return `<div class="card" style="cursor:pointer;${ativo?" outline:2px solid var(--rosa-texto);":""}" onclick="procuraFiltro = procuraFiltro === '${r}' ? '' : '${r}'; renderProcuraRegiao();">
+      <div class="num">${x.total}</div><div class="label">${escapeHtml(r)}${["Litoral","Serra","Interior RS","Outro estado"].includes(r)?" ⭐":""}<br><span style="font-size:var(--fs-xs);">${x.feitas} feita${x.feitas===1?"":"s"} · ${x.canceladas} não fechou</span></div></div>`;
+  }).join("") || `<p style="color:var(--muted);">Nenhum pedido ainda.</p>`;
+
+  const lista = viagens.filter(v => !procuraFiltro || regiaoDe(v) === procuraFiltro)
+    .sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")) || b.id - a.id);
+  const motivos = {};
+  lista.filter(v=>v.status === "Cancelada").forEach(v=>{
+    const m = motivoPadraoDe(v.motivo_perda) || (v.motivo_perda ? "Outro" : "Sem motivo");
+    motivos[m] = (motivos[m] || 0) + 1;
+  });
+  const mot = Object.entries(motivos).sort((a,b)=>b[1]-a[1]);
+  document.getElementById("procura-motivos").innerHTML = mot.length
+    ? `<b>Por que não fechou${procuraFiltro ? " em " + escapeHtml(procuraFiltro) : ""}:</b> ` + mot.map(([m,n])=>`${escapeHtml(m)} (${n})`).join(" · ")
+    : "";
+  corpo.innerHTML = lista.map(v=>{
+    const c = clientesTransporte.find(x=>x.id===v.cliente_id);
+    return `<tr style="cursor:pointer;" onclick="openViagemModal(${v.id})">
+      <td>${v.data ? dataComSemana(dataDeISO(String(v.data).slice(0,10)), true) : "-"}</td>
+      <td>#${v.id}</td>
+      <td>${escapeHtml(c ? c.nome : "-")}</td>
+      <td>${escapeHtml([v.origem_endereco, v.destino_endereco].filter(Boolean).map(e=>{ const pe = partesEndereco(e); return pe.cidade || pe.rua || e; }).join(" → ") || "-")}</td>
+      <td>${escapeHtml(regiaoDe(v))}${v.cotacao_especial?" ⭐":""}</td>
+      <td>${escapeHtml(v.status || "-")}</td>
+      <td>${escapeHtml(v.motivo_perda || "")}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="7">Nenhum pedido nesta região</td></tr>`;
+}
+
 function renderDemandasForaArea(){
   const corpo = document.getElementById("demandas-body");
   if(!corpo) return;
@@ -8997,7 +9078,7 @@ function renderDemandasForaArea(){
   const top = Object.entries(porLugar).sort((a,b)=>b[1]-a[1]).slice(0, 3);
   if(cards){
     cards.innerHTML = `
-      <div class="card"><div class="num">${demandasForaArea.length}</div><div class="label">Pedidos de fora da área</div></div>
+      <div class="card"><div class="num">${demandasForaArea.length}</div><div class="label">Pedidos antigos</div></div>
       <div class="card"><div class="num">${novas}</div><div class="label">Ainda sem contato</div></div>
       ${top.map(([lugar, n])=>`<div class="card"><div class="num">${n}</div><div class="label">${escapeHtml(lugar)}</div></div>`).join("")}
     `;
@@ -16219,7 +16300,7 @@ function renderTransporteViagens(){
           ${(()=>{ if(!v.origem_endereco || !v.destino_endereco) return ""; const t = trechoLocais(v.origem_endereco, v.destino_endereco); return `<div style="font-size:var(--fs-xs); margin-top:3px;">${escapeHtml(t.linha)}</div>${t.cidade ? `<div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(t.cidade)}</div>` : ""}`; })()}
           ${v.preco_cotado?`<div style="color:${cotando?"var(--text)":"var(--muted)"}; font-size:${cotando?"13px":"11.5px"}; font-weight:${cotando?"700":"400"};">${formatarMoedaBR(v.preco_cotado)}${cotando && v.preco_motorista ? ` <span style="font-weight:400; color:var(--muted); font-size:var(--fs-xs);">· motorista ${formatarMoedaBR(v.preco_motorista)}</span>` : ""}</div>`:""}
           ${detCotacao}${motivoAjuste}${motivoCancelamento}
-          ${v.tipo_servico?`<span class="tag novo kc-tag">${escapeHtml(rotuloOpcao(v.tipo_servico))}</span>`:""}
+          ${v.tipo_servico?`<span class="tag novo kc-tag">${escapeHtml(rotuloOpcao(v.tipo_servico))}</span>`:""}${selosViagem(v)}
           ${(()=>{ const n = viagemParadas.filter(p=>p.viagem_id===v.id).length; const pes = textoPessoasViagem(v); const txt = [n ? `${n} parada${n===1?"":"s"}` : "", pes].filter(Boolean).join(" · "); return txt ? `<span class="tag kc-tag" style="background:var(--c-purple-bg); color:var(--c-purple);"><svg class=ic aria-hidden=true><use href=#i-users /></svg> ${txt}</span>` : ""; })()}
           ${(()=>{ const pr = Preferencias.linhas(v.preferencias).precisa.filter(x=>x[0]!=="info-circle"); return pr.length ? `<div style="font-size:var(--fs-xs); margin-top:4px; padding:4px 6px; border-radius:6px; background:var(--rosa-bg); color:var(--rosa-texto); font-weight:600;" title="${escapeHtml(pr.map(x=>x[1]).join("; "))}"><svg class=ic aria-hidden=true><use href=#i-alert-circle /></svg> Precisa de: ${escapeHtml(pr.map(x=>x[1].split(":")[0]).join(" · "))}</div>` : ""; })()}
           ${btnPix}${btnEnviar}
@@ -16228,6 +16309,173 @@ function renderTransporteViagens(){
     </div>`;
   }).join("");
   preencherFotosClientes(document.getElementById("kanban-viagens"));
+}
+// ===== FERIADOS (schema_cotacao_especial.sql, 27/10/2026) =====
+// Lista no banco, usada pelo pedido do app. Carrega uma vez, quando a tela
+// do Financeiro do transporte aparece.
+let feriadosLista = null;
+let feriadosCarregando = false;
+async function carregarFeriados(){
+  if(feriadosCarregando) return;
+  feriadosCarregando = true;
+  const { data, error } = await sb.from("feriados").select("*").order("data");
+  feriadosCarregando = false;
+  feriadosLista = error ? { erro: error.message } : (data || []);
+  renderFeriados();
+}
+function renderFeriados(){
+  const box = document.getElementById("fer-conteudo");
+  if(!box) return;
+  if(feriadosLista === null){ box.innerHTML = `<p style="color:var(--muted);">Carregando...</p>`; carregarFeriados(); return; }
+  if(feriadosLista.erro){ box.innerHTML = `<div class="tp-exemplo">Falta rodar o <b>schema_cotacao_especial.sql</b> no Supabase (SQL Editor) pra lista de feriados aparecer.</div>`; return; }
+  const hoje = isoLocal(new Date());
+  const prox = feriadosLista.filter(f=>f.data >= hoje);
+  box.innerHTML = prox.length ? `<table class="tbl"><thead><tr><th>Data</th><th>Feriado</th><th>Vale em</th><th></th></tr></thead><tbody>${prox.map(f=>`
+    <tr style="${f.cobra_adicional?"":"color:var(--muted);"}">
+      <td>${dataComSemana(dataDeISO(f.data), true)}</td>
+      <td>${escapeHtml(f.nome)}${f.cobra_adicional?"":" <span style=\"font-size:var(--fs-xs);\">(sem acréscimo)</span>"}</td>
+      <td>${escapeHtml(f.abrangencia === "Nacional" ? "Brasil" : f.abrangencia === "Estadual" ? (f.uf || "RS") : (f.cidade || ""))}</td>
+      <td class="acoes-cel"><button type="button" class="btn small sec" onclick="removerFeriado(${f.id})">Remover</button></td>
+    </tr>`).join("")}</tbody></table>` : `<p style="color:var(--muted);">Nenhum feriado cadastrado daqui pra frente.</p>`;
+}
+async function adicionarFeriado(){
+  const data = document.getElementById("fer-data").value;
+  const nome = document.getElementById("fer-nome").value.trim();
+  const abr = document.getElementById("fer-abrangencia").value;
+  const cidade = abr === "Municipal" ? document.getElementById("fer-cidade").value.trim() : null;
+  if(!data || !nome || (abr === "Municipal" && !cidade)){ alert("Informe a data, o nome" + (abr === "Municipal" ? " e a cidade" : "") + " do feriado."); return; }
+  const onde = abr === "Nacional" ? "em todo lugar" : abr === "Estadual" ? "no RS" : `em viagens que saem de ${cidade}`;
+  if(!confirm(`Adicionar "${nome}" em ${formatarDataBR(data)}?\n\nPedidos pelo app nesse dia, ${onde}, passam a usar a tabela da noite ou feriado.`)) return;
+  const { error } = await sb.from("feriados").insert({ data, nome, abrangencia: abr, uf: abr === "Nacional" ? null : "RS", cidade, cobra_adicional: true });
+  if(error){ alert("Não conseguimos adicionar o feriado: " + error.message); return; }
+  ["fer-data","fer-nome","fer-cidade"].forEach(i=>document.getElementById(i).value = "");
+  showToast("Feriado adicionado!");
+  feriadosLista = null; renderFeriados();
+}
+async function removerFeriado(id){
+  const f = (feriadosLista || []).find(x=>x.id===id);
+  if(!f || !confirm(`Remover "${f.nome}" (${formatarDataBR(f.data)}) da lista?\n\nPedidos pelo app nesse dia deixam de usar a tabela da noite ou feriado. Viagens já cotadas não mudam.`)) return;
+  const { error } = await sb.from("feriados").delete().eq("id", id);
+  if(error){ alert("Não conseguimos remover o feriado: " + error.message); return; }
+  showToast("Feriado removido");
+  feriadosLista = null; renderFeriados();
+}
+// Na viagem: escolheu uma data que é feriado (na lista ou no calendário da
+// Sede) → marca a tabela da noite ou feriado e avisa. Desmarcar continua livre.
+function feriadoNaData(iso, endereco){
+  if(!iso) return null;
+  const end = String(endereco || "");
+  if(Array.isArray(feriadosLista)){
+    const f = feriadosLista.find(x=>x.data === iso && x.cobra_adicional && (x.abrangencia !== "Municipal" || new RegExp("\\b" + x.cidade + "\\b", "i").test(end)));
+    if(f) return f.nome;
+  }
+  const f2 = (sagFeriadosAno(Number(iso.slice(0,4)))[iso] || []).find(x=>!x.facultativo && (x.onde !== "Porto Alegre" || /porto alegre/i.test(end)));
+  return f2 ? f2.nome : null;
+}
+function avisarFeriadoViagem(idData, idCheck){
+  const origem = document.getElementById(idCheck === "vg-adicional-noturno" ? "vg-origem-endereco" : "vg-destino-endereco").value;
+  const nome = feriadoNaData(document.getElementById(idData).value, origem);
+  const chk = document.getElementById(idCheck);
+  if(!nome || chk.checked) return;
+  chk.checked = true;
+  periodoTrechoTrocado();
+  showToast(`${nome} é feriado: marquei a tabela da noite ou feriado`);
+}
+
+// ===== MOTIVO PADRÃO DE "NÃO FECHOU" (27/10/2026) =====
+// Fica no começo do texto do motivo ("Região que ainda não atendemos: pediu
+// pra março"), sem coluna nova; a Procura por região conta por ele.
+const MOTIVOS_PERDA = ["Região que ainda não atendemos", "Sem motorista parceira no horário", "Cliente achou o valor alto", "Cliente desistiu", "Responsável não liberou", "Prazo curto", "Outro"];
+function motivoPadraoDe(texto){
+  const t = String(texto || "");
+  return MOTIVOS_PERDA.find(m => t === m || t.startsWith(m + ":")) || "";
+}
+function preencherMotivoPadrao(texto){
+  const sel = document.getElementById("vg-motivo-padrao");
+  sel.innerHTML = `<option value="">Escolha o motivo</option>` + MOTIVOS_PERDA.map(m=>`<option>${m}</option>`).join("");
+  sel.value = motivoPadraoDe(texto);
+}
+function motivoPadraoEscolhido(){
+  const sel = document.getElementById("vg-motivo-padrao");
+  const ta = document.getElementById("vg-motivo-perda");
+  const atual = ta.value;
+  const antigo = motivoPadraoDe(atual);
+  const detalhe = antigo ? atual.slice(antigo.length).replace(/^:\s*/, "") : atual.trim();
+  ta.value = sel.value ? (detalhe ? `${sel.value}: ${detalhe}` : sel.value) : detalhe;
+}
+
+// ===== AUTORIZAÇÃO DO RESPONSÁVEL LEGAL (27/10/2026) =====
+// Adolescente sem responsável ligado pede pelo app informando o responsável
+// legal; a viagem fica "pendente" até a Jú conversar e registrar aqui.
+function renderAutorizacaoViagem(v){
+  const box = document.getElementById("vg-autorizacao-box");
+  if(!v || !v.autorizacao_status){ box.style.display = "none"; box.innerHTML = ""; return; }
+  const teenId = v.passageira_cliente_id || v.cliente_id;
+  const teen = clientesTransporte.find(c=>c.id===teenId);
+  const primeiro = teen ? String(teen.nome||"").split(" ")[0] : "a (o) adolescente";
+  box.style.display = "block";
+  if(v.autorizacao_status === "autorizada"){
+    box.style.borderLeftColor = "var(--c-green)"; box.style.background = "var(--c-green-bg)";
+    box.innerHTML = `<b><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Autorização do responsável legal registrada</b>`
+      + `<div style="margin-top:4px;">${escapeHtml(v.responsavel_nome||"")}${v.responsavel_vinculo?` (${escapeHtml(v.responsavel_vinculo.toLowerCase())})`:""} · ${escapeHtml(v.responsavel_whatsapp||"")}`
+      + `${v.autorizacao_forma?` · por ${escapeHtml(v.autorizacao_forma.toLowerCase())}`:""}${v.autorizacao_em?` · ${new Date(v.autorizacao_em).toLocaleString("pt-BR")}`:""}</div>`
+      + (v.autorizacao_obs?`<div style="margin-top:4px; color:var(--muted);">${escapeHtml(v.autorizacao_obs)}</div>`:"");
+    return;
+  }
+  box.style.borderLeftColor = "var(--c-amber)"; box.style.background = "var(--c-amber-bg)";
+  const msg = `Olá, ${String(v.responsavel_nome||"").split(" ")[0]}! Tudo bem? Aqui é a Jú, fundadora da Go Ladies 🩷 `
+    + `${teen ? primeiro : "A (o) adolescente"} fez um pedido de viagem conosco para ${v.data ? formatarDataBR(String(v.data).slice(0,10)) : "os próximos dias"}. `
+    + `Como tem menos de 18 anos, gostaria de conversar com você antes, para apresentar como cuidamos de cada viagem e combinar tudo com a sua autorização. `
+    + `Posso te ligar? Se preferir, me diga o melhor horário.`;
+  const lk = linkWhats(v.responsavel_whatsapp, msg);
+  box.innerHTML = `<b>🧒 Adolescente aguardando autorização do responsável legal</b>
+    <div style="margin-top:4px;">${escapeHtml(primeiro)} pediu esta viagem e informou o responsável abaixo. A viagem só segue depois que você registrar a autorização.</div>
+    ${lk?`<div style="margin:8px 0;"><a class="btn sec" href="${escapeHtml(lk)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Chamar o responsável no WhatsApp</a></div>`:""}
+    <div class="formgrid" style="margin-top:8px;">
+      <div><label>Nome do responsável legal</label><input type="text" id="vg-aut-nome" value="${escapeHtml(v.responsavel_nome||"")}"></div>
+      <div><label>WhatsApp</label><input type="tel" id="vg-aut-whats" value="${escapeHtml(v.responsavel_whatsapp||"")}"></div>
+      <div><label>Vínculo</label><select id="vg-aut-vinculo">${["","Mãe","Pai","Tutora (or)","Guardiã (ão)","Outro"].map(o=>`<option value="${o}" ${o===(v.responsavel_vinculo||"")?"selected":""}>${o||"Escolha"}</option>`).join("")}</select></div>
+      <div><label>CPF <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="vg-aut-cpf" inputmode="numeric" value="${escapeHtml(v.responsavel_cpf||"")}"></div>
+      <div><label>Como foi a conversa</label><select id="vg-aut-forma">${["Ligação","WhatsApp","Pessoalmente"].map(o=>`<option>${o}</option>`).join("")}</select></div>
+      <div class="full"><label>Observação</label><textarea id="vg-aut-obs" rows="2" placeholder="O que vocês combinaram, cuidados pedidos, quem busca..."></textarea></div>
+      <div class="full"><label class="vg-check"><input type="checkbox" id="vg-aut-ligar" checked> Criar a ficha do responsável (ou usar a que já existe com esse WhatsApp), ligar à conta de ${escapeHtml(primeiro)} e passar a viagem pro nome dele (a), como na Conta Adolescente</label></div>
+    </div>
+    <button type="button" class="btn" style="margin-top:8px;" onclick="registrarAutorizacaoViagem(${v.id})"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Tenho a autorização, seguir com a viagem</button>`;
+}
+async function registrarAutorizacaoViagem(id){
+  const nome = document.getElementById("vg-aut-nome").value.trim();
+  const whats = document.getElementById("vg-aut-whats").value.trim();
+  if(!nome || whats.replace(/\D/g,"").length < 10){ alert("Informe o nome e o WhatsApp (com DDD) do responsável legal."); return; }
+  const ligar = document.getElementById("vg-aut-ligar").checked;
+  const v = viagens.find(x=>x.id===id) || {};
+  const proximo = (v.status === "Solicitada" && v.preco_cotado && !v.cotacao_especial) ? "vai para Cotando preço, pra você conferir e enviar o valor" : "continua onde está, pra você cotar";
+  if(!confirm(`Registrar a autorização de ${nome} para a viagem #${id}?\n\n• A viagem ${proximo}.\n`
+    + (ligar ? `• ${nome} vira o responsável da conta e a viagem passa pro nome dele (a): o valor e os avisos vão pra ele (a).\n` : `• A viagem continua no nome da (o) adolescente.\n`)
+    + `• Nenhuma mensagem sai agora.`)) return;
+  const { error } = await sb.rpc("autorizar_viagem_adolescente", {
+    p_viagem_id: id, p_nome: nome, p_whatsapp: whats,
+    p_vinculo: document.getElementById("vg-aut-vinculo").value || null,
+    p_cpf: document.getElementById("vg-aut-cpf").value.trim() || null,
+    p_forma: document.getElementById("vg-aut-forma").value,
+    p_obs: document.getElementById("vg-aut-obs").value.trim() || null,
+    p_ligar: ligar
+  });
+  if(error){ alert("Não conseguimos registrar a autorização: " + error.message); return; }
+  showToast("Autorização registrada!");
+  await recarregarTabelas("viagens", "clientes_transporte");
+  openViagemModal(id);
+}
+
+// Selos de destaque no card (schema_cotacao_especial.sql): região fora de
+// POA, cotação especial, prazo curto e adolescente aguardando autorização.
+function selosViagem(v){
+  const selo = (txt, fundo, cor, titulo) => `<span class="tag kc-tag" style="background:${fundo}; color:${cor};"${titulo?` title="${escapeHtml(titulo)}"`:""}>${txt}</span>`;
+  let h = "";
+  if (v.autorizacao_status === "pendente") h += selo("🧒 Aguardando autorização", "var(--c-amber-bg)", "var(--c-amber)", "Adolescente: registre a autorização do responsável legal no modal da viagem");
+  if (v.cotacao_especial) h += selo(`⭐ Cotação especial${v.regiao ? " · " + escapeHtml(v.regiao) : ""}`, "var(--rosa-bg)", "var(--rosa-texto)", "Origem ou destino fora dos 30 km: preço feito por você");
+  else if (v.regiao === "Vizinhas") h += selo("Vizinhas", "var(--c-blue-bg)", "var(--c-blue)");
+  if (v.prazo_curto && v.status !== "Concluída" && v.status !== "Cancelada") h += selo("⏰ Prazo curto", "var(--c-red-bg)", "var(--c-red)", "Cotação especial pedida com menos de 24 horas");
+  return h;
 }
 let editingViagemId = null;
 let cotacaoDaViagem = null;   // cotação guardada que abriu esta viagem nova (preencherViagemDaCotacao)
@@ -16441,6 +16689,8 @@ function openViagemModal(id, opcoes){
     statusPreco.textContent = "";
   }
   document.getElementById("vg-motivo-perda").value = v.motivo_perda || "";
+  preencherMotivoPadrao(v.motivo_perda);
+  renderAutorizacaoViagem(id ? v : null);
   document.getElementById("vg-preparacao").checked = !!v.preparacao_confirmada;
   document.getElementById("vg-saida").checked = !!v.saida_confirmada;
   document.getElementById("vg-grupo-whats").checked = !!v.grupo_whatsapp_criado;
