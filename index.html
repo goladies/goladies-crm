@@ -2754,6 +2754,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="f-teste" style="width:auto;"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
     </div>
+    <div class="ligacoes-wrap" id="f-datas"></div>
     <div class="ligacoes-wrap" id="f-ligacoes"></div>
 
     <div id="f-vendas-wrap" style="margin-top:18px;">
@@ -2884,6 +2885,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
       <div class="full"><label>Notas</label><textarea id="p-notas" rows="2"></textarea></div>
     </div>
+    <div class="ligacoes-wrap" id="p-datas"></div>
     <div class="ligacoes-wrap" id="p-ligacoes"></div>
 
     <div id="p-contatos-wrap" style="margin-top:18px;">
@@ -3255,6 +3257,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Validade da CNH</label><input type="date" id="mt-cnh-validade"></div>
       <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
     </div>
+    <div class="ligacoes-wrap" id="mt-datas"></div>
     <div class="ligacoes-wrap" id="mt-ligacoes"></div>
 
     <div style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
@@ -3451,6 +3454,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
            mesmo WhatsApp, aparece o botão de unificar. -->
       <div class="full" id="ct-acesso-painel" style="font-size:13px; color:var(--muted);"></div>
     </div>
+    <div class="ligacoes-wrap" id="ct-datas"></div>
     <div class="ligacoes-wrap" id="ct-ligacoes"></div>
     <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
          motoristas disseram dela; nota_motorista + comentario é o que ela disse. -->
@@ -4472,6 +4476,8 @@ let viagens = [];
 let viagemOfertas = [];
 let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_paradas.sql
 let viagemPassageiros = []; // quem vai no carro e onde entra/desce, schema_garupa_lista_passageiros.sql
+let datasEspeciais = [];        // aniversário de familiares (schema_datas_especiais.sql)
+let datasEspeciaisSqlFaltando = false;
 let tabelasPreco = [];          // tabelas de preço por tipo e horário (schema_tabelas_preco.sql)
 let tabelasPrecoSqlFaltando = true;
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
@@ -5182,6 +5188,7 @@ async function carregarDadosInterno(){
       sb.from("sede_maturidade_sugestoes").select("*").eq("status", "Pendente").order("criado_em"),
     ]),
     sb.from("tabelas_preco").select("*").order("ordem").order("id"),
+    sb.from("datas_especiais").select("*").order("id"),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -5306,6 +5313,10 @@ async function carregarDadosInterno(){
   const rtp = await q[17];
   tabelasPrecoSqlFaltando = !!rtp.error;
   if(!rtp.error) tabelasPreco = rtp.data || [];
+  // Datas especiais (schema_datas_especiais.sql): sem o SQL a seção mostra o aviso.
+  const rde = await q[18];
+  datasEspeciaisSqlFaltando = !!rde.error;
+  if(!rde.error) datasEspeciais = rde.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -5432,6 +5443,7 @@ const TABELA_ATUALIZA = {
   fin_entradas: v => finEntradas = v,
   fin_conferencias: v => finConferencias = v,
   vinculos_cadastros: v => vinculosCadastros = v,
+  datas_especiais: v => datasEspeciais = v,
   cadastros: v => atualizarCadastros(v),
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
@@ -6573,6 +6585,14 @@ function renderAniversariosDashboard(){
     ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
     ...clientesTransporte.map(c=>({nome:c.nome, tipo:rotuloCadastro(CADASTROS.ct, c)+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
     ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", empresa:false, whats:m.whatsapp, aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
+    // Datas especiais: a linha abre a ficha de quem lançou e o Parabéns vai
+    // pro WhatsApp dela (ex.: Mirian, pelo aniversário do filho).
+    ...datasEspeciais.map(e=>{
+      const cad = cadastroDaTabela(e.tabela), dono = cad && cad.lista().find(r=>r.id===e.registro_id);
+      if(!dono) return null;
+      return {nome:e.nome, tipo:`${e.relacao && e.relacao!=="Outra" ? e.relacao : "Data especial"} de ${dono.nome}`, empresa:false,
+        whats:dono.whatsapp || (e.tabela==="parceiros" ? (parceiroContatos.find(x=>x.parceiro_id===dono.id && x.numero)||{}).numero : null), aniversario:e.data, familiar:{relacao:e.relacao, de:dono.nome}, abrir:`cadastroDaTabela('${e.tabela}').abrir(${dono.id})`};
+    }).filter(Boolean),
   ];
   const proximos = candidatos
     .filter(c=>c.aniversario)
@@ -6591,6 +6611,12 @@ function renderAniversariosDashboard(){
 // Mensagem pronta do botão Parabéns (sai pelo WhatsApp que abrir o link).
 function mensagemAniversario(c){
   const nome = String(c.nome||"").trim().split(" ")[0];
+  if(c.familiar){
+    const de = String(c.familiar.de||"").trim().split(" ")[0];
+    const r = c.familiar.relacao, masc = RELACOES_MASC.includes(r);
+    const quem = r && r!=="Outra" ? `${masc ? "do seu" : "da sua"} ${r.toLowerCase()}, ${c.nome}` : `de ${c.nome}`;
+    return `Oi, ${de}! Hoje é aniversário ${quem} 🎂\nManda um abraço carinhoso nosso, com votos de um ano cheio de alegria e saúde. 🩷\nJú Castilhos e equipe Go Ladies`;
+  }
   if(c.empresa) return `Olá! Hoje é aniversário da ${c.nome}. Parabéns pela trajetória! Que venham muitos anos de parceria com a Go Ladies. 🩷\nJú Castilhos, Go Ladies`;
   return `Feliz aniversário, ${nome}! 🩷\nHoje o dia é seu, e toda a equipe Go Ladies deseja um ano cheio de caminhos bons, com segurança, saúde e alegria.\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
 }
@@ -14241,6 +14267,7 @@ function opcoesAlvoLigacao(pre, modo){
   }).join("");
 }
 function renderLigacoes(pre){
+  renderDatasEspeciais(pre); // abre junto com as Ligações em todas as fichas
   const el = document.getElementById(pre+"-ligacoes");
   if(!el) return;
   const c = CADASTROS[pre], id = c.aberto();
@@ -14363,6 +14390,78 @@ async function removerLigacao(pre, vid){
   if(error){ alert("Erro ao remover: " + error.message); return; }
   await recarregarTabelas("vinculos_cadastros");
   renderLigacoes(pre);
+}
+
+// ===== DATAS ESPECIAIS (27/10/2026) =====
+// Aniversário de quem é da família do cadastro (ex.: filho da Mirian). Fica na
+// ficha onde foi lançada e aparece em todas as fichas da mesma pessoa. Sai no
+// Dashboard e no aviso das 9h do WhatsApp (schema_datas_especiais.sql).
+const RELACOES_DATA = ["Filha","Filho","Mãe","Pai","Companheira","Companheiro","Irmã","Irmão","Neta","Neto","Sobrinha","Sobrinho","Amiga","Amigo","Outra"];
+const RELACOES_MASC = ["Filho","Pai","Companheiro","Irmão","Neto","Sobrinho","Amigo"];
+// Ano 0001 = sem ano (mesmo jeito do campo Aniversário).
+function dataEspecialTexto(d){
+  const [ano, mes, dia] = String(d||"").split("-");
+  return dia && mes ? `${dia}/${mes}${Number(ano) > 1900 ? "/" + ano : ""}` : "";
+}
+function lerDataEspecial(txt){
+  const m = String(txt||"").trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
+  if(!m) return null;
+  const dia = Number(m[1]), mes = Number(m[2]), ano = m[3] ? Number(m[3]) : 1;
+  const teste = new Date(2000, mes-1, dia); // 2000 é bissexto: 29/02 passa
+  if(mes < 1 || mes > 12 || teste.getMonth() !== mes-1 || (m[3] && (ano < 1900 || ano > new Date().getFullYear()))) return null;
+  return `${String(ano).padStart(4,"0")}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+}
+// Datas da ficha aberta e das outras fichas da mesma pessoa.
+function datasEspeciaisDoGrupo(tabela, id){
+  const grupo = grupoMesmaPessoa(tabela, id);
+  return datasEspeciais.filter(e=>grupo.has(e.tabela + ":" + e.registro_id));
+}
+function renderDatasEspeciais(pre){
+  const el = document.getElementById(pre+"-datas");
+  if(!el) return;
+  const c = CADASTROS[pre], id = c.aberto();
+  const cab = `<h4>Datas especiais</h4><p class="lig-sub">Aniversário de quem é da família (filha, filho, companheira (o)...). Avisa no WhatsApp na véspera e no dia, às 9h.</p>`;
+  if(datasEspeciaisSqlFaltando){ el.innerHTML = cab + `<p class="lig-vazio">Rode primeiro o SQL schema_datas_especiais.sql no Supabase (SQL Editor).</p>`; return; }
+  if(!id){ el.innerHTML = cab + `<p class="lig-vazio">Salve o cadastro primeiro. Depois dá pra adicionar as datas.</p>`; return; }
+  const itens = datasEspeciaisDoGrupo(c.tabela, id)
+    .sort((a,b)=>String(a.data).slice(5).localeCompare(String(b.data).slice(5)))
+    .map(e=>{
+      const daqui = e.tabela===c.tabela && e.registro_id===id;
+      const outra = !daqui && cadastroDaTabela(e.tabela);
+      return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${escapeHtml(e.nome)}</span>${e.relacao ? ` <span style="color:var(--text2);">· ${escapeHtml(e.relacao)}</span>` : ""}<small>${dataEspecialTexto(e.data)}${outra ? ` · lançada na ficha de ${outra.rotulo.toLowerCase()}` : ""}</small></div><div class="lig-acoes">
+        <button type="button" class="act act-del" title="Remover data" aria-label="Remover data" onclick="removerDataEspecial('${pre}',${e.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+    }).join("");
+  el.innerHTML = cab + (itens || `<p class="lig-vazio">Nenhuma data ainda.</p>`) + `<div class="lig-form">
+      <div><label for="${pre}-de-nome">Nome</label><input type="text" id="${pre}-de-nome" placeholder="Ex: Lucas"></div>
+      <div><label for="${pre}-de-relacao">Relação</label><select id="${pre}-de-relacao"><option value="">-</option>${RELACOES_DATA.map(r=>`<option>${r}</option>`).join("")}</select></div>
+      <div><label for="${pre}-de-data">Data <span style="font-weight:400; color:var(--muted);">(ano é opcional)</span></label><input type="text" id="${pre}-de-data" inputmode="numeric" placeholder="01/11 ou 01/11/2015"></div>
+      <div style="display:flex; align-items:flex-end;"><button type="button" class="btn secondary small" style="margin-bottom:10px;" onclick="adicionarDataEspecial('${pre}')">+ Adicionar data</button></div>
+    </div>`;
+}
+async function adicionarDataEspecial(pre){
+  const c = CADASTROS[pre], id = c.aberto();
+  const nome = (document.getElementById(pre+"-de-nome").value||"").trim();
+  const relacao = document.getElementById(pre+"-de-relacao").value || null;
+  const data = lerDataEspecial(document.getElementById(pre+"-de-data").value);
+  if(!nome){ alert("Escreva o nome."); return; }
+  if(!data){ alert("Data inválida. Use dia/mês (01/11) ou dia/mês/ano (01/11/2015)."); return; }
+  const { error } = await sb.from("datas_especiais").insert({ tabela:c.tabela, registro_id:id, nome, relacao, data });
+  if(error){
+    alert(/does not exist|schema cache/i.test(error.message)
+      ? "Rode primeiro o SQL schema_datas_especiais.sql no Supabase (SQL Editor)."
+      : "Erro ao salvar a data: " + error.message);
+    return;
+  }
+  await recarregarTabelas("datas_especiais");
+  renderDatasEspeciais(pre);
+  showToast("Data adicionada!");
+}
+async function removerDataEspecial(pre, did){
+  if(!confirm("Remover esta data especial?")) return;
+  const { error } = await sb.from("datas_especiais").delete().eq("id", did);
+  if(error){ alert("Erro ao remover: " + error.message); return; }
+  await recarregarTabelas("datas_especiais");
+  renderDatasEspeciais(pre);
 }
 
 // ===== BUSCA DE ENDEREÇO (Google Places, mesmo padrão do site) =====
