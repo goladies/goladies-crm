@@ -16258,11 +16258,18 @@ function renderTransporteViagens(){
   const concluidas = filtradas.filter(v=>v.status==="Concluída");
   const canceladas = filtradas.filter(v=>v.status==="Cancelada").length;
   const valor = concluidas.reduce((s,v)=>s+Number(v.preco_cotado||0), 0);
+  // Médias das concluídas (27/10/2026): por viagem e por cliente transporte
+  // (cada cliente conta uma vez, viaje quantas vezes for).
+  const nClientes = new Set(concluidas.map(v=>v.cliente_id).filter(Boolean)).size;
+  const mediaViagem = concluidas.length ? valor / concluidas.length : 0;
+  const mediaCliente = nClientes ? valor / nClientes : 0;
   document.getElementById("viagem-periodo-total").innerHTML =
     `<span>Período: <b>${rotuloPeriodoViagens(r)}</b></span>`
     + `<span>Tipo: <b>${escapeHtml(tipoF ? (ROTULO_TIPO_VIAGEM[tipoF] || tipoF) : "Todos")}</b></span>`
     + `<span><b>${concluidas.length}</b> ${concluidas.length===1?"viagem concluída":"viagens concluídas"}</span>`
     + `<span>Valor: <b>${formatarMoedaBR(valor)}</b></span>`
+    + `<span>Média por viagem: <b>${formatarMoedaBR(mediaViagem)}</b></span>`
+    + `<span title="${nClientes} ${nClientes===1?"cliente":"clientes"} com viagem concluída">Média por cliente transporte: <b>${formatarMoedaBR(mediaCliente)}</b></span>`
     + `<span><b>${canceladas}</b> ${canceladas===1?"cancelada":"canceladas"}</span>`;
 
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
