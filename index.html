@@ -16520,7 +16520,8 @@ async function registrarAutorizacaoViagem(id){
 // Selos de destaque no card (schema_cotacao_especial.sql): região fora de
 // POA, cotação especial, prazo curto e adolescente aguardando autorização.
 function selosViagem(v){
-  const selo = (txt, fundo, cor, titulo) => `<span class="tag kc-tag" style="background:${fundo}; color:${cor};"${titulo?` title="${escapeHtml(titulo)}"`:""}>${txt}</span>`;
+  // Cada selo na sua linha (display:table = largura do texto), pra não grudar
+  const selo = (txt, fundo, cor, titulo) => `<span class="tag kc-tag" style="display:table; background:${fundo}; color:${cor};"${titulo?` title="${escapeHtml(titulo)}"`:""}>${txt}</span>`;
   let h = "";
   if (precisaAutorizacao(v)) h += selo("🧒 Aguardando autorização", "var(--c-amber-bg)", "var(--c-amber)", "Adolescente: registre a autorização do responsável legal no modal da viagem");
   if (v.cotacao_especial) h += selo(`⭐ Cotação especial${v.regiao ? " · " + escapeHtml(v.regiao) : ""}`, "var(--rosa-bg)", "var(--rosa-texto)", "Origem ou destino fora dos 30 km: preço feito por você");
