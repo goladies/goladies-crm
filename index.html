@@ -9026,6 +9026,7 @@ function enderecoCurtoCelula(end){
 // Cada card filtra a lista; cada linha abre a viagem.
 const REGIOES_PROCURA = ["Porto Alegre", "Vizinhas", "Litoral", "Serra", "Interior RS", "Outro estado", "Sem região"];
 let procuraFiltro = "";
+const rotuloRegiao = r => r === "Vizinhas" ? "Cidades vizinhas" : r;
 function renderProcuraRegiao(){
   const corpo = document.getElementById("procura-body");
   if(!corpo) return;
@@ -9043,7 +9044,7 @@ function renderProcuraRegiao(){
     const x = resumo[r];
     const ativo = procuraFiltro === r;
     return `<div class="card" style="cursor:pointer;${ativo?" outline:2px solid var(--rosa-texto);":""}" onclick="procuraFiltro = procuraFiltro === '${r}' ? '' : '${r}'; renderProcuraRegiao();">
-      <div class="num">${x.total}</div><div class="label">${escapeHtml(r)}${["Litoral","Serra","Interior RS","Outro estado"].includes(r)?" ⭐":""}<br><span style="font-size:var(--fs-xs);">${x.feitas} feita${x.feitas===1?"":"s"} · ${x.canceladas} não fechou</span></div></div>`;
+      <div class="num">${x.total}</div><div class="label">${escapeHtml(rotuloRegiao(r))}${["Litoral","Serra","Interior RS","Outro estado"].includes(r)?" ⭐":""}<br><span style="font-size:var(--fs-xs);">${x.feitas} feita${x.feitas===1?"":"s"} · ${x.canceladas} não fechou</span></div></div>`;
   }).join("") || `<p style="color:var(--muted);">Nenhum pedido ainda.</p>`;
 
   const lista = viagens.filter(v => !procuraFiltro || regiaoDe(v) === procuraFiltro)
@@ -9064,7 +9065,7 @@ function renderProcuraRegiao(){
       <td>#${v.id}</td>
       <td>${escapeHtml(c ? c.nome : "-")}</td>
       <td>${escapeHtml([v.origem_endereco, v.destino_endereco].filter(Boolean).map(e=>{ const pe = partesEndereco(e); return pe.cidade || pe.rua || e; }).join(" → ") || "-")}</td>
-      <td>${escapeHtml(regiaoDe(v))}${v.cotacao_especial?" ⭐":""}</td>
+      <td>${escapeHtml(rotuloRegiao(regiaoDe(v)))}${v.cotacao_especial?" ⭐":""}</td>
       <td>${escapeHtml(v.status || "-")}</td>
       <td>${escapeHtml(v.motivo_perda || "")}</td>
     </tr>`;
@@ -16523,7 +16524,7 @@ function selosViagem(v){
   let h = "";
   if (precisaAutorizacao(v)) h += selo("🧒 Aguardando autorização", "var(--c-amber-bg)", "var(--c-amber)", "Adolescente: registre a autorização do responsável legal no modal da viagem");
   if (v.cotacao_especial) h += selo(`⭐ Cotação especial${v.regiao ? " · " + escapeHtml(v.regiao) : ""}`, "var(--rosa-bg)", "var(--rosa-texto)", "Origem ou destino fora dos 30 km: preço feito por você");
-  else if (v.regiao === "Vizinhas") h += selo("Vizinhas", "var(--c-blue-bg)", "var(--c-blue)");
+  else if (v.regiao === "Vizinhas") h += selo("📍 Fora de POA", "var(--c-blue-bg)", "var(--c-blue)", "Cidade vizinha, dentro dos 30 km: preço automático");
   if (v.prazo_curto && v.status !== "Concluída" && v.status !== "Cancelada") h += selo("⏰ Prazo curto", "var(--c-red-bg)", "var(--c-red)", "Cotação especial pedida com menos de 24 horas");
   return h;
 }
