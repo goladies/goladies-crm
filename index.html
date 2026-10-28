@@ -3575,7 +3575,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemEscolhido()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
         <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
-        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado()"></select></div>
+        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado(); renderPontosPassageiros()"></select></div>
         <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Ex.: aniversário, formatura, show"></div>
         <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
              vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
@@ -15077,6 +15077,12 @@ function carregarPassageirosModal(v){
   }));
   clientePontosModal = { embarque: v.cliente_embarque_ponto || "origem", desembarque: v.cliente_desembarque_ponto || "destino" };
 }
+// A cliente da viagem já tem a linha dela; a mesma ficha como passageira
+// contaria a pessoa duas vezes (27/10/2026): avisa e não grava.
+function ehAClienteDaViagem(p){
+  const cid = Number(document.getElementById("vg-cliente").value) || null;
+  return !!(p && cid && p.cliente_id === cid);
+}
 function htmlPessoaNoPonto(j, ponto){
   const ehCliente = j === "cliente";
   const p = ehCliente ? null : pessoasModal[j];
@@ -15089,7 +15095,9 @@ function htmlPessoaNoPonto(j, ponto){
   const acao = `<span class="vg-pass-acao ${embarca ? "emb" : "des"}">${embarca ? "Embarca" : "Desce"}</span>`;
   if(ehCliente){
     const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
-    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem</span> ${outroSel}</div></div>`;
+    const tipoViagem = document.getElementById("vg-tipo-servico").value;
+    const tipoTxt = ["Criança", "Adolescente", "Idoso"].includes(tipoViagem) ? " · " + rotuloOpcao(tipoViagem) : "";
+    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem${escapeHtml(tipoTxt)}</span> ${outroSel}</div></div>`;
   }
   const t = p.tipo;
   const campo = (rot, html) => `<div><label>${rot}</label>${html}</div>`;
@@ -15101,6 +15109,7 @@ function htmlPessoaNoPonto(j, ponto){
   if(t === "crianca") campos += campo("Idade", inp("idade", "number", 'min="0" max="11"'));
   if(t === "idosa") campos += `<div style="display:flex; align-items:flex-end;"><label class="vg-check" style="margin:0;"><input type="checkbox" ${p.precisa_ajuda?"checked":""} onchange="pessoasModal[${j}].precisa_ajuda=this.checked; renderPontosPassageiros()"> Precisa de ajuda pra entrar ou sair</label></div>`;
   return `<div class="vg-pass"><div class="vg-pass-topo">${acao} ${outroSel}<span style="flex:1"></span><button type="button" class="icon-btn" title="Tirar esta pessoa da viagem" onclick="removerPessoaViagem(${j})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div>
+    ${ehAClienteDaViagem(p) ? `<div style="margin:4px 0 8px; padding:6px 8px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber); font-size:var(--fs-xs);">${escapeHtml(p.nome || "Esta pessoa")} já está na viagem como cliente. Esta linha não será salva; pode apagar na lixeira.</div>` : ""}
     <div class="vg-pass-campos">${campos}</div>
     <div class="vg-pass-lig" id="vg-pass-lig-${j}-${ponto}">${htmlLigacaoPessoa(j)}</div></div>`;
 }
@@ -15116,12 +15125,13 @@ function renderPontosPassageiros(){
     if(clientePontosModal.embarque === k || clientePontosModal.desembarque === k) linhas.push(htmlPessoaNoPonto("cliente", k));
     pessoasModal.forEach((p,j)=>{ if(p.embarque_ponto === k || p.desembarque_ponto === k) linhas.push(htmlPessoaNoPonto(j, k)); });
     const botoes = [];
-    if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Embarca aqui</button>`);
-    if(k !== "origem") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Desce aqui</button>`);
+    if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Outra pessoa embarca aqui</button>`);
+    if(k !== "origem") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Outra pessoa desce aqui</button>`);
     el.innerHTML = linhas.join("") + `<div class="vg-pass-botoes">${botoes.join("")}</div>`;
   });
   const dica = document.getElementById("vg-pessoas-dica");
-  if(dica) dica.textContent = `Contando a cliente. Na lista do trajeto: ${pessoasModal.length + 1} ${pessoasModal.length ? "pessoas" : "pessoa"}.`;
+  const outras = pessoasModal.filter(p=>!ehAClienteDaViagem(p)).length;
+  if(dica) dica.textContent = `Contando a cliente. Na lista do trajeto: ${outras + 1} ${outras ? "pessoas" : "pessoa"}.`;
 }
 function adicionarPessoaViagem(ponto, embarca){
   pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
@@ -15211,6 +15221,7 @@ async function criarFichaPessoa(j){
 // Grava a lista inteira (apaga e reinsere), como as paradas
 async function gravarPassageirosViagem(viagemId){
   if(!listaPassageirosExiste()) return true;
+  pessoasModal = pessoasModal.filter(p=>!ehAClienteDaViagem(p));
   const existiam = viagemPassageiros.some(p=>p.viagem_id===viagemId);
   if(!pessoasModal.length && !existiam) return true;
   const del = await sb.from("viagem_passageiros").delete().eq("viagem_id", viagemId);
@@ -15279,8 +15290,8 @@ function htmlGarupaCliente(c){
 // Etiqueta de quantas pessoas, pro cartão da viagem e pro topo do modal
 function textoPessoasViagem(v){
   if(v.pessoas_ida && v.pessoas_volta && v.pessoas_ida !== v.pessoas_volta) return `${v.pessoas_ida} na ida · ${v.pessoas_volta} na volta`;
-  if(v.pessoas_ida || v.pessoas_volta) return `${v.pessoas_ida || v.pessoas_volta} pessoas`;
-  const n = viagemPassageiros.filter(p=>p.viagem_id===v.id).length;
+  if(v.pessoas_ida || v.pessoas_volta){ const n = v.pessoas_ida || v.pessoas_volta; return `${n} ${Number(n) === 1 ? "pessoa" : "pessoas"}`; }
+  const n = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id).length;
   return n ? `${n + 1} pessoas` : "";
 }
 function renderParadasModal(){
