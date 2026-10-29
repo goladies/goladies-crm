@@ -16574,17 +16574,44 @@ function renderViagemFeita(v){
     box.innerHTML = "";
     return;
   }
-  const pago = pagamentosCliente.some(p=>p.viagem_id===v.id && p.status==="Pago");
+  const pgto = pagamentosCliente.find(p=>p.viagem_id===v.id && p.status==="Pago");
+  const pago = !!pgto;
   let situacao;
   if(pago) situacao = "cliente já pagou.";
   else if(v.silenciar_cobranca) situacao = "não enviada (você escolheu não enviar).";
   else if(v.pix_solicitado_em) situacao = "enviada em " + new Date(v.pix_solicitado_em).toLocaleString("pt-BR") + ".";
   else situacao = "na fila pra sair pelo WhatsApp.";
-  const botao = (!pago && v.silenciar_cobranca && v.status === "Concluída")
+  let botao = (!pago && v.silenciar_cobranca && v.status === "Concluída")
     ? `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="enviarCobrancaViagemFeita()">${ic("send")} Enviar cobrança agora</button>`
     : "";
+  // Com "Não enviar", o "Recebemos seu pagamento" só sai pelo botão.
+  let confirmacao = "";
+  if(pago){
+    if(pgto.aviso_enviado_em){
+      const d = new Date(pgto.aviso_enviado_em);
+      confirmacao = `enviada em ${dataComSemana(d)} às ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}.`;
+    } else if(pgto.aviso_liberado || !v.silenciar_cobranca){
+      confirmacao = "na fila pra sair pelo WhatsApp.";
+    } else {
+      confirmacao = "não enviada.";
+      botao = `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="enviarConfirmacaoPagamentoViagemFeita()">${ic("send")} Enviar confirmação de pagamento</button>`;
+    }
+  }
   box.style.display = "block";
-  box.innerHTML = `${ic("clipboard-check")} <b>Viagem lançada depois de feita.</b> Cobrança: ${escapeHtml(situacao)}${botao ? "<br>" + botao : ""}`;
+  box.innerHTML = `${ic("clipboard-check")} <b>Viagem lançada depois de feita.</b> Cobrança: ${escapeHtml(situacao)}${confirmacao ? "<br>Confirmação de pagamento: " + escapeHtml(confirmacao) : ""}${botao ? "<br>" + botao : ""}`;
+}
+async function enviarConfirmacaoPagamentoViagemFeita(){
+  if(!editingViagemId) return;
+  const v = viagens.find(x=>x.id===editingViagemId) || {};
+  const c = clientesTransporte.find(x=>x.id===v.cliente_id);
+  const pgto = pagamentosCliente.find(p=>p.viagem_id===editingViagemId && p.status==="Pago") || {};
+  const valor = pgto.valor_recebido || v.preco_cotado || 0;
+  if(!confirm(`Enviar a confirmação de pagamento de ${formatarMoedaBR(valor)} pra ${c ? c.nome : "a cliente"} (viagem #${editingViagemId})?\n\nEla recebe no WhatsApp em até 2 minutos: "Recebemos seu pagamento. Obrigada por viajar com a Go Ladies!"`)) return;
+  const { error } = await sb.rpc("enviar_confirmacao_pagamento", { p_viagem_id: editingViagemId });
+  if(error){ alert("Não foi possível enviar a confirmação: " + error.message); return; }
+  showToast("Confirmação liberada! Sai em até 2 minutos.");
+  await recarregarTabelas("pagamentos_cliente");
+  openViagemModal(editingViagemId);
 }
 async function enviarCobrancaViagemFeita(){
   if(!editingViagemId) return;
