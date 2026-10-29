@@ -2514,7 +2514,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
 
       <div class="panel" id="gestao-painel-aportes" style="max-width:720px;">
-        <h3><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Aportes da sócia</h3>
+        <h3><svg class=ic aria-hidden=true><use href=#i-wallet /></svg> Aportes das sócias</h3>
         <p style="color:var(--muted); font-size:var(--fs-sm); margin:-6px 0 12px;">Dinheiro pessoal seu que entrou na Go Ladies, e o que ela já te devolveu. Despesa marcada como "Paguei do meu bolso" entra aqui sozinha.</p>
         <div id="gestao-aportes-resumo" style="margin-bottom:12px;"></div>
         <div class="formgrid">
@@ -3349,13 +3349,6 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <!-- Leituras do odômetro: cada mudança de motoristas.km_atual vira uma linha
-         em motorista_km_historico (gatilho do schema_km_historico.sql). -->
-    <div id="mt-km-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-gauge /></svg> Histórico de km <span id="mt-km-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
-      <div id="mt-km-lista"></div>
-    </div>
-
     <div id="mt-documentos-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
       <h4 style="font-size:var(--fs-sm); margin:0 0 10px;">Antecedentes Criminais</h4>
       <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
@@ -4041,7 +4034,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Saiu de qual conta ou caixinha</label><select id="cp-fin-conta"></select><span class="dica">É o que mexe no saldo do Livro-caixa.</span></div>
       <div><label style="display:flex; gap:8px; align-items:center; margin-top:22px;"><input type="checkbox" id="cp-recorrente" style="width:auto;"> Repete todo mês</label>
         <label style="display:flex; gap:8px; align-items:center; margin-top:6px;"><input type="checkbox" id="cp-valor-muda" style="width:auto;"> Valor muda todo mês (≈)</label>
-        <label style="display:flex; gap:8px; align-items:center; margin-top:6px;" title="Dinheiro pessoal seu que entrou na Go Ladies. Fica em Gestão → Aportes da sócia, como valor que a empresa te deve."><input type="checkbox" id="cp-aporte" style="width:auto;"> Paguei do meu bolso (aporte)</label></div>
+        <label style="display:flex; gap:8px; align-items:center; margin-top:6px;" title="Dinheiro pessoal seu que entrou na Go Ladies. Fica em Gestão → Aportes das sócias, como valor que a empresa te deve."><input type="checkbox" id="cp-aporte" style="width:auto;"> Paguei do meu bolso (aporte)</label></div>
       <div><label>Parceira (o) ligada</label><select id="cp-parceiro"><option value="">-</option></select></div>
       <div><label>Vencimento</label><input type="date" id="cp-vencimento"></div>
       <div><label>Data de pagamento</label><input type="date" id="cp-data-pagamento"></div>
@@ -4584,9 +4577,6 @@ let sedeMaturidade = [], maturidadeSqlFaltando = false, drivePastas = [];
 let sedeTrabalhos = [], sedeTrabalhosSqlFaltando = false;
 let sedeAgenda = [], sedeAgendaSqlFaltando = false;
 let sedeSqlFaltando = false;
-// Gastos que a Juliana lança como motorista (aba Carro do app da motorista):
-// saem da Caixinha Jú Motorista.
-let gastosJuMotorista = [];
 let pecasPedidos = [];
 let pecasTentativas = [];
 let parceiroLinks = [];
@@ -5311,7 +5301,6 @@ async function carregarDadosInterno(){
   vagasCandidatas = aplicarConsulta("vagas_candidatas", rvc, vagasCandidatas);
   motoristaObservacoes = aplicarConsulta("motorista_observacoes", rmo, motoristaObservacoes);
   viagemOfertas = aplicarConsulta("viagem_ofertas", rvo, viagemOfertas);
-  const pGastos = carregarGastosJuMotorista(); // precisa de motoristas; roda junto com o resto
 
   // Agenda de Eventos (schema_eventos.sql) — em chamada separada pra, se o
   // SQL ainda não tiver sido rodado, o erro ficar restrito a estas 5 tabelas.
@@ -5369,7 +5358,6 @@ async function carregarDadosInterno(){
   // Conferir saldo (schema_conferir_saldo.sql), também tolerante.
   const rfcf = await q[12];
   if(!rfcf.error) finConferencias = rfcf.data || [];
-  await pGastos;
   // Sede (schema_sede.sql): também tolerante; sem o SQL a Sede mostra o aviso.
   const [rsp, rsr, rspe, rsd] = await q[13];
   sedeSqlFaltando = !!rsp.error;
@@ -5455,7 +5443,6 @@ async function atualizarDados(manual){
   if(btn) btn.style.opacity = ".5";
   recargaSilenciosa = !manual;
   try{
-    if(manual) await carregarGastosJuMotorista();
     await recarregarTabelas(...TABELAS_AUTO);
     carregarErrosSite();
     marcarAtualizado();
@@ -13583,7 +13570,6 @@ function openMotoristaModal(id){
   renderDocumentosMotorista();
   renderObservacoesMotorista();
   renderAvaliacoesMotorista();
-  renderKmHistoricoMotorista();
   carregarPerfilMotorista();
   document.getElementById("motorista-modal").classList.add("open");
 }
@@ -17366,38 +17352,6 @@ function renderAvaliacoesMotorista(){
   document.getElementById("mt-avaliacoes-resumo").textContent = resumoNotas(avs.filter(a=>a.visivel), "nota_motorista");
   document.getElementById("mt-avaliacoes-lista").innerHTML = htmlListaAvaliacoes(avs, "motorista");
 }
-const KM_ORIGEM_ROTULO = { painel:"Painel", abastecimento:"Abastecimento", manutencao:"Manutenção", carga_inicial:"Registro anterior" };
-function fmtKm(n){ return Number(n).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " km"; }
-async function renderKmHistoricoMotorista(){
-  const wrap = document.getElementById("mt-km-wrap");
-  const id = editingMotoristaId;
-  if(!id){ wrap.style.display = "none"; return; }
-  wrap.style.display = "block";
-  const lista = document.getElementById("mt-km-lista");
-  const resumo = document.getElementById("mt-km-resumo");
-  lista.innerHTML = `<p style="color:var(--muted); font-size:var(--fs-sm);">Carregando...</p>`;
-  resumo.textContent = "";
-  const { data, error } = await sb.from("motorista_km_historico")
-    .select("km, km_anterior, origem, registrado_em")
-    .eq("motorista_id", id)
-    .order("registrado_em", { ascending: true });
-  if(editingMotoristaId !== id) return; // trocou de ficha enquanto carregava
-  if(error){ lista.innerHTML = `<p style="color:var(--muted); font-size:var(--fs-sm);">Não deu pra carregar o histórico: ${escapeHtml(error.message)}</p>`; return; }
-  const regs = data || [];
-  if(!regs.length){ lista.innerHTML = `<p style="color:var(--muted); font-size:var(--fs-sm);">Nenhuma leitura de km ainda. Aparece aqui quando ela atualiza o km no painel.</p>`; return; }
-  // Diferença contra a leitura anterior no tempo (e não km_anterior, que só o gatilho preenche)
-  const linhas = regs.map((r, i)=>({ ...r, dif: i ? Number(r.km) - Number(regs[i-1].km) : null }));
-  const primeira = regs[0], ultima = regs[regs.length-1];
-  const rodado = Number(ultima.km) - Number(primeira.km);
-  resumo.textContent = `· ${regs.length} leitura${regs.length>1?"s":""}` + (regs.length>1 && rodado>0
-    ? ` · ${fmtKm(rodado)} desde ${new Date(primeira.registrado_em).toLocaleDateString("pt-BR")}` : "");
-  lista.innerHTML = `<div style="max-height:260px; overflow-y:auto;">` + linhas.reverse().map(r=>`
-    <div style="display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm);">
-      <span>${new Date(r.registrado_em).toLocaleDateString("pt-BR")} <span style="color:var(--muted);">· ${KM_ORIGEM_ROTULO[r.origem] || escapeHtml(r.origem||"")}</span></span>
-      <span><strong>${fmtKm(r.km)}</strong>${r.dif!=null && r.dif!==0
-        ? ` <span style="color:${r.dif<0 ? "var(--red)" : "var(--muted)"};" ${r.dif<0 ? 'title="Menor que a leitura anterior: pode ser erro de digitação"' : ""}>(${r.dif>0?"+":""}${fmtKm(r.dif)})</span>` : ""}</span>
-    </div>`).join("") + `</div>`;
-}
 function renderAvaliacoesCliente(){
   const wrap = document.getElementById("ct-avaliacoes-wrap");
   if(!editingClienteTransporteId){ wrap.style.display = "none"; return; }
@@ -18880,8 +18834,8 @@ function irParaGestaoDoMes(mes, ano){
 // ===== FINANCEIRO: LIVRO-CAIXA =====
 // No jeito da Vida Financeira do Lapidar, mas para o dinheiro da Go Ladies
 // (05/10/2026). Não tem tabela própria de lançamentos: lê o que o CRM já
-// grava (pagamentos das viagens, repasses, parcelas de venda, despesas) e o
-// que a Juliana lança como motorista no app (sai da Caixinha Jú Motorista).
+// grava (pagamentos das viagens, repasses, parcelas de venda, despesas). O que
+// as motoristas lançam no app (combustível, manutenção) é delas e não entra.
 // Só três coisas são novas: contas/caixinhas, transferências entre elas e
 // entradas avulsas (parceiros, patrocínio). Regras:
 // - Saldo = o informado no fim do dia de data_saldo_inicial + o que
@@ -18961,21 +18915,6 @@ function lcIcone(cat, tipo){
 
 // Gastos de motorista da Juliana (aba Carro do app). "Pago por outra pessoa"
 // não saiu da caixinha; manutenção planejada ainda não aconteceu.
-async function carregarGastosJuMotorista(){
-  const ids = motoristas.filter(ehMotoristaJuliana).map(m=>m.id);
-  if(!ids.length){ gastosJuMotorista = []; return; }
-  const [ra, rm, rd] = await Promise.all([
-    sb.from("motorista_abastecimentos").select("*").in("motorista_id", ids),
-    sb.from("motorista_manutencoes").select("*").in("motorista_id", ids),
-    sb.from("motorista_despesas").select("*").in("motorista_id", ids),
-  ]);
-  const lista = [];
-  (ra.data || []).forEach(a=>{ if(!a.pago_por_outra_pessoa && a.data) lista.push({ chave: "ab" + a.id, data: a.data, valor: Number(a.valor_total || 0), titulo: "Abastecimento" + (a.posto ? " · " + a.posto : ""), tipo: "Combustível", fixo: false }); });
-  (rm.data || []).forEach(m=>{ if(!m.pago_por_outra_pessoa && m.status === "feita" && m.data && Number(m.valor) > 0) lista.push({ chave: "mn" + m.id, data: m.data, valor: Number(m.valor), titulo: m.descricao || m.tipo || "Manutenção", tipo: "Manutenção do carro", fixo: false }); });
-  (rd.data || []).forEach(d=>{ if(!d.pago_por_outra_pessoa && d.data) lista.push({ chave: "dp" + d.id, data: d.data, valor: Number(d.valor || 0), titulo: d.descricao || d.categoria || "Pagamento", tipo: d.categoria || "Pagamento", fixo: !!d.fixo_mensal }); });
-  gastosJuMotorista = lista;
-}
-
 // Tudo o que entra, sai ou muda de lugar entre `de` e `ate` (inclusive),
 // realizado ou previsto. Cada item sabe abrir sua origem (acao) e, quando
 // previsto, ser marcado como feito (jaFoi).
@@ -19011,7 +18950,7 @@ function lcColetar(de, ate){
   });
   pagamentosMotorista.forEach(p=>{
     const v = viagens.find(x=>x.id === p.viagem_id);
-    if(v && idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)))) return;
+    if(juSemRepasse(v)) return;
     const pago = p.status === "Pago";
     // Repasse que ainda não saiu de viagem cancelada não vai mais sair.
     if(!pago && (!v || v.status === "Cancelada")) return;
@@ -19053,20 +18992,6 @@ function lcColetar(de, ate){
       contaId: aporte ? null : (c.fin_conta_id || null), aporte, titulo: c.descricao || "Despesa",
       categoria: c.categoria || "Sem categoria", fixa: !!c.recorrente, aproximado: !!c.valor_muda,
       acao: `openContaPagarModal(${c.id})`, jaFoi: pago ? null : `lcJaFoiDespesa(${c.id})` });
-  });
-  const ju = caixinhaDoBolso("Jú Motorista");
-  gastosJuMotorista.forEach(g=>{
-    const base = { tipo: "saida", valor: g.valor, contaId: ju ? ju.id : null, titulo: g.titulo, categoria: "Pagamentos de motorista",
-      sub: `${g.tipo} · lançado no app da motorista`, fixa: g.fixo, acao: "lcAvisoAppMotorista()" };
-    if(!g.fixo){ if(dentro(g.data)) itens.push({ ...base, chave: g.chave, data: g.data, previsto: g.data > hojeLocalISO() }); return; }
-    // Gasto fixo do app (seguro, parcela...): vale todo mês, no mesmo dia, a partir do mês dele.
-    let d = new Date(String(de).slice(0,4), Number(String(de).slice(5,7)) - 1, 1);
-    const fim = new Date(String(ate).slice(0,4), Number(String(ate).slice(5,7)) - 1, 1);
-    while(d <= fim){
-      const dia = lcNoMesDia(g.data, d.getMonth() + 1, d.getFullYear());
-      if(dia >= String(g.data).slice(0,10) && dentro(dia)) itens.push({ ...base, chave: g.chave + "-" + dia, data: dia, previsto: dia > hojeLocalISO() });
-      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    }
   });
   // Conferir saldo: a diferença para mais é rendimento; para menos, ajuste.
   finConferencias.forEach(c=>{
@@ -19137,7 +19062,7 @@ function lcDeveria(de, ate){
     const liquido = (p.valor_liquido != null ? Number(p.valor_liquido) : Number(p.valor_recebido || 0) - Number(p.taxa_mp || 0)) - devolvidoDe(p);
     const ela = v ? idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))) : false;
     r.glViagens += liquido - repasse;
-    if(ela) r.ju += repasse;
+    if(juSemRepasse(v)) r.ju += repasse;
     r.viagens.push({ id: p.viagem_id, liquido, repasse, ela, gl: liquido - repasse });
   });
   const jaNaGl = id => { const c = finConta(id); return c && c.bolso === "Go Ladies"; };
@@ -19241,7 +19166,7 @@ function renderLcResumo(mes, ano){
     if(desde <= hojeLocalISO()){
       const t = lcDeveria(desde, hojeLocalISO());
       const fGl = t.gl - t.passouGl, fJu = t.ju - t.passouJu;
-      acumulado = `<p class="lc-sub" style="margin:10px 0 0;">Desde ${fmtDataBR(desde)} (quando o saldo das caixinhas foi informado): Go Ladies ${fGl > 0.009 ? `falta ${lcR(fGl)}` : "em dia"} · Jú Motorista ${fJu > 0.009 ? `falta ${lcR(fJu)}` : "em dia"}.</p>`;
+      acumulado = `<p class="lc-sub" style="margin:10px 0 0;">Desde ${fmtDataBR(desde)} (quando o saldo das caixinhas foi informado): Go Ladies ${fGl > 0.009 ? `falta ${lcR(fGl)}` : "em dia"}${ju ? ` · Jú Motorista ${fJu > 0.009 ? `falta ${lcR(fJu)}` : "em dia"}` : ""}.</p>`;
     }
   }
   html += `<div class="panel">
@@ -19250,7 +19175,7 @@ function renderLcResumo(mes, ano){
     ${!finContas.length ? `<p class="lc-sub">Cadastre a conta e as caixinhas em <a href="#" onclick="lcAba('contas'); return false;">Contas e caixinhas</a>.</p>` : `
     <table class="tbl lc-tbl"><thead><tr><th>Caixinha</th><th style="text-align:right;">Deveria receber</th><th style="text-align:right;">Você passou</th><th style="text-align:right;">Situação</th></tr></thead><tbody>
       ${linhaCx(gl ? gl.nome : "Caixinha Go Ladies", gl, d.gl, d.passouGl, `viagens ${lcR(d.glViagens)}${d.glOutros - d.glRendimentos ? ` + outros serviços ${lcR(d.glOutros - d.glRendimentos)}` : ""}${d.glRendimentos ? ` + rendimento do Mercado Pago ${lcR(d.glRendimentos)}` : ""} · <a href="#" onclick="lcAbrirConta${gl ? `(${gl.id})` : "s()"}; return false;">ver extrato</a>`)}
-      ${linhaCx(ju ? ju.nome : "Caixinha Jú Motorista", ju, d.ju, d.passouJu, `repasse das viagens que você dirigiu · <a href="#" onclick="lcAbrirConta${ju ? `(${ju.id})` : "s()"}; return false;">ver extrato</a>`)}
+      ${!ju ? "" : linhaCx(ju.nome, ju, d.ju, d.passouJu, `repasse das viagens que você dirigiu · <a href="#" onclick="lcAbrirConta${ju ? `(${ju.id})` : "s()"}; return false;">ver extrato</a>`)}
     </tbody></table>
     ${d.aDefinir.length ? `<p style="margin:10px 0 0; font-size:var(--fs-sm);"><span class="lc-selo definir" style="margin:0;">a definir</span> ${d.aDefinir.length} recebimento(s) sem a parte da Go Ladies: ${d.aDefinir.map(p=>{ const { lead, venda } = labelVendaParcela(p); return `<a href="#" onclick="openParcelaModal(${p.id}); return false;">${escapeHtml((venda ? venda.servico_produto : "venda") + " · " + (lead ? lead.nome : ""))} (${lcR(p.valor)})</a>`; }).join(", ")}</p>` : ""}
     ${acumulado}`}
@@ -19343,7 +19268,7 @@ function renderLcContas(){
     <div class="lc-sec"><div><h3>Suas contas</h3><p>Ao todo <b>${lcR(total)}</b> em ${contas.length} conta(s) e ${caixinhas.length} caixinha(s) · o saldo se atualiza sozinho com o que for sendo marcado como feito.</p></div>
       <div class="lc-acoes"><button class="btn ghost" type="button" onclick="abrirTransferencia()"><svg class=ic aria-hidden=true><use href=#i-arrows-exchange /></svg> Transferir</button><button class="btn" type="button" onclick="abrirFinConta(null, 'Conta')">+ Nova conta</button></div></div>
     <div class="lc-contas">${contas.map(cartao).join("") || `<p class="empty">Nenhuma conta cadastrada ainda.</p>`}</div>
-    <div class="lc-sec"><div><h3>Suas caixinhas</h3><p>Dinheiro separado dentro de uma conta: o da Go Ladies, o seu como motorista.</p></div>
+    <div class="lc-sec"><div><h3>Suas caixinhas</h3><p>Dinheiro separado dentro de uma conta, como o da Go Ladies.</p></div>
       <button class="btn" type="button" onclick="abrirFinConta(null, 'Caixinha')">+ Nova caixinha</button></div>
     <div class="lc-contas">${caixinhas.map(cartao).join("") || `<p class="empty">Nenhuma caixinha cadastrada ainda.</p>`}</div>
     ${inativas.length ? `<p class="lc-sub">Fora de uso: ${inativas.map(c=>`<a href="#" onclick="abrirFinConta(${c.id}); return false;">${escapeHtml(c.nome)}</a>`).join(", ")}</p>` : ""}`;
@@ -19374,9 +19299,6 @@ function renderLcCategorias(mes, ano){
 }
 
 // ----- Ações do Livro-caixa -----
-function lcAvisoAppMotorista(){
-  showToast("Esse pagamento foi lançado no app da motorista (aba Carro). Edite por lá.");
-}
 function lcNovaSaida(){
   openContaPagarModal(null);
   const gl = caixinhaDoBolso("Go Ladies");
@@ -19774,8 +19696,15 @@ function margemReferencia(mes, ano){
   }
   return rec > 0 ? contrib / rec : null;
 }
-// A Juliana também é motorista: as viagens dela não têm repasse para outra
-// pessoa. Reconhece pelo sobrenome, e-mail ou um dos dois WhatsApp dela.
+// Até 29/10/2026 as viagens que a Juliana dirigia não tinham repasse lançado:
+// a parte dela ia para a Caixinha Jú Motorista. Desde 30/10 ela é motorista
+// como as outras: o repasse é lançado e sai da Go Ladies, e o que ela gasta
+// com o carro fica só no app dela.
+const JU_COMO_TODAS_DESDE = "2026-10-30";
+function juSemRepasse(v){
+  return !!v && String(v.data || "").slice(0,10) < JU_COMO_TODAS_DESDE && idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id)));
+}
+// Reconhece a Juliana pelo sobrenome, e-mail ou um dos dois WhatsApp dela.
 function ehMotoristaJuliana(m){
   if(!m) return false;
   const n = String(m.nome || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -19837,9 +19766,9 @@ function gestaoPendencias(mes, ano){
   });
   const semRepasse = viagens.filter(v=>pagoDa(v.id) && Number(v.preco_motorista || 0) > 0
     && !pagamentosMotorista.some(m=>m.viagem_id === v.id)
-    && !idsMotoristasViagem(v).some(id=>ehMotoristaJuliana(motoristas.find(m=>m.id === id))));
+    && !juSemRepasse(v));
   if(semRepasse.length) itens.push({
-    nivel: "media", texto: `${semRepasse.length} viagem(ns) paga(s) sem repasse lançado para outra motorista`,
+    nivel: "media", texto: `${semRepasse.length} viagem(ns) paga(s) sem repasse lançado para a motorista`,
     detalhe: semRepasse.slice(0,5).map(v=>linkGestao(`abrirViagemDoPagamento(${v.id})`, `#${v.id}`)).join(", "),
     acao: semRepasse.length === 1 ? `abrirViagemDoPagamento(${semRepasse[0].id})` : "irParaViagens()",
     dica: semRepasse.length === 1 ? "Abrir a viagem" : "Ver viagens",
@@ -20288,7 +20217,7 @@ function renderDetalheGestao(ctx){
       ...pagos.filter(x=>x.ela).map(x=>({ s: "+", t: `Você dirigiu a ${linkViagem(x.v)}`, d: `repasse da viagem paga em ${fmtDataBR(x.p.data_pagamento)}`, v: x.repasse })),
       { s: g.lucro >= 0 ? "+" : "−", t: "Lucro da Go Ladies no mês", v: Math.abs(g.lucro), d: "a empresa é sua, então o resultado dela também é", cor: corV(g.lucro) },
       { s: "=", t: "No seu bolso", v: bolso, cor: corV(bolso) },
-    ]) + `<p style="color:var(--muted); font-size:var(--fs-sm); margin:10px 0 0;">É o resultado do mês. O que você colocou do próprio bolso fica separado, em Aportes da sócia.</p>`;
+    ]) + `<p style="color:var(--muted); font-size:var(--fs-sm); margin:10px 0 0;">É o resultado do mês. O que você colocou do próprio bolso fica separado, em Aportes das sócias.</p>`;
   }
   else if(gestaoDetalheAberto === "equilibrio"){
     titulo = "Ponto de equilíbrio";
