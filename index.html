@@ -2549,7 +2549,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
     <div id="tab-sede" style="display:none;">
       <div class="pagehead">
-        <div><h2>Sede</h2><p>A equipe da Go Ladies: pessoas e IA. As agentes trabalham e trazem o que precisa de decisão; quem decide são a Jú e a Rafaela.</p></div>
+        <div><h2>Sede</h2><p>A equipe da Go Ladies: pessoas e IA. As agentes trabalham e trazem o que precisa de decisão; quem decide é a Jú, com a Rafaela e a Una Vitória como conselho.</p></div>
         <button class="btn" type="button" onclick="abrirPedidoSede()">+ Novo pedido</button>
       </div>
       <div class="subnav">
@@ -9399,6 +9399,23 @@ const SEDE_AGENTES = [
     escreve:"Simulações e pautas no Drive; pendências e decisões fiscais na Sede",
     custo:"Incluído no seu plano do Claude",
     rotina:"Sob pedido", status:["Começando","amber"], aba:"financeiro", abaRotulo:"Abrir Financeiro" },
+  { id:"una", nome:"Una Vitória", cargo:"Sócia Investidora", titulo:"Sócia Investidora (IA, para treino): olhar de investidora-anjo \"smart money\"", cor:"amber", ia:"Claude", responde:"Jú (ao lado, como conselho; a Vera confere)", nivel:"conselho",
+    jeito:"Exigente e respeitosa. Pede número, prazo e explicação, reconhece o que andou e sempre pergunta \"e qual é a sua decisão?\". Una de unicórnio, Vitória de quem já chegou lá.",
+    missao:"Treinar a Jú a ter alguém do outro lado da mesa: prestar contas, defender número, ouvir \"não\" e decidir junto, até a Go Ladies estar pronta para uma sócia (o) de verdade.",
+    faz:["Reunião de sócias a cada 2 semanas, junto com a retrospectiva da sprint: lê placar, números da Rica, Maturidade e decisões abertas, e escreve a pauta com as perguntas duras",
+         "Responde quando você chama: \"o que a sócia acharia disso?\"",
+         "Deixa sugestões nos 11 pontos da Maturidade (você aceita ou descarta) e aponta o mais fraco",
+         "Sai de toda reunião com \"o que muda até a próxima?\" e cobra na seguinte"],
+    naoFaz:["Não manda e não aprova: opina, pergunta e cobra; quem decide é você",
+            "Não põe dinheiro nem promete investimento (é uma agente de treino)",
+            "Não dá conselho de investimento pessoal",
+            "Não altera CRM, preço, meta ou regra"],
+    horarios:["A cada 2 semanas, na segunda da retrospectiva (próxima 02/11)","Sob pedido, quando você chamar a Una"],
+    onde:"Claude: skill una-socia-investidora (perfil, aprendizados). Reuniões em G:\\Meu Drive\\Sede\\Una.",
+    le:"Placar da Ester, semanas da Tati e da Rica, Maturidade, indicações, decisões e pendências da Sede",
+    escreve:"Pauta e ata da reunião de sócias no Drive; sugestões na Maturidade; pendências e decisões na Sede",
+    custo:"Incluído no seu plano do Claude",
+    rotina:"Quinzenal + sob pedido", status:["Começando","amber"], aba:"sede:maturidade", abaRotulo:"Abrir a Maturidade" },
   { id:"ester", nome:"Ester", cargo:"Head de Estratégia", titulo:"Head de Estratégia e consultora sênior (startups, métodos ágeis, Lean Canvas)", cor:"indigo", ia:"Claude", responde:"Gabi", nivel:"estrategia",
     jeito:"Calma e firme. Fala em fases, metas e portões, prefere uma prioridade certa a cinco mais ou menos e diz \"sem dado\" quando não sabe. Crítica sem ser pessimista: separa fato, hipótese e desejo, e é a primeira a desconfiar do plano.",
     missao:"Manter a Go Ladies no caminho do plano de negócio, sólido, crítico e realista: dizer o que fazer agora e o que pode esperar.",
@@ -9538,7 +9555,7 @@ const SEDE_AGENTES = [
 // Pessoas da equipe (07/10/2026): mesma ficha das agentes, com selo "Pessoa".
 // As agentes de IA respondem às duas (Gabi e Vera citam "Jú" e "Rafaela").
 const SEDE_PESSOAS = [
-  { id:"ju", pessoa:true, nome:"Jú", nomeCompleto:"Juliana Castilhos", cargo:"CEO", titulo:"Fundadora e CEO", cor:"pink", responde:"", nivel:"ceo",
+  { id:"ju", pessoa:true, nome:"Jú", nomeCompleto:"Juliana Castilhos", cargo:"Founder e CEO", titulo:"Fundadora e CEO", cor:"pink", responde:"", nivel:"ceo",
     missao:"Construir o ecossistema Go Ladies: mobilidade, parcerias, eventos e certificação, com segurança para mulheres.",
     faz:["Define a estratégia e o plano de negócio em 5 fases",
          "Decide preços, metas, parcerias e o que vai para o ar",
@@ -9554,11 +9571,10 @@ const SEDE_PESSOAS = [
                 "Diretora de Capacitação na AMICRO",
                 "Mentora no Instituto Gema"],
     acesso:"CRM completo", desde:"Fundadora" },
-  { id:"rafaela", pessoa:true, nome:"Rafaela", nomeCompleto:"Rafaela de Castilhos", cargo:"Founder's Associate", titulo:"Founder's Associate", cor:"indigo", responde:"Jú", nivel:"associate",
-    missao:"Trabalhar ao lado da CEO em todas as áreas enquanto a função dela é definida.",
-    faz:["Ajuda em tudo: transporte, parcerias, marketing, financeiro e atendimento",
-         "Faz pedidos às agentes de IA e recebe o que elas trazem, junto com a Jú",
-         "Também é motorista da Go Ladies"],
+  { id:"rafaela", pessoa:true, nome:"Rafaela", nomeCompleto:"Rafaela de Castilhos", cargo:"Adviser", titulo:"Adviser (conselheira)", cor:"indigo", responde:"Jú (ao lado, como conselheira)", nivel:"adviser",
+    missao:"Aconselhar a CEO com um olhar de fora e de outra geração.",
+    faz:["Opina nas decisões grandes, quando a Jú pede",
+         "Faz pedidos às agentes de IA e recebe o que elas trazem, junto com a Jú"],
     acesso:"CRM completo (rafaela@goladies.com.br)", desde:"Outubro de 2026" },
 ];
 const SEDE_COR = { pink:["var(--rosa-texto)","var(--rosa-bg)"], amber:["var(--c-amber)","var(--c-amber-bg)"], indigo:["var(--c-indigo)","var(--c-indigo-bg)"],
@@ -9600,9 +9616,8 @@ function renderSede(){
   const pessoa = p => `<button type="button" class="no pessoa${p.nivel==="ceo"?" voce":""}" onclick="abrirFichaAgente('${p.id}')"><img src="${sedeFotoSrc(p.id)}" alt="" onerror="this.remove()">${escapeHtml(p.nome)} · ${escapeHtml(p.cargo)}</button>`;
   org.innerHTML = `
     <div class="nivel">${SEDE_PESSOAS.filter(p=>p.nivel==="ceo").map(pessoa).join("")}</div>
-    <span class="seta">▲</span>
-    <div class="nivel">${SEDE_PESSOAS.filter(p=>p.nivel!=="ceo").map(pessoa).join("")}</div>
-    <span class="seta">▲ decisões sobem para a Jú e a Rafaela · tarefas descem ▼</span>
+    <div class="nivel" style="margin-top:4px;">${SEDE_PESSOAS.filter(p=>p.nivel!=="ceo").map(pessoa).join("")}${nivel("conselho")}</div>
+    <span class="seta">▲ conselho ao lado da Jú · decisões sobem para a Jú · tarefas descem ▼</span>
     <div class="nivel">${nivel("chefe","lado")}</div>
     <span class="seta">▲</span>
     <div class="nivel">${nivel("estrategia")}</div>
