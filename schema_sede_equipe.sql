@@ -1,3 +1,4 @@
+-- Arquivo: schema_sede_equipe.sql
 -- Go Ladies · Sede: o que a Rica (Finanças), a Tati (Operações) e a Ester (Estratégia) leem (07/10/2026).
 -- Uma função só de leitura, protegida pela mesma chave da Gabi (fica no notebook).
 -- Traz números, datas, status e ids. Nada de telefone, endereço, e-mail nem nome de cliente.
@@ -6,6 +7,9 @@
 -- Pode rodar de novo sem estragar nada. Precisa do schema_sede.sql já rodado.
 -- 07/10 (2ª versão): + transferências entre contas (Rica), funil de motoristas e pedidos
 -- dos últimos 30 dias com motivo de perda (Tati). Rodar o arquivo inteiro de novo.
+-- 29/10 (3ª versão): viagens do mês e pedidos de 30 dias trazem também o motivo do desconto
+-- e o preço da tabela. Antes só ia o valor do desconto, e as agentes concluíam "sem motivo"
+-- mesmo com o motivo salvo no CRM (viagem 57). Rodar o arquivo inteiro de novo.
 
 -- Reconhece a motorista Juliana (mesma regra do CRM: ehMotoristaJuliana).
 create or replace function public.sede_eh_motorista_ju(p_id bigint)
@@ -48,7 +52,8 @@ begin
     select vi.id, vi.cliente_id, vi.motorista_id, vi.status, vi.tipo_servico,
            coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date) as dia,
            coalesce(vi.preco_final, vi.preco_cotado) as preco,
-           vi.desconto_valor, vi.multa_cancelamento
+           vi.desconto_valor, vi.multa_cancelamento,
+           to_jsonb(vi)->'desconto_motivo' as desconto_motivo, to_jsonb(vi)->'preco_tabela' as preco_tabela
       from public.viagens vi
   )
   select jsonb_build_object(
@@ -121,7 +126,8 @@ begin
     -- ── Operações (Tati) ─────────────────────────────────────────────
     'operacao', jsonb_build_object(
       'viagens_mes', coalesce((select jsonb_agg(jsonb_build_object('id', v.id, 'dia', v.dia, 'status', v.status,
-                    'tipo', v.tipo_servico, 'preco', v.preco, 'desconto', v.desconto_valor, 'multa', v.multa_cancelamento,
+                    'tipo', v.tipo_servico, 'preco', v.preco, 'desconto', v.desconto_valor, 'desconto_motivo', v.desconto_motivo,
+                    'preco_tabela', v.preco_tabela, 'multa', v.multa_cancelamento,
                     'cliente_id', v.cliente_id, 'tem_motorista', v.motorista_id is not null,
                     'motorista_eh_ju', public.sede_eh_motorista_ju(v.motorista_id)) order by v.dia, v.id)
                     from v where v.dia between v_ini and v_fim), '[]'),
@@ -146,6 +152,7 @@ begin
                     'dia', coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date),
                     'status', vi.status, 'canal', to_jsonb(vi)->'canal_recepcao', 'tipo', vi.tipo_servico,
                     'preco', coalesce(vi.preco_final, vi.preco_cotado), 'desconto', to_jsonb(vi)->'desconto_valor',
+                    'desconto_motivo', to_jsonb(vi)->'desconto_motivo', 'preco_tabela', to_jsonb(vi)->'preco_tabela',
                     'motivo_perda', to_jsonb(vi)->'motivo_perda') order by vi.id)
                     from public.viagens vi where vi.criado_em > now() - interval '30 days'), '[]'),
       'certificadas_validas', (select count(*) from public.motoristas m
@@ -177,3 +184,5 @@ grant execute on function public.sede_equipe_ler(text) to anon, authenticated;
 
 -- Conferência (opcional): deve dar "chave inválida", sinal de que está protegida.
 -- select public.sede_equipe_ler('teste');
+
+select public.sql_registrar('schema_sede_equipe.sql');
