@@ -2487,6 +2487,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <div><h4 style="margin:14px 0 6px; font-size:var(--fs-sm);">De onde vieram as clientes que pagaram</h4><div id="nd-origem"></div></div>
           <div><h4 style="margin:14px 0 6px; font-size:var(--fs-sm);">Pago por mês (últimos 6)</h4><div id="nd-meses"></div></div>
         </div>
+        <h4 style="margin:14px 0 6px; font-size:var(--fs-sm);">Indicações</h4>
+        <div id="nd-indicacoes"></div>
         <h4 style="margin:14px 0 6px; font-size:var(--fs-sm);">Fôlego e motoristas</h4>
         <div class="cards" id="nd-folego"></div>
       </div>
@@ -2799,6 +2801,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Etapa</label><select id="f-etapa"></select></div>
       <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"></select></div>
       <div id="f-origem-outro-wrap" style="display:none;"><label>Qual?</label><input type="text" id="f-origem-outro" placeholder="Descreva a origem"></div>
+      <div id="f-indicada-wrap" class="full" style="display:none;"><label for="f-indicada">Indicada por</label><input type="text" id="f-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span></div>
       <div><label>Data de entrada</label><input type="date" id="f-data"></div>
       <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
       <div><label>Responsável</label><input type="text" id="f-responsavel" value="Jú"></div>
@@ -3492,7 +3495,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Região</label><input type="text" id="ct-regiao"></div>
       <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
       <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
-      <div><label>Origem</label><select id="ct-origem"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
+      <div><label>Origem</label><select id="ct-origem" onchange="toggleIndicada('ct')"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Outro</option></select></div>
+      <div id="ct-indicada-wrap" class="full" style="display:none;"><label for="ct-indicada">Indicada por</label><input type="text" id="ct-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span><datalist id="lista-indicacao"></datalist></div>
       <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, pessoas idosas etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Normalmente paga depois da viagem (pós-pago) <span style="color:var(--muted);">(é só o padrão: as viagens novas dela já vêm com "cobrar depois", e dá pra trocar em cada viagem. Mudar aqui não mexe nas viagens que já existem)</span></label></div>
       <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
@@ -11238,6 +11242,7 @@ function openLeadModal(id){
     document.getElementById("f-origem").value = l.origem||"";
     document.getElementById("f-origem-outro").value = "";
   }
+  preencherIndicada("f", l);
   toggleOrigemOutro();
   document.getElementById("f-data").value = l.data||new Date().toISOString().slice(0,10);
   document.getElementById("f-aniversario").value = l.aniversario||"";
@@ -11263,6 +11268,35 @@ function openLeadModal(id){
 function toggleOrigemOutro(){
   const sel = document.getElementById("f-origem");
   document.getElementById("f-origem-outro-wrap").style.display = sel.value === "Outro" ? "block" : "none";
+  toggleIndicada("f");
+}
+// "Indicada por" (schema_indicada_por.sql, 29/10/2026): quem chegou por
+// indicação fica ligada ao cadastro (código) de quem indicou, para a
+// indicação virar número em Números do negócio e na Sede. Sem cadastro,
+// guarda o nome escrito. Antes do SQL rodar, o campo não aparece.
+const temCampoIndicacao = () => [...leads, ...clientesTransporte].some(r=>"indicada_por_cadastro_id" in r);
+const rotuloIndicacao = c => `${c.nome} #${c.codigo}`;
+function toggleIndicada(pre){
+  const origem = document.getElementById(pre === "f" ? "f-origem" : "ct-origem").value;
+  document.getElementById(pre + "-indicada-wrap").style.display = temCampoIndicacao() && origem === "Indicação" ? "block" : "none";
+}
+function preencherIndicada(pre, r){
+  const meuCad = r && r.cadastro_id;
+  document.getElementById("lista-indicacao").innerHTML = cadastros
+    .filter(c=>c.tipo === "pessoa" && c.id !== meuCad)
+    .sort((a,b)=>String(a.nome).localeCompare(String(b.nome), "pt-BR"))
+    .map(c=>`<option value="${escapeHtml(rotuloIndicacao(c))}"></option>`).join("");
+  const cad = r && r.indicada_por_cadastro_id != null ? cadastrosPorId.get(r.indicada_por_cadastro_id) : null;
+  document.getElementById(pre + "-indicada").value = cad ? rotuloIndicacao(cad) : (r && r.indicada_por_texto) || "";
+  toggleIndicada(pre);
+}
+// Para o payload: escolhido da lista (ou "#42K") liga ao cadastro; o resto vira texto.
+function lerIndicada(pre, origem){
+  if(!temCampoIndicacao()) return {};
+  const txt = document.getElementById(pre + "-indicada").value.trim();
+  if(origem !== "Indicação" || !txt) return { indicada_por_cadastro_id: null, indicada_por_texto: null };
+  const cad = cadastros.find(c=>rotuloIndicacao(c) === txt) || cadastrosPorId.get(cadastroDaBusca(txt));
+  return cad ? { indicada_por_cadastro_id: cad.id, indicada_por_texto: null } : { indicada_por_cadastro_id: null, indicada_por_texto: txt };
 }
 function fillServicoOptions(selected){
   const cat = document.getElementById("f-categoria").value;
@@ -11295,6 +11329,7 @@ async function saveLead(){
     responsavel: document.getElementById("f-responsavel").value,
     notas: document.getElementById("f-notas").value,
   };
+  Object.assign(payload, lerIndicada("f", payload.origem));
   // Só manda "teste" se a coluna já existe (schema_testes_marcados.sql rodado)
   if(leads.some(x=>"teste" in x)) payload.teste = document.getElementById("f-teste").checked;
   Object.assign(payload, camposPJ("f", leads.find(x=>x.id===editingLeadId)));
@@ -14051,6 +14086,7 @@ function openClienteTransporteModal(id){
   marcarCamposDaCliente(c);
   document.getElementById("ct-segmento").value = c.segmento||"";
   document.getElementById("ct-origem").value = c.origem||"Indicação";
+  preencherIndicada("ct", c);
   document.getElementById("ct-familiares").value = c.familiares||"";
   document.getElementById("ct-pos-pago").checked = !!c.pos_pago;
   document.getElementById("ct-notas").value = c.notas||"";
@@ -14344,6 +14380,7 @@ async function saveClienteTransporte(){
     pos_pago: document.getElementById("ct-pos-pago").checked,
     notas: document.getElementById("ct-notas").value,
   };
+  Object.assign(payload, lerIndicada("ct", payload.origem));
   const antes = clientesTransporte.find(x=>x.id===editingClienteTransporteId);
   Object.assign(payload, camposPJ("ct", antes));
   const trocas = antes ? trocasDeDadoDaCliente(antes, payload) : [];
@@ -14555,7 +14592,17 @@ function renderLigacoes(pre){
         <div id="${pre}-lig-principal-wrap" style="display:flex; align-items:flex-end;"><label style="display:flex; align-items:center; gap:6px; margin:0 0 10px; color:var(--text1); font-size:var(--fs-sm);"><input type="checkbox" id="${pre}-lig-principal" style="width:auto;"> Proprietária / contato principal</label></div>
         <div class="full lig-botao"><button type="button" class="btn secondary small" onclick="adicionarLigacao('${pre}')">+ Ligar</button></div>
       </div>`;
-  el.innerHTML = `<h4>Ligações</h4><p class="lig-sub">Outros cadastros desta mesma pessoa e as empresas a que ela está ligada.</p>${(itens + indiretos) || `<p class="lig-vazio">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
+  // Quem esta pessoa indicou ("Indicada por" nas leads e clientes de viagem),
+  // uma linha por código (a mesma pessoa pode ser lead e cliente).
+  const vistos = new Set();
+  const indicou = meu.cadastro_id == null ? [] : [["clientes_transporte", clientesTransporte], ["leads", leads]]
+    .flatMap(([t, lista])=>lista.filter(r=>r.indicada_por_cadastro_id === meu.cadastro_id).map(r=>({ t, r })))
+    .filter(({ r })=>{ const k = r.cadastro_id ?? "x" + r.id; if(vistos.has(k)) return false; vistos.add(k); return true; });
+  const blocoIndicou = indicou.length
+    ? `<h4>Indicou</h4>` + indicou.map(({ t, r })=>`<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${escapeHtml(r.nome)}</span>${numId(r)}<small>${cadastroDaTabela(t).rotulo}${r.criado_em ? ` · chegou em ${dataComSemana(new Date(r.criado_em))}` : ""}</small></div><div class="lig-acoes">
+        <button type="button" class="act act-edit" onclick="abrirCadastroLigado('${pre}','${t}',${r.id})">Abrir</button></div></div>`).join("")
+    : "";
+  el.innerHTML = `${blocoIndicou}<h4>Ligações</h4><p class="lig-sub">Outros cadastros desta mesma pessoa e as empresas a que ela está ligada.</p>${(itens + indiretos) || `<p class="lig-vazio">Nenhuma ligação ainda.</p>`}${sugestoes}${form}`;
   if(!empresa) trocarTipoLigacao(pre);
 }
 function trocarTipoLigacao(pre){
@@ -19870,6 +19917,7 @@ function ndPessoasTransporte(){
     const canal = vs.map(v=>v.canal_recepcao).find(Boolean);
     return { servico: "transporte", nome: c.nome, abrir: `openClienteTransporteModal(${c.id})`,
       entrou: ndDia(c.criado_em), origem: c.origem || canal || (c.auth_user_id ? "Cadastro no app" : "Cadastro no CRM"),
+      cadastro: c.cadastro_id, indicadaPor: c.indicada_por_cadastro_id, indicadaTexto: c.indicada_por_texto,
       compromisso: vs.length > 0, pagou: viagensPagas.size > 0, voltou: viagensPagas.size >= 2,
       pago: pgs.reduce((s,p)=>s + Number(p.valor_recebido || 0) - devolvidoDe(p), 0), gl, glDefinir: false, primeiraPaga: datasPg[0] || "", datasPg };
   });
@@ -19882,6 +19930,7 @@ function ndPessoasServicos(){
     const datasPg = parcelasPagas.map(p=>ndDia(p.data_realizada || p.data_prevista)).filter(Boolean).sort();
     return { servico: "servicos", nome: l.nome, abrir: `openLeadModal(${l.id})`,
       entrou: ndDia(l.data || l.criado_em), origem: l.origem || l.canal || "Sem origem",
+      cadastro: l.cadastro_id, indicadaPor: l.indicada_por_cadastro_id, indicadaTexto: l.indicada_por_texto,
       compromisso: orcamentos.some(o=>o.lead_id===l.id) || vds.length > 0 || ["Orçamento solicitado","Orçamento enviado","Negociação","Fechado - Ganho","Cliente ativo"].includes(l.etapa),
       pagou: vendasPagas.size > 0, voltou: vendasPagas.size >= 2,
       pago: parcelasPagas.reduce((s,p)=>s + Number(p.valor || 0), 0),
@@ -19957,6 +20006,7 @@ function renderNumerosNegocio(){
   document.getElementById("nd-origem").innerHTML = Object.entries(porOrigem).sort((a,b)=>b[1]-a[1])
     .map(([o,n])=>`<div class="nd-linha"><span>${escapeHtml(o)}</span><b>${n}</b></div>`).join("")
     || `<div class="sede-vazio">Ninguém pagou ainda nesse recorte.</div>`;
+  renderIndicacoesNumeros(ps);
   // Pago por mês (pela data do pagamento), últimos 6 meses
   const meses = [];
   for(let i = 5; i >= 0; i--){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); meses.push(isoLocal(d).slice(0,7)); }
@@ -19992,6 +20042,40 @@ function renderNumerosNegocio(){
   ].join("");
   renderDetalheNumeros(ps);
 }
+// Indicações (schema_indicada_por.sql): quem chegou com origem "Indicação",
+// quantas pagaram e quem mais indica. Lead e cliente de viagem da mesma
+// pessoa contam uma vez (pelo código).
+function ndUmaPorPessoa(lista){
+  const vistos = new Set();
+  return lista.filter(p=>{ const k = p.cadastro ?? p.abrir; if(vistos.has(k)) return false; vistos.add(k); return true; });
+}
+function renderIndicacoesNumeros(ps){
+  const box = document.getElementById("nd-indicacoes");
+  const indicadas = ndUmaPorPessoa(ps.filter(p=>p.origem === "Indicação"));
+  if(!indicadas.length){ box.innerHTML = `<div class="sede-vazio">Ninguém chegou por indicação nesse recorte.</div>`; return; }
+  const pagaram = indicadas.filter(p=>p.pagou).length;
+  const semQuem = indicadas.filter(p=>p.indicadaPor == null).length;
+  const porQuem = {};
+  indicadas.filter(p=>p.indicadaPor != null).forEach(p=>{ porQuem[p.indicadaPor] = (porQuem[p.indicadaPor] || 0) + 1; });
+  const abrirCad = id => {
+    for(const [lista, abrir] of [[clientesTransporte, "openClienteTransporteModal"], [leads, "openLeadModal"], [parceiros, "openParceiroModal"], [motoristas, "openMotoristaModal"]]){
+      const r = (lista||[]).find(x=>x.cadastro_id === id);
+      if(r && typeof window[abrir] === "function") return `${abrir}(${r.id})`;
+    }
+    return "";
+  };
+  const ranking = Object.entries(porQuem).sort((a,b)=>b[1]-a[1]).map(([id, n])=>{
+    const c = cadastrosPorId.get(Number(id));
+    const acao = abrirCad(Number(id));
+    return `<div class="nd-linha${acao ? " tr-click" : ""}"${acao ? ` onclick="${acao}" title="Abrir a ficha"` : ""}><span>${c ? escapeHtml(c.nome) + ` <span class="num-id">#${c.codigo}</span>` : "Cadastro apagado"}</span><b>${n} ${n===1 ? "indicação" : "indicações"}</b></div>`;
+  }).join("");
+  box.innerHTML = `<div class="cards">
+      <div class="card card-link${ndDetalheAberto==="indicacao" ? " card-ativo" : ""}" title="Ver as pessoas" onclick="abrirDetalheNumeros('indicacao')"><div class="num">${indicadas.length}</div><div class="label">Chegaram por indicação · de ${ndUmaPorPessoa(ps).length} que chegaram</div></div>
+      <div class="card card-link" title="Ver as pessoas" onclick="abrirDetalheNumeros('indicacao')"><div class="num">${pagaram}</div><div class="label">Dessas, pagaram</div></div>
+      ${semQuem ? `<div class="card card-link" title="Ver quem está sem quem indicou" onclick="abrirDetalheNumeros('indicacao-sem')"><div class="num" style="color:var(--c-amber);">${semQuem}</div><div class="label">Sem a ficha de quem indicou · abra e escolha em "Indicada por"</div></div>` : ""}
+    </div>
+    <div style="margin-top:8px;"><div style="font-size:var(--fs-sm); color:var(--muted); margin-bottom:4px;">Quem mais indica</div>${ranking || `<div class="sede-vazio">Nenhuma indicação ligada a uma ficha ainda.</div>`}</div>`;
+}
 function abrirDetalheNumeros(chave){
   ndDetalheAberto = ndDetalheAberto === chave ? null : chave;
   renderNumerosNegocio();
@@ -19999,9 +20083,11 @@ function abrirDetalheNumeros(chave){
 function renderDetalheNumeros(ps){
   const box = document.getElementById("nd-detalhe");
   if(!ndDetalheAberto){ box.style.display = "none"; return; }
-  const filtro = { chegou: p=>true, compromisso: p=>p.compromisso, pagou: p=>p.pagou, voltou: p=>p.voltou }[ndDetalheAberto] || (p=>true);
+  const filtro = { chegou: p=>true, compromisso: p=>p.compromisso, pagou: p=>p.pagou, voltou: p=>p.voltou,
+    indicacao: p=>p.origem === "Indicação", "indicacao-sem": p=>p.origem === "Indicação" && p.indicadaPor == null }[ndDetalheAberto] || (p=>true);
   const serv = ND_SERVICOS.find(s=>s.id===ndServico) || ND_SERVICOS[0];
-  const titulo = serv.degraus[["chegou","compromisso","pagou","voltou"].indexOf(ndDetalheAberto)] || "";
+  const titulo = { indicacao: "Chegaram por indicação", "indicacao-sem": "Indicação sem a ficha de quem indicou" }[ndDetalheAberto]
+    || serv.degraus[["chegou","compromisso","pagou","voltou"].indexOf(ndDetalheAberto)] || "";
   const nomeServ = { transporte: "Transporte", servicos: "Outros serviços", parceiras: "Parceira (o)" };
   const lista = ps.filter(filtro).sort((a,b)=>b.pago - a.pago || (b.entrou||"").localeCompare(a.entrou||""));
   box.style.display = "block";
