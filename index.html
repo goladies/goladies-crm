@@ -1415,10 +1415,23 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 @media (max-width:700px){ .doc-linha{flex-wrap:wrap;} .doc-acoes{width:100%;} }
 .drive-pastas{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
 .drive-pasta{border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
-.mat-campos{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px;}
-.mat-campos label{display:flex; flex-direction:column; gap:4px; font-size:var(--fs-xs); color:var(--muted);}
-.mat-campos textarea{resize:vertical; min-height:52px; font-size:var(--fs-sm);}
-.mat-caixa{border:1px dashed var(--border2); border-radius:10px; padding:8px 10px; margin-top:8px;}
+.mat-ponto{padding:20px 6px; gap:14px;}
+.mat-ponto > .status-badge{margin-top:7px;}
+.mat-cab{display:flex; gap:10px; align-items:center; flex-wrap:wrap; min-height:34px;}
+.mat-ponto .doc-desc{margin-top:6px;}
+.mat-ponto > .doc-txt > .doc-meta{margin-top:12px;}
+.mat-campos{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 16px; margin-top:14px;}
+/* subgrid: rótulo, descrição e caixa ficam na mesma altura nas três colunas, mesmo com descrição de 2 linhas */
+.mat-campo{display:grid; grid-row:span 3; grid-template-rows:subgrid; row-gap:2px; min-width:0; align-content:start;}
+.mat-campo.largo{grid-column:span 2;}
+.mat-rotulo{font-size:var(--fs-sm); font-weight:600; color:var(--text);}
+.mat-dica{font-size:var(--fs-xs); color:var(--muted);}
+.mat-campo textarea, .mat-campo input{margin-top:6px; width:100%; padding:10px 12px; font-size:var(--fs-sm); line-height:1.5;}
+.mat-campo textarea{resize:vertical; min-height:120px;}
+.mat-link{display:flex; gap:8px; align-items:center; margin-top:6px;}
+.mat-link input{margin-top:0; flex:1;}
+@media (max-width:700px){ .mat-campos{grid-template-columns:1fr;} .mat-campo.largo{grid-column:auto;} }
+.mat-caixa{border:1px dashed var(--border2); border-radius:10px; padding:12px 14px; margin-top:14px;}
 .mat-hist{margin-top:6px; border-left:3px solid var(--border); padding-left:10px;}
 .mat-hist-item{padding:4px 0;}
 .nd-grade{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
@@ -10961,7 +10974,7 @@ function renderMaturidade(){
     <div class="doc-linha mat-ponto" style="cursor:default; align-items:flex-start;" id="mat-ponto-${m.id}">
       <span class="status-badge ${MAT_COR[m.situacao]||"gray"}" style="min-width:22px; text-align:center;">${m.ordem}</span>
       <div class="doc-txt">
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><b>${escapeHtml(m.ponto)}</b>
+        <div class="mat-cab"><b>${escapeHtml(m.ponto)}</b>
           <select onchange="salvarMaturidade(${m.id}, {situacao:this.value})" style="max-width:150px;" aria-label="Situação de ${escapeHtml(m.ponto)}">
             ${MAT_SITUACOES.map(s=>`<option${s===m.situacao?" selected":""}>${escapeHtml(s)}</option>`).join("")}
           </select>
@@ -10969,12 +10982,12 @@ function renderMaturidade(){
         ${m.pergunta ? `<div class="doc-desc">${escapeHtml(m.pergunta)}</div>` : ""}
         ${m.conflito_drive ? matHtmlConflito(m) : ""}
         <div class="mat-campos">
-          ${MAT_CAMPOS.map(c=>`<label>${c.rotulo}<textarea rows="2" placeholder="${escapeHtml(c.dica)}" onchange="salvarMaturidade(${m.id}, {${c.campo}:this.value.trim()||null})">${escapeHtml(m[c.campo]||"")}</textarea></label>`).join("")}
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-          <input type="text" value="${escapeHtml(m.onde||"")}" placeholder="Onde está a resposta" style="flex:1; min-width:180px;" onchange="salvarMaturidade(${m.id}, {onde:this.value.trim()||null})" aria-label="Onde está a resposta">
-          <input type="url" value="${escapeHtml(m.link||"")}" placeholder="Link (opcional)" style="flex:1; min-width:160px;" onchange="salvarMaturidade(${m.id}, {link:this.value.trim()||null})" aria-label="Link da resposta">
-          ${m.link ? `<a class="btn ghost small" href="${escapeHtml(m.link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>` : ""}
+          ${MAT_CAMPOS.map(c=>`<label class="mat-campo"><span class="mat-rotulo">${c.rotulo}</span><span class="mat-dica">${escapeHtml(c.dica)}</span><textarea rows="4" onchange="salvarMaturidade(${m.id}, {${c.campo}:this.value.trim()||null})">${escapeHtml(m[c.campo]||"")}</textarea></label>`).join("")}
+          <label class="mat-campo largo"><span class="mat-rotulo">Onde está a resposta</span><span class="mat-dica">Documento, tela do CRM ou conversa onde está o dado</span>
+            <input type="text" value="${escapeHtml(m.onde||"")}" onchange="salvarMaturidade(${m.id}, {onde:this.value.trim()||null})"></label>
+          <div class="mat-campo"><label for="mat-link-${m.id}" class="mat-rotulo">Link</label><span class="mat-dica">Opcional: endereço do documento ou da pasta</span>
+            <div class="mat-link"><input type="url" id="mat-link-${m.id}" value="${escapeHtml(m.link||"")}" onchange="salvarMaturidade(${m.id}, {link:this.value.trim()||null})">
+            ${m.link ? `<a class="btn ghost small" href="${escapeHtml(m.link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Abrir</a>` : ""}</div></div>
         </div>
         ${sugs.map(matHtmlSugestao).join("")}
         <div class="doc-meta">${m.respondido_por ? `Respondido por ${escapeHtml(matNomeQuem(m.respondido_por))} · ` : ""}atualizado em ${sedeData(m.atualizado_em)}
