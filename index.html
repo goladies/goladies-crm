@@ -4546,13 +4546,13 @@ const VAGA_CANDIDATA_STATUS = ["Recebida","Triagem","Indicada","Contratada","Rec
 // sempre foi. Continua reagindo ao clique no cabeçalho igual antes.
 let sortState = {
   leads: { campo: "data", dir: -1, tipo: "texto" },
-  contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
   clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
+  contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
   acessosApp: { campo: "criado_em", dir: -1, tipo: "texto" },
 };
-function aplicarOrdenacao(chave, lista){
 // A última ordem escolhida em cada lista fica guardada neste navegador (30/10/2026).
 try { Object.assign(sortState, JSON.parse(localStorage.getItem("crm_ordenacao") || "{}")); } catch(e){}
+function aplicarOrdenacao(chave, lista){
   const st = sortState[chave];
   if(!st) return lista;
   const arr = [...lista];
