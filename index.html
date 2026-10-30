@@ -4545,12 +4545,14 @@ const VAGA_CANDIDATA_STATUS = ["Recebida","Triagem","Indicada","Contratada","Rec
 // maior primeiro); as outras tabelas seguem sem ordenação padrão, como
 // sempre foi. Continua reagindo ao clique no cabeçalho igual antes.
 let sortState = {
-  clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
   leads: { campo: "data", dir: -1, tipo: "texto" },
   contasApp: { campo: "criado_em", dir: -1, tipo: "texto" },
+  clientesTransporte: { campo: "id", dir: -1, tipo: "numero" },
   acessosApp: { campo: "criado_em", dir: -1, tipo: "texto" },
 };
 function aplicarOrdenacao(chave, lista){
+// A última ordem escolhida em cada lista fica guardada neste navegador (30/10/2026).
+try { Object.assign(sortState, JSON.parse(localStorage.getItem("crm_ordenacao") || "{}")); } catch(e){}
   const st = sortState[chave];
   if(!st) return lista;
   const arr = [...lista];
@@ -4571,6 +4573,7 @@ function ordenarPor(chave, campo, tipo){
   const dir = (atual && atual.campo === campo) ? -atual.dir : 1;
   sortState[chave] = { campo, dir, tipo: tipo || "texto" };
   renderAll();
+  try { localStorage.setItem("crm_ordenacao", JSON.stringify(sortState)); } catch(e){}
 }
 function renderCabecalho(trId, colunas, chave){
   const tr = document.getElementById(trId);
