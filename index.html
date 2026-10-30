@@ -3724,6 +3724,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                Observação e Passageiras (os), com o nome do campo sempre à
                vista. O horário do embarque e a chegada prevista são os mesmos
                campos de mais abaixo (espelhados, sem duplicar no banco). -->
+          <label class="vg-check" style="margin-top:10px;"><input type="checkbox" id="vg-cliente-nao-vai" onchange="clienteNaoVaiMudou(this.checked)"> A cliente da viagem não vai no carro <span style="color:var(--muted);">(pediu e pagou pra outra pessoa)</span></label>
           <div class="vg-ponto" style="margin-top:10px;">
             <div class="vg-ponto-tit">1. Embarque (origem)</div>
             <div class="obrig destaque">
@@ -4572,8 +4573,8 @@ function ordenarPor(chave, campo, tipo){
   const atual = sortState[chave];
   const dir = (atual && atual.campo === campo) ? -atual.dir : 1;
   sortState[chave] = { campo, dir, tipo: tipo || "texto" };
-  renderAll();
   try { localStorage.setItem("crm_ordenacao", JSON.stringify(sortState)); } catch(e){}
+  renderAll();
 }
 function renderCabecalho(trId, colunas, chave){
   const tr = document.getElementById(trId);
@@ -15773,6 +15774,9 @@ function carregarParadasModal(viagemId){
 // tem os dois pontos (viagens.cliente_embarque_ponto/desembarque_ponto).
 let pessoasModal = [];
 let clientePontosModal = { embarque: "origem", desembarque: "destino" };
+// Falso quando quem pediu e pagou não entra no carro (schema_cliente_nao_vai.sql):
+// a cliente some do trajeto e viaja só quem está na lista.
+let clienteVaiModal = true;
 const TIPOS_PASSAGEIRA = [
   ["conta", "Tem conta"], ["sem_conta", "Adulta (o) sem conta"], ["adolescente", "Adolescente (12 a 17)"],
   ["crianca", "Criança (até 11)"], ["idosa", "Pessoa idosa"], ["nao_informado", "Tipo a confirmar"],
@@ -15789,6 +15793,13 @@ function carregarPassageirosModal(v){
     idade: p.idade ?? "", precisa_ajuda: !!p.precisa_ajuda, embarque_ponto: p.embarque_ponto || "origem", desembarque_ponto: p.desembarque_ponto || "destino",
   }));
   clientePontosModal = { embarque: v.cliente_embarque_ponto || "origem", desembarque: v.cliente_desembarque_ponto || "destino" };
+  clienteVaiModal = v.cliente_vai_no_carro !== false;
+  document.getElementById("vg-cliente-nao-vai").checked = !clienteVaiModal;
+}
+function clienteNaoVaiMudou(naoVai){
+  clienteVaiModal = !naoVai;
+  if(naoVai) clientePontosModal = { embarque: "origem", desembarque: "destino" };
+  renderPontosPassageiros();
 }
 // A cliente da viagem já tem a linha dela; a mesma ficha como passageira
 // contaria a pessoa duas vezes (27/10/2026): avisa e não grava.
@@ -15835,7 +15846,7 @@ function renderPontosPassageiros(){
     const el = document.getElementById("vg-pass-" + k);
     if(!el) return;
     const linhas = [];
-    if(clientePontosModal.embarque === k || clientePontosModal.desembarque === k) linhas.push(htmlPessoaNoPonto("cliente", k));
+    if(clienteVaiModal && (clientePontosModal.embarque === k || clientePontosModal.desembarque === k)) linhas.push(htmlPessoaNoPonto("cliente", k));
     pessoasModal.forEach((p,j)=>{ if(p.embarque_ponto === k || p.desembarque_ponto === k) linhas.push(htmlPessoaNoPonto(j, k)); });
     const botoes = [];
     if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Outra pessoa embarca aqui</button>`);
@@ -15844,7 +15855,8 @@ function renderPontosPassageiros(){
   });
   const dica = document.getElementById("vg-pessoas-dica");
   const outras = pessoasModal.filter(p=>!ehAClienteDaViagem(p)).length;
-  if(dica) dica.textContent = `Contando a cliente. Na lista do trajeto: ${outras + 1} ${outras ? "pessoas" : "pessoa"}.`;
+  const total = outras + (clienteVaiModal ? 1 : 0);
+  if(dica) dica.textContent = `${clienteVaiModal ? "Contando a cliente" : "A cliente não vai no carro"}. Na lista do trajeto: ${total} ${total === 1 ? "pessoa" : "pessoas"}.`;
 }
 function adicionarPessoaViagem(ponto, embarca){
   pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
@@ -15959,6 +15971,11 @@ function conferirPassageirosModal(){
     if(!p.nome.trim() && p.tipo !== "nao_informado") return `${quem} no trajeto: escreva o nome, ou deixe o tipo como "Tipo a confirmar".`;
     if(posicaoPonto(p.embarque_ponto) >= posicaoPonto(p.desembarque_ponto)) return `${quem}: o ponto onde desce precisa vir depois do ponto onde embarca.`;
     if(p.tipo === "crianca" && (p.idade === "" || Number(p.idade) < 0 || Number(p.idade) > 11)) return `${quem}: criança precisa da idade (até 11 anos).`;
+  }
+  if(!clienteVaiModal){
+    if(!pessoasModal.some(p=>p.tipo !== "crianca" && p.nome.trim() && !ehAClienteDaViagem(p)))
+      return "A cliente não vai no carro: coloque no trajeto quem vai viajar (uma pessoa a partir de 12 anos), com \"+ Outra pessoa embarca aqui\".";
+    return "";
   }
   if(posicaoPonto(clientePontosModal.embarque) >= posicaoPonto(clientePontosModal.desembarque)) return "Cliente da viagem: o ponto onde desce precisa vir depois do ponto onde embarca.";
   return "";
@@ -17721,6 +17738,8 @@ async function saveViagem(){
     payload.cliente_embarque_ponto = clientePontosModal.embarque === "origem" ? null : clientePontosModal.embarque;
     payload.cliente_desembarque_ponto = clientePontosModal.desembarque === "destino" ? null : clientePontosModal.desembarque;
   }
+  // Coluna de schema_cliente_nao_vai.sql (30/10/2026): mesmo cuidado.
+  if(viagens.length > 0 && ("cliente_vai_no_carro" in viagens[0])) payload.cliente_vai_no_carro = clienteVaiModal;
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
