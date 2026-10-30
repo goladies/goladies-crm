@@ -4161,6 +4161,26 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="parabens-modal">
+  <div class="modal" style="max-width:540px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <h3 id="parabens-titulo" style="margin:0;">Parabéns de aniversário</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('parabens-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p id="parabens-para" style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;"></p>
+    <div class="formgrid">
+      <div class="full"><label for="parabens-tipo">Tipo de mensagem</label><select id="parabens-tipo" onchange="trocarTipoParabens()"></select></div>
+      <div class="full"><label for="parabens-texto">Mensagem</label><textarea id="parabens-texto" rows="8" oninput="atualizarParabensModal()"></textarea><span class="dica">Dá pra mudar o texto aqui ou no próprio WhatsApp, antes de enviar. Trocar o tipo volta o texto pro modelo.</span></div>
+    </div>
+    <p id="parabens-status" style="font-size:var(--fs-sm); color:var(--text3); margin:10px 0 0;"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="parabens-desmarcar" style="margin-right:auto; display:none;" onclick="desmarcarParabens()">Desmarcar enviado</button>
+      <button class="btn ghost" id="parabens-marcar" onclick="marcarParabens()"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Parabéns enviado</button>
+      <a class="btn" id="parabens-abrir" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Abrir no WhatsApp</a>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script>
@@ -4564,6 +4584,8 @@ let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_para
 let viagemPassageiros = []; // quem vai no carro e onde entra/desce, schema_garupa_lista_passageiros.sql
 let datasEspeciais = [];        // aniversário de familiares (schema_datas_especiais.sql)
 let datasEspeciaisSqlFaltando = false;
+let parabensEnviados = [];      // quem já recebeu os parabéns no ano (schema_parabens_enviados.sql)
+let parabensSqlFaltando = false;
 let tabelasPreco = [];          // tabelas de preço por tipo e horário (schema_tabelas_preco.sql)
 let tabelasPrecoSqlFaltando = true;
 let areasAtendimento = [];  // praças atendidas (círculo + antecedência), schema_area_atendimento.sql
@@ -5285,6 +5307,7 @@ async function carregarDadosInterno(){
     ]),
     sb.from("tabelas_preco").select("*").order("ordem").order("id"),
     sb.from("datas_especiais").select("*").order("id"),
+    sb.from("parabens_enviados").select("*").order("id"),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -5411,6 +5434,11 @@ async function carregarDadosInterno(){
   const rde = await q[18];
   datasEspeciaisSqlFaltando = !!rde.error;
   if(!rde.error) datasEspeciais = rde.data || [];
+  // Parabéns enviados (schema_parabens_enviados.sql): sem o SQL o botão
+  // Parabéns funciona, só não dá pra marcar como enviado.
+  const rparab = await q[19];
+  parabensSqlFaltando = !!rparab.error;
+  if(!rparab.error) parabensEnviados = rparab.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -5537,6 +5565,7 @@ const TABELA_ATUALIZA = {
   fin_conferencias: v => finConferencias = v,
   vinculos_cadastros: v => vinculosCadastros = v,
   datas_especiais: v => datasEspeciais = v,
+  parabens_enviados: v => parabensEnviados = v,
   cadastros: v => atualizarCadastros(v),
   pecas_pedidos: v => pecasPedidos = v,
   pecas_tentativas: v => pecasTentativas = v,
@@ -6672,17 +6701,19 @@ function proximoAniversario(dataStr){
 // quadro do Dashboard e pela Agenda da Sede.
 function aniversariantesCrm(){
   return [
-    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), empresa:ehEmpresa(l), whats:l.whatsapp, aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`})),
-    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`})),
-    ...clientesTransporte.map(c=>({nome:c.nome, tipo:rotuloCadastro(CADASTROS.ct, c)+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`})),
-    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", empresa:false, whats:m.whatsapp, aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`})),
+    ...leads.map(l=>({nome:l.nome, tipo:"Lead"+(ehEmpresa(l)?" (abertura da empresa)":""), empresa:ehEmpresa(l), whats:l.whatsapp, aniversario:l.aniversario, abrir:`openLeadModal(${l.id})`, itens:()=>itensParabens("leads", l)})),
+    ...parceiros.map(p=>({nome:p.nome, tipo:"Parceira (o)"+(ehEmpresa(p)?" (abertura da empresa)":""), empresa:ehEmpresa(p), whats:p.whatsapp, aniversario:p.aniversario, abrir:`openParceiroModal(${p.id})`, itens:()=>itensParabens("parceiros", p)})),
+    ...clientesTransporte.map(c=>({nome:c.nome, tipo:rotuloCadastro(CADASTROS.ct, c)+(ehEmpresa(c)?" (abertura da empresa)":(c.responsavel_cliente_id?" (Conta Adolescente)":"")), empresa:ehEmpresa(c), whats:c.whatsapp, aniversario:c.aniversario, abrir:`openClienteTransporteModal(${c.id})`, itens:()=>itensParabens("clientes_transporte", c)})),
+    ...motoristas.map(m=>({nome:m.nome, tipo:"Motorista", empresa:false, whats:m.whatsapp, aniversario:m.aniversario, abrir:`openMotoristaModal(${m.id})`, itens:()=>itensParabens("motoristas", m)})),
     // Datas especiais: a linha abre a ficha de quem lançou e o Parabéns vai
     // pro WhatsApp dela (ex.: Mirian, pelo aniversário do filho).
     ...datasEspeciais.map(e=>{
       const cad = cadastroDaTabela(e.tabela), dono = cad && cad.lista().find(r=>r.id===e.registro_id);
       if(!dono) return null;
+      const whats = whatsDoRegistro(e.tabela, dono);
       return {nome:e.nome, tipo:`${e.relacao && e.relacao!=="Outra" ? e.relacao : "Data especial"} de ${dono.nome}`, empresa:false,
-        whats:dono.whatsapp || (e.tabela==="parceiros" ? (parceiroContatos.find(x=>x.parceiro_id===dono.id && x.numero)||{}).numero : null), aniversario:e.data, familiar:{relacao:e.relacao, de:dono.nome}, abrir:`cadastroDaTabela('${e.tabela}').abrir(${dono.id})`};
+        whats, aniversario:e.data, familiar:{relacao:e.relacao, de:dono.nome}, abrir:`cadastroDaTabela('${e.tabela}').abrir(${dono.id})`,
+        itens:()=>[{ chave:"de:"+e.id, para:"pessoa", nome:e.nome, destino:dono.nome, whats, tipo:"familiar", x:{nome:e.nome, de:dono.nome, relacao:e.relacao} }]};
     }).filter(Boolean),
   ].filter(c=>c.aniversario);
 }
@@ -6699,26 +6730,150 @@ function renderAniversariosDashboard(){
     const ehHoje = c.proxima.getTime() === hoje.getTime();
     // Idade que vai fazer (só pessoa, e só se o ano parece de nascimento)
     const anos = !c.empresa && Number(c.aniversario.slice(0,4)) > 1900 ? c.proxima.getFullYear() - Number(c.aniversario.slice(0,4)) : null;
-    const link = c.whats ? linkWhats(c.whats, mensagemAniversario(c)) : null;
-    const parabens = link ? `<a class="act act-edit" href="${escapeHtml(link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Parabéns</a>` : "";
+    const parabens = htmlBotoesParabens(c.itens(), true);
     return `<tr class="tr-click" onclick="${c.abrir}"${ehHoje ? ` style="background:var(--rosa-bg, #fde7f3)"` : ""}><td>${ehHoje ? `<svg class=ic aria-hidden=true><use href=#i-cake /></svg> ` : ""}${escapeHtml(c.nome)}${anos !== null && anos > 0 && anos < 120 ? ` <small style="color:var(--muted)">(${anos} anos)</small>` : ""}</td><td>${escapeHtml(c.tipo)}</td><td>${ehHoje ? "<b>Hoje</b>" : c.proxima.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${parabens}</td></tr>`;
   }).join("") || `<tr><td class="empty" colspan="3">Nenhum aniversário nessa janela</td></tr>`;
 }
-// Mensagem pronta do botão Parabéns (sai pelo WhatsApp que abrir o link).
-function mensagemAniversario(c){
-  const nome = String(c.nome||"").trim().split(" ")[0];
-  if(c.familiar){
-    const de = String(c.familiar.de||"").trim().split(" ")[0];
-    const r = c.familiar.relacao, masc = RELACOES_MASC.includes(r);
-    const quem = r && r!=="Outra" ? `${masc ? "do seu" : "da sua"} ${r.toLowerCase()}, ${c.nome}` : `de ${c.nome}`;
-    return `Oi, ${de}! Hoje é aniversário ${quem} 🎂\nManda um abraço carinhoso nosso, com votos de um ano cheio de alegria e saúde. 🩷\nJú Castilhos e equipe Go Ladies`;
+// ── Parabéns de aniversário (30/10/2026) ──
+// Mensagem por perfil (Mari, Clara, Ester e Gabi): a Jú escolhe o tipo, pode
+// editar o texto aqui ou no próprio WhatsApp, e marca "Parabéns enviado"
+// (tabela parabens_enviados) pra não mandar duas vezes e pra Ester medir o
+// resultado. Sem venda na mensagem; motorista é parceira, não "equipe".
+// Conta Adolescente: parabéns pra adolescente e aviso à (ao) responsável.
+const PARABENS_TIPOS = [
+  ["cliente", "Cliente que já viajou"],
+  ["lead", "Ainda não viajou (lead)"],
+  ["motorista", "Motorista parceira"],
+  ["parceira", "Parceira (o)"],
+  ["empresa", "Empresa (aniversário da empresa)"],
+  ["familiar", "Familiar (vai pra quem cadastrou)"],
+  ["responsavel", "Responsável pela (o) adolescente"],
+];
+function textoParabens(tipo, x){
+  const nome = String(x.nome||"").trim().split(" ")[0];
+  const de = String(x.de||"").trim().split(" ")[0];
+  if(tipo==="cliente") return `Feliz aniversário, ${nome}! 🩷\nHoje o dia é seu. Obrigada por confiar na Go Ladies nos seus caminhos. Desejamos um ano com muita saúde, alegria e chegadas tranquilas.\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
+  if(tipo==="motorista") return `Feliz aniversário, ${nome}! 🩷\nQue alegria caminhar junto com você na Go Ladies. Desejamos um ano de muita saúde, descanso quando precisar e caminhos seguros.\nUm abraço carinhoso,\nJú Castilhos`;
+  if(tipo==="parceira") return `Feliz aniversário, ${nome}! 🩷\nObrigada pela parceria e pelo cuidado com as mulheres que chegam até você. Desejamos um ano de saúde, alegria e bons negócios.\nUm abraço,\nJú Castilhos, Go Ladies`;
+  if(tipo==="empresa") return `Olá! Hoje é aniversário da ${x.nome}. Parabéns pela trajetória! Que venham muitos anos de parceria com a Go Ladies. 🩷\nJú Castilhos, Go Ladies`;
+  if(tipo==="familiar"){
+    const r = x.relacao, masc = RELACOES_MASC.includes(r);
+    const quem = r && r!=="Outra" ? `${masc ? "do seu" : "da sua"} ${r.toLowerCase()}, ${x.nome}` : `de ${x.nome}`;
+    return `Oi, ${de || nome}! Hoje é aniversário ${quem} 🎂\nManda um abraço carinhoso nosso, com votos de um ano cheio de alegria e saúde. 🩷\nJú Castilhos e equipe Go Ladies`;
   }
-  if(c.empresa) return `Olá! Hoje é aniversário da ${c.nome}. Parabéns pela trajetória! Que venham muitos anos de parceria com a Go Ladies. 🩷\nJú Castilhos, Go Ladies`;
-  return `Feliz aniversário, ${nome}! 🩷\nHoje o dia é seu, e toda a equipe Go Ladies deseja um ano cheio de caminhos bons, com segurança, saúde e alegria.\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
+  if(tipo==="responsavel") return `Oi, ${de}! Hoje é o aniversário de ${nome} 🎂\nPassamos para desejar um ano cheio de alegria, saúde e caminhos seguros. Já mandamos os parabéns para ${nome} também. 🩷\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
+  return `Feliz aniversário, ${nome}! 🩷\nDesejamos um novo ano leve, com saúde, alegria e muitos encontros bons.\nUm abraço carinhoso,\nJú Castilhos, Go Ladies`;
+}
+// A mesma pessoa em várias fichas (lead e cliente) tem uma chave só: o código.
+function chaveParabens(tabela, r){
+  if(r.cadastro_id != null) return "cad:" + r.cadastro_id;
+  return r.id != null ? tabela + ":" + r.id : null;
+}
+function whatsDoRegistro(tabela, r){
+  return r.whatsapp || (tabela==="parceiros" ? (parceiroContatos.find(x=>x.parceiro_id===r.id && x.numero)||{}).numero : null) || null;
+}
+function tipoParabensPadrao(tabela, r){
+  if(ehEmpresa(r)) return "empresa";
+  if(tabela==="motoristas") return "motorista";
+  if(tabela==="parceiros") return "parceira";
+  if(tabela==="clientes_transporte") return ehClienteTransporte(r) ? "cliente" : "lead";
+  return "lead";
+}
+function itensParabens(tabela, r){
+  const chave = chaveParabens(tabela, r);
+  const itens = [{ chave, para:"pessoa", nome:r.nome, destino:r.nome, whats:whatsDoRegistro(tabela, r), tipo:tipoParabensPadrao(tabela, r), x:{nome:r.nome} }];
+  if(tabela==="clientes_transporte" && r.responsavel_cliente_id){
+    const resp = clientesTransporte.find(c=>c.id===r.responsavel_cliente_id);
+    if(resp) itens.push({ chave, para:"responsavel", nome:r.nome, destino:resp.nome, whats:resp.whatsapp, tipo:"responsavel", x:{nome:r.nome, de:resp.nome} });
+  }
+  return itens;
+}
+function parabensEnviadoDe(it){
+  const ano = new Date().getFullYear();
+  return it.chave ? parabensEnviados.find(p=>p.chave===it.chave && p.para===it.para && p.ano===ano) : null;
+}
+function fmtDataSemanaParabens(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString("pt-BR",{day:"2-digit", month:"2-digit"}) + " (" + d.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","") + ")";
+}
+// Botões das linhas do Dashboard e da faixa da ficha. Já enviado = selo verde
+// (clicar abre de novo, pra reenviar ou desmarcar).
+const parabensAbertos = new Map();
+function htmlBotoesParabens(itens, curto){
+  return itens.map(it=>{
+    const k = (it.chave || "nova") + "|" + it.para;
+    parabensAbertos.set(k, it);
+    const env = parabensEnviadoDe(it);
+    const primeiro = String(it.destino||"").trim().split(" ")[0];
+    const rotulo = env ? (it.para==="responsavel" ? "Responsável avisada (o)" : "Parabéns enviado")
+      : it.para==="responsavel" ? (curto ? "Avisar responsável" : `Avisar a (o) responsável, ${primeiro}`)
+      : curto ? "Parabéns" : it.tipo==="familiar" ? `Parabéns para ${primeiro}` : "Parabéns no WhatsApp";
+    const titulo = env ? `Enviado em ${fmtDataSemanaParabens(env.enviado_em)}. Clique para ver de novo.` : "Escolher a mensagem e abrir o WhatsApp";
+    return `<button type="button" class="act${env ? "" : " act-edit"}" title="${escapeHtml(titulo)}"${env ? ` style="color:var(--green, #2e9d5b);"` : ""} onclick="event.stopPropagation(); abrirParabens('${k}')"><svg class=ic aria-hidden=true><use href=#i-${env ? "check" : "brand-whatsapp"} /></svg> ${escapeHtml(rotulo)}</button>`;
+  }).join(" ");
+}
+let parabensAtual = null;
+function abrirParabens(k){
+  const it = parabensAbertos.get(k);
+  if(!it) return;
+  parabensAtual = it;
+  document.getElementById("parabens-tipo").innerHTML = PARABENS_TIPOS.map(([v,r])=>`<option value="${v}"${v===it.tipo ? " selected" : ""}>${r}</option>`).join("");
+  document.getElementById("parabens-titulo").textContent = it.para==="responsavel" ? `Aniversário de ${it.nome}: aviso à (ao) responsável` : `Parabéns de aniversário: ${it.nome}`;
+  document.getElementById("parabens-para").innerHTML = `Vai para <b>${escapeHtml(it.destino||"")}</b>`
+    + (it.whats ? ` · ${escapeHtml(formatarTelefoneBR(String(it.whats)))}` : ` · <span style="color:var(--red)">sem WhatsApp na ficha. Cadastre o número pra mandar.</span>`);
+  document.getElementById("parabens-texto").value = textoParabens(it.tipo, it.x);
+  atualizarParabensModal();
+  document.getElementById("parabens-modal").classList.add("open");
+}
+function trocarTipoParabens(){
+  if(!parabensAtual) return;
+  document.getElementById("parabens-texto").value = textoParabens(document.getElementById("parabens-tipo").value, parabensAtual.x);
+  atualizarParabensModal();
+}
+function atualizarParabensModal(){
+  const it = parabensAtual; if(!it) return;
+  const link = linkWhats(it.whats, document.getElementById("parabens-texto").value);
+  const a = document.getElementById("parabens-abrir");
+  if(link){ a.href = link; a.style.display = ""; } else { a.removeAttribute("href"); a.style.display = "none"; }
+  const env = parabensEnviadoDe(it);
+  const podeMarcar = !!it.chave && !parabensSqlFaltando;
+  document.getElementById("parabens-marcar").style.display = podeMarcar && !env ? "" : "none";
+  document.getElementById("parabens-desmarcar").style.display = podeMarcar && env ? "" : "none";
+  document.getElementById("parabens-status").innerHTML = env
+    ? `<svg class=ic aria-hidden=true><use href=#i-check /></svg> Marcado como enviado em ${fmtDataSemanaParabens(env.enviado_em)}.`
+    : parabensSqlFaltando ? "Para marcar como enviado, rode primeiro o SQL schema_parabens_enviados.sql no Supabase (SQL Editor)."
+    : !it.chave ? "Salve a ficha primeiro para poder marcar como enviado."
+    : "Depois de mandar no WhatsApp, clique em <b>Parabéns enviado</b>.";
+}
+async function marcarParabens(){
+  const it = parabensAtual; if(!it || !it.chave) return;
+  const { error } = await sb.from("parabens_enviados").upsert(
+    { chave:it.chave, ano:new Date().getFullYear(), para:it.para, nome:it.nome, tipo_mensagem:document.getElementById("parabens-tipo").value },
+    { onConflict:"chave,ano,para" });
+  if(error){
+    alert(/does not exist|schema cache/i.test(error.message)
+      ? "Rode primeiro o SQL schema_parabens_enviados.sql no Supabase (SQL Editor)."
+      : "Não consegui marcar como enviado agora. Confira a internet e tente de novo, por favor.");
+    return;
+  }
+  await recarregarTabelas("parabens_enviados");
+  closeModal("parabens-modal");
+  Object.keys(CADASTROS).forEach(avisoAniversarioFicha);
+  showToast("Parabéns marcado como enviado!");
+}
+async function desmarcarParabens(){
+  const it = parabensAtual, env = it && parabensEnviadoDe(it);
+  if(!env) return;
+  if(!confirm(`Desmarcar o "Parabéns enviado" de ${it.nome}? O botão volta a aparecer como não enviado.`)) return;
+  const { error } = await sb.from("parabens_enviados").delete().eq("id", env.id);
+  if(error){ alert("Não consegui desmarcar agora. Tente de novo, por favor."); return; }
+  await recarregarTabelas("parabens_enviados");
+  atualizarParabensModal();
+  Object.keys(CADASTROS).forEach(avisoAniversarioFicha);
 }
 // Ficha aberta no dia do aniversário: faixa rosa embaixo do campo com o
-// Parabéns pronto (mesma mensagem do Dashboard). Nos outros dias não aparece.
-// Parceira não tem WhatsApp na ficha: usa o da ficha salva ou o 1º contato.
+// Parabéns (mesma janela do Dashboard). Nos outros dias não aparece.
+// Usa a ficha salva com o nome e o WhatsApp que estão digitados agora.
 function avisoAniversarioFicha(pre){
   const inp = document.getElementById(pre+"-aniversario");
   if(!inp) return;
@@ -6733,18 +6888,17 @@ function avisoAniversarioFicha(pre){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const prox = proximoAniversario(inp.value);
   if(!prox || prox.getTime() !== hoje.getTime()){ el.style.display = "none"; el.innerHTML = ""; return; }
-  const nome = (document.getElementById(pre+"-nome")||{}).value || "";
+  const cad = CADASTROS[pre], id = cad.aberto();
+  const salvo = (id != null && cad.lista().find(r=>r.id===id)) || {};
   const empresa = ehEmpresaNoModal(pre);
-  let whats = (document.getElementById(pre+"-whatsapp")||{}).value || "";
-  if(pre==="p" && editingParceiroId){
-    const pa = parceiros.find(x=>x.id===editingParceiroId) || {};
-    whats = pa.whatsapp || (parceiroContatos.find(x=>x.parceiro_id===pa.id && x.numero)||{}).numero || "";
-  }
-  const link = linkWhats(whats, mensagemAniversario({nome, empresa}));
+  const r = { ...salvo, tipo_pessoa: empresa ? "PJ" : "PF" };
+  const nomeDigitado = (document.getElementById(pre+"-nome")||{}).value, whatsDigitado = (document.getElementById(pre+"-whatsapp")||{}).value;
+  if(nomeDigitado) r.nome = nomeDigitado;
+  if(whatsDigitado) r.whatsapp = whatsDigitado;
+  const itens = itensParabens(cad.tabela, r);
   el.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-cake /></svg> <b>${empresa ? "Hoje é o aniversário da empresa" : "Hoje é o aniversário dela"}</b> `
-    + (link
-      ? `<a class="act act-edit" href="${escapeHtml(link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Parabéns no WhatsApp</a>`
-      : `<br><span style="color:var(--muted)">Cadastre o WhatsApp pra mandar os parabéns.</span>`);
+    + htmlBotoesParabens(itens, false)
+    + (itens[0].whats ? "" : `<br><span style="color:var(--muted)">Cadastre o WhatsApp pra mandar os parabéns.</span>`);
   el.style.display = "block";
 }
 
