@@ -132,6 +132,43 @@ a{color:var(--rosa-texto);}
 .sidebar-sub{font-size:var(--fs-xs); color:var(--text3); text-transform:uppercase; letter-spacing:.6px; padding:10px 18px 4px;}
 .sidebar-nav{flex:1; overflow-y:auto; padding:4px 0 8px;}
 .sidebar-sub-grupo{margin-top:10px; padding-top:12px; border-top:1px solid var(--border);}
+/* Grupos do menu (30/10/2026): um título por parte do negócio */
+.nav-grupo{font-size:var(--fs-xs); font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; padding:14px 18px 4px;}
+.nav-grupo-1{padding-top:6px;}
+/* ---------- SERVIÇOS E PLANOS (30/10/2026) ---------- */
+.svp-topo{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+.svp-topo h3{margin:0;}
+.svp-botoes{display:flex; gap:8px; flex-wrap:wrap;}
+.svp-ajuda{font-size:var(--fs-sm); color:var(--text3); margin:6px 0 12px; line-height:1.5;}
+.svp-ajuda a{color:var(--rosa);}
+.svp-def{color:var(--text3); font-style:italic;}
+.svp-campo-ajuda{font-size:var(--fs-xs); color:var(--text3); margin-top:3px;}
+.svp-inativa{opacity:.55;}
+.svp-grupos{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px;}
+.svp-grupo{display:flex; flex-direction:column; gap:4px; padding:11px 13px; border:1px solid var(--border); border-radius:10px; background:var(--bg-card2); font-size:var(--fs-sm); color:var(--text2);}
+.svp-grupo b{color:var(--text1); font-size:var(--fs-md);}
+.svp-grupo small{font-size:var(--fs-xs); color:var(--text3);}
+.svp-grupo.clicavel{cursor:pointer;}
+.svp-grupo.clicavel:hover{border-color:var(--rosa);}
+.svp-rolagem{overflow-x:auto;}
+.svp-tabela{width:100%; border-collapse:collapse; font-size:var(--fs-sm); min-width:640px;}
+.svp-tabela th{text-transform:none; letter-spacing:0; vertical-align:top; font-size:var(--fs-sm); color:var(--text2); font-weight:400; white-space:normal; min-width:150px;}
+.svp-tabela th.svp-ben, .svp-tabela td.svp-ben{min-width:220px; color:var(--text1);}
+.svp-tabela td{border-bottom:1px solid var(--border); padding:9px 10px;}
+.svp-tabela tr.svp-obs td{font-size:var(--fs-xs); color:var(--text3); background:transparent;}
+.svp-plano-nome{display:inline-flex; align-items:center; gap:6px; background:none; border:none; padding:0; cursor:pointer; font-family:inherit; font-size:var(--fs-lg); font-weight:700; color:var(--text1);}
+.svp-plano-nome:hover{color:var(--rosa);}
+.svp-plano-nome .ic{font-size:var(--fs-sm); opacity:.6;}
+.svp-preco{font-size:var(--fs-md); font-weight:600; color:var(--rosa); margin-top:4px; font-variant-numeric:tabular-nums;}
+.svp-fund{font-size:var(--fs-xs); color:var(--text3); margin-top:2px; min-height:1em;}
+.svp-cab-linha{margin-top:6px;}
+.svp-conta{margin-top:6px; background:none; border:none; padding:0; cursor:pointer; font-family:inherit; font-size:var(--fs-xs); font-weight:600; color:var(--rosa); text-decoration:underline;}
+.svp-sim{display:inline-flex; align-items:center; gap:4px; color:var(--c-green); font-weight:600;}
+.svp-nao{color:var(--text3);}
+.tag.svp-sit-decidido{background:var(--c-green-bg); color:var(--c-green);}
+.tag.svp-sit-proposta{background:var(--c-amber-bg); color:var(--c-amber);}
+.tag.svp-sit-aberto{background:var(--c-red-bg); color:var(--c-red);}
+.tag.svp-tag-plano{background:var(--c-indigo-bg); color:var(--c-indigo);}
 .nav-item{
   display:flex; align-items:center; gap:11px; padding:10px 18px; cursor:pointer;
   font-size:var(--fs-md); color:var(--text2); border-left:3px solid transparent; user-select:none;
@@ -1515,21 +1552,24 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
     <div class="sidebar-sub">Painel administrativo</div>
     <div class="sidebar-nav">
+      <div class="nav-grupo nav-grupo-1">Dia a dia</div>
       <div class="nav-item active" data-tab="dashboard" data-titulo="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></div>
-      <div class="nav-item" data-tab="contatos" data-titulo="Contatos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Contatos</span></div>
       <div class="nav-item" data-tab="conversas" data-titulo="Conversas do WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20l1.3-3.9A9 9 0 1 1 7.7 19.3L3 20"/><path d="M8 10h8M8 14h5"/></svg><span>Conversas</span><b class="nav-conta" id="nav-conta-conversas" title="Conversas esperando você"></b></div>
-      <div class="nav-item" data-tab="parceiros" data-titulo="Rede de Parceiras (os)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Parceiras (os)</span></div>
+      <div class="nav-item" data-tab="contatos" data-titulo="Contatos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Contatos</span></div>
+      <div class="nav-grupo">Transporte</div>
       <div class="nav-item nav-destaque" data-tab="transporte" data-titulo="Transporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H3v-5l2-5h12l3 5v5h-2"/><path d="M5 12h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg><span>Transporte</span></div>
-      <div class="nav-item" data-tab="orcamentos" data-titulo="Orçamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v7M9.5 13h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span>Orçamentos</span></div>
-      <div class="nav-item" data-tab="pecas" data-titulo="Peças"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Peças</span></div>
+      <div class="nav-grupo">Rede automotiva</div>
+      <div class="nav-item" data-tab="servicos" data-titulo="Serviços e Planos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços e Planos</span></div>
+      <div class="nav-item" data-tab="parceiros" data-titulo="Rede de Parceiras (os)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Parceiras (os)</span></div>
+      <div class="nav-item" data-tab="pedidos" data-titulo="Pedidos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 11v7M9.5 13h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span>Pedidos</span></div>
+      <div class="nav-grupo">Comunidade</div>
       <div class="nav-item" data-tab="divulgacao" data-titulo="Divulgação"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6"/><path d="M18 6a8 8 0 0 1 0 12"/></svg><span>Divulgação</span></div>
-      <div class="nav-item" data-tab="links" data-titulo="Links das motoristas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Links</span></div>
       <div class="nav-item" data-tab="vagas" data-titulo="Vagas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Vagas</span></div>
+      <div class="nav-grupo">Negócio</div>
       <div class="nav-item" data-tab="financeiro" data-titulo="Financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg><span>Financeiro</span></div>
       <div class="nav-item" data-tab="gestao" data-titulo="Gestão do negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18a9 9 0 1 1 17 0"/><path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.2"/></svg><span>Gestão</span></div>
       <div class="nav-item" data-tab="sede" data-titulo="Sede"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01M12 10h.01"/></svg><span>Sede</span></div>
-      <div class="sidebar-sub sidebar-sub-grupo">Configuração</div>
-      <div class="nav-item" data-tab="servicos" data-titulo="Catálogo de serviços"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg><span>Serviços</span></div>
+      <div class="nav-grupo">Configuração</div>
       <div class="nav-item" data-tab="config" data-titulo="Dados do painel"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></svg><span>Dados</span></div>
     </div>
     <div class="sidebar-footer">
@@ -1741,6 +1781,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <select id="filter-tipo-parceria" onchange="renderParceiros()"><option value="">Todos os tipos</option></select>
         <select id="filter-pessoa-parceiros" onchange="renderParceiros()"><option value="">PF e PJ</option><option value="PF">Só pessoa física</option><option value="PJ">Só empresas</option></select>
         <select id="filter-status-parceiros" onchange="renderParceiros()"><option value="">Todos os status</option></select>
+        <select id="filter-plano-parceiros" onchange="renderParceiros()" style="display:none;"><option value="">Todos os planos</option></select>
         <select id="filter-carol-parceiros" onchange="renderParceiros()">
           <option value="">Carol: todas</option>
           <option value="A">Classe A</option><option value="B">Classe B</option><option value="C">Classe C</option>
@@ -1757,32 +1798,83 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="tab-orcamentos" style="display:none;">
-      <div class="pagehead">
-        <div><h2>Orçamentos</h2><p>Cotações solicitadas para leads/clientes junto aos parceiros</p></div>
-        <button class="btn" onclick="openOrcamentoModal()">+ Novo orçamento</button>
+
+
+    <div id="tab-servicos" style="display:none;">
+      <div class="pagehead"><div><h2>Serviços e Planos</h2><p>O que a Go Ladies oferece: serviços para clientes, planos para parceiras (os) e cotas de patrocínio</p></div></div>
+      <div class="subnav">
+        <button type="button" class="subnav-item active" data-subsp="servicos" onclick="mostrarSubServicos('servicos')"><svg class=ic aria-hidden=true><use href=#i-clipboard-list /></svg> Serviços (para clientes)</button>
+        <button type="button" class="subnav-item" data-subsp="planos" onclick="mostrarSubServicos('planos')"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Planos (para parceiras)</button>
+        <button type="button" class="subnav-item" data-subsp="patrocinio" onclick="mostrarSubServicos('patrocinio')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Patrocínio</button>
       </div>
-      <div class="panel">
-        <table class="tbl">
-          <thead><tr id="thead-orcamentos"></tr></thead>
-          <tbody id="orcamentos-body"></tbody>
-        </table>
+      <div id="svp-aviso-sql" class="note" style="display:none;"></div>
+
+      <div id="svp-servicos">
+        <div class="panel">
+          <div class="svp-topo"><h3>Exigência a mais de cada grupo</h3></div>
+          <p class="svp-ajuda">O que a parceira (o) daquele grupo precisa cumprir além da curadoria. Clique no grupo para editar.</p>
+          <div id="svp-grupos"></div>
+        </div>
+        <div class="panel">
+          <div class="svp-topo"><h3>Catálogo de serviços</h3><button type="button" class="btn small" id="svp-btn-novo-servico" onclick="editarItemSp('servico')">+ Novo serviço</button></div>
+          <p class="svp-ajuda">Quantas vezes cada serviço foi pedido e o ticket médio. Serviço não se apaga: desative e ele sai das listas, o histórico continua.</p>
+          <table class="tbl">
+            <thead><tr id="thead-servicos"></tr></thead>
+            <tbody id="servicos-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="svp-planos" style="display:none;">
+        <div class="panel">
+          <div class="svp-topo"><h3>Planos das parceiras (os)</h3>
+            <span class="svp-botoes"><button type="button" class="btn secondary small" onclick="editarItemSp('beneficio')">+ Benefício</button> <button type="button" class="btn small" onclick="editarItemSp('plano')">+ Novo plano</button></span></div>
+          <p class="svp-ajuda">Valem para empresas de serviço automotivo. Clique no nome do plano ou no benefício para editar; o número de parceiras (os) abre a lista delas. As decisões e os motivos ficam no documento <a href="https://claude.ai/artifact/Dpq4qvdZAnSLVw6nqz2LQZ" target="_blank" rel="noopener">Definições Go Ladies</a>.</p>
+          <div id="svp-planos-conteudo"></div>
+        </div>
+      </div>
+
+      <div id="svp-patrocinio" style="display:none;">
+        <div class="panel">
+          <div class="svp-topo"><h3>Cotas de patrocínio</h3><button type="button" class="btn small" onclick="editarItemSp('cota')">+ Nova cota</button></div>
+          <p class="svp-ajuda">Valores de referência, ainda a confirmar. Comissão de 15% para quem vende a cota, paga só quando o patrocinador pagar.</p>
+          <div id="svp-cotas-conteudo"></div>
+        </div>
       </div>
     </div>
 
-    <div id="tab-pecas" style="display:none;">
-      <div class="pagehead">
-        <div><h2>Peças</h2><p>Pedidos de busca/intermediação de autopeças e as tentativas com cada loja</p></div>
-        <button class="btn" onclick="openPedidoModal()">+ Novo pedido</button>
+    <div id="tab-pedidos" style="display:none;">
+      <div class="pagehead"><div><h2>Pedidos</h2><p>O que clientes pediram e a rede está atendendo: orçamentos com parceiras (os) e busca de peças</p></div></div>
+      <div class="subnav">
+        <button type="button" class="subnav-item active" data-subped="orcamentos" onclick="mostrarSubPedidos('orcamentos')"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Orçamentos com parceiras (os)</button>
+        <button type="button" class="subnav-item" data-subped="pecas" onclick="mostrarSubPedidos('pecas')"><svg class=ic aria-hidden=true><use href=#i-tool /></svg> Peças</button>
       </div>
-      <div class="filters">
-        <select id="filter-status-peca" onchange="renderPecas()"><option value="">Todos os status</option></select>
+      <div id="pedidos-orcamentos">
+        <div class="pagehead">
+          <div><h2 style="font-size:var(--fs-lg);">Orçamentos com parceiras (os)</h2><p>Preço pedido às parceiras (os) para um serviço que a cliente quer. As cotações de viagem ficam em Transporte.</p></div>
+          <button class="btn" onclick="openOrcamentoModal()">+ Novo orçamento</button>
+        </div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr id="thead-orcamentos"></tr></thead>
+            <tbody id="orcamentos-body"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="panel">
-        <table class="tbl">
-          <thead><tr id="thead-pecas"></tr></thead>
-          <tbody id="pecas-body"></tbody>
-        </table>
+      <div id="pedidos-pecas" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:var(--fs-lg);">Peças</h2><p>Pedidos de busca/intermediação de autopeças e as tentativas com cada loja</p></div>
+          <button class="btn" onclick="openPedidoModal()">+ Novo pedido</button>
+        </div>
+        <div class="filters">
+          <select id="filter-status-peca" onchange="renderPecas()"><option value="">Todos os status</option></select>
+        </div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr id="thead-pecas"></tr></thead>
+            <tbody id="pecas-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1804,31 +1896,6 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="tab-links" style="display:none;">
-      <div class="pagehead">
-        <div><h2>Links</h2><p>Links úteis que aparecem na aba Links do painel da motorista (dicas de compra, manutenção, documentos...)</p></div>
-        <button class="btn" onclick="openLinkModal()">+ Novo link</button>
-      </div>
-      <div class="filters">
-        <select id="filter-categoria-link" onchange="renderLinks()"><option value="">Todas as categorias</option></select>
-        <select id="filter-publico-link" onchange="renderLinks()">
-          <option value="">Todos</option>
-          <option value="geral">Só os gerais (todas veem)</option>
-          <option value="exclusivo">Só os exclusivos (uma motorista)</option>
-        </select>
-        <select id="filter-ativo-link" onchange="renderLinks()">
-          <option value="">Ativos e inativos</option>
-          <option value="1" selected>Só ativos</option>
-          <option value="0">Só inativos</option>
-        </select>
-      </div>
-      <div class="panel">
-        <table class="tbl">
-          <thead><tr id="thead-links"></tr></thead>
-          <tbody id="links-body"></tbody>
-        </table>
-      </div>
-    </div>
 
     <div id="tab-vagas" style="display:none;">
       <div class="pagehead">
@@ -1878,6 +1945,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="subnav-item" data-subtab="financeiro-transporte" onclick="mostrarSubTab('financeiro-transporte')"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Financeiro do transporte</button>
         <button type="button" class="subnav-item" data-subtab="demandas" onclick="mostrarSubTab('demandas')"><svg class=ic aria-hidden=true><use href=#i-map /></svg> Procura por região</button>
         <button type="button" class="subnav-item" data-subtab="acessos-app" onclick="mostrarSubTab('acessos-app')"><svg class=ic aria-hidden=true><use href=#i-device-mobile-message /></svg> Acessos aos apps (cliente e motorista)</button>
+        <button type="button" class="subnav-item" data-subtab="links" onclick="mostrarSubTab('links')"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Links das motoristas</button>
       </div>
 
       <div id="subtab-motoristas" style="display:none;">
@@ -2268,6 +2336,32 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <table class="tbl">
             <thead><tr id="acessos-app-head"></tr></thead>
             <tbody id="acessos-app-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-links" style="display:none;">
+        <div class="pagehead">
+          <div><h2 style="font-size:var(--fs-lg);">Links das motoristas</h2><p>Links úteis que aparecem na aba Links do painel da motorista (dicas de compra, manutenção, documentos...)</p></div>
+          <button class="btn" onclick="openLinkModal()">+ Novo link</button>
+        </div>
+        <div class="filters">
+          <select id="filter-categoria-link" onchange="renderLinks()"><option value="">Todas as categorias</option></select>
+          <select id="filter-publico-link" onchange="renderLinks()">
+            <option value="">Todos</option>
+            <option value="geral">Só os gerais (todas veem)</option>
+            <option value="exclusivo">Só os exclusivos (uma motorista)</option>
+          </select>
+          <select id="filter-ativo-link" onchange="renderLinks()">
+            <option value="">Ativos e inativos</option>
+            <option value="1" selected>Só ativos</option>
+            <option value="0">Só inativos</option>
+          </select>
+        </div>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr id="thead-links"></tr></thead>
+            <tbody id="links-body"></tbody>
           </table>
         </div>
       </div>
@@ -2735,15 +2829,6 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="tab-servicos" style="display:none;">
-      <div class="pagehead"><div><h2>Catálogo de serviços</h2><p>Serviços oferecidos, quantas vezes foram pedidos e ticket médio</p></div></div>
-      <div class="panel">
-        <table class="tbl">
-          <thead><tr id="thead-servicos"></tr></thead>
-          <tbody id="servicos-body"></tbody>
-        </table>
-      </div>
-    </div>
 
     <div id="tab-config" style="display:none;">
       <div class="pagehead"><div><h2>Dados do painel</h2><p>Os dados deste painel ficam guardados num banco de dados (Supabase), protegidos por login.</p></div></div>
@@ -2899,6 +2984,21 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="svp-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="svp-modal-titulo" style="margin:0;">Editar</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('svp-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <div class="formgrid" id="svp-modal-corpo" style="margin-top:12px;"></div>
+    <div class="svp-ajuda" id="svp-modal-info" style="margin-top:10px;"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('svp-modal')">Cancelar</button>
+      <button class="btn" onclick="salvarItemSp()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="parceiro-modal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -2936,6 +3036,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
       <div><label>Região atendida</label><input type="text" id="p-regiao"></div>
       <div><label>Selo Go Ladies</label><select id="p-selo"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+      <div id="p-plano-wrap" style="display:none;"><label>Plano</label><select id="p-plano"></select></div>
       <div><label>Status</label><select id="p-status"></select></div>
       <div class="full" id="p-prospeccao" style="display:none;"></div>
       <div><label title="A empresa é de mulher, tem gestão feminina ou equipe com mulheres?">Critério mulher</label><select id="p-criterio-mulher"></select></div>
@@ -4269,7 +4370,9 @@ function cadastroDaBusca(q){
 const ETAPA_CLASS = {"Novo lead":"indigo","Contato iniciado":"amber","Orçamento solicitado":"pink","Orçamento enviado":"pink","Negociação":"teal","Fechado - Ganho":"green","Cliente ativo":"green","Perdido":"red"};
 const URG_CLASS = {"Urgente":"urg-alta","Essa semana":"urg-media","Sem pressa":"urg-baixa"};
 
-const SERVICOS = [
+// Lista fixa de antes: vale enquanto o schema_servicos_planos.sql não roda;
+// depois o catálogo vem do banco (Serviços e Planos › Serviços) e substitui esta.
+let SERVICOS = [
   {nome:"Guincho e Reboque 24h", categoria:"SOS e Emergências"},
   {nome:"Socorro Mecânico/Elétrico no Local", categoria:"SOS e Emergências"},
   {nome:"Borracharia Móvel / Socorro para Pneus", categoria:"SOS e Emergências"},
@@ -4310,7 +4413,7 @@ const SERVICOS = [
   {nome:"Imprensa e outras propostas", categoria:"Parcerias e Patrocínio"},
   {nome:"Outro serviço", categoria:"Outros"},
 ];
-const CATEGORIAS = [...new Set(SERVICOS.map(s=>s.categoria))];
+let CATEGORIAS = [...new Set(SERVICOS.map(s=>s.categoria))];
 
 // Etapas do Checklist de Certificação (Anexo II do Termo de Adesão v1.0), na
 // ordem do funil. Só "Ativa" recebe oferta de corrida (cláusula 3.5 do Termo).
@@ -4950,6 +5053,8 @@ async function liberarPainelCompleto(user){
   try{ ultimaAba = localStorage.getItem("crm-ultima-aba"); }catch(_){}
   if(ultimaAba==="documentos"){ ultimaAba = "sede"; lembrarSubAba("sede", "documentos"); }
   if(ultimaAba==="leads" || ultimaAba==="clientes"){ lembrarSubAba("contatos", ultimaAba); ultimaAba = "contatos"; }
+  if(ultimaAba==="orcamentos" || ultimaAba==="pecas"){ lembrarSubAba("pedidos", ultimaAba); ultimaAba = "pedidos"; }
+  if(ultimaAba==="links"){ lembrarSubAba("transporte", "links"); ultimaAba = "transporte"; }
   if(ultimaAba && document.getElementById("tab-"+ultimaAba)){ mostrarAbaDireto(ultimaAba); restaurarSubAba(ultimaAba); }
   carregarFotosEquipe();
   await carregarDados();
@@ -5308,6 +5413,13 @@ async function carregarDadosInterno(){
     sb.from("tabelas_preco").select("*").order("ordem").order("id"),
     sb.from("datas_especiais").select("*").order("id"),
     sb.from("parabens_enviados").select("*").order("id"),
+    Promise.all([
+      sb.from("catalogo_grupos").select("*").order("ordem").order("grupo"),
+      sb.from("catalogo_servicos").select("*").order("ordem").order("id"),
+      sb.from("planos_parceria").select("*").order("ordem").order("id"),
+      sb.from("planos_beneficios").select("*").order("ordem").order("id"),
+      sb.from("cotas_patrocinio").select("*").order("ordem").order("id"),
+    ]),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -5439,6 +5551,9 @@ async function carregarDadosInterno(){
   const rparab = await q[19];
   parabensSqlFaltando = !!rparab.error;
   if(!rparab.error) parabensEnviados = rparab.data || [];
+  // Serviços e Planos (schema_servicos_planos.sql): sem o SQL o catálogo
+  // segue a lista fixa e Planos/Patrocínio mostram o aviso.
+  aplicarServicosPlanos(await q[20]);
 
   renderAll();
   marcarAtualizado();
@@ -6637,8 +6752,23 @@ function irParaAba(tab){
   if(tab==="documentos"){ irParaAba("sede"); mostrarSubSede("documentos"); return; }
   // Leads e Clientes viraram abas de Contatos (23/10/2026)
   if(tab==="leads" || tab==="clientes"){ irParaAba("contatos"); mostrarSubContatos(tab); return; }
+  // Menu reorganizado em 30/10/2026: Orçamentos e Peças em Pedidos, Links em
+  // Transporte, Planos e Patrocínio em Serviços e Planos
+  if(tab==="orcamentos" || tab==="pecas"){ irParaAba("pedidos"); mostrarSubPedidos(tab); return; }
+  if(tab==="links"){ irParaTransporte("links"); return; }
+  if(tab==="planos" || tab==="patrocinio"){ irParaAba("servicos"); mostrarSubServicos(tab); return; }
   const nav = document.querySelector(`.nav-item[data-tab="${tab}"]`);
   if(nav) nav.click();
+}
+function mostrarSubPedidos(nome){
+  lembrarSubAba("pedidos", nome);
+  document.querySelectorAll("#tab-pedidos .subnav-item[data-subped]").forEach(b=>b.classList.toggle("active", b.dataset.subped===nome));
+  ["orcamentos","pecas"].forEach(n=>{ document.getElementById("pedidos-"+n).style.display = n===nome ? "block" : "none"; });
+}
+function mostrarSubServicos(nome){
+  lembrarSubAba("servicos", nome);
+  document.querySelectorAll("#tab-servicos .subnav-item[data-subsp]").forEach(b=>b.classList.toggle("active", b.dataset.subsp===nome));
+  SVP_ABAS.forEach(n=>{ document.getElementById("svp-"+n).style.display = n===nome ? "block" : "none"; });
 }
 function irParaLeads(etapa){
   if(ETAPAS_CLIENTE.includes(etapa)){ irParaClientesGeral(); return; }
@@ -6969,7 +7099,7 @@ function renderLeads(){
 // Cada número é clicável: abre a lista do que está esperando, e cada item
 // leva pra origem. Tudo sai do que o CRM já carrega (sem SQL próprio).
 const ATENCAO_MENUS = ["conversas","leads","transporte","orcamentos","financeiro","gestao","sede","vagas"];
-const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Contatos › Leads", transporte:"Transporte", orcamentos:"Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
+const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Contatos › Leads", transporte:"Transporte", orcamentos:"Pedidos › Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
 const VIAGEM_BOLA_GO_LADIES = ["Solicitada","Cotando preço","Escolher motoristas","Preço recusado pela cliente"];
 let atencaoAtual = {};
 
@@ -7089,7 +7219,7 @@ function atualizarAtencao(){
     subLeads.classList.toggle("verm", l.some(i=>i.nivel==="vermelho"));
   }
   ATENCAO_MENUS.forEach(menu=>{
-    const nav = document.querySelector(`.nav-item[data-tab="${menu === "leads" ? "contatos" : menu}"]`);
+    const nav = document.querySelector(`.nav-item[data-tab="${({ leads:"contatos", orcamentos:"pedidos" })[menu] || menu}"]`);
     if(!nav) return;
     let b = nav.querySelector(".nav-conta");
     if(!b){ b = document.createElement("b"); b.className = "nav-conta"; nav.appendChild(b); }
@@ -7784,6 +7914,7 @@ function exportarParceirosCsv(){
   a.click();
   URL.revokeObjectURL(a.href);
 }
+function planoDaParceira(p){ return p && p.plano_id ? planosParceria.find(pl=>pl.id===p.plano_id) : null; }
 function renderParceiros(){
   const ft = document.getElementById("filter-tipo-parceria");
   if(!ft.dataset.filled){ fillSelect(ft, ["",...TIPO_PARCERIA], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
@@ -7792,6 +7923,14 @@ function renderParceiros(){
   if(!fs.dataset.filled){ fillSelect(fs, ["",...PARCEIRO_ETAPAS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
   const statusF = fs.value;
   const carolF = document.getElementById("filter-carol-parceiros").value;
+  // Plano (schema_servicos_planos.sql): o filtro só aparece depois do SQL
+  const fp = document.getElementById("filter-plano-parceiros");
+  const planoAtual = fp.value;
+  fp.style.display = servicosPlanosSqlFaltando ? "none" : "";
+  fp.innerHTML = `<option value="">Todos os planos</option><option value="sem">Sem plano</option>` + planosParceria.map(pl=>`<option value="${pl.id}">${escapeHtml(pl.nome)}</option>`).join("");
+  fp.value = [...fp.options].some(o=>o.value===planoAtual) ? planoAtual : "";
+  const planoF = servicosPlanosSqlFaltando ? "" : fp.value;
+  const planoOk = p => !planoF || (planoF==="sem" ? !p.plano_id : p.plano_id===Number(planoF));
   const carolOk = p => !carolF
     || (carolF==="cert" ? !!p.elegivel_certificacao
       : carolF==="confirmar" ? (p.criterio_mulher||"A confirmar")==="A confirmar"
@@ -7801,7 +7940,7 @@ function renderParceiros(){
     {label:"Carol · Google", campo:"classe_carol"}, {label:"Tipo de parceria", campo:"tipo_parceria"},
     {label:"Selo Go Ladies", campo:"selo"}, {label:"Status", campo:"status"}, {label:"Último contato", campo:null}, {label:"", campo:null}
   ], "parceiros");
-  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p)));
+  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p) && planoOk(p)));
   parceirosNaTela = lista;
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
@@ -7811,7 +7950,7 @@ function renderParceiros(){
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
       <td>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">${escapeHtml(p.classe_carol)}</span> `:""}${p.nota_google!=null?`<span style="font-size:var(--fs-xs);">${escapeHtml(String(p.nota_google).replace(".",","))} ★ <span style="color:var(--muted);">(${p.avaliacoes_google||0})</span></span>`:""}${p.elegivel_certificacao?'<br><span class="tag" style="font-size:var(--fs-xs);">Elegível à certificação</span>':""}${!p.classe_carol&&p.nota_google==null&&!p.elegivel_certificacao?"-":""}</td>
-      <td>${(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`).join(" ")||"-"}</td>
+      <td>${[planoDaParceira(p) ? `<span class="tag svp-tag-plano" title="Plano">${escapeHtml(planoDaParceira(p).nome)}</span>` : "", ...(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`)].filter(Boolean).join(" ")||"-"}</td>
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
       <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
       <td>${ultimoContato||"-"}</td>
@@ -7866,18 +8005,315 @@ function renderPecas(){
   }).join("") || `<tr><td class="empty" colspan="7">Nenhum pedido de peça registrado</td></tr>`;
 }
 
+// ===== SERVIÇOS E PLANOS (schema_servicos_planos.sql, 30/10/2026) =====
+// Catálogo de serviços, exigência de cada grupo, planos das parceiras (os),
+// benefícios e cotas de patrocínio, tudo editável aqui. O CRM é a fonte dos
+// preços; o documento Definições Go Ladies guarda as decisões e os motivos.
+// Sem o SQL, o catálogo segue a lista fixa (SERVICOS) e o resto mostra o aviso.
+const SVP_ABAS = ["servicos","planos","patrocinio"];
+const SVP_SITUACOES = ["Decidido","Proposta","Em aberto"];
+let catalogoGrupos = [], catalogoServicos = [], planosParceria = [], planosBeneficios = [], cotasPatrocinio = [];
+let servicosPlanosSqlFaltando = true;
+const svpOrdem = lista => [...(lista || [])].sort((a,b)=>(a.ordem||0)-(b.ordem||0) || String(a.id ?? a.grupo).localeCompare(String(b.id ?? b.grupo), "pt-BR", { numeric:true }));
+
+function aplicarServicosPlanos(rs){
+  const [rg, rs2, rp, rb, rc] = rs || [];
+  servicosPlanosSqlFaltando = [rg, rs2, rp, rb, rc].some(r=>!r || r.error);
+  if(servicosPlanosSqlFaltando) return;
+  catalogoGrupos = svpOrdem(rg.data);
+  catalogoServicos = svpOrdem(rs2.data);
+  planosParceria = svpOrdem(rp.data);
+  planosBeneficios = svpOrdem(rb.data);
+  cotasPatrocinio = svpOrdem(rc.data);
+  if(catalogoServicos.length){
+    SERVICOS = catalogoServicos.map(s=>({ id:s.id, nome:s.nome, categoria:s.grupo, ativo:s.ativo }));
+    CATEGORIAS = [...new Set(SERVICOS.filter(s=>s.ativo!==false).map(s=>s.categoria))];
+  }
+}
+async function recarregarServicosPlanos(){
+  const rs = await Promise.all([
+    sb.from("catalogo_grupos").select("*").order("ordem").order("grupo"),
+    sb.from("catalogo_servicos").select("*").order("ordem").order("id"),
+    sb.from("planos_parceria").select("*").order("ordem").order("id"),
+    sb.from("planos_beneficios").select("*").order("ordem").order("id"),
+    sb.from("cotas_patrocinio").select("*").order("ordem").order("id"),
+  ].map(c=>Promise.resolve(c)));
+  aplicarServicosPlanos(rs);
+  renderServicos();
+  renderParceiros();
+  aplicarRotulos();
+}
+// Lista de serviços dos formulários: só os ativos, mais o que o registro já tem
+// (assim um serviço desativado não some de um pedido antigo ao salvar).
+function servicosParaLista(atual){
+  const nomes = SERVICOS.filter(s=>s.ativo!==false || s.nome===atual).map(s=>s.nome);
+  if(atual && !nomes.includes(atual)) nomes.push(atual);
+  return nomes;
+}
+function svpQuando(iso){
+  if(!iso) return "";
+  const d = new Date(iso), z = n=>String(n).padStart(2,"0");
+  return `${z(d.getDate())}/${z(d.getMonth()+1)} (${["dom","seg","ter","qua","qui","sex","sáb"][d.getDay()]}) ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+function svpSituacao(s){
+  const cls = { "Decidido":"svp-sit-decidido", "Proposta":"svp-sit-proposta", "Em aberto":"svp-sit-aberto" }[s] || "";
+  return `<span class="tag ${cls}">${escapeHtml(s || "Proposta")}</span>`;
+}
+function svpPrecoPlano(p){
+  return p.preco_mes != null ? `${formatarMoedaBR(p.preco_mes)} / mês` : escapeHtml(p.preco_texto || "a definir");
+}
+function svpFundadoraPlano(p){
+  if(p.preco_fundadora != null && Number(p.meses_fundadora) > 0)
+    return `Fundadora: ${formatarMoedaBR(p.preco_fundadora)} / mês nos ${p.meses_fundadora} primeiros meses`;
+  return p.preco_mes != null ? "Sem desconto de fundadora" : "";
+}
+function svpValorBeneficio(v){
+  const s = String(v ?? "").trim();
+  if(!s) return `<span class="svp-def">a definir</span>`;
+  if(s.toLowerCase() === "sim") return `<span class="svp-sim"><svg class=ic aria-hidden=true><use href=#i-check /></svg> sim</span>`;
+  if(["não","nao"].includes(s.toLowerCase())) return `<span class="svp-nao">não</span>`;
+  return escapeHtml(s);
+}
+function svpContaParceiras(planoId){ return parceiros.filter(p=>p.plano_id===planoId).length; }
+function verParceirasDoPlano(planoId){
+  irParaAba("parceiros");
+  const f = document.getElementById("filter-plano-parceiros");
+  if(f){ f.value = String(planoId); renderParceiros(); }
+}
+function svpUltimaMudanca(lista){
+  const u = (lista || []).filter(x=>x.atualizado_em).sort((a,b)=>String(b.atualizado_em).localeCompare(String(a.atualizado_em)))[0];
+  return u ? `<p class="svp-ajuda" style="margin:10px 0 0;">Última mudança: ${svpQuando(u.atualizado_em)}${u.atualizado_por ? " por " + escapeHtml(u.atualizado_por) : ""}</p>` : "";
+}
+
 function renderServicos(){
+  const aviso = document.getElementById("svp-aviso-sql");
+  if(!aviso) return;
+  aviso.style.display = servicosPlanosSqlFaltando ? "" : "none";
+  aviso.innerHTML = `Falta rodar o <b>schema_servicos_planos.sql</b> no Supabase (SQL Editor do go-ladies-crm). Enquanto isso, o catálogo é a lista fixa de antes e não dá para editar; os planos e as cotas aparecem depois do SQL.`;
+  document.getElementById("svp-btn-novo-servico").style.display = servicosPlanosSqlFaltando ? "none" : "";
+  renderGruposServico();
+  const editavel = !servicosPlanosSqlFaltando;
   renderCabecalho("thead-servicos", [
-    {label:"Serviço", campo:"nome"}, {label:"Categoria", campo:"categoria"},
-    {label:"Vezes solicitado", campo:null}, {label:"Ticket médio (orçamentos aceitos)", campo:null}
+    {label:"Serviço", campo:"nome"}, {label:"Grupo", campo:"categoria"},
+    {label:"Vezes solicitado", campo:null}, {label:"Ticket médio (orçamentos aceitos)", campo:null}, {label:"", campo:null}
   ], "servicos");
   const lista = aplicarOrdenacao("servicos", SERVICOS);
   document.getElementById("servicos-body").innerHTML = lista.map(s=>{
     const qtd = leads.filter(l=>l.servico===s.nome && leadReal(l)).length;
     const aceitos = orcamentos.filter(o=>o.servico===s.nome && o.status==="Aceito" && o.valor_final!=null);
     const media = aceitos.length ? (aceitos.reduce((a,o)=>a+Number(o.valor_final),0)/aceitos.length) : null;
-    return `<tr><td>${s.nome}</td><td>${s.categoria}</td><td>${qtd}</td><td>${media?formatarMoedaBR(media):"-"}</td></tr>`;
+    return `<tr class="${editavel ? "tr-click" : ""} ${s.ativo===false ? "svp-inativa" : ""}" ${editavel ? `onclick="editarItemSp('servico', ${s.id})"` : ""}>
+      <td><strong>${escapeHtml(s.nome)}</strong>${s.ativo===false ? ' <span class="tag">desativado</span>' : ""}</td>
+      <td>${escapeHtml(s.categoria)}</td>
+      <td>${qtd ? `<a href="#" onclick="event.stopPropagation(); irParaLeadsServico(this.dataset.s); return false;" data-s="${escapeHtml(s.nome)}" title="Ver os leads desse serviço">${qtd}</a>` : 0}</td>
+      <td>${media?formatarMoedaBR(media):"-"}</td>
+      <td class="acoes-cel">${editavel ? `<button class="act act-edit" onclick="event.stopPropagation(); editarItemSp('servico', ${s.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button>` : ""}</td>
+    </tr>`;
+  }).join("") || `<tr><td class="empty" colspan="5">Nenhum serviço no catálogo</td></tr>`;
+  renderPlanos();
+  renderCotasPatrocinio();
+}
+function renderGruposServico(){
+  const box = document.getElementById("svp-grupos");
+  if(!box) return;
+  const grupos = servicosPlanosSqlFaltando ? CATEGORIAS.map(g=>({ grupo:g, exigencia:null })) : catalogoGrupos;
+  box.innerHTML = `<div class="svp-grupos">` + grupos.map((g, i)=>{
+    const n = SERVICOS.filter(s=>s.categoria===g.grupo && s.ativo!==false).length;
+    const clique = servicosPlanosSqlFaltando ? "" : `onclick="editarItemSp('grupo', ${i})" title="Editar a exigência"`;
+    return `<div class="svp-grupo ${servicosPlanosSqlFaltando ? "" : "clicavel"}" ${clique}>
+      <b>${escapeHtml(g.grupo)}</b>
+      <span>${g.exigencia ? escapeHtml(g.exigencia) : `<span class="svp-def">sem exigência a mais</span>`}</span>
+      <small>${n} serviço${n===1 ? "" : "s"}</small>
+    </div>`;
+  }).join("") + `</div>` + (servicosPlanosSqlFaltando ? "" : svpUltimaMudanca(catalogoGrupos));
+}
+function renderPlanos(){
+  const box = document.getElementById("svp-planos-conteudo");
+  if(!box) return;
+  if(servicosPlanosSqlFaltando){ box.innerHTML = `<p class="svp-def">Os planos aparecem aqui depois de rodar o schema_servicos_planos.sql.</p>`; return; }
+  if(!planosParceria.length){ box.innerHTML = `<p class="svp-def">Nenhum plano cadastrado. Clique em <b>+ Novo plano</b>.</p>`; return; }
+  const planos = planosParceria;
+  const cab = planos.map(p=>{
+    const n = svpContaParceiras(p.id);
+    return `<th class="svp-plano ${p.ativo ? "" : "svp-inativa"}">
+      <button type="button" class="svp-plano-nome" onclick="editarItemSp('plano', ${p.id})" title="Editar o plano">${escapeHtml(p.nome)} <svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button>
+      <div class="svp-preco">${svpPrecoPlano(p)}</div>
+      <div class="svp-fund">${svpFundadoraPlano(p)}</div>
+      <div class="svp-cab-linha">${svpSituacao(p.situacao)}${p.ativo ? "" : ' <span class="tag">desativado</span>'}</div>
+      <button type="button" class="svp-conta" onclick="verParceirasDoPlano(${p.id})" title="Abrir a lista das parceiras (os) nesse plano">${n} ${n===1 ? "parceira (o)" : "parceiras (os)"}</button>
+    </th>`;
   }).join("");
+  const beneficios = [...planosBeneficios.filter(b=>b.ativo), ...planosBeneficios.filter(b=>!b.ativo)];
+  const linhas = beneficios.map(b=>`<tr class="tr-click ${b.ativo ? "" : "svp-inativa"}" onclick="editarItemSp('beneficio', ${b.id})" title="Editar o benefício">
+      <td class="svp-ben">${escapeHtml(b.beneficio)}${b.ativo ? "" : ' <span class="tag">desativado</span>'}</td>
+      ${planos.map(p=>`<td class="${p.ativo ? "" : "svp-inativa"}">${svpValorBeneficio((b.valores || {})[p.id])}</td>`).join("")}
+    </tr>`).join("");
+  const obs = planos.some(p=>p.observacao)
+    ? `<tr class="svp-obs"><td class="svp-ben">Observação</td>${planos.map(p=>`<td>${p.observacao ? escapeHtml(p.observacao) : ""}</td>`).join("")}</tr>` : "";
+  box.innerHTML = `<div class="svp-rolagem"><table class="svp-tabela"><thead><tr><th class="svp-ben">Benefício</th>${cab}</tr></thead>
+    <tbody>${linhas || `<tr><td class="empty" colspan="${planos.length + 1}">Nenhum benefício cadastrado</td></tr>`}${obs}</tbody></table></div>`
+    + svpUltimaMudanca([...planosParceria, ...planosBeneficios]);
+}
+function renderCotasPatrocinio(){
+  const box = document.getElementById("svp-cotas-conteudo");
+  if(!box) return;
+  if(servicosPlanosSqlFaltando){ box.innerHTML = `<p class="svp-def">As cotas aparecem aqui depois de rodar o schema_servicos_planos.sql.</p>`; return; }
+  const cotas = [...cotasPatrocinio.filter(c=>c.ativo), ...cotasPatrocinio.filter(c=>!c.ativo)];
+  box.innerHTML = `<table class="tbl"><thead><tr><th>Cota</th><th>Valor de referência</th><th>Contrapartidas</th><th>Situação</th><th>Observação</th><th></th></tr></thead><tbody>`
+    + (cotas.map(c=>`<tr class="tr-click ${c.ativo ? "" : "svp-inativa"}" onclick="editarItemSp('cota', ${c.id})">
+        <td><strong>${escapeHtml(c.nome)}</strong>${c.ativo ? "" : ' <span class="tag">desativada</span>'}</td>
+        <td>${c.valor_referencia != null ? formatarMoedaBR(c.valor_referencia) : `<span class="svp-def">a definir</span>`}</td>
+        <td>${c.contrapartidas ? escapeHtml(c.contrapartidas) : `<span class="svp-def">a definir</span>`}</td>
+        <td>${svpSituacao(c.situacao)}</td>
+        <td>${c.observacao ? escapeHtml(c.observacao) : "-"}</td>
+        <td class="acoes-cel"><button class="act act-edit" onclick="event.stopPropagation(); editarItemSp('cota', ${c.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button></td>
+      </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhuma cota cadastrada</td></tr>`)
+    + `</tbody></table>` + svpUltimaMudanca(cotasPatrocinio);
+}
+
+// ── Editor (uma janela para os 5 tipos) ─────────────────────────────────
+// Salvar sempre pede confirmação com o antes e o depois e diz o efeito.
+const SVP_EFEITO_CRM = "Muda o que aparece aqui no CRM. Não muda o site nem o que uma parceira (o) já combinou.";
+const SVP_EDITORES = {
+  grupo: { tabela:"catalogo_grupos", titulo:"grupo de serviço", lista:()=>catalogoGrupos, nome:i=>i.grupo,
+    campos:()=>[
+      { k:"grupo", rot:"Grupo", tipo:"texto", soNovo:true },
+      { k:"ordem", rot:"Ordem na lista", tipo:"num" },
+      { k:"exigencia", rot:"Exigência a mais", tipo:"area", ajuda:"O que a parceira (o) desse grupo precisa cumprir além da curadoria. Vazio = sem exigência a mais." },
+    ], efeito:()=>SVP_EFEITO_CRM },
+  servico: { tabela:"catalogo_servicos", titulo:"serviço", lista:()=>catalogoServicos, nome:i=>i.nome,
+    campos:()=>[
+      { k:"nome", rot:"Nome", tipo:"texto", soNovo:true, cheio:true, ajuda:"O nome fica guardado nos pedidos e não muda depois de criado. Para trocar, desative este e crie outro." },
+      { k:"grupo", rot:"Grupo", tipo:"sel", opcoes:()=>catalogoGrupos.map(g=>g.grupo) },
+      { k:"ordem", rot:"Ordem na lista", tipo:"num" },
+      { k:"ativo", rot:"Ativo (aparece nas listas de serviço)", tipo:"check" },
+    ], efeito:(antes, d)=> (antes && antes.ativo && !d.ativo ? "Ele sai das listas de serviço; os pedidos antigos continuam com o nome. " : "")
+      + "Vale para as listas de serviço do CRM (Lead e Orçamento). O site e a assistente do WhatsApp têm lista própria e não mudam." },
+  plano: { tabela:"planos_parceria", titulo:"plano", lista:()=>planosParceria, nome:i=>i.nome,
+    campos:()=>[
+      { k:"nome", rot:"Nome do plano", tipo:"texto" },
+      { k:"situacao", rot:"Situação", tipo:"sel", opcoes:()=>[...SVP_SITUACOES] },
+      { k:"preco_mes", rot:"Preço por mês (R$)", tipo:"moeda", ajuda:"Vazio = ainda sem preço." },
+      { k:"preco_texto", rot:"Texto quando não tem preço", tipo:"texto", dica:"a definir depois do piloto" },
+      { k:"preco_fundadora", rot:"Preço de fundadora por mês (R$)", tipo:"moeda", ajuda:"Vazio = sem desconto de fundadora." },
+      { k:"meses_fundadora", rot:"Meses com preço de fundadora", tipo:"num" },
+      { k:"observacao", rot:"Observação", tipo:"area" },
+      { k:"ordem", rot:"Ordem (coluna)", tipo:"num" },
+      { k:"ativo", rot:"Ativo", tipo:"check" },
+    ], efeito:()=>SVP_EFEITO_CRM },
+  beneficio: { tabela:"planos_beneficios", titulo:"benefício", lista:()=>planosBeneficios, nome:i=>i.beneficio,
+    campos:()=>[
+      { k:"beneficio", rot:"Benefício", tipo:"texto", cheio:true },
+      ...planosParceria.map(p=>({ k:"v_" + p.id, rot:p.nome, tipo:"valor", ajuda:p.ativo ? "" : "plano desativado" })),
+      { k:"ordem", rot:"Ordem (linha)", tipo:"num" },
+      { k:"ativo", rot:"Ativo", tipo:"check" },
+    ], efeito:()=>SVP_EFEITO_CRM },
+  cota: { tabela:"cotas_patrocinio", titulo:"cota", lista:()=>cotasPatrocinio, nome:i=>i.nome,
+    campos:()=>[
+      { k:"nome", rot:"Nome da cota", tipo:"texto" },
+      { k:"situacao", rot:"Situação", tipo:"sel", opcoes:()=>[...SVP_SITUACOES] },
+      { k:"valor_referencia", rot:"Valor de referência (R$)", tipo:"moeda", ajuda:"Vazio = a definir." },
+      { k:"ordem", rot:"Ordem", tipo:"num" },
+      { k:"contrapartidas", rot:"Contrapartidas", tipo:"area" },
+      { k:"observacao", rot:"Observação", tipo:"area" },
+      { k:"ativo", rot:"Ativa", tipo:"check" },
+    ], efeito:()=>"Muda o que aparece aqui no CRM. O valor segue como referência até você confirmar com a patrocinadora." },
+};
+let svpEditando = null;   // { tipo, antes } ; antes null = novo
+function editarItemSp(tipo, ref){
+  if(servicosPlanosSqlFaltando){ alert("Falta rodar o schema_servicos_planos.sql no Supabase para editar."); return; }
+  const ed = SVP_EDITORES[tipo];
+  const lista = ed.lista();
+  const antes = ref == null ? null : (tipo === "grupo" ? lista[ref] : lista.find(x=>x.id===ref));
+  if(ref != null && !antes) return;
+  const maiorOrdem = lista.reduce((m, x)=>Math.max(m, Number(x.ordem) || 0), 0);
+  const base = antes ? { ...antes } : { ordem: maiorOrdem + 10, ativo: true, situacao: "Proposta", meses_fundadora: 3, valores: {} };
+  if(tipo === "beneficio") planosParceria.forEach(p=>{ base["v_" + p.id] = (base.valores || {})[p.id] ?? ""; });
+  svpEditando = { tipo, antes };
+  document.getElementById("svp-modal-titulo").textContent = antes ? `Editar ${ed.titulo}: ${ed.nome(antes)}` : `Novo ${ed.titulo}`;
+  document.getElementById("svp-modal-corpo").innerHTML = ed.campos().map(c=>{
+    const v = base[c.k];
+    const id = "svp-f-" + c.k;
+    const ajuda = c.ajuda ? `<div class="svp-campo-ajuda">${escapeHtml(c.ajuda)}</div>` : "";
+    const cls = c.cheio || c.tipo === "area" ? "full" : "";
+    if(c.tipo === "check") return `<div class="${cls}" style="display:flex; align-items:flex-end;"><label class="chip-check"><input type="checkbox" id="${id}" ${v ? "checked" : ""}> ${escapeHtml(c.rot)}</label></div>`;
+    let campo;
+    if(c.tipo === "area") campo = `<textarea id="${id}" rows="2">${escapeHtml(v || "")}</textarea>`;
+    else if(c.tipo === "sel"){
+      const ops = c.opcoes();
+      if(v && !ops.includes(v)) ops.push(v);
+      campo = `<select id="${id}">${ops.map(o=>`<option value="${escapeHtml(o)}" ${o===v ? "selected" : ""}>${escapeHtml(o)}</option>`).join("")}</select>`;
+    }
+    else if(c.tipo === "num" || c.tipo === "moeda") campo = `<input type="number" id="${id}" step="${c.tipo === "moeda" ? "0.01" : "1"}" min="0" value="${v ?? ""}">`;
+    else campo = `<input type="text" id="${id}" value="${escapeHtml(v ?? "")}" ${c.tipo === "valor" ? 'list="svp-valores" placeholder="a definir"' : ""} ${c.dica ? `placeholder="${escapeHtml(c.dica)}"` : ""} ${c.soNovo && antes ? "disabled" : ""}>`;
+    return `<div class="${cls}"><label for="${id}">${escapeHtml(c.rot)}</label>${campo}${ajuda}</div>`;
+  }).join("") + `<datalist id="svp-valores"><option value="sim"><option value="não"><option value="em breve"></datalist>`;
+  document.getElementById("svp-modal-info").innerHTML = antes && antes.atualizado_em
+    ? `Última mudança: ${svpQuando(antes.atualizado_em)}${antes.atualizado_por ? " por " + escapeHtml(antes.atualizado_por) : ""}` : "";
+  document.getElementById("svp-modal").classList.add("open");
+}
+function lerEditorSp(){
+  const { tipo, antes } = svpEditando;
+  const d = {};
+  SVP_EDITORES[tipo].campos().forEach(c=>{
+    const el = document.getElementById("svp-f-" + c.k);
+    if(!el || (c.soNovo && antes)) return;
+    if(c.tipo === "check") d[c.k] = el.checked;
+    else if(c.tipo === "num") d[c.k] = el.value === "" ? 0 : Math.round(Number(el.value));
+    else if(c.tipo === "moeda") d[c.k] = el.value === "" ? null : Number(el.value);
+    else d[c.k] = el.value.trim() || null;
+  });
+  if(tipo === "beneficio"){
+    const valores = { ...((antes && antes.valores) || {}) };
+    planosParceria.forEach(p=>{
+      const v = d["v_" + p.id]; delete d["v_" + p.id];
+      if(v) valores[p.id] = v; else delete valores[p.id];
+    });
+    d.valores = valores;
+  }
+  return d;
+}
+function svpFormatar(c, v){
+  if(c.tipo === "check") return v ? "sim" : "não";
+  if(c.tipo === "moeda") return v == null ? "vazio" : formatarMoedaBR(v);
+  if(v == null || v === "") return c.tipo === "valor" ? "a definir" : "vazio";
+  return String(v);
+}
+async function salvarItemSp(){
+  const { tipo, antes } = svpEditando;
+  const ed = SVP_EDITORES[tipo];
+  const d = lerEditorSp();
+  const nomeCampo = { grupo:"grupo", servico:"nome", plano:"nome", beneficio:"beneficio", cota:"nome" }[tipo];
+  if(!antes && !d[nomeCampo]){ alert("Preencha o nome antes de salvar, por favor."); return; }
+  if(antes && nomeCampo in d && !d[nomeCampo]){ alert("O nome não pode ficar vazio."); return; }
+  if(tipo === "servico" && !d.grupo){ alert("Escolha o grupo do serviço, por favor."); return; }
+  const campos = ed.campos();
+  const valorDe = (obj, c)=> c.tipo === "valor" ? ((obj.valores || {})[c.k.slice(2)] ?? "") : obj[c.k];
+  const depois = { ...(antes || {}), ...d };
+  const linhas = campos.filter(c=>!(c.soNovo && antes)).map(c=>{
+    const a = antes ? svpFormatar(c, valorDe(antes, c)) : null, b = svpFormatar(c, valorDe(depois, c));
+    if(antes) return a !== b ? `${c.rot}: ${a} → ${b}` : null;
+    return (c.k === "ordem" || b === "vazio") ? null : `${c.rot}: ${b}`;
+  }).filter(Boolean);
+  if(antes && !linhas.length){ closeModal("svp-modal"); return; }
+  const nome = antes ? ed.nome(antes) : d[nomeCampo];
+  const ok = confirm((antes ? `Salvar as mudanças em "${nome}"?` : `Criar o ${ed.titulo} "${nome}"?`)
+    + "\n\n" + linhas.join("\n") + "\n\n" + ed.efeito(antes, depois));
+  if(!ok) return;
+  let r;
+  if(!antes) r = await sb.from(ed.tabela).insert(d);
+  else if(tipo === "grupo") r = await sb.from(ed.tabela).update(d).eq("grupo", antes.grupo);
+  else r = await sb.from(ed.tabela).update(d).eq("id", antes.id);
+  if(r.error){
+    console.error("Serviços e Planos: erro ao salvar", r.error);
+    alert(r.error.code === "23505"
+      ? "Já existe um item com esse nome. Escolha outro nome, por favor."
+      : "Não deu para salvar agora. Confira a internet e tente de novo, por favor.");
+    return;
+  }
+  closeModal("svp-modal");
+  showToast("Salvo!");
+  await recarregarServicosPlanos();
 }
 
 // Aplica rótulos (data-label) em cada célula a partir do cabeçalho da tabela,
@@ -9484,6 +9920,8 @@ function restaurarSubAba(aba){
   else if(aba==="financeiro" && document.querySelector(`#tab-financeiro #subtab-${CSS.escape(sub)}`)) mostrarSubTabFinanceiro(sub);
   else if(aba==="sede" && SEDE_ABAS.includes(sub)) mostrarSubSede(sub);
   else if(aba==="contatos" && (sub==="leads" || sub==="clientes")) mostrarSubContatos(sub);
+  else if(aba==="pedidos" && (sub==="orcamentos" || sub==="pecas")) mostrarSubPedidos(sub);
+  else if(aba==="servicos" && SVP_ABAS.includes(sub)) mostrarSubServicos(sub);
 }
 function mostrarSubContatos(nome){
   lembrarSubAba("contatos", nome);
@@ -10840,6 +11278,8 @@ function rotuloAba(destino){
   }
   if(destino === "leads") return "Contatos › Leads";
   if(destino === "clientes") return "Contatos › Clientes";
+  const movidas = { orcamentos:"Pedidos › Orçamentos", pecas:"Pedidos › Peças", links:"Transporte › Links das motoristas", planos:"Serviços e Planos › Planos", patrocinio:"Serviços e Planos › Patrocínio" };
+  if(movidas[destino]) return movidas[destino];
   const nav = document.querySelector(`.nav-item[data-tab="${destino}"]`);
   return nav ? (nav.dataset.titulo || nav.textContent.trim()) : destino;
 }
@@ -11515,7 +11955,7 @@ function lerIndicada(pre, origem){
 }
 function fillServicoOptions(selected){
   const cat = document.getElementById("f-categoria").value;
-  const opts = SERVICOS.filter(s=>!cat || s.categoria===cat).map(s=>s.nome);
+  const opts = SERVICOS.filter(s=>(!cat || s.categoria===cat) && (s.ativo!==false || s.nome===selected)).map(s=>s.nome);
   const sel = document.getElementById("f-servico");
   fillSelect(sel, opts, selected||"");
   sel.insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
@@ -12412,6 +12852,10 @@ function openParceiroModal(id){
   });
   document.getElementById("p-regiao").value = p.regiao||"";
   document.getElementById("p-selo").value = p.selo||"nao";
+  document.getElementById("p-plano-wrap").style.display = servicosPlanosSqlFaltando ? "none" : "";
+  document.getElementById("p-plano").innerHTML = `<option value="">Sem plano</option>` + planosParceria.filter(pl=>pl.ativo || pl.id===p.plano_id)
+    .map(pl=>`<option value="${pl.id}">${escapeHtml(pl.nome)} (${pl.preco_mes != null ? formatarMoedaBR(pl.preco_mes) + " / mês" : escapeHtml(pl.preco_texto || "a definir")})</option>`).join("");
+  document.getElementById("p-plano").value = p.plano_id ? String(p.plano_id) : "";
   document.getElementById("p-status").value = p.status||"Prospecção";
   fillSelect(document.getElementById("p-criterio-mulher"), CRITERIO_MULHER, "A confirmar");
   document.getElementById("p-criterio-mulher").value = p.criterio_mulher||"A confirmar";
@@ -12461,6 +12905,7 @@ async function saveParceiro(){
     comissao: document.getElementById("p-comissao").value,
     notas: document.getElementById("p-notas").value,
   };
+  if(!servicosPlanosSqlFaltando){ const pl = document.getElementById("p-plano").value; payload.plano_id = pl ? Number(pl) : null; }
   Object.assign(payload, camposPJ("p", parceiros.find(x=>x.id===editingParceiroId)));
   const isNew = !editingParceiroId;
   const { data, error } = editingParceiroId
@@ -12742,7 +13187,7 @@ function toggleOrcamentoPago(){
 function openOrcamentoModal(id){
   editingOrcamentoId = id || null;
   document.getElementById("o-lead").innerHTML = leads.map(l=>`<option value="${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("");
-  fillSelect(document.getElementById("o-servico"), SERVICOS.map(s=>s.nome), "");
+  fillSelect(document.getElementById("o-servico"), servicosParaLista((orcamentos.find(x=>x.id===id) || {}).servico), "");
   document.getElementById("o-parceiro").innerHTML = parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("orcamento-modal-title").textContent = id ? "Editar orçamento" : "Novo orçamento";
   const o = orcamentos.find(x=>x.id===id) || {};
