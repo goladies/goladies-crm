@@ -6716,6 +6716,37 @@ function mensagemAniversario(c){
   if(c.empresa) return `Olá! Hoje é aniversário da ${c.nome}. Parabéns pela trajetória! Que venham muitos anos de parceria com a Go Ladies. 🩷\nJú Castilhos, Go Ladies`;
   return `Feliz aniversário, ${nome}! 🩷\nHoje o dia é seu, e toda a equipe Go Ladies deseja um ano cheio de caminhos bons, com segurança, saúde e alegria.\nUm abraço carinhoso,\nJú Castilhos e equipe Go Ladies`;
 }
+// Ficha aberta no dia do aniversário: faixa rosa embaixo do campo com o
+// Parabéns pronto (mesma mensagem do Dashboard). Nos outros dias não aparece.
+// Parceira não tem WhatsApp na ficha: usa o da ficha salva ou o 1º contato.
+function avisoAniversarioFicha(pre){
+  const inp = document.getElementById(pre+"-aniversario");
+  if(!inp) return;
+  let el = document.getElementById(pre+"-aniv-aviso");
+  if(!el){
+    el = document.createElement("div");
+    el.id = pre+"-aniv-aviso";
+    el.style.cssText = "display:none; margin-top:6px; padding:8px 10px; border-radius:8px; background:var(--rosa-bg, #fde7f3); color:var(--ink); font-size:var(--fs-sm); line-height:1.4;";
+    inp.insertAdjacentElement("afterend", el);
+    inp.addEventListener("change", ()=>avisoAniversarioFicha(pre));
+  }
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const prox = proximoAniversario(inp.value);
+  if(!prox || prox.getTime() !== hoje.getTime()){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const nome = (document.getElementById(pre+"-nome")||{}).value || "";
+  const empresa = ehEmpresaNoModal(pre);
+  let whats = (document.getElementById(pre+"-whatsapp")||{}).value || "";
+  if(pre==="p" && editingParceiroId){
+    const pa = parceiros.find(x=>x.id===editingParceiroId) || {};
+    whats = pa.whatsapp || (parceiroContatos.find(x=>x.parceiro_id===pa.id && x.numero)||{}).numero || "";
+  }
+  const link = linkWhats(whats, mensagemAniversario({nome, empresa}));
+  el.innerHTML = `<svg class=ic aria-hidden=true><use href=#i-cake /></svg> <b>${empresa ? "Hoje é o aniversário da empresa" : "Hoje é o aniversário dela"}</b> `
+    + (link
+      ? `<a class="act act-edit" href="${escapeHtml(link)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Parabéns no WhatsApp</a>`
+      : `<br><span style="color:var(--muted)">Cadastre o WhatsApp pra mandar os parabéns.</span>`);
+  el.style.display = "block";
+}
 
 function renderLeads(){
   const fe = document.getElementById("filter-etapa"), fc = document.getElementById("filter-categoria");
@@ -11292,6 +11323,7 @@ function openLeadModal(id){
   document.getElementById("fi-proximos").value = "";
   renderVendasLead();
   renderInteracoesLead();
+  avisoAniversarioFicha("f");
   document.getElementById("lead-modal").classList.add("open");
 }
 function toggleOrigemOutro(){
@@ -12254,6 +12286,7 @@ function openParceiroModal(id){
   renderLinksParceiro();
   renderEnderecosParceiro();
   renderInteracoesParceiro();
+  avisoAniversarioFicha("p");
   document.getElementById("parceiro-modal").classList.add("open");
 }
 async function saveParceiro(){
@@ -13635,6 +13668,7 @@ function openMotoristaModal(id){
   renderObservacoesMotorista();
   renderAvaliacoesMotorista();
   carregarPerfilMotorista();
+  avisoAniversarioFicha("mt");
   document.getElementById("motorista-modal").classList.add("open");
 }
 function renderDocumentosMotorista(){
@@ -14122,6 +14156,7 @@ function openClienteTransporteModal(id){
   carregarPreviewFoto("ct", c);
   document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) + htmlGarupaCliente(c) : "";
   renderAvaliacoesCliente();
+  avisoAniversarioFicha("ct");
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
 // O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
