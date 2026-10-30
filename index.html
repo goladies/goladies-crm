@@ -2940,7 +2940,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('lead-modal')">Sair</button>
-      <button class="btn" onclick="saveLead()">Salvar</button>
+      <button class="btn" id="btn-salvar-lead" onclick="saveLead()">Salvar</button>
     </div>
   </div>
 </div>
@@ -11967,9 +11967,23 @@ function fillServicoOptions(selected){
   sel.insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
   sel.value = selected && opts.includes(selected) ? selected : "";
 }
+// Lead aberto = ainda não virou cliente nem foi perdido.
+function leadAbertoMesmoWhats(whats){
+  return whats && leads.find(l=>mesmoTelefone(l.whatsapp, whats) && l.etapa !== "Perdido" && !ETAPAS_CLIENTE.includes(l.etapa));
+}
 async function saveLead(){
+  const btn = document.getElementById("btn-salvar-lead");
+  if(btn.disabled) return;
+  btn.disabled = true;
+  try { await salvarLead(); } finally { btn.disabled = false; }
+}
+async function salvarLead(){
   const nome = document.getElementById("f-nome").value.trim();
   if(!nome){ alert("Nome é obrigatório"); return; }
+  // Lead novo com WhatsApp que já tem lead aberto: pergunta antes de duplicar
+  // (Sandra #54P ficou com 2 leads do mesmo pedido, 30/10/2026).
+  const jaTem = !editingLeadId && leadAbertoMesmoWhats(document.getElementById("f-whatsapp").value);
+  if(jaTem && !confirm(`${jaTem.nome} já tem um lead aberto: ${jaTem.servico || jaTem.categoria || "sem serviço"} (${jaTem.etapa})${jaTem.data ? ", desde " + formatarDataBR(jaTem.data) : ""}.\n\nSe for um pedido diferente, clique em OK para criar outro lead.\nSe for o mesmo pedido, clique em Cancelar: nada é salvo e você pode atualizar o lead que já existe.`)) return;
   const payload = {
     nome, whatsapp: document.getElementById("f-whatsapp").value,
     email: document.getElementById("f-email").value,
