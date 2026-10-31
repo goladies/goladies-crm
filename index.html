@@ -9333,19 +9333,58 @@ function renderDetalheFt(pagos, tot){
     ${linhas ? `<tr style="font-weight:700;"><td colspan="4">Total</td><td>${formatarMoedaBR(tot.recebido)}</td><td>${formatarMoedaBR(tot.taxaMp)}</td><td>${formatarMoedaBR(tot.repassado)}</td><td>${formatarMoedaBR(tot.lucro)}</td></tr>` : ""}
     </tbody></table><p style="color:var(--muted); font-size:var(--fs-sm); margin:10px 0 0;">Entra pela data em que a cliente pagou. Clique numa linha para abrir a viagem.</p>`;
 }
-// Por motorista: mesma base dos cards (pagamentos da cliente no período).
-// A viagem é da motorista que aceitou; antiga sem confirmada só entra no nome
-// dela se tinha uma motorista marcada. Km e minutos do Google, ida + volta;
-// viagem sem km (ou sem tempo) fica fora daquela média.
+// Por motorista: o que fica pra cada motorista e pra Go Ladies. Tem período
+// próprio (Dia/Semana/Mês/Ano com ‹ ›, guardado em gl-ft-mot-periodo), pela
+// data em que a cliente pagou. A viagem é da motorista que aceitou; antiga sem
+// confirmada só entra no nome dela se tinha uma motorista marcada. Km e
+// minutos do Google, ida + volta; viagem sem km (ou sem tempo) fica fora
+// daquela média. Colunas ordenam no clique (sortState ftMotoristas/ftMotViagens).
 let ftMotoristaAberta = null;
+const ftMotPeriodo = { tipo: "mes", offset: 0 };
+try { const s = JSON.parse(localStorage.getItem("gl-ft-mot-periodo") || "null"); if(s && ["dia","semana","mes","ano"].includes(s.tipo)) ftMotPeriodo.tipo = s.tipo; } catch(e){}
+function escolherFtMotPeriodo(tipo){
+  ftMotPeriodo.tipo = tipo; ftMotPeriodo.offset = 0;
+  try { localStorage.setItem("gl-ft-mot-periodo", JSON.stringify({ tipo })); } catch(e){}
+  renderFinanceiroTransporte();
+}
+function moverFtMotPeriodo(dir){ ftMotPeriodo.offset += dir; renderFinanceiroTransporte(); }
+function intervaloFtMot(){
+  const { tipo, offset } = ftMotPeriodo, hoje = new Date(); hoje.setHours(0,0,0,0);
+  if(tipo === "dia"){ const d = somarDias(hoje, offset); return { ini: d, fim: d }; }
+  if(tipo === "semana"){ const seg = somarDias(hoje, -((hoje.getDay()+6)%7) + 7*offset); return { ini: seg, fim: somarDias(seg, 6) }; }
+  if(tipo === "ano"){ const a = hoje.getFullYear()+offset; return { ini: new Date(a,0,1), fim: new Date(a,11,31) }; }
+  const ini = new Date(hoje.getFullYear(), hoje.getMonth()+offset, 1);
+  return { ini, fim: new Date(ini.getFullYear(), ini.getMonth()+1, 0) };
+}
+function rotuloFtMot(r){
+  const t = ftMotPeriodo.tipo;
+  if(t === "dia") return dataComSemana(r.ini, true);
+  if(t === "ano") return String(r.ini.getFullYear());
+  if(t === "mes"){ const n = MESES_NOME[r.ini.getMonth()]; return `${n[0].toUpperCase()+n.slice(1)} de ${r.ini.getFullYear()}`; }
+  return `${dataComSemana(r.ini, false)} a ${dataComSemana(r.fim, r.fim.getFullYear() !== new Date().getFullYear())}`;
+}
+function ordenarFtMot(chave, campo, tipo){
+  const atual = sortState[chave];
+  // Número começa do maior; texto, de A a Z.
+  const dir = (atual && atual.campo === campo) ? -atual.dir : (tipo === "numero" ? -1 : 1);
+  sortState[chave] = { campo, dir, tipo };
+  try { localStorage.setItem("crm_ordenacao", JSON.stringify(sortState)); } catch(e){}
+  renderFinanceiroTransporte();
+}
 function abrirFtMotorista(chave){
   ftMotoristaAberta = ftMotoristaAberta === chave ? null : chave;
   renderFinanceiroTransporte();
   if(ftMotoristaAberta) document.getElementById("ft-mot-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
-function renderFtPorMotorista(pagos){
+function renderFtPorMotorista(){
   const el = document.getElementById("ft-motoristas");
   if(!el) return;
+  const r = intervaloFtMot(), iniIso = isoLocal(r.ini), fimIso = isoLocal(r.fim);
+  const pagos = pagamentosCliente.filter(p=>{
+    if(p.status !== "Pago" || !p.data_pagamento) return false;
+    const d = String(p.data_pagamento).slice(0,10);
+    return d >= iniIso && d <= fimIso;
+  });
   const minTotal = v => Number(v.duracao_prevista_min || 0) + Number(v.duracao_prevista_retorno_min || 0);
   const linhasViagem = pagos.map(p=>{
     const v = viagens.find(x=>x.id === p.viagem_id);
@@ -9355,55 +9394,83 @@ function renderFtPorMotorista(pagos){
     const recebido = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
     const repasse = repasseDaViagem(v, pg);
     return { p, v, pg, chave: motId ? String(motId) : "sem", recebido, taxa, repasse, gl: recebido - taxa - repasse,
-             km: v ? kmTotalViagem(v) : 0, min: v ? minTotal(v) : 0 };
+             km: v ? kmTotalViagem(v) : 0, min: v ? minTotal(v) : 0, horas: v ? minTotal(v) : 0,
+             data: String(p.data_pagamento || "").slice(0,10), viagem: v ? v.id : 0, cliente: v ? ftNomeCliente(v) : "" };
   });
   const grupos = {};
   linhasViagem.forEach(l=>{ (grupos[l.chave] = grupos[l.chave] || []).push(l); });
   const somar = (ls, f) => ls.reduce((s,l)=>s+f(l), 0);
-  // R$ por km/min só com as viagens que têm km/min; o title mostra a conta.
+  const kmTxt = n => n.toLocaleString("pt-BR", {maximumFractionDigits:1});
   // 250 min → "4h10"
   const horasTxt = m => { const t = Math.round(m); return Math.floor(t / 60) + "h" + String(t % 60).padStart(2, "0"); };
-  // Por hora = os mesmos minutos ÷ 60.
+  // R$ por km / min / hora só com as viagens que têm km ou tempo; guarda a
+  // conta pro title. Por hora = os mesmos minutos ÷ 60.
   const porUnid = (ls, campo, unid, f) => {
     const com = ls.filter(l=>l[campo] > 0);
     const qtd = somar(com, l=>l[campo]) / (unid === "h" ? 60 : 1), val = somar(com, f);
-    if(!qtd) return `<td title="Nenhuma viagem com ${unid === "km" ? "km" : "tempo"} lançado">—</td>`;
+    if(!qtd) return { valor: null, conta: `Nenhuma viagem com ${unid === "km" ? "km" : "tempo"} lançado` };
     const qtdTxt = unid === "min" ? Math.round(qtd).toLocaleString("pt-BR") : qtd.toLocaleString("pt-BR", {maximumFractionDigits: unid === "h" ? 2 : 1});
-    return `<td title="${escapeHtml(`${formatarMoedaBR(val)} ÷ ${qtdTxt} ${unid} (${com.length} de ${ls.length} viagens)`)}">${formatarMoedaBR(val / qtd)}</td>`;
-  };
-  const resumo = (ls, nome, chave) => {
-    const km = somar(ls, l=>l.km), min = somar(ls, l=>l.min);
-    const ativo = chave && ftMotoristaAberta === chave;
-    return `<tr${chave ? ` class="tr-click" title="Ver as viagens" onclick="abrirFtMotorista('${chave}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}` : ' style="font-weight:700;"'}>
-      <td>${nome}</td><td>${ls.length}</td>
-      <td>${km ? km.toLocaleString("pt-BR", {maximumFractionDigits:1}) : "—"}</td>
-      <td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td>
-      <td>${min ? horasTxt(min) : "—"}</td>
-      <td>${formatarMoedaBR(somar(ls, l=>l.recebido))}</td>
-      <td>${formatarMoedaBR(somar(ls, l=>l.repasse))}</td>
-      <td>${formatarMoedaBR(somar(ls, l=>l.gl))}</td>
-      ${porUnid(ls, "km", "km", l=>l.repasse)}${porUnid(ls, "min", "min", l=>l.repasse)}${porUnid(ls, "min", "h", l=>l.repasse)}
-      ${porUnid(ls, "km", "km", l=>l.gl)}${porUnid(ls, "min", "min", l=>l.gl)}${porUnid(ls, "min", "h", l=>l.gl)}</tr>`;
+    return { valor: val / qtd, conta: `${formatarMoedaBR(val)} ÷ ${qtdTxt} ${unid} (${com.length} de ${ls.length} viagens)` };
   };
   const nomeGrupo = chave => {
     if(chave === "sem") return "Sem motorista definida";
     const m = motoristas.find(x=>String(x.id) === chave);
-    return m ? escapeHtml(nomeCod(m)) : "Motorista #" + chave;
+    return m ? nomeCod(m) : "Motorista #" + chave;
   };
-  const chaves = Object.keys(grupos).sort((a,b)=>somar(grupos[b], l=>l.recebido) - somar(grupos[a], l=>l.recebido));
-  const corpo = chaves.map(c=>resumo(grupos[c], nomeGrupo(c), c)).join("")
-    + (linhasViagem.length ? resumo(linhasViagem, "Total", null) : "");
+  const MEDIAS = [["motKm","km","km","repasse"],["motMin","min","min","repasse"],["motH","min","h","repasse"],["glKm","km","km","gl"],["glMin","min","min","gl"],["glH","min","h","gl"]];
+  const resumo = (ls, chave) => {
+    const o = { chave, nome: chave ? nomeGrupo(chave) : "Total", viagens: ls.length, km: somar(ls, l=>l.km), min: somar(ls, l=>l.min), horas: somar(ls, l=>l.min),
+                recebido: somar(ls, l=>l.recebido), repasse: somar(ls, l=>l.repasse), gl: somar(ls, l=>l.gl), contas: {} };
+    MEDIAS.forEach(([k, campo, unid, f])=>{ const u = porUnid(ls, campo, unid, l=>l[f]); o[k] = u.valor; o.contas[k] = u.conta; });
+    return o;
+  };
+  if(!sortState.ftMotoristas) sortState.ftMotoristas = { campo: "recebido", dir: -1, tipo: "numero" };
+  if(!sortState.ftMotViagens) sortState.ftMotViagens = { campo: "data", dir: 1, tipo: "texto" };
+  // Sem valor (—) vai sempre pro fim, em qualquer direção.
+  const ordenar = (chave, lista) => {
+    const st = sortState[chave];
+    return [...lista].sort((a,b)=>{
+      const va = a[st.campo], vb = b[st.campo];
+      if(st.tipo === "numero"){
+        if(va == null && vb == null) return 0;
+        if(va == null) return 1;
+        if(vb == null) return -1;
+        return (va - vb) * st.dir;
+      }
+      return String(va ?? "").localeCompare(String(vb ?? ""), "pt-BR") * st.dir;
+    });
+  };
+  const cab = (chave, cols) => `<tr>${cols.map(([campo, label, tipo])=>{
+    const st = sortState[chave];
+    const seta = st && st.campo === campo ? (st.dir === 1 ? " ▲" : " ▼") : "";
+    return `<th style="cursor:pointer;" title="Ordenar" onclick="ordenarFtMot('${chave}','${campo}','${tipo}')">${label}${seta}</th>`;
+  }).join("")}</tr>`;
+  const moeda = (o, k) => `<td title="${escapeHtml(o.contas[k])}">${o[k] == null ? "—" : formatarMoedaBR(o[k])}</td>`;
+  const linhaResumo = o => {
+    const ativo = o.chave && ftMotoristaAberta === o.chave;
+    return `<tr${o.chave ? ` class="tr-click" title="Ver as viagens" onclick="abrirFtMotorista('${o.chave}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}` : ' style="font-weight:700;"'}>
+      <td>${escapeHtml(o.nome)}</td><td>${o.viagens}</td>
+      <td>${o.km ? kmTxt(o.km) : "—"}</td>
+      <td>${o.min ? Math.round(o.min).toLocaleString("pt-BR") : "—"}</td>
+      <td>${o.min ? horasTxt(o.min) : "—"}</td>
+      <td>${formatarMoedaBR(o.recebido)}</td>
+      <td>${formatarMoedaBR(o.repasse)}</td>
+      <td>${formatarMoedaBR(o.gl)}</td>
+      ${MEDIAS.map(([k])=>moeda(o, k)).join("")}</tr>`;
+  };
+  const corpo = ordenar("ftMotoristas", Object.keys(grupos).map(c=>resumo(grupos[c], c))).map(linhaResumo).join("")
+    + (linhasViagem.length ? linhaResumo(resumo(linhasViagem, null)) : "");
 
   // Viagens da motorista clicada
-  let detalhe = "";
+  let detalhe = `<div id="ft-mot-detalhe"></div>`;
   const abertas = ftMotoristaAberta && grupos[ftMotoristaAberta];
   if(abertas){
-    const linhas = [...abertas].sort((a,b)=>String(a.p.data_pagamento).localeCompare(String(b.p.data_pagamento))).map(l=>`
+    const linhas = ordenar("ftMotViagens", abertas).map(l=>`
       <tr${l.v ? ` class="tr-click" onclick="openViagemModal(${l.v.id})"` : ""}>
-        <td>${fmtDataBR(String(l.p.data_pagamento || "").slice(0,10)) || "-"}</td>
+        <td>${fmtDataBR(l.data) || "-"}</td>
         <td>${l.v ? "#" + l.v.id : "-"}</td>
-        <td>${l.v ? escapeHtml(ftNomeCliente(l.v)) : "-"}</td>
-        <td>${l.km ? l.km.toLocaleString("pt-BR", {maximumFractionDigits:1}) : "—"}</td>
+        <td>${l.v ? escapeHtml(l.cliente) : "-"}</td>
+        <td>${l.km ? kmTxt(l.km) : "—"}</td>
         <td>${l.min ? Math.round(l.min) : "—"}</td>
         <td>${l.min ? horasTxt(l.min) : "—"}</td>
         <td>${formatarMoedaBR(l.recebido)}</td>
@@ -9412,16 +9479,24 @@ function renderFtPorMotorista(pagos){
         <td><span style="color:${l.gl >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(l.gl)}</span></td></tr>`).join("");
     detalhe = `<div id="ft-mot-detalhe" style="margin-top:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0;">Viagens · ${nomeGrupo(ftMotoristaAberta)}</h3>
+        <h3 style="margin:0;">Viagens · ${escapeHtml(nomeGrupo(ftMotoristaAberta))}</h3>
         <button class="icon-btn" type="button" onclick="abrirFtMotorista(ftMotoristaAberta)" aria-label="Fechar">✕</button></div>
-      <table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>km</th><th>min</th><th>Horas</th><th>Recebido</th><th>Taxa</th><th>Repasse</th><th>Go Ladies</th></tr></thead>
+      <table class="tbl"><thead>${cab("ftMotViagens", [["data","Pago em","texto"],["viagem","Viagem","numero"],["cliente","Cliente","texto"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["taxa","Taxa","numero"],["repasse","PGT MOTORA","numero"],["gl","Go Ladies","numero"]])}</thead>
       <tbody>${linhas}</tbody></table></div>`;
-  } else detalhe = `<div id="ft-mot-detalhe"></div>`;
+  }
 
-  el.innerHTML = `<h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Por motorista</h3>
-    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. Go Ladies = recebido − taxa do Mercado Pago − repasse. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou. Passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
-    <table class="tbl"><thead><tr><th>Motorista</th><th>Viagens</th><th>km</th><th>min</th><th>Horas</th><th>Recebido</th><th>Repasse</th><th>Go Ladies</th><th>Motorista R$/km</th><th>Motorista R$/min</th><th>Motorista R$/hora</th><th>Go Ladies R$/km</th><th>Go Ladies R$/min</th><th>Go Ladies R$/hora</th></tr></thead>
-    <tbody>${corpo || `<tr><td class="empty" colspan="14">Nenhum pagamento de cliente no período</td></tr>`}</tbody></table>${detalhe}`;
+  const bt = (t, label) => `<button type="button" class="${ftMotPeriodo.tipo === t ? "ativo" : ""}" onclick="escolherFtMotPeriodo('${t}')">${label}</button>`;
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Por motorista</h3>
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <div class="periodo-grupo">${bt("dia","Dia")}${bt("semana","Semana")}${bt("mes","Mês")}${bt("ano","Ano")}</div>
+        <button type="button" class="periodo-seta" onclick="moverFtMotPeriodo(-1)" title="Período anterior" aria-label="Período anterior">‹</button>
+        <b style="font-size:var(--fs-sm);">${escapeHtml(rotuloFtMot(r))}</b>
+        <button type="button" class="periodo-seta" onclick="moverFtMotPeriodo(1)" title="Próximo período" aria-label="Próximo período">›</button>
+      </div></div>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. PGT GERAL = o que a cliente pagou; PGT MOTORA = o que vai pra motorista; Go Ladies = PGT GERAL − taxa do Mercado Pago − PGT MOTORA. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou; esse período vale só pra este quadro. Clique no título de uma coluna pra ordenar; passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
+    <table class="tbl"><thead>${cab("ftMotoristas", [["nome","Motorista","texto"],["viagens","Viagens","numero"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["repasse","PGT MOTORA","numero"],["gl","Go Ladies","numero"],["motKm","Motorista R$/km","numero"],["motMin","Motorista R$/min","numero"],["motH","Motorista R$/hora","numero"],["glKm","Go Ladies R$/km","numero"],["glMin","Go Ladies R$/min","numero"],["glH","Go Ladies R$/hora","numero"]])}</thead>
+    <tbody>${corpo || `<tr><td class="empty" colspan="14">Nenhum pagamento de cliente nesse período</td></tr>`}</tbody></table>${detalhe}`;
 }
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
@@ -9631,7 +9706,7 @@ function renderFinanceiroTransporte(){
     ftCard("sobra", formatarMoedaBR(lucro), `Resultado Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%`, corLucro),
   ].join("");
   renderDetalheFt(pagos, { recebido, taxaMp, repassado, lucro });
-  renderFtPorMotorista(pagos);
+  renderFtPorMotorista();
 
   // ── Validação de preço ──
   const fechadas = cotacoes.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
