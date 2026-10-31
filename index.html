@@ -2197,6 +2197,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
              Ladies, com R$ por km e por minuto de cada parte. -->
         <div class="panel" id="ft-motoristas"></div>
 
+        <!-- Comparar com outros apps (schema_corridas_outros_apps.sql,
+             31/10/2026): corridas de outros apps como estudo, ao lado da
+             Go Ladies. Não é dinheiro da Go Ladies. -->
+        <div class="panel" id="ft-outros-apps"></div>
+
         <!-- Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026): a cotação
              automática do CRM e do app escolhe a tabela pelo tipo de serviço e
              pelo horário de cada trecho. Salvar sempre pede confirmação. -->
@@ -4230,6 +4235,46 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <button class="btn ghost" id="btn-excluir-conferencia" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirConferencia()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('fin-conferir-modal')">Sair</button>
       <button class="btn" id="btn-salvar-conferencia" onclick="salvarConferencia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Corrida de outro app (Comparar com outros apps, 31/10/2026). Só número e
+     bairro: a Uber não deixa levar endereço nem print pra fora do app. -->
+<div class="modal-backdrop" id="outro-app-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="outro-app-modal-title" style="margin:0;">Corrida de outro app</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('outro-app-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    <p style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;">Estudo pra comparar com a Go Ladies. Não mexe em nenhum dinheiro: o que você recebe de outro app continua indo pelo Livro-caixa. Só bairro, nunca endereço.</p>
+    <div class="formgrid">
+      <div><label>Quem dirigiu? *</label><select id="oa-quem" onchange="oaMostrarCampos()"><option>Jú</option><option>Motorista parceira</option><option>Relato de grupo</option></select></div>
+      <div id="oa-motorista-wrap"><label>Motorista parceira</label><select id="oa-motorista"></select></div>
+      <div id="oa-grupo-wrap"><label>De onde veio o relato</label><input type="text" id="oa-grupo" placeholder="Ex.: grupo de motoristas de SC"></div>
+      <div><label>Foi feita? *</label><select id="oa-tipo"><option value="Feita">Feita</option><option value="Oferta">Só oferta (apareceu na tela)</option></select></div>
+      <div><label>App *</label><input type="text" id="oa-app" list="oa-apps" placeholder="Ex.: Uber"><datalist id="oa-apps"><option>Uber</option><option>99</option><option>inDrive</option></datalist></div>
+      <div><label>Categoria</label><input type="text" id="oa-categoria" placeholder="Ex.: UberX"></div>
+      <div><label>Data *</label><input type="date" id="oa-data"></div>
+      <div><label>Hora</label><input type="time" id="oa-hora"></div>
+      <div><label>Cidade</label><input type="text" id="oa-cidade" placeholder="Ex.: Porto Alegre"></div>
+      <div><label>Bairro de saída</label><input type="text" id="oa-bairro-saida"></div>
+      <div><label>Bairro de chegada</label><input type="text" id="oa-bairro-chegada"></div>
+      <div><label>Km</label><input type="number" step="0.01" min="0" id="oa-km"></div>
+      <div><label>Minutos</label><input type="number" step="0.01" min="0" id="oa-minutos"></div>
+      <div><label>Motorista recebeu (R$) *</label><input type="number" step="0.01" min="0" id="oa-recebeu"></div>
+      <div><label>Passageira pagou (R$)</label><input type="number" step="0.01" min="0" id="oa-pago"></div>
+      <div><label>Dinâmico incluso (R$)</label><input type="number" step="0.01" min="0" id="oa-dinamico"></div>
+      <div><label>Espera incluso (R$)</label><input type="number" step="0.01" min="0" id="oa-espera"></div>
+      <div><label>Promoção incluso (R$)</label><input type="number" step="0.01" min="0" id="oa-vantagens" placeholder="Ex.: Vantagens Pro"></div>
+      <div><label>Ajuste de ganhos (R$)</label><input type="number" step="0.01" min="0" id="oa-ajuste" placeholder="Quando o app completa"></div>
+      <div><label>De onde veio o número</label><select id="oa-fonte"><option>Detalhe da viagem</option><option>Resumo semanal</option><option>Print de grupo</option><option>Outro</option></select></div>
+      <div class="full"><label>Observação</label><input type="text" id="oa-obs"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="btn-excluir-outro-app" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirOutroApp()">Excluir</button>
+      <button class="btn ghost" onclick="closeModal('outro-app-modal')">Sair</button>
+      <button class="btn" onclick="salvarOutroApp()">Salvar</button>
     </div>
   </div>
 </div>
@@ -9394,17 +9439,16 @@ function abrirFtMotorista(chave){
   renderFinanceiroTransporte();
   if(ftMotoristaAberta) document.getElementById("ft-mot-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
-function renderFtPorMotorista(){
-  const el = document.getElementById("ft-motoristas");
-  if(!el) return;
-  const r = intervaloFtMot(), iniIso = isoLocal(r.ini), fimIso = isoLocal(r.fim);
+// Uma linha por viagem paga no período (data em que a cliente pagou). Usada
+// pelo Por motorista e pela linha "Go Ladies" do Comparar com outros apps.
+function ftLinhasGoLadies(iniIso, fimIso){
   const pagos = pagamentosCliente.filter(p=>{
     if(p.status !== "Pago" || !p.data_pagamento) return false;
     const d = String(p.data_pagamento).slice(0,10);
     return d >= iniIso && d <= fimIso;
   });
   const minTotal = v => Number(v.duracao_prevista_min || 0) + Number(v.duracao_prevista_retorno_min || 0);
-  const linhasViagem = pagos.map(p=>{
+  return pagos.map(p=>{
     const v = viagens.find(x=>x.id === p.viagem_id);
     const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
     const ids = v ? idsMotoristasViagem(v) : [];
@@ -9416,6 +9460,12 @@ function renderFtPorMotorista(){
              pctMot: recebido ? repasse / recebido * 100 : null, pctTaxa: recebido ? taxa / recebido * 100 : null, pctGl: recebido ? (recebido - taxa - repasse) / recebido * 100 : null,
              data: String(p.data_pagamento || "").slice(0,10), viagem: v ? v.id : 0, cliente: v ? ftNomeCliente(v) : "" };
   });
+}
+function renderFtPorMotorista(){
+  const el = document.getElementById("ft-motoristas");
+  if(!el) return;
+  const r = intervaloFtMot();
+  const linhasViagem = ftLinhasGoLadies(isoLocal(r.ini), isoLocal(r.fim));
   const grupos = {};
   linhasViagem.forEach(l=>{ (grupos[l.chave] = grupos[l.chave] || []).push(l); });
   const somar = (ls, f) => ls.reduce((s,l)=>s+f(l), 0);
@@ -9524,6 +9574,240 @@ function renderFtPorMotorista(){
     <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. PGT GERAL = o que a cliente pagou; PGT MOTORA = o que vai pra motorista; Go Ladies = PGT GERAL − taxa do Mercado Pago − PGT MOTORA. Os % são sobre o PGT GERAL: motorista + Mercado Pago + Go Ladies = 100%. A taxa do Mercado Pago sai inteira da parte da Go Ladies. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou; esse período vale só pra este quadro. Clique no título de uma coluna pra ordenar; passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
     <table class="tbl"><thead>${cab("ftMotoristas", [["nome","Motorista","texto"],["viagens","Viagens","numero"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["repasse","PGT MOTORA","numero"],["taxa","Mercado Pago","numero"],["gl","Go Ladies","numero"],["pctMot","% motorista","numero"],["pctTaxa","% Mercado Pago","numero"],["pctGl","% Go Ladies","numero"],["motKm","Motorista R$/km","numero"],["motMin","Motorista R$/min","numero"],["motH","Motorista R$/hora","numero"],["glKm","Go Ladies R$/km","numero"],["glMin","Go Ladies R$/min","numero"],["glH","Go Ladies R$/hora","numero"]])}</thead>
     <tbody>${corpo || `<tr><td class="empty" colspan="18">Nenhum pagamento de cliente nesse período</td></tr>`}</tbody></table>${detalhe}`;
+}
+// ── Comparar com outros apps (31/10/2026, schema_corridas_outros_apps.sql) ──
+// Corridas de outros apps guardadas como estudo, ao lado da Go Ladies. Parte 1:
+// corridas feitas com o que a passageira pagou (Jú ou motorista parceira),
+// com as mesmas colunas do Por motorista. Parte 2: relatos de grupo, só o que
+// a motorista recebe, nunca somados com a parte 1. Mesmo período do Por
+// motorista; faixa de km, dia/noite, cidade e app são deste quadro.
+let corridasOutrosApps = [];
+let outrosAppsCarregado = false, outrosAppsSqlFaltando = false;
+let ftOaAberta = null, editingOutroAppId = null;
+const ftOaFiltro = { km: "", turno: "", cidade: "", app: "" };
+const OA_AMOSTRA_MINIMA = 20;
+async function carregarCorridasOutrosApps(){
+  const { data, error } = await sb.from("corridas_outros_apps").select("*").order("data", { ascending: false });
+  outrosAppsSqlFaltando = !!error;
+  corridasOutrosApps = error ? [] : (data || []);
+  renderFtOutrosApps();
+}
+function filtrarFtOa(campo, valor){ ftOaFiltro[campo] = valor; ftOaAberta = null; renderFtOutrosApps(); }
+function abrirFtOa(chave){
+  ftOaAberta = ftOaAberta === chave ? null : chave;
+  renderFtOutrosApps();
+  if(ftOaAberta) document.getElementById("ft-oa-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+// Noite = das 22h às 6h. Corrida sem hora não entra quando o filtro é dia ou noite.
+const oaEhNoite = h => h ? (h >= "22:00" || h < "06:00") : null;
+function renderFtOutrosApps(){
+  const el = document.getElementById("ft-outros-apps");
+  if(!el) return;
+  const r = intervaloFtMot(), iniIso = isoLocal(r.ini), fimIso = isoLocal(r.fim);
+  const f = ftOaFiltro, faixa = f.km !== "" ? FT_FAIXAS_KM[f.km] : null;
+  const naFaixa = km => !faixa || (km > 0 && km >= faixa.min && km < faixa.max);
+  const kmTxt = n => n.toLocaleString("pt-BR", {maximumFractionDigits:1});
+  const horasTxt = m => { const t = Math.round(m); return Math.floor(t / 60) + "h" + String(t % 60).padStart(2, "0"); };
+  const somar = (ls, fn) => ls.reduce((s,l)=>s+fn(l), 0);
+  const pctTxt = n => n == null ? "—" : n.toFixed(1).replace(".", ",") + "%";
+
+  // Go Ladies: as mesmas viagens do Por motorista. Cidade e app não se aplicam.
+  const gl = ftLinhasGoLadies(iniIso, fimIso).filter(l=>{
+    if(!naFaixa(l.km)) return false;
+    if(f.turno){ const noite = !!(l.v && (l.v.adicional_noturno || l.v.adicional_noturno_retorno)); if((f.turno === "noite") !== noite) return false; }
+    return true;
+  }).map(l=>({ km: l.km, min: l.min, pago: l.recebido, mot: l.repasse, mp: l.taxa }));
+
+  const outros = corridasOutrosApps.filter(c=>{
+    const d = String(c.data || "").slice(0,10);
+    if(!d || d < iniIso || d > fimIso) return false;
+    if(!naFaixa(Number(c.km || 0))) return false;
+    if(f.turno){ const noite = oaEhNoite(String(c.hora || "").slice(0,5)); if(noite == null || (f.turno === "noite") !== noite) return false; }
+    if(f.cidade && c.cidade !== f.cidade) return false;
+    if(f.app && c.app !== f.app) return false;
+    return true;
+  });
+  const linhaOa = c => ({ c, km: Number(c.km || 0), min: Number(c.minutos || 0), mot: Number(c.recebeu || 0),
+                          pago: c.pago_passageira == null ? null : Number(c.pago_passageira), mp: null });
+  const parte1 = {}, parte2 = {};
+  let semPago = 0;
+  outros.forEach(c=>{
+    if(c.quem === "Relato de grupo"){
+      const k = "r|" + (c.grupo || "Sem origem") + "|" + c.tipo;
+      (parte2[k] = parte2[k] || []).push(linhaOa(c));
+    } else if(c.tipo === "Feita" && c.pago_passageira != null){
+      const k = "p|" + c.quem + "|" + c.app;
+      (parte1[k] = parte1[k] || []).push(linhaOa(c));
+    } else semPago++;
+  });
+  const nomeOa = k => {
+    const [lado, a, b] = k.split("|");
+    if(lado === "r") return `${a}, ${b === "Feita" ? "feitas" : "ofertas"}`;
+    return a === "Jú" ? `Jú na ${b}` : `Motoristas parceiras na ${b}`;
+  };
+  const subOa = ls => {
+    const cids = [...new Set(ls.map(l=>l.c.cidade).filter(Boolean))];
+    const ds = ls.map(l=>String(l.c.data || "").slice(0,10)).filter(Boolean).sort();
+    const dTxt = ds.length ? (ds[0] === ds[ds.length-1] ? fmtDataBR(ds[0]).slice(0,5) : `${fmtDataBR(ds[0]).slice(0,5)} a ${fmtDataBR(ds[ds.length-1]).slice(0,5)}`) : "";
+    return [cids.length > 2 ? cids.length + " cidades" : cids.join(", "), dTxt].filter(Boolean).join(" · ");
+  };
+  // R$ por km / min / hora só com as linhas que têm km ou tempo; a conta vai no title.
+  const porUnid = (ls, campo, unid, fn) => {
+    const com = ls.filter(l=>l[campo] > 0);
+    const qtd = somar(com, l=>l[campo]) / (unid === "h" ? 60 : 1), val = somar(com, fn);
+    if(!qtd) return { valor: null, conta: `Nenhuma com ${unid === "km" ? "km" : "tempo"}` };
+    const qtdTxt = unid === "min" ? Math.round(qtd).toLocaleString("pt-BR") : qtd.toLocaleString("pt-BR", {maximumFractionDigits: unid === "h" ? 2 : 1});
+    return { valor: val / qtd, conta: `${formatarMoedaBR(val)} ÷ ${qtdTxt} ${unid} (${com.length} de ${ls.length})` };
+  };
+  const moedaTd = u => `<td title="${escapeHtml(u.conta)}">${u.valor == null ? "—" : formatarMoedaBR(u.valor)}</td>`;
+  const pctTd = (val, base) => `<td title="${escapeHtml(base ? `${formatarMoedaBR(val)} ÷ ${formatarMoedaBR(base)}` : "Sem o valor da passageira")}">${pctTxt(base ? val / base * 100 : null)}</td>`;
+
+  // Parte 1: Plataforma = PGT GERAL − PGT MOTORA (na Go Ladies, Go Ladies + Mercado Pago).
+  const linha1 = (chave, nome, sub, ls, ehGl) => {
+    const pago = somar(ls, l=>l.pago), mot = somar(ls, l=>l.mot), plat = pago - mot, km = somar(ls, l=>l.km), min = somar(ls, l=>l.min);
+    const ativo = !ehGl && ftOaAberta === chave;
+    const aviso = !ehGl && ls.length < OA_AMOSTRA_MINIMA ? `<div style="color:var(--c-amber); font-size:var(--fs-xs);">${ls.length} de ${OA_AMOSTRA_MINIMA} corridas: ainda não prova</div>` : "";
+    const attrs = ehGl ? ` title="Viagem por viagem no Por motorista, acima" style="font-weight:600;"`
+                       : ` class="tr-click" title="Ver as corridas" onclick="abrirFtOa('${escapeHtml(chave)}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}`;
+    return `<tr${attrs}>
+      <td style="min-width:160px;"><strong${ehGl ? ' style="color:var(--pink, #c2187a);"' : ""}>${escapeHtml(nome)}</strong><div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(sub)}</div>${aviso}</td>
+      <td>${ls.length}</td><td>${km ? kmTxt(km) : "—"}</td><td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
+      <td>${formatarMoedaBR(pago)}</td><td>${formatarMoedaBR(mot)}</td>
+      <td title="${ehGl ? "Taxa do cartão, já dentro de Plataforma" : "Nos outros apps a taxa do cartão já está dentro da parte do app"}">${ehGl ? formatarMoedaBR(somar(ls, l=>l.mp)) : "—"}</td>
+      <td title="${escapeHtml(`${formatarMoedaBR(pago)} − ${formatarMoedaBR(mot)}`)}">${formatarMoedaBR(plat)}</td>
+      ${pctTd(mot, pago)}${pctTd(plat, pago)}
+      ${moedaTd(porUnid(ls, "km", "km", l=>l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.mot))}
+      ${moedaTd(porUnid(ls, "km", "km", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.pago - l.mot))}</tr>`;
+  };
+  const corpo1 = (gl.length ? linha1("gl", "Go Ladies", rotuloFtMot(r), gl, true) : "")
+    + Object.keys(parte1).sort().map(k=>linha1(k, nomeOa(k), subOa(parte1[k]), parte1[k], false)).join("");
+
+  // Parte 2: só o que a motorista recebe. % do app só com as que têm o valor da passageira.
+  const linha2 = k => {
+    const ls = parte2[k], mot = somar(ls, l=>l.mot), km = somar(ls, l=>l.km), min = somar(ls, l=>l.min);
+    const comPago = ls.filter(l=>l.pago != null), pagoC = somar(comPago, l=>l.pago), motC = somar(comPago, l=>l.mot);
+    const ativo = ftOaAberta === k;
+    return `<tr class="tr-click" title="Ver as corridas" onclick="abrirFtOa('${escapeHtml(k)}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}>
+      <td style="min-width:160px;"><strong>${escapeHtml(nomeOa(k))}</strong><div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(subOa(ls))}</div></td>
+      <td>${ls.length}</td><td>${km ? kmTxt(km) : "—"}</td><td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
+      <td>${formatarMoedaBR(mot)}</td>
+      <td title="${escapeHtml(comPago.length ? `${formatarMoedaBR(pagoC - motC)} ÷ ${formatarMoedaBR(pagoC)}, só ${comPago.length} de ${ls.length} têm o valor da passageira` : "Nenhuma com o valor da passageira")}">${comPago.length ? pctTxt(pagoC ? (pagoC - motC) / pagoC * 100 : null) + ` <span style="color:var(--muted); font-size:var(--fs-xs);">(${comPago.length} de ${ls.length})</span>` : "—"}</td>
+      ${moedaTd(porUnid(ls, "km", "km", l=>l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.mot))}</tr>`;
+  };
+  const corpo2 = Object.keys(parte2).sort().map(linha2).join("");
+
+  // Corridas da linha clicada
+  const aberta = ftOaAberta && (parte1[ftOaAberta] || parte2[ftOaAberta]);
+  const detalhe = aberta ? `<div id="ft-oa-detalhe" style="margin-top:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">Corridas · ${escapeHtml(nomeOa(ftOaAberta))}</h3>
+        <button class="icon-btn" type="button" onclick="abrirFtOa(ftOaAberta)" aria-label="Fechar">✕</button></div>
+      <table class="tbl"><thead><tr><th>Data</th><th>Hora</th><th>App</th><th>De › para</th><th>Feita?</th><th>km</th><th>min</th><th>Motorista recebeu</th><th>Passageira pagou</th><th>% do app</th><th>Motorista R$/km</th></tr></thead>
+      <tbody>${[...aberta].sort((a,b)=>String(b.c.data || "").localeCompare(String(a.c.data || "")) || String(b.c.hora || "").localeCompare(String(a.c.hora || ""))).map(({ c, km, min, mot, pago })=>{
+        const d = String(c.data || "").slice(0,10);
+        const trajeto = c.bairro_saida || c.bairro_chegada ? `${c.bairro_saida || "?"} › ${c.bairro_chegada || "?"}` : (c.cidade || "-");
+        return `<tr class="tr-click" title="Abrir a corrida" onclick="abrirOutroApp(${c.id})">
+          <td>${d ? dataComSemana(new Date(d + "T12:00:00"), false) : "-"}</td><td>${c.hora ? String(c.hora).slice(0,5) : "-"}</td>
+          <td>${escapeHtml([c.app, c.categoria].filter(Boolean).join(" "))}</td><td>${escapeHtml(trajeto)}</td><td>${escapeHtml(c.tipo)}</td>
+          <td>${km ? kmTxt(km) : "—"}</td><td>${min ? Math.round(min) : "—"}</td><td>${formatarMoedaBR(mot)}</td>
+          <td>${pago == null ? "—" : formatarMoedaBR(pago)}</td>
+          <td title="${escapeHtml(pago ? `(${formatarMoedaBR(pago)} − ${formatarMoedaBR(mot)}) ÷ ${formatarMoedaBR(pago)}` : "Sem o valor da passageira")}"${pago != null && pago < mot ? ' style="color:var(--c-green);"' : ""}>${pctTxt(pago ? (pago - mot) / pago * 100 : null)}</td>
+          <td title="${escapeHtml(km ? `${formatarMoedaBR(mot)} ÷ ${kmTxt(km)} km` : "Sem km")}">${km ? formatarMoedaBR(mot / km) : "—"}</td></tr>`;
+      }).join("")}</tbody></table></div>` : `<div id="ft-oa-detalhe"></div>`;
+
+  const sel = (campo, opcoes, rotulo) => `<select aria-label="${rotulo}" onchange="filtrarFtOa('${campo}', this.value)">${opcoes.map(([v, t])=>`<option value="${escapeHtml(v)}"${String(f[campo]) === String(v) ? " selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select>`;
+  const cidades = [...new Set(corridasOutrosApps.map(c=>c.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b, "pt-BR"));
+  const apps = [...new Set(corridasOutrosApps.map(c=>c.app).filter(Boolean))].sort((a,b)=>a.localeCompare(b, "pt-BR"));
+  const bt = (t, label) => `<button type="button" class="${ftMotPeriodo.tipo === t ? "ativo" : ""}" onclick="escolherFtMotPeriodo('${t}')">${label}</button>`;
+  const cab1 = ["","Viagens","km","min","Horas","PGT GERAL","PGT MOTORA","Mercado Pago","Plataforma","% motorista","% plataforma","Motorista R$/km","Motorista R$/min","Motorista R$/hora","Plataforma R$/km","Plataforma R$/min","Plataforma R$/hora"];
+  const cab2 = ["","Corridas","km","min","Horas","Motorista recebeu","% do app","Motorista R$/km","Motorista R$/min","Motorista R$/hora"];
+  const vazio = (n, txt) => `<tr><td class="empty" colspan="${n}">${txt}</td></tr>`;
+
+  el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-arrows-left-right /></svg> Comparar com outros apps</h3>
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <div class="periodo-grupo">${bt("dia","Dia")}${bt("semana","Semana")}${bt("mes","Mês")}${bt("ano","Ano")}</div>
+        <button type="button" class="periodo-seta" onclick="moverFtMotPeriodo(-1)" title="Período anterior" aria-label="Período anterior">‹</button>
+        <b style="font-size:var(--fs-sm);">${escapeHtml(rotuloFtMot(r))}</b>
+        <button type="button" class="periodo-seta" onclick="moverFtMotPeriodo(1)" title="Próximo período" aria-label="Próximo período">›</button>
+        <button type="button" class="btn small" onclick="abrirOutroApp(null)"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Corrida de outro app</button>
+      </div></div>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 10px;">Estudo: corridas de outros apps ao lado da Go Ladies. Não é dinheiro da Go Ladies e não entra no Por motorista, no Livro-caixa nem no fechamento. O período é o mesmo do Por motorista (mudar aqui muda lá). Cidade e app valem só pros outros apps.</p>
+    ${outrosAppsSqlFaltando ? `<p class="sim-nota">Falta rodar o <b>schema_corridas_outros_apps.sql</b> no Supabase (SQL Editor) pra aparecerem as corridas de outros apps.</p>` : ""}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      ${sel("km", [["", "Todas as faixas de km"], ...FT_FAIXAS_KM.map((x,i)=>[String(i), x.rotulo])], "Faixa de km")}
+      ${sel("turno", [["", "Dia e noite"], ["dia", "Só de dia (6h às 22h)"], ["noite", "Só à noite (22h às 6h)"]], "Dia ou noite")}
+      ${sel("cidade", [["", "Todas as cidades"], ...cidades.map(c=>[c, c])], "Cidade")}
+      ${sel("app", [["", "Todos os apps"], ...apps.map(a=>[a, a])], "App")}
+    </div>
+    <h4 style="margin:14px 0 4px; font-size:var(--fs-md);">1. Comparação, conta completa</h4>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:0 0 8px;">Corridas feitas, com o que a passageira pagou. PGT GERAL = o que a passageira (ou cliente) pagou; PGT MOTORA = o que ficou com a motorista; Plataforma = PGT GERAL − PGT MOTORA (na Go Ladies, a parte da Go Ladies mais a taxa do Mercado Pago; nos outros apps, a taxa do cartão já está dentro). Os % são sobre o PGT GERAL. Horas: Go Ladies = tempo previsto pelo Google (ida e volta pagas, quando houver); outros apps = tempo real da corrida. Nenhum conta o tempo indo buscar a passageira. Passe o mouse num valor pra ver a conta; clique numa linha pra ver as corridas.${semPago ? ` ${semPago} corrida${semPago > 1 ? "s" : ""} feita${semPago > 1 ? "s" : ""} sem o valor da passageira ficou${semPago > 1 ? "aram" : ""} fora desta parte.` : ""}</p>
+    <table class="tbl"><thead><tr>${cab1.map(t=>`<th>${t}</th>`).join("")}</tr></thead>
+    <tbody>${corpo1 || vazio(cab1.length, "Nada nesse período com esses filtros")}</tbody></table>
+    <h4 style="margin:18px 0 4px; font-size:var(--fs-md);">2. Relatos de outras motoristas</h4>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:0 0 8px;">Só o que a motorista recebe; nunca somado com a parte 1. Prints de grupo de reclamação mostram o problema, não a média. Oferta = o que o app propôs na tela, não corrida feita; algumas incluem o km até o embarque.</p>
+    <table class="tbl"><thead><tr>${cab2.map(t=>`<th>${t}</th>`).join("")}</tr></thead>
+    <tbody>${corpo2 || vazio(cab2.length, "Nenhum relato nesse período com esses filtros")}</tbody></table>
+    ${detalhe}`;
+}
+function oaMostrarCampos(){
+  const q = document.getElementById("oa-quem").value;
+  document.getElementById("oa-motorista-wrap").style.display = q === "Motorista parceira" ? "" : "none";
+  document.getElementById("oa-grupo-wrap").style.display = q === "Relato de grupo" ? "" : "none";
+}
+function abrirOutroApp(id){
+  if(outrosAppsSqlFaltando){ alert("Falta rodar o schema_corridas_outros_apps.sql no Supabase (SQL Editor)."); return; }
+  editingOutroAppId = id || null;
+  const c = corridasOutrosApps.find(x=>x.id === id) || {};
+  const val = (k, v) => { document.getElementById(k).value = v ?? ""; };
+  val("oa-quem", c.quem || "Jú");
+  document.getElementById("oa-motorista").innerHTML = `<option value="">Escolha</option>` + motoristas.map(m=>`<option value="${m.id}">${escapeHtml(nomeCod(m))}</option>`).join("");
+  val("oa-motorista", c.motorista_id);
+  val("oa-grupo", c.grupo); val("oa-tipo", c.tipo || "Feita"); val("oa-app", c.app); val("oa-categoria", c.categoria);
+  val("oa-data", c.data ? String(c.data).slice(0,10) : hojeLocalISO()); val("oa-hora", c.hora ? String(c.hora).slice(0,5) : "");
+  val("oa-cidade", c.id ? c.cidade : "Porto Alegre"); val("oa-bairro-saida", c.bairro_saida); val("oa-bairro-chegada", c.bairro_chegada);
+  val("oa-km", c.km); val("oa-minutos", c.minutos); val("oa-recebeu", c.recebeu); val("oa-pago", c.pago_passageira);
+  val("oa-dinamico", c.dinamico); val("oa-espera", c.espera); val("oa-vantagens", c.vantagens); val("oa-ajuste", c.ajuste);
+  val("oa-fonte", c.fonte || "Detalhe da viagem"); val("oa-obs", c.observacao);
+  document.getElementById("outro-app-modal-title").textContent = id ? "Editar corrida de outro app" : "Corrida de outro app";
+  document.getElementById("btn-excluir-outro-app").style.display = id ? "inline-block" : "none";
+  oaMostrarCampos();
+  document.getElementById("outro-app-modal").classList.add("open");
+}
+async function salvarOutroApp(){
+  const txt = k => document.getElementById(k).value.trim() || null;
+  const num = k => { const v = document.getElementById(k).value; return v === "" ? null : Number(v); };
+  const quem = document.getElementById("oa-quem").value;
+  const payload = {
+    quem, motorista_id: quem === "Motorista parceira" ? (num("oa-motorista") || null) : null,
+    grupo: quem === "Relato de grupo" ? txt("oa-grupo") : null,
+    tipo: document.getElementById("oa-tipo").value, app: txt("oa-app"), categoria: txt("oa-categoria"),
+    data: txt("oa-data"), hora: txt("oa-hora"), cidade: txt("oa-cidade"),
+    bairro_saida: txt("oa-bairro-saida"), bairro_chegada: txt("oa-bairro-chegada"),
+    km: num("oa-km"), minutos: num("oa-minutos"), recebeu: num("oa-recebeu"), pago_passageira: num("oa-pago"),
+    dinamico: num("oa-dinamico"), espera: num("oa-espera"), vantagens: num("oa-vantagens"), ajuste: num("oa-ajuste"),
+    fonte: document.getElementById("oa-fonte").value, observacao: txt("oa-obs"),
+  };
+  if(!payload.app || !payload.data || payload.recebeu == null){ alert("Preencha o app, a data e quanto a motorista recebeu."); return; }
+  const { error } = editingOutroAppId
+    ? await sb.from("corridas_outros_apps").update(payload).eq("id", editingOutroAppId)
+    : await sb.from("corridas_outros_apps").insert(payload);
+  if(error){ alert("Não deu pra salvar a corrida agora. Confira a internet e tente de novo."); console.error(error); return; }
+  closeModal("outro-app-modal");
+  showToast(editingOutroAppId ? "Corrida atualizada." : "Corrida guardada no comparativo.");
+  carregarCorridasOutrosApps();
+}
+async function excluirOutroApp(){
+  const c = corridasOutrosApps.find(x=>x.id === editingOutroAppId);
+  if(!c) return;
+  const d = String(c.data || "").slice(0,10);
+  const quando = d ? dataComSemana(new Date(d + "T12:00:00"), false) : "sem data";
+  if(!confirm(`Excluir a corrida de ${quando} na ${c.app} (motorista recebeu ${formatarMoedaBR(Number(c.recebeu || 0))})?\n\nEla sai do Comparar com outros apps. Não mexe em nenhum dinheiro nem no Livro-caixa.`)) return;
+  const { error } = await sb.from("corridas_outros_apps").delete().eq("id", c.id);
+  if(error){ alert("Não deu pra excluir agora. Tente de novo."); console.error(error); return; }
+  closeModal("outro-app-modal");
+  showToast("Corrida excluída do comparativo.");
+  carregarCorridasOutrosApps();
 }
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
@@ -9734,6 +10018,8 @@ function renderFinanceiroTransporte(){
   ].join("");
   renderDetalheFt(pagos, { recebido, taxaMp, repassado, lucro });
   renderFtPorMotorista();
+  renderFtOutrosApps();
+  if(!outrosAppsCarregado){ outrosAppsCarregado = true; carregarCorridasOutrosApps(); }
 
   // ── Validação de preço ──
   const fechadas = cotacoes.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
