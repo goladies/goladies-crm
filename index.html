@@ -3768,6 +3768,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <div id="vg-pass-destino" class="vg-pass-lista"></div>
           </div>
           <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
+          <div id="vg-km-real" class="dica" style="display:none; margin-top:8px; line-height:1.55;"></div>
         </div>
         <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-adicional-noturno')"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
@@ -17986,6 +17987,47 @@ setInterval(()=>{
   carregarChatCRM(editingViagemId, false);
 }, 10000);
 
+// Km real (31/10/2026): o app da motorista mede pelo GPS do código até
+// finalizar (schema_km_real_viagem.sql). Mostra previsto × real e a conta:
+// o que veio do GPS e o que foi estimado nos buracos (app em segundo plano).
+function mostrarKmRealViagem(v){
+  const box = document.getElementById("vg-km-real");
+  const kmTxt = n => String(Math.round(n * 10) / 10).replace(".", ",") + " km";
+  const horaTxt = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+  const linha = (rotulo, real, fonte, rota, previsto, de, ate) => {
+    if(real == null) return "";
+    let t = `<b>${rotulo}: ${kmTxt(Number(real))} reais</b>`;
+    if(previsto){
+      const dif = Number(real) - Number(previsto);
+      const pct = Math.round(dif / Number(previsto) * 100);
+      t += ` × ${kmTxt(Number(previsto))} previstos (${dif >= 0 ? "+" : "−"}${kmTxt(Math.abs(dif))}, ${pct >= 0 ? "+" : "−"}${Math.abs(pct)}%)`;
+    }
+    if(de && ate){
+      const min = Math.round((new Date(ate) - new Date(de)) / 60000);
+      if(min > 0 && min < 24 * 60) t += ` · ${min} min (${horaTxt(de)} → ${horaTxt(ate)})`;
+    }
+    if(rota){
+      t += `<br>Conta: ${kmTxt(rota.km_gps || 0)} com GPS`;
+      if(rota.buracos) t += ` + ${kmTxt(rota.km_buracos || 0)} estimados em ${rota.buracos} ${rota.buracos === 1 ? "trecho" : "trechos"} sem GPS (${rota.min_sem_gps || 0} min com o app em segundo plano; linha reta × ${String(rota.fator_buraco || 1.3).replace(".", ",")})`;
+      t += fonte === "estimado" ? ". <b>Estimado</b>: mais de 20% veio sem GPS." : ".";
+      const pts = rota.pontos || [];
+      if(pts.length > 1){
+        // Até 10 pontos no link do Maps (o primeiro, o último e 8 no meio)
+        const passo = Math.max(1, Math.ceil(pts.length / 9));
+        const usar = pts.filter((p, i) => i % passo === 0);
+        if(usar[usar.length - 1] !== pts[pts.length - 1]) usar.push(pts[pts.length - 1]);
+        t += ` <a href="https://www.google.com/maps/dir/${usar.map(p => p[0] + "," + p[1]).join("/")}" target="_blank" rel="noopener">Ver o caminho no Maps</a>`;
+      }
+    }
+    return `<div style="margin-top:4px;">${t}</div>`;
+  };
+  const fimIda = v.data_retorno ? v.ida_concluida_em : v.concluida_em;
+  const html = linha("Ida", v.km_real_ida, v.km_real_fonte_ida, v.rota_real_ida, v.distancia_km, v.inicio_confirmado_em, fimIda) +
+    linha("Volta", v.km_real_volta, v.km_real_fonte_volta, v.rota_real_volta, v.distancia_km_retorno, v.rota_real_volta && v.rota_real_volta.inicio, v.rota_real_volta && v.rota_real_volta.fim);
+  box.innerHTML = html ? `<b>Medido na viagem pelo GPS da motorista</b>${html}` : "";
+  box.style.display = html ? "block" : "none";
+}
+
 function openViagemModal(id, opcoes){
   editingViagemId = id || null;
   lancandoViagemFeita = !id && !!(opcoes && opcoes.viagemFeita);
@@ -18039,6 +18081,7 @@ function openViagemModal(id, opcoes){
   medicaoRotaViagem++;
   ["vg-distancia-km","vg-duracao-min","vg-distancia-retorno-km","vg-duracao-retorno-min"].forEach(c=>{ delete document.getElementById(c).dataset.autoValor; });
   document.getElementById("vg-rota-medida").style.display = "none";
+  mostrarKmRealViagem(v);
   // Ida e volta criadas antes de 26/09/2026: o km da ida guardava a soma dos dois trechos
   document.getElementById("vg-distancia-km-dica").textContent = v.data_retorno && v.distancia_km && v.distancia_km_retorno == null
     ? "Viagem antiga: este km é a soma de ida e volta (a volta não foi medida separada)."
