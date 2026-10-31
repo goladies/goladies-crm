@@ -7180,7 +7180,7 @@ function renderLeads(){
 // Cada número é clicável: abre a lista do que está esperando, e cada item
 // leva pra origem. Tudo sai do que o CRM já carrega (sem SQL próprio).
 const ATENCAO_MENUS = ["conversas","leads","transporte","orcamentos","financeiro","gestao","sede","vagas"];
-const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Contatos › Leads", transporte:"Transporte", orcamentos:"Pedidos › Orçamentos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
+const ATENCAO_ROTULOS = { conversas:"Conversas", leads:"Contatos › Leads", transporte:"Transporte", orcamentos:"Pedidos", financeiro:"Financeiro", gestao:"Gestão", sede:"Sede", vagas:"Vagas" };
 const VIAGEM_BOLA_GO_LADIES = ["Solicitada","Cotando preço","Escolher motoristas","Preço recusado pela cliente"];
 let atencaoAtual = {};
 
@@ -7254,6 +7254,12 @@ function itensAtencao(){
   (orcamentos||[]).filter(o=>o.status==="Solicitado" && !o.exemplo).forEach(o=>{
     const l = (leads||[]).find(x=>x.id===o.lead_id);
     add("orcamentos", "amarelo", `Orçamento #${o.id}: ${[l && nomeCod(l), o.servico].filter(Boolean).join(" · ") || "sem detalhe"}`, `openOrcamentoModal(${o.id})`);
+  });
+  // Peça pedida pelo site/WhatsApp (tem lead), ainda sem busca começada
+  // (schema_pedido_automatico_lead.sql). As anotadas à mão não entram.
+  (pecasPedidos||[]).filter(p=>p.lead_id && p.status==="Aberto" && !/^TESTE/.test(p.notas||"")).forEach(p=>{
+    const l = (leads||[]).find(x=>x.id===p.lead_id);
+    add("orcamentos", "amarelo", `Peça #${p.id}: ${[l ? nomeCod(l) : p.cliente_nome, p.peca].filter(Boolean).join(" · ")}`, `openPedidoModal(${p.id})`);
   });
 
   // Financeiro: despesa vencida (vermelho) ou vencendo hoje (amarelo);
