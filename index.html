@@ -9361,11 +9361,12 @@ function renderFtPorMotorista(pagos){
   linhasViagem.forEach(l=>{ (grupos[l.chave] = grupos[l.chave] || []).push(l); });
   const somar = (ls, f) => ls.reduce((s,l)=>s+f(l), 0);
   // R$ por km/min só com as viagens que têm km/min; o title mostra a conta.
+  // Por hora = os mesmos minutos ÷ 60.
   const porUnid = (ls, campo, unid, f) => {
     const com = ls.filter(l=>l[campo] > 0);
-    const qtd = somar(com, l=>l[campo]), val = somar(com, f);
+    const qtd = somar(com, l=>l[campo]) / (unid === "h" ? 60 : 1), val = somar(com, f);
     if(!qtd) return `<td title="Nenhuma viagem com ${unid === "km" ? "km" : "tempo"} lançado">—</td>`;
-    const qtdTxt = unid === "km" ? qtd.toLocaleString("pt-BR", {maximumFractionDigits:1}) : Math.round(qtd).toLocaleString("pt-BR");
+    const qtdTxt = unid === "min" ? Math.round(qtd).toLocaleString("pt-BR") : qtd.toLocaleString("pt-BR", {maximumFractionDigits: unid === "h" ? 2 : 1});
     return `<td title="${escapeHtml(`${formatarMoedaBR(val)} ÷ ${qtdTxt} ${unid} (${com.length} de ${ls.length} viagens)`)}">${formatarMoedaBR(val / qtd)}</td>`;
   };
   const resumo = (ls, nome, chave) => {
@@ -9378,8 +9379,8 @@ function renderFtPorMotorista(pagos){
       <td>${formatarMoedaBR(somar(ls, l=>l.recebido))}</td>
       <td>${formatarMoedaBR(somar(ls, l=>l.repasse))}</td>
       <td>${formatarMoedaBR(somar(ls, l=>l.gl))}</td>
-      ${porUnid(ls, "km", "km", l=>l.repasse)}${porUnid(ls, "min", "min", l=>l.repasse)}
-      ${porUnid(ls, "km", "km", l=>l.gl)}${porUnid(ls, "min", "min", l=>l.gl)}</tr>`;
+      ${porUnid(ls, "km", "km", l=>l.repasse)}${porUnid(ls, "min", "min", l=>l.repasse)}${porUnid(ls, "min", "h", l=>l.repasse)}
+      ${porUnid(ls, "km", "km", l=>l.gl)}${porUnid(ls, "min", "min", l=>l.gl)}${porUnid(ls, "min", "h", l=>l.gl)}</tr>`;
   };
   const nomeGrupo = chave => {
     if(chave === "sem") return "Sem motorista definida";
@@ -9414,9 +9415,9 @@ function renderFtPorMotorista(pagos){
   } else detalhe = `<div id="ft-mot-detalhe"></div>`;
 
   el.innerHTML = `<h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Por motorista</h3>
-    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km e por minuto. Go Ladies = recebido − taxa do Mercado Pago − repasse. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou. Passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
-    <table class="tbl"><thead><tr><th>Motorista</th><th>Viagens</th><th>km</th><th>min</th><th>Recebido</th><th>Repasse</th><th>Go Ladies</th><th>Motorista R$/km</th><th>Motorista R$/min</th><th>Go Ladies R$/km</th><th>Go Ladies R$/min</th></tr></thead>
-    <tbody>${corpo || `<tr><td class="empty" colspan="11">Nenhum pagamento de cliente no período</td></tr>`}</tbody></table>${detalhe}`;
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. Go Ladies = recebido − taxa do Mercado Pago − repasse. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou. Passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
+    <table class="tbl"><thead><tr><th>Motorista</th><th>Viagens</th><th>km</th><th>min</th><th>Recebido</th><th>Repasse</th><th>Go Ladies</th><th>Motorista R$/km</th><th>Motorista R$/min</th><th>Motorista R$/hora</th><th>Go Ladies R$/km</th><th>Go Ladies R$/min</th><th>Go Ladies R$/hora</th></tr></thead>
+    <tbody>${corpo || `<tr><td class="empty" colspan="13">Nenhum pagamento de cliente no período</td></tr>`}</tbody></table>${detalhe}`;
 }
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
