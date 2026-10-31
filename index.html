@@ -3068,6 +3068,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
       <div class="full"><label>Notas</label><textarea id="p-notas" rows="2"></textarea></div>
     </div>
+    <div id="p-conversa-whats" style="display:none; margin-top:18px;"></div>
     <div class="ligacoes-wrap" id="p-datas"></div>
     <div class="ligacoes-wrap" id="p-ligacoes"></div>
 
@@ -3440,6 +3441,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Validade da CNH</label><input type="date" id="mt-cnh-validade"></div>
       <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
     </div>
+    <div id="mt-conversa-whats" style="display:none; margin-top:18px;"></div>
     <div class="ligacoes-wrap" id="mt-datas"></div>
     <div class="ligacoes-wrap" id="mt-ligacoes"></div>
 
@@ -3634,6 +3636,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
            mesmo WhatsApp, aparece o botão de unificar. -->
       <div class="full" id="ct-acesso-painel" style="font-size:var(--fs-sm); color:var(--muted);"></div>
     </div>
+    <div id="ct-conversa-whats" style="display:none; margin-top:18px;"></div>
     <div class="ligacoes-wrap" id="ct-datas"></div>
     <div class="ligacoes-wrap" id="ct-ligacoes"></div>
     <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
@@ -13241,19 +13244,28 @@ async function deleteVenda(id){
 // que o número já teve (aba Conversas), com quantas mensagens, de quando
 // até quando, a última e o botão pra abrir. Lê whatsapp_mensagens na hora,
 // pelos 8 últimos dígitos; sem conversa, o quadro não aparece.
-async function renderConversaWhatsLead(l){
-  const box = document.getElementById("f-conversa-whats");
+// Desde 31/10 também nas fichas de cliente transporte, motorista e parceira (o).
+const CONVERSA_FICHAS = {
+  f:  { modal:"lead-modal",               atual:()=>editingLeadId },
+  ct: { modal:"cliente-transporte-modal", atual:()=>editingClienteTransporteId },
+  mt: { modal:"motorista-modal",          atual:()=>editingMotoristaId },
+  p:  { modal:"parceiro-modal",           atual:()=>editingParceiroId },
+};
+function renderConversaWhatsLead(l){ return renderConversaWhats("f", l); }
+async function renderConversaWhats(pre, l, telefone){
+  const ficha = CONVERSA_FICHAS[pre];
+  const box = document.getElementById(pre + "-conversa-whats");
   box.style.display = "none";
   box.innerHTML = "";
-  const fim = String((l && l.whatsapp) || "").replace(/\D/g, "").slice(-8);
-  if(fim.length < 8) return;
+  const fim = String(telefone || (l && l.whatsapp) || "").replace(/\D/g, "").slice(-8);
+  if(fim.length < 8 || !l || !l.id) return;
   const leadId = l.id;
   const filtro = q => q.like("telefone", "%" + fim);
   const [ult, pri] = await Promise.all([
     filtro(sb.from("whatsapp_mensagens").select("telefone,autor,texto,criado_em", { count:"exact" })).order("id", { ascending:false }).limit(1),
     filtro(sb.from("whatsapp_mensagens").select("criado_em")).order("id", { ascending:true }).limit(1),
   ]);
-  if(editingLeadId !== leadId) return;   // trocou de ficha enquanto buscava
+  if(ficha.atual() !== leadId) return;   // trocou de ficha enquanto buscava
   const m = ult.data && ult.data[0];
   if(ult.error || !m) return;
   const quando = iso => { const d = new Date(iso); return `${dataComSemana(d)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
@@ -13266,7 +13278,7 @@ async function renderConversaWhatsLead(l){
     <div style="font-size:var(--fs-sm); line-height:1.5;">
       <div>${n} ${n===1 ? "mensagem" : "mensagens"} · ${n===1 ? quando(m.criado_em) : `de ${quando(inicio)} até ${quando(m.criado_em)}`}</div>
       <div style="color:var(--muted); margin-top:2px;">Última: <b>${escapeHtml(autor)}</b>: "${escapeHtml(texto.length > 140 ? texto.slice(0,140) + "..." : texto)}"</div>
-      <button class="btn secondary small" type="button" style="margin-top:8px;" onclick="closeModal('lead-modal'); irParaConversa('${escapeHtml(m.telefone)}')">Abrir conversa</button>
+      <button class="btn secondary small" type="button" style="margin-top:8px;" onclick="closeModal('${ficha.modal}'); irParaConversa('${escapeHtml(m.telefone)}')">Abrir conversa</button>
     </div>`;
   box.style.display = "";
 }
@@ -13468,6 +13480,8 @@ function openParceiroModal(id){
   renderEnderecosParceiro();
   renderInteracoesParceiro();
   avisoAniversarioFicha("p");
+  // Parceira (o): o WhatsApp da ficha ou, sem ele, o 1º contato com número
+  renderConversaWhats("p", p, p.whatsapp || (parceiroContatos.find(x=>x.parceiro_id===p.id && String(x.numero||"").replace(/\D/g,"").length >= 10) || {}).numero);
   document.getElementById("parceiro-modal").classList.add("open");
 }
 async function saveParceiro(){
@@ -14851,6 +14865,7 @@ function openMotoristaModal(id){
   renderAvaliacoesMotorista();
   carregarPerfilMotorista();
   avisoAniversarioFicha("mt");
+  renderConversaWhats("mt", m);
   document.getElementById("motorista-modal").classList.add("open");
 }
 function renderDocumentosMotorista(){
@@ -15339,6 +15354,7 @@ function openClienteTransporteModal(id){
   document.getElementById("ct-acesso-painel").innerHTML = id ? htmlAcessoPainelCliente(c) + htmlGarupaCliente(c) : "";
   renderAvaliacoesCliente();
   avisoAniversarioFicha("ct");
+  renderConversaWhats("ct", c);
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
 // O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
