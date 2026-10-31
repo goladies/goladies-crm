@@ -2937,6 +2937,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
+    <div id="f-conversa-whats" style="display:none; margin-top:18px;"></div>
+
     <div id="f-interacoes-wrap" style="margin-top:18px;">
       <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Histórico de conversas</h4>
       <div id="f-interacoes-lista"></div>
@@ -12445,6 +12447,7 @@ function openLeadModal(id){
   document.getElementById("fi-proximos").value = "";
   renderVendasLead();
   renderInteracoesLead();
+  renderConversaWhatsLead(l);
   avisoAniversarioFicha("f");
   document.getElementById("lead-modal").classList.add("open");
 }
@@ -13234,6 +13237,39 @@ async function deleteVenda(id){
 }
 
 // Histórico de conversas do lead/cliente
+// Quadro "Conversa no WhatsApp" na ficha da lead (31/10/2026): a conversa
+// que o número já teve (aba Conversas), com quantas mensagens, de quando
+// até quando, a última e o botão pra abrir. Lê whatsapp_mensagens na hora,
+// pelos 8 últimos dígitos; sem conversa, o quadro não aparece.
+async function renderConversaWhatsLead(l){
+  const box = document.getElementById("f-conversa-whats");
+  box.style.display = "none";
+  box.innerHTML = "";
+  const fim = String((l && l.whatsapp) || "").replace(/\D/g, "").slice(-8);
+  if(fim.length < 8) return;
+  const leadId = l.id;
+  const filtro = q => q.like("telefone", "%" + fim);
+  const [ult, pri] = await Promise.all([
+    filtro(sb.from("whatsapp_mensagens").select("telefone,autor,texto,criado_em", { count:"exact" })).order("id", { ascending:false }).limit(1),
+    filtro(sb.from("whatsapp_mensagens").select("criado_em")).order("id", { ascending:true }).limit(1),
+  ]);
+  if(editingLeadId !== leadId) return;   // trocou de ficha enquanto buscava
+  const m = ult.data && ult.data[0];
+  if(ult.error || !m) return;
+  const quando = iso => { const d = new Date(iso); return `${dataComSemana(d)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
+  const autor = m.autor==="bot" ? "Assistente" : m.autor==="equipe" ? "Você" : (l.nome ? l.nome.split(" ")[0] : "Contato");
+  const texto = String(m.texto || "(mídia)").replace(/\s+/g, " ");
+  const inicio = pri.data && pri.data[0] ? pri.data[0].criado_em : m.criado_em;
+  const n = ult.count || 1;
+  box.innerHTML = `
+    <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Conversa no WhatsApp</h4>
+    <div style="font-size:var(--fs-sm); line-height:1.5;">
+      <div>${n} ${n===1 ? "mensagem" : "mensagens"} · ${n===1 ? quando(m.criado_em) : `de ${quando(inicio)} até ${quando(m.criado_em)}`}</div>
+      <div style="color:var(--muted); margin-top:2px;">Última: <b>${escapeHtml(autor)}</b>: "${escapeHtml(texto.length > 140 ? texto.slice(0,140) + "..." : texto)}"</div>
+      <button class="btn secondary small" type="button" style="margin-top:8px;" onclick="closeModal('lead-modal'); irParaConversa('${escapeHtml(m.telefone)}')">Abrir conversa</button>
+    </div>`;
+  box.style.display = "";
+}
 function renderInteracoesLead(){
   const wrap = document.getElementById("f-interacoes-lista");
   const campos = document.querySelectorAll("#f-interacoes-wrap button");
