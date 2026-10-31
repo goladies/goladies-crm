@@ -16954,6 +16954,16 @@ function renderTransporteViagens(){
   const nClientes = new Set(concluidas.map(v=>v.cliente_id).filter(Boolean)).size;
   const mediaViagem = concluidas.length ? valor / concluidas.length : 0;
   const mediaCliente = nClientes ? valor / nClientes : 0;
+  // Média por km (31/10/2026): só as concluídas com km lançado (ida + volta),
+  // pra viagem sem km não puxar a média pra cima.
+  const comKm = concluidas.filter(v=>kmTotalViagem(v) > 0);
+  const kmSoma = comKm.reduce((s,v)=>s+kmTotalViagem(v), 0);
+  const valorComKm = comKm.reduce((s,v)=>s+Number(v.preco_cotado||0), 0);
+  const mediaKm = kmSoma ? valorComKm / kmSoma : 0;
+  const kmTxt = kmSoma.toLocaleString("pt-BR", {maximumFractionDigits:1});
+  const tituloKm = comKm.length
+    ? `${formatarMoedaBR(valorComKm)} ÷ ${kmTxt} km (${comKm.length} de ${concluidas.length} ${concluidas.length===1?"viagem concluída":"viagens concluídas"} com km lançado)`
+    : "Nenhuma viagem concluída com km lançado";
   document.getElementById("viagem-periodo-total").innerHTML =
     `<span>Período: <b>${rotuloPeriodoViagens(r)}</b></span>`
     + `<span>Tipo: <b>${escapeHtml(tipoF ? (ROTULO_TIPO_VIAGEM[tipoF] || tipoF) : "Todos")}</b></span>`
@@ -16961,6 +16971,7 @@ function renderTransporteViagens(){
     + `<span>Valor: <b>${formatarMoedaBR(valor)}</b></span>`
     + `<span>Média por viagem: <b>${formatarMoedaBR(mediaViagem)}</b></span>`
     + `<span title="${nClientes} ${nClientes===1?"cliente":"clientes"} com viagem concluída">Média por cliente transporte: <b>${formatarMoedaBR(mediaCliente)}</b></span>`
+    + `<span title="${escapeHtml(tituloKm)}">Média por km: <b>${comKm.length ? formatarMoedaBR(mediaKm) : "—"}</b></span>`
     + `<span><b>${canceladas}</b> ${canceladas===1?"cancelada":"canceladas"}</span>`;
 
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
