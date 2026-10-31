@@ -2906,6 +2906,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Serviço específico</label><select id="f-servico"></select></div>
       <div><label>Tipo de veículo</label><input type="text" id="f-veiculo"></div>
       <div><label>Urgência</label><select id="f-urgencia"><option>Urgente</option><option>Essa semana</option><option>Sem pressa</option></select></div>
+      <div class="f-contato-pref"><label for="f-contato-preferido">Prefere contato por</label><input type="text" id="f-contato-preferido" placeholder="Ex.: Mensagem no WhatsApp, Ligação"></div>
+      <div class="f-contato-pref"><label for="f-melhor-horario">Melhor horário</label><input type="text" id="f-melhor-horario" placeholder="Ex.: Manhã (8h–12h)"></div>
       <div class="full"><label>Descrição</label><textarea id="f-descricao" rows="2"></textarea></div>
       <div><label>Etapa</label><select id="f-etapa"></select></div>
       <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"></select></div>
@@ -12406,6 +12408,11 @@ function openLeadModal(id){
   fillServicoOptions(l.servico);
   document.getElementById("f-veiculo").value = l.veiculo||"";
   document.getElementById("f-urgencia").value = l.urgencia||"Essa semana";
+  // Contato e horário preferidos (schema_contato_preferido_site.sql, 31/10/2026):
+  // vêm do formulário do site; antes do SQL rodar, os campos não aparecem.
+  document.querySelectorAll(".f-contato-pref").forEach(el=>el.style.display = temCampoContatoPref() ? "" : "none");
+  document.getElementById("f-contato-preferido").value = l.contato_preferido||"";
+  document.getElementById("f-melhor-horario").value = l.melhor_horario||"";
   document.getElementById("f-descricao").value = l.descricao||"";
   document.getElementById("f-etapa").value = l.etapa||"Novo lead";
   const origensPadrao = ORIGENS_LEAD;
@@ -12451,6 +12458,7 @@ function toggleOrigemOutro(){
 // indicação virar número em Números do negócio e na Sede. Sem cadastro,
 // guarda o nome escrito. Antes do SQL rodar, o campo não aparece.
 const temCampoIndicacao = () => [...leads, ...clientesTransporte].some(r=>"indicada_por_cadastro_id" in r);
+const temCampoContatoPref = () => leads.some(r=>"contato_preferido" in r);
 const rotuloIndicacao = c => `${c.nome} #${c.codigo}`;
 function toggleIndicada(pre){
   const origem = document.getElementById(pre === "f" ? "f-origem" : "ct-origem").value;
@@ -12520,6 +12528,10 @@ async function salvarLead(){
     notas: document.getElementById("f-notas").value,
   };
   Object.assign(payload, lerIndicada("f", payload.origem));
+  if(temCampoContatoPref()){
+    payload.contato_preferido = document.getElementById("f-contato-preferido").value.trim() || null;
+    payload.melhor_horario = document.getElementById("f-melhor-horario").value.trim() || null;
+  }
   // Só manda "teste" se a coluna já existe (schema_testes_marcados.sql rodado)
   if(leads.some(x=>"teste" in x)) payload.teste = document.getElementById("f-teste").checked;
   Object.assign(payload, camposPJ("f", leads.find(x=>x.id===editingLeadId)));
