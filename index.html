@@ -9395,7 +9395,7 @@ function renderFtPorMotorista(){
     const repasse = repasseDaViagem(v, pg);
     return { p, v, pg, chave: motId ? String(motId) : "sem", recebido, taxa, repasse, gl: recebido - taxa - repasse,
              km: v ? kmTotalViagem(v) : 0, min: v ? minTotal(v) : 0, horas: v ? minTotal(v) : 0,
-             pctMot: recebido ? repasse / recebido * 100 : null, pctGl: recebido ? (recebido - taxa - repasse) / recebido * 100 : null,
+             pctMot: recebido ? repasse / recebido * 100 : null, pctTaxa: recebido ? taxa / recebido * 100 : null, pctGl: recebido ? (recebido - taxa - repasse) / recebido * 100 : null,
              data: String(p.data_pagamento || "").slice(0,10), viagem: v ? v.id : 0, cliente: v ? ftNomeCliente(v) : "" };
   });
   const grupos = {};
@@ -9421,7 +9421,8 @@ function renderFtPorMotorista(){
   const MEDIAS = [["motKm","km","km","repasse"],["motMin","min","min","repasse"],["motH","min","h","repasse"],["glKm","km","km","gl"],["glMin","min","min","gl"],["glH","min","h","gl"]];
   const resumo = (ls, chave) => {
     const o = { chave, nome: chave ? nomeGrupo(chave) : "Total", viagens: ls.length, km: somar(ls, l=>l.km), min: somar(ls, l=>l.min), horas: somar(ls, l=>l.min),
-                recebido: somar(ls, l=>l.recebido), repasse: somar(ls, l=>l.repasse), gl: somar(ls, l=>l.gl), contas: {} };
+                recebido: somar(ls, l=>l.recebido), repasse: somar(ls, l=>l.repasse), taxa: somar(ls, l=>l.taxa), gl: somar(ls, l=>l.gl), contas: {} };
+    o.pctTaxa = o.recebido ? o.taxa / o.recebido * 100 : null;
     o.pctMot = o.recebido ? o.repasse / o.recebido * 100 : null;
     o.pctGl = o.recebido ? o.gl / o.recebido * 100 : null;
     MEDIAS.forEach(([k, campo, unid, f])=>{ const u = porUnid(ls, campo, unid, l=>l[f]); o[k] = u.valor; o.contas[k] = u.conta; });
@@ -9460,8 +9461,9 @@ function renderFtPorMotorista(){
       <td>${o.min ? horasTxt(o.min) : "—"}</td>
       <td>${formatarMoedaBR(o.recebido)}</td>
       <td>${formatarMoedaBR(o.repasse)}</td>
+      <td>${formatarMoedaBR(o.taxa)}</td>
       <td>${formatarMoedaBR(o.gl)}</td>
-      ${pct(o.repasse, o.recebido, o.pctMot)}${pct(o.gl, o.recebido, o.pctGl)}
+      ${pct(o.repasse, o.recebido, o.pctMot)}${pct(o.taxa, o.recebido, o.pctTaxa)}${pct(o.gl, o.recebido, o.pctGl)}
       ${MEDIAS.map(([k])=>moeda(o, k)).join("")}</tr>`;
   };
   const corpo = ordenar("ftMotoristas", Object.keys(grupos).map(c=>resumo(grupos[c], c))).map(linhaResumo).join("")
@@ -9480,15 +9482,15 @@ function renderFtPorMotorista(){
         <td>${l.min ? Math.round(l.min) : "—"}</td>
         <td>${l.min ? horasTxt(l.min) : "—"}</td>
         <td>${formatarMoedaBR(l.recebido)}</td>
-        <td>${formatarMoedaBR(l.taxa)}</td>
         <td>${formatarMoedaBR(l.repasse)}${l.pg ? "" : `<div style="color:var(--muted); font-size:var(--fs-xs);">previsto, ainda não lançado</div>`}</td>
+        <td>${formatarMoedaBR(l.taxa)}</td>
         <td><span style="color:${l.gl >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(l.gl)}</span></td>
-        ${pct(l.repasse, l.recebido, l.pctMot)}${pct(l.gl, l.recebido, l.pctGl)}</tr>`).join("");
+        ${pct(l.repasse, l.recebido, l.pctMot)}${pct(l.taxa, l.recebido, l.pctTaxa)}${pct(l.gl, l.recebido, l.pctGl)}</tr>`).join("");
     detalhe = `<div id="ft-mot-detalhe" style="margin-top:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0;">Viagens · ${escapeHtml(nomeGrupo(ftMotoristaAberta))}</h3>
         <button class="icon-btn" type="button" onclick="abrirFtMotorista(ftMotoristaAberta)" aria-label="Fechar">✕</button></div>
-      <table class="tbl"><thead>${cab("ftMotViagens", [["data","Pago em","texto"],["viagem","Viagem","numero"],["cliente","Cliente","texto"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["taxa","Taxa","numero"],["repasse","PGT MOTORA","numero"],["gl","Go Ladies","numero"],["pctMot","% motorista","numero"],["pctGl","% Go Ladies","numero"]])}</thead>
+      <table class="tbl"><thead>${cab("ftMotViagens", [["data","Pago em","texto"],["viagem","Viagem","numero"],["cliente","Cliente","texto"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["repasse","PGT MOTORA","numero"],["taxa","Mercado Pago","numero"],["gl","Go Ladies","numero"],["pctMot","% motorista","numero"],["pctTaxa","% Mercado Pago","numero"],["pctGl","% Go Ladies","numero"]])}</thead>
       <tbody>${linhas}</tbody></table></div>`;
   }
 
@@ -9501,9 +9503,9 @@ function renderFtPorMotorista(){
         <b style="font-size:var(--fs-sm);">${escapeHtml(rotuloFtMot(r))}</b>
         <button type="button" class="periodo-seta" onclick="moverFtMotPeriodo(1)" title="Próximo período" aria-label="Próximo período">›</button>
       </div></div>
-    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. PGT GERAL = o que a cliente pagou; PGT MOTORA = o que vai pra motorista; Go Ladies = PGT GERAL − taxa do Mercado Pago − PGT MOTORA. Os % são sobre o PGT GERAL; a motorista e a Go Ladies não somam 100% porque a taxa do Mercado Pago fica no meio. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou; esse período vale só pra este quadro. Clique no título de uma coluna pra ordenar; passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
-    <table class="tbl"><thead>${cab("ftMotoristas", [["nome","Motorista","texto"],["viagens","Viagens","numero"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["repasse","PGT MOTORA","numero"],["gl","Go Ladies","numero"],["pctMot","% motorista","numero"],["pctGl","% Go Ladies","numero"],["motKm","Motorista R$/km","numero"],["motMin","Motorista R$/min","numero"],["motH","Motorista R$/hora","numero"],["glKm","Go Ladies R$/km","numero"],["glMin","Go Ladies R$/min","numero"],["glH","Go Ladies R$/hora","numero"]])}</thead>
-    <tbody>${corpo || `<tr><td class="empty" colspan="16">Nenhum pagamento de cliente nesse período</td></tr>`}</tbody></table>${detalhe}`;
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km, por minuto e por hora. PGT GERAL = o que a cliente pagou; PGT MOTORA = o que vai pra motorista; Go Ladies = PGT GERAL − taxa do Mercado Pago − PGT MOTORA. Os % são sobre o PGT GERAL: motorista + Mercado Pago + Go Ladies = 100%. A taxa do Mercado Pago sai inteira da parte da Go Ladies. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou; esse período vale só pra este quadro. Clique no título de uma coluna pra ordenar; passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
+    <table class="tbl"><thead>${cab("ftMotoristas", [["nome","Motorista","texto"],["viagens","Viagens","numero"],["km","km","numero"],["min","min","numero"],["horas","Horas","numero"],["recebido","PGT GERAL","numero"],["repasse","PGT MOTORA","numero"],["taxa","Mercado Pago","numero"],["gl","Go Ladies","numero"],["pctMot","% motorista","numero"],["pctTaxa","% Mercado Pago","numero"],["pctGl","% Go Ladies","numero"],["motKm","Motorista R$/km","numero"],["motMin","Motorista R$/min","numero"],["motH","Motorista R$/hora","numero"],["glKm","Go Ladies R$/km","numero"],["glMin","Go Ladies R$/min","numero"],["glH","Go Ladies R$/hora","numero"]])}</thead>
+    <tbody>${corpo || `<tr><td class="empty" colspan="18">Nenhum pagamento de cliente nesse período</td></tr>`}</tbody></table>${detalhe}`;
 }
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
