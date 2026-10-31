@@ -2193,6 +2193,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
         <div class="cards" id="ft-cards"></div>
         <div class="panel" id="ft-detalhe" style="display:none;"></div>
+        <!-- Por motorista (31/10/2026): o que fica pra cada motorista e pra Go
+             Ladies, com R$ por km e por minuto de cada parte. -->
+        <div class="panel" id="ft-motoristas"></div>
 
         <!-- Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026): a cotação
              automática do CRM e do app escolhe a tabela pelo tipo de serviço e
@@ -9330,6 +9333,91 @@ function renderDetalheFt(pagos, tot){
     ${linhas ? `<tr style="font-weight:700;"><td colspan="4">Total</td><td>${formatarMoedaBR(tot.recebido)}</td><td>${formatarMoedaBR(tot.taxaMp)}</td><td>${formatarMoedaBR(tot.repassado)}</td><td>${formatarMoedaBR(tot.lucro)}</td></tr>` : ""}
     </tbody></table><p style="color:var(--muted); font-size:var(--fs-sm); margin:10px 0 0;">Entra pela data em que a cliente pagou. Clique numa linha para abrir a viagem.</p>`;
 }
+// Por motorista: mesma base dos cards (pagamentos da cliente no período).
+// A viagem é da motorista que aceitou; antiga sem confirmada só entra no nome
+// dela se tinha uma motorista marcada. Km e minutos do Google, ida + volta;
+// viagem sem km (ou sem tempo) fica fora daquela média.
+let ftMotoristaAberta = null;
+function abrirFtMotorista(chave){
+  ftMotoristaAberta = ftMotoristaAberta === chave ? null : chave;
+  renderFinanceiroTransporte();
+  if(ftMotoristaAberta) document.getElementById("ft-mot-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function renderFtPorMotorista(pagos){
+  const el = document.getElementById("ft-motoristas");
+  if(!el) return;
+  const minTotal = v => Number(v.duracao_prevista_min || 0) + Number(v.duracao_prevista_retorno_min || 0);
+  const linhasViagem = pagos.map(p=>{
+    const v = viagens.find(x=>x.id === p.viagem_id);
+    const pg = pagamentosMotorista.find(m=>m.viagem_id === p.viagem_id);
+    const ids = v ? idsMotoristasViagem(v) : [];
+    const motId = v ? (v.motorista_id_confirmada || (ids.length === 1 ? ids[0] : null)) : null;
+    const recebido = Number(p.valor_recebido || 0), taxa = Number(p.taxa_mp || 0);
+    const repasse = repasseDaViagem(v, pg);
+    return { p, v, pg, chave: motId ? String(motId) : "sem", recebido, taxa, repasse, gl: recebido - taxa - repasse,
+             km: v ? kmTotalViagem(v) : 0, min: v ? minTotal(v) : 0 };
+  });
+  const grupos = {};
+  linhasViagem.forEach(l=>{ (grupos[l.chave] = grupos[l.chave] || []).push(l); });
+  const somar = (ls, f) => ls.reduce((s,l)=>s+f(l), 0);
+  // R$ por km/min só com as viagens que têm km/min; o title mostra a conta.
+  const porUnid = (ls, campo, unid, f) => {
+    const com = ls.filter(l=>l[campo] > 0);
+    const qtd = somar(com, l=>l[campo]), val = somar(com, f);
+    if(!qtd) return `<td title="Nenhuma viagem com ${unid === "km" ? "km" : "tempo"} lançado">—</td>`;
+    const qtdTxt = unid === "km" ? qtd.toLocaleString("pt-BR", {maximumFractionDigits:1}) : Math.round(qtd).toLocaleString("pt-BR");
+    return `<td title="${escapeHtml(`${formatarMoedaBR(val)} ÷ ${qtdTxt} ${unid} (${com.length} de ${ls.length} viagens)`)}">${formatarMoedaBR(val / qtd)}</td>`;
+  };
+  const resumo = (ls, nome, chave) => {
+    const km = somar(ls, l=>l.km), min = somar(ls, l=>l.min);
+    const ativo = chave && ftMotoristaAberta === chave;
+    return `<tr${chave ? ` class="tr-click" title="Ver as viagens" onclick="abrirFtMotorista('${chave}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}` : ' style="font-weight:700;"'}>
+      <td>${nome}</td><td>${ls.length}</td>
+      <td>${km ? km.toLocaleString("pt-BR", {maximumFractionDigits:1}) : "—"}</td>
+      <td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td>
+      <td>${formatarMoedaBR(somar(ls, l=>l.recebido))}</td>
+      <td>${formatarMoedaBR(somar(ls, l=>l.repasse))}</td>
+      <td>${formatarMoedaBR(somar(ls, l=>l.gl))}</td>
+      ${porUnid(ls, "km", "km", l=>l.repasse)}${porUnid(ls, "min", "min", l=>l.repasse)}
+      ${porUnid(ls, "km", "km", l=>l.gl)}${porUnid(ls, "min", "min", l=>l.gl)}</tr>`;
+  };
+  const nomeGrupo = chave => {
+    if(chave === "sem") return "Sem motorista definida";
+    const m = motoristas.find(x=>String(x.id) === chave);
+    return m ? escapeHtml(nomeCod(m)) : "Motorista #" + chave;
+  };
+  const chaves = Object.keys(grupos).sort((a,b)=>somar(grupos[b], l=>l.recebido) - somar(grupos[a], l=>l.recebido));
+  const corpo = chaves.map(c=>resumo(grupos[c], nomeGrupo(c), c)).join("")
+    + (linhasViagem.length ? resumo(linhasViagem, "Total", null) : "");
+
+  // Viagens da motorista clicada
+  let detalhe = "";
+  const abertas = ftMotoristaAberta && grupos[ftMotoristaAberta];
+  if(abertas){
+    const linhas = [...abertas].sort((a,b)=>String(a.p.data_pagamento).localeCompare(String(b.p.data_pagamento))).map(l=>`
+      <tr${l.v ? ` class="tr-click" onclick="openViagemModal(${l.v.id})"` : ""}>
+        <td>${fmtDataBR(String(l.p.data_pagamento || "").slice(0,10)) || "-"}</td>
+        <td>${l.v ? "#" + l.v.id : "-"}</td>
+        <td>${l.v ? escapeHtml(ftNomeCliente(l.v)) : "-"}</td>
+        <td>${l.km ? l.km.toLocaleString("pt-BR", {maximumFractionDigits:1}) : "—"}</td>
+        <td>${l.min ? Math.round(l.min) : "—"}</td>
+        <td>${formatarMoedaBR(l.recebido)}</td>
+        <td>${formatarMoedaBR(l.taxa)}</td>
+        <td>${formatarMoedaBR(l.repasse)}${l.pg ? "" : `<div style="color:var(--muted); font-size:var(--fs-xs);">previsto, ainda não lançado</div>`}</td>
+        <td><span style="color:${l.gl >= 0 ? "var(--c-green)" : "var(--c-red)"};">${formatarMoedaBR(l.gl)}</span></td></tr>`).join("");
+    detalhe = `<div id="ft-mot-detalhe" style="margin-top:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">Viagens · ${nomeGrupo(ftMotoristaAberta)}</h3>
+        <button class="icon-btn" type="button" onclick="abrirFtMotorista(ftMotoristaAberta)" aria-label="Fechar">✕</button></div>
+      <table class="tbl"><thead><tr><th>Pago em</th><th>Viagem</th><th>Cliente</th><th>km</th><th>min</th><th>Recebido</th><th>Taxa</th><th>Repasse</th><th>Go Ladies</th></tr></thead>
+      <tbody>${linhas}</tbody></table></div>`;
+  } else detalhe = `<div id="ft-mot-detalhe"></div>`;
+
+  el.innerHTML = `<h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-steering-wheel /></svg> Por motorista</h3>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">O que ficou com cada motorista e com a Go Ladies, por km e por minuto. Go Ladies = recebido − taxa do Mercado Pago − repasse. Km e minutos são os previstos pelo Google (ida + volta). Entra pela data em que a cliente pagou. Passe o mouse num valor pra ver a conta; clique numa motorista pra ver as viagens.</p>
+    <table class="tbl"><thead><tr><th>Motorista</th><th>Viagens</th><th>km</th><th>min</th><th>Recebido</th><th>Repasse</th><th>Go Ladies</th><th>Motorista R$/km</th><th>Motorista R$/min</th><th>Go Ladies R$/km</th><th>Go Ladies R$/min</th></tr></thead>
+    <tbody>${corpo || `<tr><td class="empty" colspan="11">Nenhum pagamento de cliente no período</td></tr>`}</tbody></table>${detalhe}`;
+}
 function renderDetalheFtValidacao(cotacoes){
   const el = document.getElementById("ft-detalhe-validacao");
   if(!el) return;
@@ -9538,6 +9626,7 @@ function renderFinanceiroTransporte(){
     ftCard("sobra", formatarMoedaBR(lucro), `Resultado Go Ladies · margem ${margem.toFixed(1).replace(".", ",")}%`, corLucro),
   ].join("");
   renderDetalheFt(pagos, { recebido, taxaMp, repassado, lucro });
+  renderFtPorMotorista(pagos);
 
   // ── Validação de preço ──
   const fechadas = cotacoes.filter(v => ["aceitou direto", "fechou com desconto"].includes(ftDesfecho(v)));
