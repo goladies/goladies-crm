@@ -16964,6 +16964,16 @@ function renderTransporteViagens(){
   const tituloKm = comKm.length
     ? `${formatarMoedaBR(valorComKm)} ÷ ${kmTxt} km (${comKm.length} de ${concluidas.length} ${concluidas.length===1?"viagem concluída":"viagens concluídas"} com km lançado)`
     : "Nenhuma viagem concluída com km lançado";
+  // Média por minuto (31/10/2026): mesmo jeito, com o tempo previsto pelo
+  // Google (ida + volta), só das concluídas com tempo lançado.
+  const minTotal = v => Number(v.duracao_prevista_min || 0) + Number(v.duracao_prevista_retorno_min || 0);
+  const comMin = concluidas.filter(v=>minTotal(v) > 0);
+  const minSoma = comMin.reduce((s,v)=>s+minTotal(v), 0);
+  const valorComMin = comMin.reduce((s,v)=>s+Number(v.preco_cotado||0), 0);
+  const mediaMin = minSoma ? valorComMin / minSoma : 0;
+  const tituloMin = comMin.length
+    ? `${formatarMoedaBR(valorComMin)} ÷ ${Math.round(minSoma).toLocaleString("pt-BR")} min (${comMin.length} de ${concluidas.length} ${concluidas.length===1?"viagem concluída":"viagens concluídas"} com tempo lançado)`
+    : "Nenhuma viagem concluída com tempo lançado";
   document.getElementById("viagem-periodo-total").innerHTML =
     `<span>Período: <b>${rotuloPeriodoViagens(r)}</b></span>`
     + `<span>Tipo: <b>${escapeHtml(tipoF ? (ROTULO_TIPO_VIAGEM[tipoF] || tipoF) : "Todos")}</b></span>`
@@ -16972,6 +16982,7 @@ function renderTransporteViagens(){
     + `<span>Média por viagem: <b>${formatarMoedaBR(mediaViagem)}</b></span>`
     + `<span title="${nClientes} ${nClientes===1?"cliente":"clientes"} com viagem concluída">Média por cliente transporte: <b>${formatarMoedaBR(mediaCliente)}</b></span>`
     + `<span title="${escapeHtml(tituloKm)}">Média por km: <b>${comKm.length ? formatarMoedaBR(mediaKm) : "—"}</b></span>`
+    + `<span title="${escapeHtml(tituloMin)}">Média por minuto: <b>${comMin.length ? formatarMoedaBR(mediaMin) : "—"}</b></span>`
     + `<span><b>${canceladas}</b> ${canceladas===1?"cancelada":"canceladas"}</span>`;
 
   document.getElementById("kanban-viagens").innerHTML = VIAGEM_STATUS.map(status=>{
