@@ -10,6 +10,13 @@
 -- 29/10 (3ª versão): viagens do mês e pedidos de 30 dias trazem também o motivo do desconto
 -- e o preço da tabela. Antes só ia o valor do desconto, e as agentes concluíam "sem motivo"
 -- mesmo com o motivo salvo no CRM (viagem 57). Rodar o arquivo inteiro de novo.
+-- 31/10 (4ª versão): a motorista da viagem passa a vir de motorista_id_confirmada (quem
+-- aceitou), depois motorista_ids (se só uma marcada), e só por último da coluna antiga
+-- motorista_id, que ficou sem uso desde o multimotorista. Antes tem_motorista e
+-- motorista_eh_ju vinham sempre falsos nas viagens novas, mesmo com a Jú dirigindo.
+-- + historico_viagens: todas as viagens concluídas (e canceladas com multa) desde o começo,
+-- com km, minutos, PGT GERAL, taxa do Mercado Pago e PGT MOTORA, igual ao quadro
+-- "Por motorista" do CRM. Viagens do mês também trazem km e minutos. Rodar o arquivo inteiro de novo.
 
 -- Reconhece a motorista Juliana (mesma regra do CRM: ehMotoristaJuliana).
 create or replace function public.sede_eh_motorista_ju(p_id bigint)
@@ -49,7 +56,15 @@ begin
   end if;
 
   with v as (
-    select vi.id, vi.cliente_id, vi.motorista_id, vi.status, vi.tipo_servico,
+    select vi.id, vi.cliente_id, vi.status, vi.tipo_servico,
+           -- Mesma regra do CRM: quem aceitou; senão a única marcada; senão a coluna antiga.
+           coalesce(vi.motorista_id_confirmada,
+                    case when array_length(vi.motorista_ids, 1) = 1 then vi.motorista_ids[1] end,
+                    vi.motorista_id) as motorista_id,
+           -- Km e minutos previstos pelo Google, ida + volta.
+           nullif(coalesce(vi.distancia_km, 0) + coalesce(vi.distancia_km_retorno, 0), 0) as km,
+           nullif(coalesce(vi.duracao_prevista_min, 0) + coalesce(vi.duracao_prevista_retorno_min, 0), 0) as minutos,
+           vi.preco_motorista, vi.repasse_multa,
            coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date) as dia,
            coalesce(vi.preco_final, vi.preco_cotado) as preco,
            vi.desconto_valor, vi.multa_cancelamento,
@@ -93,7 +108,7 @@ begin
                     'valor', pm.valor_repassado, 'comissao', pm.comissao_plataforma, 'status', pm.status,
                     'data', pm.data_pagamento, 'previsto', pm.data_prevista_pagamento,
                     'motorista_eh_ju', public.sede_eh_motorista_ju(vv.motorista_id)) order by pm.id)
-                    from public.pagamentos_motorista pm left join public.viagens vv on vv.id = pm.viagem_id
+                    from public.pagamentos_motorista pm left join v vv on vv.id = pm.viagem_id
                    where pm.data_pagamento between v_ini and v_fim
                       or coalesce(pm.status, 'Pendente') <> 'Pago'), '[]'),
       'entradas', coalesce((select jsonb_agg(jsonb_build_object('id', e.id, 'descricao', e.descricao, 'categoria', e.categoria,
@@ -129,6 +144,7 @@ begin
                     'tipo', v.tipo_servico, 'preco', v.preco, 'desconto', v.desconto_valor, 'desconto_motivo', v.desconto_motivo,
                     'preco_tabela', v.preco_tabela, 'multa', v.multa_cancelamento,
                     'cliente_id', v.cliente_id, 'tem_motorista', v.motorista_id is not null,
+                    'motorista_id', v.motorista_id, 'km', v.km, 'minutos', v.minutos,
                     'motorista_eh_ju', public.sede_eh_motorista_ju(v.motorista_id)) order by v.dia, v.id)
                     from v where v.dia between v_ini and v_fim), '[]'),
       'proximas_14_dias', coalesce((select jsonb_agg(jsonb_build_object('id', v.id, 'dia', v.dia, 'status', v.status,
@@ -164,6 +180,29 @@ begin
                     from public.avaliacoes a where a.criado_em > now() - interval '30 days'), '[]'),
       'fora_da_area_30_dias', (select count(*) from public.demandas_fora_area d where d.criado_em > now() - interval '30 days')
     ),
+
+    -- ── Histórico de todas as viagens (Rica, Tati, Ester) ────────────
+    -- Concluídas e canceladas com multa, desde a primeira. Dinheiro igual ao quadro
+    -- "Por motorista" do CRM: PGT GERAL = recebido da cliente; PGT MOTORA = repasse lançado
+    -- (ou o previsto na viagem); Go Ladies = PGT GERAL − taxa do Mercado Pago − PGT MOTORA.
+    -- Só ids: motorista_id e cliente_id, sem nome.
+    'historico_viagens', coalesce((select jsonb_agg(jsonb_build_object('id', h.id, 'dia', h.dia, 'status', h.status,
+                    'tipo', h.tipo_servico, 'cliente_id', h.cliente_id, 'motorista_id', h.motorista_id,
+                    'motorista_eh_ju', public.sede_eh_motorista_ju(h.motorista_id),
+                    'km', h.km, 'minutos', h.minutos, 'preco', h.preco, 'preco_tabela', h.preco_tabela,
+                    'desconto', h.desconto_valor, 'desconto_motivo', h.desconto_motivo, 'multa', h.multa_cancelamento,
+                    'pago_em', h.pago_em, 'pgt_geral', h.pgt_geral, 'taxa_mp', h.taxa_mp, 'pgt_motora', h.pgt_motora,
+                    'repasse_lancado', h.repasse_lancado, 'go_ladies', h.pgt_geral - h.taxa_mp - h.pgt_motora)
+                    order by h.dia, h.id)
+                    from (select v.*,
+                                 (select max(pc.data_pagamento) from public.pagamentos_cliente pc where pc.viagem_id = v.id and pc.status = 'Pago') as pago_em,
+                                 coalesce((select sum(pc.valor_recebido) from public.pagamentos_cliente pc where pc.viagem_id = v.id and pc.status = 'Pago'), 0) as pgt_geral,
+                                 coalesce((select sum(pc.taxa_mp) from public.pagamentos_cliente pc where pc.viagem_id = v.id and pc.status = 'Pago'), 0) as taxa_mp,
+                                 coalesce((select sum(pm.valor_repassado) from public.pagamentos_motorista pm where pm.viagem_id = v.id),
+                                          case when v.status = 'Cancelada' then v.repasse_multa else v.preco_motorista end, 0) as pgt_motora,
+                                 exists (select 1 from public.pagamentos_motorista pm where pm.viagem_id = v.id) as repasse_lancado
+                            from v
+                           where v.status = 'Concluída' or coalesce(v.multa_cancelamento, 0) > 0) h), '[]'),
 
     -- ── Clientes desde o início da Fase 2 (Ester) ────────────────────
     -- Só id e contagem. Recorrente = 2 ou mais corridas concluídas na fase.
