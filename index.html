@@ -9586,6 +9586,11 @@ let outrosAppsCarregado = false, outrosAppsSqlFaltando = false;
 let ftOaAberta = null, editingOutroAppId = null;
 const ftOaFiltro = { km: "", turno: "", cidade: "", app: "" };
 const OA_AMOSTRA_MINIMA = 20;
+// "tipica" = mediana corrida a corrida (padrão; uma corrida fora da curva não
+// puxa o número); "total" = soma do período. Sem média simples (decisão 31/10).
+let ftOaModo = (()=>{ try { return localStorage.getItem("ftOaModo") === "total" ? "total" : "tipica"; } catch(e){ return "tipica"; } })();
+function modoFtOa(m){ ftOaModo = m; try { localStorage.setItem("ftOaModo", m); } catch(e){} renderFtOutrosApps(); }
+const medianaOa = v => { const s = [...v].sort((a,b)=>a-b), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
 async function carregarCorridasOutrosApps(){
   const { data, error } = await sb.from("corridas_outros_apps").select("*").order("data", { ascending: false });
   outrosAppsSqlFaltando = !!error;
@@ -9661,6 +9666,19 @@ function renderFtOutrosApps(){
   };
   const moedaTd = u => `<td title="${escapeHtml(u.conta)}">${u.valor == null ? "—" : formatarMoedaBR(u.valor)}</td>`;
   const pctTd = (val, base) => `<td title="${escapeHtml(base ? `${formatarMoedaBR(val)} ÷ ${formatarMoedaBR(base)}` : "Sem o valor da passageira")}">${pctTxt(base ? val / base * 100 : null)}</td>`;
+  // Corrida típica: mediana de cada coluna, corrida a corrida; o title mostra de quantas e de quanto a quanto.
+  const tipica = ftOaModo === "tipica";
+  const minTxt = n => Math.round(n).toLocaleString("pt-BR");
+  const medTd = (vals, fmt, extra = "") => {
+    const v = vals.filter(x=>x != null && isFinite(x));
+    if(!v.length) return `<td title="Sem dado">—</td>`;
+    const s = [...v].sort((a,b)=>a-b);
+    return `<td title="${escapeHtml(`Mediana de ${v.length} corrida${v.length > 1 ? "s" : ""}: vai de ${fmt(s[0])} a ${fmt(s[s.length-1])}`)}">${fmt(medianaOa(s))}${extra}</td>`;
+  };
+  const porKm = (ls, fn) => ls.filter(l=>l.km > 0).map(l=>fn(l) / l.km);
+  const porMin = (ls, fn, x = 1) => ls.filter(l=>l.min > 0).map(l=>fn(l) / l.min * x);
+  const basicoTipico = ls => medTd(ls.filter(l=>l.km > 0).map(l=>l.km), kmTxt) + medTd(ls.filter(l=>l.min > 0).map(l=>l.min), minTxt) + medTd(ls.filter(l=>l.min > 0).map(l=>l.min), horasTxt);
+  const unidTipico = (ls, fn) => medTd(porKm(ls, fn), formatarMoedaBR) + medTd(porMin(ls, fn), formatarMoedaBR) + medTd(porMin(ls, fn, 60), formatarMoedaBR);
 
   // Parte 1: Plataforma = PGT GERAL − PGT MOTORA (na Go Ladies, Go Ladies + Mercado Pago).
   const linha1 = (chave, nome, sub, ls, ehGl) => {
@@ -9671,13 +9689,18 @@ function renderFtOutrosApps(){
                        : ` class="tr-click" title="Ver as corridas" onclick="abrirFtOa('${escapeHtml(chave)}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}`;
     return `<tr${attrs}>
       <td style="min-width:160px;"><strong${ehGl ? ' style="color:var(--pink, #c2187a);"' : ""}>${escapeHtml(nome)}</strong><div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(sub)}</div>${aviso}</td>
-      <td>${ls.length}</td><td>${km ? kmTxt(km) : "—"}</td><td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
+      <td>${ls.length}</td>${tipica ? `${basicoTipico(ls)}
+      ${medTd(ls.map(l=>l.pago), formatarMoedaBR)}${medTd(ls.map(l=>l.mot), formatarMoedaBR)}
+      ${ehGl ? medTd(ls.map(l=>l.mp), formatarMoedaBR) : `<td title="Nos outros apps a taxa do cartão já está dentro da parte do app">—</td>`}
+      ${medTd(ls.map(l=>l.pago - l.mot), formatarMoedaBR)}
+      ${medTd(ls.filter(l=>l.pago > 0).map(l=>l.mot / l.pago * 100), pctTxt)}${medTd(ls.filter(l=>l.pago > 0).map(l=>(l.pago - l.mot) / l.pago * 100), pctTxt)}
+      ${unidTipico(ls, l=>l.mot)}${unidTipico(ls, l=>l.pago - l.mot)}` : `<td>${km ? kmTxt(km) : "—"}</td><td>${min ? minTxt(min) : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
       <td>${formatarMoedaBR(pago)}</td><td>${formatarMoedaBR(mot)}</td>
       <td title="${ehGl ? "Taxa do cartão, já dentro de Plataforma" : "Nos outros apps a taxa do cartão já está dentro da parte do app"}">${ehGl ? formatarMoedaBR(somar(ls, l=>l.mp)) : "—"}</td>
       <td title="${escapeHtml(`${formatarMoedaBR(pago)} − ${formatarMoedaBR(mot)}`)}">${formatarMoedaBR(plat)}</td>
       ${pctTd(mot, pago)}${pctTd(plat, pago)}
       ${moedaTd(porUnid(ls, "km", "km", l=>l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.mot))}
-      ${moedaTd(porUnid(ls, "km", "km", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.pago - l.mot))}</tr>`;
+      ${moedaTd(porUnid(ls, "km", "km", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.pago - l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.pago - l.mot))}`}</tr>`;
   };
   const corpo1 = (gl.length ? linha1("gl", "Go Ladies", rotuloFtMot(r), gl, true) : "")
     + Object.keys(parte1).sort().map(k=>linha1(k, nomeOa(k), subOa(parte1[k]), parte1[k], false)).join("");
@@ -9689,10 +9712,13 @@ function renderFtOutrosApps(){
     const ativo = ftOaAberta === k;
     return `<tr class="tr-click" title="Ver as corridas" onclick="abrirFtOa('${escapeHtml(k)}')"${ativo ? ' style="background:var(--c-pink-bg, rgba(255,45,156,.1));"' : ""}>
       <td style="min-width:160px;"><strong>${escapeHtml(nomeOa(k))}</strong><div style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(subOa(ls))}</div></td>
-      <td>${ls.length}</td><td>${km ? kmTxt(km) : "—"}</td><td>${min ? Math.round(min).toLocaleString("pt-BR") : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
+      <td>${ls.length}</td>${tipica ? `${basicoTipico(ls)}
+      ${medTd(ls.map(l=>l.mot), formatarMoedaBR)}
+      ${medTd(comPago.filter(l=>l.pago > 0).map(l=>(l.pago - l.mot) / l.pago * 100), pctTxt, comPago.length ? ` <span style="color:var(--muted); font-size:var(--fs-xs);">(${comPago.length} de ${ls.length})</span>` : "")}
+      ${unidTipico(ls, l=>l.mot)}` : `<td>${km ? kmTxt(km) : "—"}</td><td>${min ? minTxt(min) : "—"}</td><td>${min ? horasTxt(min) : "—"}</td>
       <td>${formatarMoedaBR(mot)}</td>
       <td title="${escapeHtml(comPago.length ? `${formatarMoedaBR(pagoC - motC)} ÷ ${formatarMoedaBR(pagoC)}, só ${comPago.length} de ${ls.length} têm o valor da passageira` : "Nenhuma com o valor da passageira")}">${comPago.length ? pctTxt(pagoC ? (pagoC - motC) / pagoC * 100 : null) + ` <span style="color:var(--muted); font-size:var(--fs-xs);">(${comPago.length} de ${ls.length})</span>` : "—"}</td>
-      ${moedaTd(porUnid(ls, "km", "km", l=>l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.mot))}</tr>`;
+      ${moedaTd(porUnid(ls, "km", "km", l=>l.mot))}${moedaTd(porUnid(ls, "min", "min", l=>l.mot))}${moedaTd(porUnid(ls, "min", "h", l=>l.mot))}`}</tr>`;
   };
   const corpo2 = Object.keys(parte2).sort().map(linha2).join("");
 
@@ -9739,7 +9765,13 @@ function renderFtOutrosApps(){
       ${sel("turno", [["", "Dia e noite"], ["dia", "Só de dia (6h às 22h)"], ["noite", "Só à noite (22h às 6h)"]], "Dia ou noite")}
       ${sel("cidade", [["", "Todas as cidades"], ...cidades.map(c=>[c, c])], "Cidade")}
       ${sel("app", [["", "Todos os apps"], ...apps.map(a=>[a, a])], "App")}
+      <div class="periodo-grupo" role="group" aria-label="Como mostrar os números">
+        <button type="button" class="${tipica ? "ativo" : ""}" onclick="modoFtOa('tipica')">Corrida típica</button>
+        <button type="button" class="${tipica ? "" : "ativo"}" onclick="modoFtOa('total')">Total</button></div>
     </div>
+    <p style="color:var(--muted); font-size:var(--fs-sm); margin:-4px 0 10px;">${tipica
+      ? "<b>Corrida típica</b>: em cada coluna, a corrida do meio (mediana). Metade das corridas fica abaixo, metade acima; uma corrida fora da curva não puxa o número. Cada coluna é calculada sozinha, então PGT MOTORA + Plataforma pode não fechar com PGT GERAL."
+      : "<b>Total</b>: soma de todas as corridas do período. R$ por km, min e hora = soma do dinheiro ÷ soma dos km ou do tempo."}</p>
     <h4 style="margin:14px 0 4px; font-size:var(--fs-md);">1. Comparação, conta completa</h4>
     <p style="color:var(--muted); font-size:var(--fs-sm); margin:0 0 8px;">Corridas feitas, com o que a passageira pagou. PGT GERAL = o que a passageira (ou cliente) pagou; PGT MOTORA = o que ficou com a motorista; Plataforma = PGT GERAL − PGT MOTORA (na Go Ladies, a parte da Go Ladies mais a taxa do Mercado Pago; nos outros apps, a taxa do cartão já está dentro). Os % são sobre o PGT GERAL. Horas: Go Ladies = tempo previsto pelo Google (ida e volta pagas, quando houver); outros apps = tempo real da corrida. Nenhum conta o tempo indo buscar a passageira. Passe o mouse num valor pra ver a conta; clique numa linha pra ver as corridas.${semPago ? ` ${semPago} corrida${semPago > 1 ? "s" : ""} feita${semPago > 1 ? "s" : ""} sem o valor da passageira ficou${semPago > 1 ? "aram" : ""} fora desta parte.` : ""}</p>
     <table class="tbl"><thead><tr>${cab1.map(t=>`<th>${t}</th>`).join("")}</tr></thead>
