@@ -17,6 +17,9 @@
 -- + historico_viagens: todas as viagens concluídas (e canceladas com multa) desde o começo,
 -- com km, minutos, PGT GERAL, taxa do Mercado Pago e PGT MOTORA, igual ao quadro
 -- "Por motorista" do CRM. Viagens do mês também trazem km e minutos. Rodar o arquivo inteiro de novo.
+-- 31/10 (5ª versão): + acréscimo e motivo do acréscimo (schema_acrescimo_viagem.sql), pra
+-- cobrança acima da tabela com motivo não aparecer como erro (viagem 64). Lido por to_jsonb:
+-- se a coluna ainda não existir, vem vazio. Rodar o arquivo inteiro de novo.
 
 -- Reconhece a motorista Juliana (mesma regra do CRM: ehMotoristaJuliana).
 create or replace function public.sede_eh_motorista_ju(p_id bigint)
@@ -68,7 +71,8 @@ begin
            coalesce(vi.data, (vi.data_hora at time zone 'America/Sao_Paulo')::date) as dia,
            coalesce(vi.preco_final, vi.preco_cotado) as preco,
            vi.desconto_valor, vi.multa_cancelamento,
-           to_jsonb(vi)->'desconto_motivo' as desconto_motivo, to_jsonb(vi)->'preco_tabela' as preco_tabela
+           to_jsonb(vi)->'desconto_motivo' as desconto_motivo, to_jsonb(vi)->'preco_tabela' as preco_tabela,
+           to_jsonb(vi)->'acrescimo_valor' as acrescimo_valor, to_jsonb(vi)->'acrescimo_motivo' as acrescimo_motivo
       from public.viagens vi
   )
   select jsonb_build_object(
@@ -143,6 +147,7 @@ begin
       'viagens_mes', coalesce((select jsonb_agg(jsonb_build_object('id', v.id, 'dia', v.dia, 'status', v.status,
                     'tipo', v.tipo_servico, 'preco', v.preco, 'desconto', v.desconto_valor, 'desconto_motivo', v.desconto_motivo,
                     'preco_tabela', v.preco_tabela, 'multa', v.multa_cancelamento,
+                    'acrescimo', v.acrescimo_valor, 'acrescimo_motivo', v.acrescimo_motivo,
                     'cliente_id', v.cliente_id, 'tem_motorista', v.motorista_id is not null,
                     'motorista_id', v.motorista_id, 'km', v.km, 'minutos', v.minutos,
                     'motorista_eh_ju', public.sede_eh_motorista_ju(v.motorista_id)) order by v.dia, v.id)
@@ -169,6 +174,7 @@ begin
                     'status', vi.status, 'canal', to_jsonb(vi)->'canal_recepcao', 'tipo', vi.tipo_servico,
                     'preco', coalesce(vi.preco_final, vi.preco_cotado), 'desconto', to_jsonb(vi)->'desconto_valor',
                     'desconto_motivo', to_jsonb(vi)->'desconto_motivo', 'preco_tabela', to_jsonb(vi)->'preco_tabela',
+                    'acrescimo', to_jsonb(vi)->'acrescimo_valor', 'acrescimo_motivo', to_jsonb(vi)->'acrescimo_motivo',
                     'motivo_perda', to_jsonb(vi)->'motivo_perda') order by vi.id)
                     from public.viagens vi where vi.criado_em > now() - interval '30 days'), '[]'),
       'certificadas_validas', (select count(*) from public.motoristas m
@@ -191,6 +197,7 @@ begin
                     'motorista_eh_ju', public.sede_eh_motorista_ju(h.motorista_id),
                     'km', h.km, 'minutos', h.minutos, 'preco', h.preco, 'preco_tabela', h.preco_tabela,
                     'desconto', h.desconto_valor, 'desconto_motivo', h.desconto_motivo, 'multa', h.multa_cancelamento,
+                    'acrescimo', h.acrescimo_valor, 'acrescimo_motivo', h.acrescimo_motivo,
                     'pago_em', h.pago_em, 'pgt_geral', h.pgt_geral, 'taxa_mp', h.taxa_mp, 'pgt_motora', h.pgt_motora,
                     'repasse_lancado', h.repasse_lancado, 'go_ladies', h.pgt_geral - h.taxa_mp - h.pgt_motora)
                     order by h.dia, h.id)

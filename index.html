@@ -3816,6 +3816,21 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         </div>
         <div class="automatico"><label>Desconto dado <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" readonly tabindex="-1"></div><span class="dica">Calculado: tabela − cobrado.</span></div>
         <div id="vg-desconto-outro-wrap" class="full" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
+        <!-- Acréscimo (31/10/2026, schema_acrescimo_viagem.sql): aparece só
+             quando o cobrado passa da tabela. -->
+        <div id="vg-acrescimo-motivo-wrap" style="display:none;"><label>Motivo do acréscimo</label>
+          <select id="vg-acrescimo-motivo" onchange="atualizarDesconto()">
+            <option value="">Escolha o motivo</option>
+            <option>Deslocamento longo até a partida</option>
+            <option>Horário com trânsito ou pico</option>
+            <option>Espera combinada</option>
+            <option>Pedágio ou estacionamento</option>
+            <option>Outro</option>
+          </select>
+          <span class="dica">Cobrou mais que a tabela.</span>
+        </div>
+        <div id="vg-acrescimo-valor-wrap" class="automatico" style="display:none;"><label>Acréscimo <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-acrescimo-valor" step="0.01" min="0" readonly tabindex="-1"></div><span class="dica">Calculado: cobrado − tabela.</span></div>
+        <div id="vg-acrescimo-outro-wrap" class="full" style="display:none;"><label>Qual motivo do acréscimo?</label><input type="text" id="vg-acrescimo-outro" placeholder="Descreva o motivo"></div>
         <div class="obrig destaque"><label>Preço cobrado da cliente</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-cotado" step="0.01" oninput="cotadoEditado()"></div><span class="dica">Digite o valor final; o desconto é calculado.</span></div>
         <div class="obrig destaque sugerido"><label>Repasse à motorista (75%) <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-motorista" step="0.01" oninput="recalcularComissaoCotacao()"></div><span class="dica">É a oferta que ela vê antes de aceitar.</span></div>
         <div class="automatico"><label>Comissão Go Ladies <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><input type="text" id="vg-comissao-ladies" readonly tabindex="-1"><span class="dica">Calculada: cobrado − repasse.</span></div>
@@ -4493,6 +4508,9 @@ const TAXA_CANCELAMENTO = {         // % do preço cotado que a cliente paga
 // continua sempre 75% do preço já com desconto (ela participa do desconto
 // na mesma proporção da comissão).
 const DESCONTO_MOTIVOS = ["Primeira viagem", "Fidelidade", "Correção de erro", "Cortesia", "Indicação", "Outro"];
+// Acréscimo (31/10/2026): o contrário do desconto, quando ela cobra acima da
+// tabela. Dividido como o resto (75% motorista), decidido pela Jú.
+const ACRESCIMO_MOTIVOS = ["Deslocamento longo até a partida", "Horário com trânsito ou pico", "Espera combinada", "Pedágio ou estacionamento", "Outro"];
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
 // Funil de parceiros — o mesmo que a Juliana já documenta e usa
@@ -16464,9 +16482,9 @@ function recalcularCotacao(){
   if(tabela != null){
     // Refazer a tabela não apaga o desconto que ela já tinha dado: o cotado
     // acompanha a tabela nova mantendo a mesma diferença.
-    const desconto = descontoAtual();
+    const desconto = descontoAtual(), acrescimo = acrescimoAtual();
     document.getElementById("vg-preco-tabela").value = tabela.toFixed(2);
-    document.getElementById("vg-preco-cotado").value = Math.max(0, tabela - desconto).toFixed(2);
+    document.getElementById("vg-preco-cotado").value = Math.max(0, tabela - desconto + acrescimo).toFixed(2);
     recalcularRepasseMotorista();
   }
   atualizarDesconto();
@@ -16479,6 +16497,13 @@ function descontoAtual(){
   const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
   if(!tabela || !cotado) return 0;
   return Math.max(0, Math.round((tabela - cotado) * 100) / 100);
+}
+// Quanto foi cobrado acima da tabela: cotado − tabela.
+function acrescimoAtual(){
+  const tabela = Number(document.getElementById("vg-preco-tabela").value) || 0;
+  const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
+  if(!tabela || !cotado) return 0;
+  return Math.max(0, Math.round((cotado - tabela) * 100) / 100);
 }
 // A espera combinada fica fora do rateio: vai 100% pra motorista.
 function recalcularRepasseMotorista(){
@@ -16520,6 +16545,17 @@ function atualizarDesconto(){
   // Desconto sem motivo escolhido perde o rastro, que é justamente o ponto:
   // marca o campo em vez de travar o Salvar.
   motivo.style.borderColor = (desconto && !motivo.value) ? "var(--c-red)" : "";
+  // Acréscimo: mesmos campos ao contrário, só aparecem quando existe.
+  const acrescimo = acrescimoAtual();
+  const motAcr = document.getElementById("vg-acrescimo-motivo");
+  const campoAcr = document.getElementById("vg-acrescimo-valor");
+  campoAcr.value = acrescimo ? acrescimo.toFixed(2) : "";
+  campoAcr.dataset.valor = acrescimo || "";
+  const mostraAcr = !!acrescimo || !!motAcr.value;
+  document.getElementById("vg-acrescimo-motivo-wrap").style.display = mostraAcr ? "" : "none";
+  document.getElementById("vg-acrescimo-valor-wrap").style.display = mostraAcr ? "" : "none";
+  document.getElementById("vg-acrescimo-outro-wrap").style.display = mostraAcr && motAcr.value === "Outro" ? "" : "none";
+  motAcr.style.borderColor = (acrescimo && !motAcr.value) ? "var(--c-red)" : "";
   recalcularComissaoCotacao();
 }
 // Cancelamento (05/10/2026): multa e repasse sobre ela combinados caso a
@@ -17639,6 +17675,10 @@ function openViagemModal(id, opcoes){
   const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
   document.getElementById("vg-desconto-motivo").value = motivoConhecido;
   document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
+  const acrSalvo = v.acrescimo_motivo || "";
+  const acrConhecido = acrSalvo && ACRESCIMO_MOTIVOS.includes(acrSalvo) ? acrSalvo : (acrSalvo ? "Outro" : "");
+  document.getElementById("vg-acrescimo-motivo").value = acrConhecido;
+  document.getElementById("vg-acrescimo-outro").value = acrConhecido === "Outro" ? acrSalvo : "";
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   // Viagem paga fica como está, pra não inventar desconto em cobrança antiga.
@@ -17951,6 +17991,13 @@ async function saveViagem(){
   const colunasDescontoExistem = viagens.length > 0 && ("preco_tabela" in viagens[0]);
   if(colunasDescontoExistem || desconto.preco_tabela != null || desconto.desconto_valor != null || desconto.desconto_motivo){
     Object.assign(payload, desconto);
+  }
+  // Colunas de schema_acrescimo_viagem.sql (31/10/2026): só manda se já existem.
+  if(viagens.length > 0 && ("acrescimo_motivo" in viagens[0])){
+    const motAcr = document.getElementById("vg-acrescimo-motivo").value;
+    const valAcr = document.getElementById("vg-acrescimo-valor").dataset.valor;
+    payload.acrescimo_valor = valAcr ? Number(valAcr) : null;
+    payload.acrescimo_motivo = !valAcr ? null : motAcr === "Outro" ? (document.getElementById("vg-acrescimo-outro").value || "Outro") : (motAcr || null);
   }
 
   // Viagem já feita: nasce Concluída, sem motorista_ids (quem marca a
