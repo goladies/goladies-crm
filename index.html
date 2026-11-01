@@ -349,6 +349,8 @@ td.acoes-cel .act{margin-right:3px;}
 .form-grade{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px 14px; align-items:end;}
 .form-grade label{display:flex; flex-direction:column; gap:5px; font-size:var(--fs-sm); color:var(--text3); min-width:0;}
 .o-abrir-ficha{float:right; font-size:var(--fs-xs); color:var(--pink); text-decoration:underline; cursor:pointer;}
+/* Nome nas listas de pessoas sem negrito (31/10/2026): em negrito as letras ficavam muito juntas */
+.nome-tbl{font-weight:400; color:var(--ink);}
 .form-grade input, .form-grade select{width:100%; box-sizing:border-box;}
 .form-grade .larga{grid-column:span 2;}
 .form-grade-botoes{display:flex; gap:8px; align-items:flex-end;}
@@ -7156,7 +7158,7 @@ function renderLeads(){
   ));
   document.getElementById("leads-body").innerHTML = filtered.map(l=>l._ct ? `
     <tr class="tr-click" onclick="openClienteTransporteModal(${l.id})">
-      <td>${htmlAvatarContato(l)}<strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)} <span class="tag novo">Transporte</span></td>
+      <td>${htmlAvatarContato(l)}<span class="nome-tbl">${escapeHtml(l.nome)}</span>${numId(l)}${etiquetaPJ(l)} <span class="tag novo">Transporte</span></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>Transporte</td>
       <td>-</td>
@@ -7166,7 +7168,7 @@ function renderLeads(){
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openClienteTransporteModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Abrir</button></td>
     </tr>` : `
     <tr class="tr-click" onclick="openLeadModal(${l.id})">
-      <td><div style="display:flex; align-items:flex-start;">${htmlAvatarContato(l)}<div><strong>${escapeHtml(l.nome)}</strong>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:var(--fs-xs);">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:var(--fs-xs);">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></div></div></td>
+      <td><div style="display:flex; align-items:flex-start;">${htmlAvatarContato(l)}<div><span class="nome-tbl">${escapeHtml(l.nome)}</span>${numId(l)}${etiquetaPJ(l)}${l.teste?' <span class="tag" title="Lead de teste: não entra nas contagens">Teste</span>':''}${l.exemplo?' <span style="color:var(--muted); font-size:var(--fs-xs);">(exemplo)</span>':''}<br><span style="color:var(--muted); font-size:var(--fs-xs);">${[l.bairro,l.cidade].filter(Boolean).map(escapeHtml).join(", ")}</span></div></div></td>
       <td>${numeroClicavel(l.whatsapp)}${l.email?"<br>"+escapeHtml(l.email):""}</td>
       <td>${escapeHtml(l.categoria||"-")}<br><span style="color:var(--muted); font-size:var(--fs-xs);">${escapeHtml(l.servico||"")}</span></td>
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
@@ -7942,7 +7944,7 @@ function renderClientes(){
       c.ct ? `<button class="act act-edit" onclick="openClienteTransporteModal(${c.ct.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Ficha transporte</button>` : "",
     ].filter(Boolean).join(" ");
     return `<tr class="tr-click" onclick="${abrirPrimeiro}">
-      <td>${htmlAvatarContato({ ...(c.ct && c.ct.foto_path ? c.ct : c.base), nome: c.nome })}<strong>${escapeHtml(c.nome)}</strong>${numId(c.base)}${etiquetaPJ(c.base)}</td>
+      <td>${htmlAvatarContato({ ...(c.ct && c.ct.foto_path ? c.ct : c.base), nome: c.nome })}<span class="nome-tbl">${escapeHtml(c.nome)}</span>${numId(c.base)}${etiquetaPJ(c.base)}</td>
       <td>${numeroClicavel(c.whatsapp)}</td>
       <td>${chips.join(" ")}</td>
       <td>${dataTxt(c.primeira)}</td>
@@ -8043,7 +8045,7 @@ function renderParceiros(){
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
     return `<tr class="tr-click" onclick="openParceiroModal(${p.id})">
-      <td><strong>${escapeHtml(p.nome)}</strong>${numId(p)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:var(--fs-xs);">(exemplo)</span>':''}</td>
+      <td><span class="nome-tbl">${escapeHtml(p.nome)}</span>${numId(p)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:var(--fs-xs);">(exemplo)</span>':''}</td>
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
       <td>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">${escapeHtml(p.classe_carol)}</span> `:""}${p.nota_google!=null?`<span style="font-size:var(--fs-xs);">${escapeHtml(String(p.nota_google).replace(".",","))} ★ <span style="color:var(--muted);">(${p.avaliacoes_google||0})</span></span>`:""}${p.elegivel_certificacao?'<br><span class="tag" style="font-size:var(--fs-xs);">Elegível à certificação</span>':""}${!p.classe_carol&&p.nota_google==null&&!p.elegivel_certificacao?"-":""}</td>
@@ -14001,7 +14003,7 @@ function renderTransporteMotoristas(){
     const faltam = checklistDocumentosMotorista(m.id).filter(i=>!i.ok).length;
     const media = mediaAvaliacaoMotorista(m.id);
     return `<tr class="tr-click" onclick="openMotoristaModal(${m.id})">
-      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<strong>${escapeHtml(m.nome)}</strong>${numId(m)}${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}</td>
+      <td style="white-space:nowrap;">${htmlAvatarMini(urlFotoMotorista(m.foto_path), m.nome)}<span class="nome-tbl">${escapeHtml(m.nome)}</span>${numId(m)}${m.exclusao_solicitada_em && !/\[concluída em/.test(m.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}</td>
       <td>${numeroClicavel(m.whatsapp)}</td>
       <td>${escapeHtml(m.regiao||"-")}${m.veiculo?"<br><span style='color:var(--muted); font-size:var(--fs-xs);'>"+escapeHtml(m.veiculo)+"</span>":""}</td>
       <td>${emDia?'<span class="tag urg-baixa">Em dia</span>':`<span class="tag urg-alta">${faltam} pendente${faltam>1?"s":""}</span>`}</td>
@@ -15269,7 +15271,7 @@ function renderTransporteClientes(){
     `${base.length} cliente${base.length===1?"":"s"} · ${tot.viagens} ${tot.viagens===1?"viagem":"viagens"} · recebido ${formatarMoedaBR(tot.pago)} · pendente ${formatarMoedaBR(tot.pendente)}` + (temPeriodo ? " no período" : "");
   document.getElementById("clientes-transporte-body").innerHTML = filtradas.map(r=>`
     <tr class="tr-click" onclick="openClienteTransporteModal(${r.id})">
-      <td>${htmlAvatarCliente(r)}<strong>${escapeHtml(r.nome)}</strong>${numId(r)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.pendente && !r.pago ? ` <span class="tag" title="Viagem concluída e ainda não paga">a receber</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
+      <td>${htmlAvatarCliente(r)}<span class="nome-tbl">${escapeHtml(r.nome)}</span>${numId(r)}${etiquetaPJ(r)}${r.exclusao_solicitada_em && !/\[concluída em/.test(r.exclusao_motivo||"") ? ` <span class="tag perdido" title="Pediu exclusão da conta pelo app; abra o cadastro pra concluir"><svg class=ic aria-hidden=true><use href=#i-trash /></svg> pediu exclusão</span>` : ""}${r.pendente && !r.pago ? ` <span class="tag" title="Viagem concluída e ainda não paga">a receber</span>` : ""}${r.auth_user_id?` <span title="Tem login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-lock /></svg></span>`:""}${motoristaDaCliente(r.id)?` <span title="Também é motorista (mesmo login)"><svg class=ic aria-hidden=true><use href=#i-car /></svg></span>`:""}${duplicatasCliente(r).length?` <span title="Outra cliente com o mesmo WhatsApp. Abra o cadastro pra unificar."><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg></span>`:""}${(r.canais||r.formas)?`<br><small style="color:var(--muted);">${escapeHtml([r.canais, r.formas].filter(Boolean).join(" · "))}</small>`:""}</td>
       <td>${numeroClicavel(r.whatsapp)}</td>
       <td>${r.segmento?`<span class="tag novo">${escapeHtml(r.segmento)}</span>`:"-"}</td>
       <td>${r.qtd_viagens ? `${r.qtd_concluidas}/${r.qtd_viagens}` : "-"}${r.preferida?` <span title="Pediu motorista específica em ${r.preferida} viagem(ns)"><svg class=ic aria-hidden=true><use href=#i-star /></svg></span>`:""}</td>
@@ -15337,7 +15339,7 @@ function renderLeadsTransporte(){
     const abrir = l.tipo==="ct" ? `openClienteTransporteModal(${l.id})` : `openLeadModal(${l.id})`;
     return `
     <tr class="tr-click" onclick="${abrir}">
-      <td>${htmlAvatarContato(l.base)}<strong>${escapeHtml(l.nome)}</strong>${numId(l.base)}${etiquetaPJ(l.base)}</td>
+      <td>${htmlAvatarContato(l.base)}<span class="nome-tbl">${escapeHtml(l.nome)}</span>${numId(l.base)}${etiquetaPJ(l.base)}</td>
       <td>${numeroClicavel(l.whatsapp)}</td>
       <td>${escapeHtml(l.entrou)}</td>
       <td>${l.desde ? formatarDataBR(l.desde) : "-"}</td>
@@ -21513,7 +21515,7 @@ function renderDetalheNumeros(ps){
   box.style.display = "block";
   box.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><b>${escapeHtml(titulo)} · ${lista.length}</b><button type="button" class="btn ghost small" onclick="abrirDetalheNumeros('${ndDetalheAberto}')">Fechar</button></div>
     <table class="tbl" style="margin-top:8px;"><thead><tr><th>Nome</th><th>Serviço</th><th>Chegou</th><th>Origem</th><th>1º pagamento</th><th>Pago</th></tr></thead><tbody>
-    ${lista.map(p=>`<tr class="tr-click" onclick="${p.abrir}"><td><strong>${escapeHtml(p.nome)}</strong></td><td>${nomeServ[p.servico]}</td><td>${p.entrou ? formatarDataBR(p.entrou) : "-"}</td><td>${escapeHtml(p.origem)}</td><td>${p.primeiraPaga ? formatarDataBR(p.primeiraPaga) : "-"}</td><td>${p.pago ? formatarMoedaBR(p.pago) : "-"}</td></tr>`).join("")
+    ${lista.map(p=>`<tr class="tr-click" onclick="${p.abrir}"><td><span class="nome-tbl">${escapeHtml(p.nome)}</span></td><td>${nomeServ[p.servico]}</td><td>${p.entrou ? formatarDataBR(p.entrou) : "-"}</td><td>${escapeHtml(p.origem)}</td><td>${p.primeiraPaga ? formatarDataBR(p.primeiraPaga) : "-"}</td><td>${p.pago ? formatarMoedaBR(p.pago) : "-"}</td></tr>`).join("")
       || `<tr><td class="empty" colspan="6">Ninguém nesse degrau.</td></tr>`}
     </tbody></table>`;
 }
