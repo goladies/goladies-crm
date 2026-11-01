@@ -348,6 +348,7 @@ td.acoes-cel .act{margin-right:3px;}
 /* Conta da API (Custos de tecnologia): formulários em grade, campos alinhados */
 .form-grade{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px 14px; align-items:end;}
 .form-grade label{display:flex; flex-direction:column; gap:5px; font-size:var(--fs-sm); color:var(--text3); min-width:0;}
+.o-abrir-ficha{float:right; font-size:var(--fs-xs); color:var(--pink); text-decoration:underline; cursor:pointer;}
 .form-grade input, .form-grade select{width:100%; box-sizing:border-box;}
 .form-grade .larga{grid-column:span 2;}
 .form-grade-botoes{display:flex; gap:8px; align-items:flex-end;}
@@ -3354,9 +3355,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <button class="icon-btn" type="button" onclick="closeModal('orcamento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <div class="formgrid">
-      <div class="full"><label>Lead/Cliente</label><select id="o-lead"></select></div>
+      <div class="full"><label>Lead/Cliente <a href="#" class="o-abrir-ficha" onclick="abrirFichaDoOrcamento('leads','o-lead'); return false;">Abrir ficha</a></label><select id="o-lead"></select></div>
       <div class="full"><label>Serviço</label><select id="o-servico"></select></div>
-      <div class="full"><label>Parceiro</label><select id="o-parceiro"></select></div>
+      <div class="full"><label>Parceiro <a href="#" class="o-abrir-ficha" id="o-parceiro-abrir" onclick="abrirFichaDoOrcamento('parceiros','o-parceiro'); return false;">Abrir ficha</a></label><select id="o-parceiro" onchange="mostrarAbrirParceiroOrc()"></select></div>
       <div><label>Valor cotado (R$)</label><input type="number" id="o-cotado"></div>
       <div><label>Valor final (R$)</label><input type="number" id="o-final"></div>
       <div><label>Status</label><select id="o-status"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select></div>
@@ -13792,12 +13793,15 @@ function openOrcamentoModal(id){
   editingOrcamentoId = id || null;
   document.getElementById("o-lead").innerHTML = leads.map(l=>`<option value="${l.id}">${escapeHtml(l.nome)}${optCod(l)}</option>`).join("");
   fillSelect(document.getElementById("o-servico"), servicosParaLista((orcamentos.find(x=>x.id===id) || {}).servico), "");
-  document.getElementById("o-parceiro").innerHTML = parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
+  // Opção vazia: orçamento aberto sozinho pelo site/WhatsApp chega sem
+  // parceira; sem ela o select mostrava a 1ª da lista e salvava errado.
+  document.getElementById("o-parceiro").innerHTML = `<option value="">Ainda sem parceira (o)</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
   document.getElementById("orcamento-modal-title").textContent = id ? "Editar orçamento" : "Novo orçamento";
   const o = orcamentos.find(x=>x.id===id) || {};
   if(o.lead_id) document.getElementById("o-lead").value = o.lead_id;
   if(o.servico) document.getElementById("o-servico").value = o.servico;
-  if(o.parceiro_id) document.getElementById("o-parceiro").value = o.parceiro_id;
+  document.getElementById("o-parceiro").value = o.parceiro_id || "";
+  mostrarAbrirParceiroOrc();
   document.getElementById("o-cotado").value = o.valor_cotado ?? "";
   document.getElementById("o-final").value = o.valor_final ?? "";
   document.getElementById("o-status").value = o.status||"Solicitado";
@@ -13814,8 +13818,18 @@ function openOrcamentoModal(id){
   document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas; edite direto em Financeiro se precisar.` : "";
   document.getElementById("orcamento-modal").classList.add("open");
 }
+// "Abrir ficha" ao lado da lead e da parceira: fecha o orçamento e abre o cadastro.
+function abrirFichaDoOrcamento(tabela, selectId){
+  const id = Number(document.getElementById(selectId).value);
+  if(!id) return;
+  closeModal("orcamento-modal");
+  cadastroDaTabela(tabela).abrir(id);
+}
+function mostrarAbrirParceiroOrc(){
+  document.getElementById("o-parceiro-abrir").style.display = document.getElementById("o-parceiro").value ? "" : "none";
+}
 async function saveOrcamento(){
-  if(!leads.length || !parceiros.length){ alert("Cadastre pelo menos um lead e um parceiro antes."); return; }
+  if(!leads.length){ alert("Cadastre pelo menos um lead antes."); return; }
   const cotado = document.getElementById("o-cotado").value;
   const final = document.getElementById("o-final").value;
   const parcelado = document.getElementById("o-parcelado").checked;
@@ -13823,7 +13837,7 @@ async function saveOrcamento(){
   const payload = {
     lead_id: Number(document.getElementById("o-lead").value),
     servico: document.getElementById("o-servico").value,
-    parceiro_id: Number(document.getElementById("o-parceiro").value),
+    parceiro_id: Number(document.getElementById("o-parceiro").value) || null,
     valor_cotado: cotado === "" ? null : Number(cotado),
     valor_final: final === "" ? null : Number(final),
     status: document.getElementById("o-status").value,
