@@ -1776,8 +1776,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
 
     <div id="tab-parceiros" style="display:none;">
+      <!-- 31/10/2026: Leads e Ativas (os) em abas, como Contatos. Ativa = status "Parceria ativa". -->
+      <div class="subnav">
+        <button type="button" class="subnav-item active" data-subparc="leads" onclick="mostrarSubParceiros('leads')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Leads parceiras (os)<b class="nav-conta" id="subparc-conta-leads"></b></button>
+        <button type="button" class="subnav-item" data-subparc="ativas" onclick="mostrarSubParceiros('ativas')"><svg class=ic aria-hidden=true><use href=#i-heart /></svg> Parceria ativa<b class="nav-conta" id="subparc-conta-ativas"></b></button>
+      </div>
       <div class="pagehead">
-        <div><h2>Rede de Parceiras (os)</h2><p>Oficinas, guinchos, seguradoras e demais parceiras (os) indicados</p></div>
+        <div><h2 id="parceiros-titulo">Leads parceiras (os)</h2><p id="parceiros-sub">Empresas e pessoas em conversa pra entrar na rede, da prospecção à proposta. Quem fechou fica em <a href="#" onclick="mostrarSubParceiros('ativas'); return false;">Parceria ativa</a>.</p></div>
         <button class="btn" onclick="openParceiroModal()">+ Nova parceira (o)</button>
       </div>
       <div class="filters">
@@ -8008,7 +8013,7 @@ function renderParceiros(){
   if(!ft.dataset.filled){ fillSelect(ft, ["",...TIPO_PARCERIA], ""); ft.querySelector("option").textContent="Todos os tipos"; ft.dataset.filled=1; }
   const tipoF = ft.value;
   const fs = document.getElementById("filter-status-parceiros");
-  if(!fs.dataset.filled){ fillSelect(fs, ["",...PARCEIRO_ETAPAS], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
+  if(!fs.dataset.filled){ fillSelect(fs, ["",...PARCEIRO_ETAPAS.filter(e=>e!=="Parceria ativa")], ""); fs.querySelector("option").textContent="Todos os status"; fs.dataset.filled=1; }
   const statusF = fs.value;
   const carolF = document.getElementById("filter-carol-parceiros").value;
   // Plano (schema_servicos_planos.sql): o filtro só aparece depois do SQL
@@ -8028,7 +8033,11 @@ function renderParceiros(){
     {label:"Carol · Google", campo:"classe_carol"}, {label:"Tipo de parceria", campo:"tipo_parceria"},
     {label:"Selo Go Ladies", campo:"selo"}, {label:"Status", campo:"status"}, {label:"Último contato", campo:null}, {label:"", campo:null}
   ], "parceiros");
-  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p) && planoOk(p)));
+  const ehAtiva = p => p.status==="Parceria ativa";
+  const contaL = document.getElementById("subparc-conta-leads"), contaA = document.getElementById("subparc-conta-ativas");
+  if(contaL) contaL.textContent = parceiros.filter(p=>!ehAtiva(p) && p.status!=="Fora da rede").length || "";
+  if(contaA) contaA.textContent = parceiros.filter(ehAtiva).length || "";
+  const lista = aplicarOrdenacao("parceiros", parceiros.filter(p=>(parceirosSub==="ativas" ? ehAtiva(p) : !ehAtiva(p)) && (!tipoF || (p.tipo_parceria||"").split(",").map(s=>s.trim()).includes(tipoF)) && filtroPessoaOk("filter-pessoa-parceiros", p) && (!statusF || p.status===statusF) && carolOk(p) && planoOk(p)));
   parceirosNaTela = lista;
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
@@ -10456,8 +10465,25 @@ function restaurarSubAba(aba){
   else if(aba==="financeiro" && document.querySelector(`#tab-financeiro #subtab-${CSS.escape(sub)}`)) mostrarSubTabFinanceiro(sub);
   else if(aba==="sede" && SEDE_ABAS.includes(sub)) mostrarSubSede(sub);
   else if(aba==="contatos" && (sub==="leads" || sub==="clientes")) mostrarSubContatos(sub);
+  else if(aba==="parceiros" && (sub==="leads" || sub==="ativas")) mostrarSubParceiros(sub);
   else if(aba==="pedidos" && (sub==="orcamentos" || sub==="pecas")) mostrarSubPedidos(sub);
   else if(aba==="servicos" && SVP_ABAS.includes(sub)) mostrarSubServicos(sub);
+}
+let parceirosSub = "leads";
+function mostrarSubParceiros(nome){
+  parceirosSub = nome;
+  lembrarSubAba("parceiros", nome);
+  document.querySelectorAll("#tab-parceiros .subnav-item[data-subparc]").forEach(b=>b.classList.toggle("active", b.dataset.subparc===nome));
+  const ativas = nome==="ativas";
+  document.getElementById("parceiros-titulo").textContent = ativas ? "Parceria ativa" : "Leads parceiras (os)";
+  document.getElementById("parceiros-sub").innerHTML = ativas
+    ? `Quem já é parceira (o) de verdade (status Parceria ativa). Quem ainda está em conversa fica em <a href="#" onclick="mostrarSubParceiros('leads'); return false;">Leads parceiras (os)</a>.`
+    : `Empresas e pessoas em conversa pra entrar na rede, da prospecção à proposta. Quem fechou fica em <a href="#" onclick="mostrarSubParceiros('ativas'); return false;">Parceria ativa</a>.`;
+  // Status só faz sentido nos leads (nas ativas é sempre "Parceria ativa")
+  const fs = document.getElementById("filter-status-parceiros");
+  fs.style.display = ativas ? "none" : "";
+  if(ativas) fs.value = "";
+  renderParceiros();
 }
 function mostrarSubContatos(nome){
   lembrarSubAba("contatos", nome);
