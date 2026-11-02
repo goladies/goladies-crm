@@ -2927,6 +2927,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="f-teste" style="width:auto;"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
     </div>
+    <div class="ligacoes-wrap" id="f-redes"></div>
     <div class="ligacoes-wrap" id="f-datas"></div>
     <div class="ligacoes-wrap" id="f-ligacoes"></div>
 
@@ -3091,15 +3092,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </div>
 
-    <div id="p-links-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Site e Redes Sociais</h4>
-      <div id="p-links-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
-        <div><label>Tipo</label><select id="pl-tipo"><option>Site</option><option>Instagram</option><option>LinkedIn</option><option>Facebook</option><option>Outro</option></select></div>
-        <div class="full"><label>Link</label><input type="text" id="pl-url" placeholder="https://..."></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addLinkParceiro()">+ Adicionar link</button></div>
-      </div>
-    </div>
+    <div class="ligacoes-wrap" id="p-redes"></div>
 
     <div id="p-enderecos-wrap" style="margin-top:18px;">
       <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Endereços</h4>
@@ -3450,6 +3443,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
     </div>
     <div id="mt-conversa-whats" style="display:none; margin-top:18px;"></div>
+    <div class="ligacoes-wrap" id="mt-redes"></div>
     <div class="ligacoes-wrap" id="mt-datas"></div>
     <div class="ligacoes-wrap" id="mt-ligacoes"></div>
 
@@ -3645,6 +3639,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full" id="ct-acesso-painel" style="font-size:var(--fs-sm); color:var(--muted);"></div>
     </div>
     <div id="ct-conversa-whats" style="display:none; margin-top:18px;"></div>
+    <div class="ligacoes-wrap" id="ct-redes"></div>
     <div class="ligacoes-wrap" id="ct-datas"></div>
     <div class="ligacoes-wrap" id="ct-ligacoes"></div>
     <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
@@ -4776,6 +4771,8 @@ let viagemParadas = [];   // paradas (garupa) de cada viagem, schema_viagem_para
 let viagemPassageiros = []; // quem vai no carro e onde entra/desce, schema_garupa_lista_passageiros.sql
 let datasEspeciais = [];        // aniversário de familiares (schema_datas_especiais.sql)
 let datasEspeciaisSqlFaltando = false;
+let cadastroRedes = [];          // redes sociais e site no código da pessoa (schema_cadastro_redes.sql)
+let cadastroRedesSqlFaltando = false;
 let parabensEnviados = [];      // quem já recebeu os parabéns no ano (schema_parabens_enviados.sql)
 let parabensSqlFaltando = false;
 let tabelasPreco = [];          // tabelas de preço por tipo e horário (schema_tabelas_preco.sql)
@@ -5509,6 +5506,7 @@ async function carregarDadosInterno(){
       sb.from("planos_beneficios").select("*").order("ordem").order("id"),
       sb.from("cotas_patrocinio").select("*").order("ordem").order("id"),
     ]),
+    sb.from("cadastro_redes").select("*").order("id"),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -5643,6 +5641,10 @@ async function carregarDadosInterno(){
   // Serviços e Planos (schema_servicos_planos.sql): sem o SQL o catálogo
   // segue a lista fixa e Planos/Patrocínio mostram o aviso.
   aplicarServicosPlanos(await q[20]);
+  // Redes sociais no cadastro (schema_cadastro_redes.sql): sem o SQL a seção mostra o aviso.
+  const rredes = await q[21];
+  cadastroRedesSqlFaltando = !!rredes.error;
+  if(!rredes.error) cadastroRedes = rredes.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -5769,6 +5771,7 @@ const TABELA_ATUALIZA = {
   fin_conferencias: v => finConferencias = v,
   vinculos_cadastros: v => vinculosCadastros = v,
   datas_especiais: v => datasEspeciais = v,
+  cadastro_redes: v => cadastroRedes = v,
   parabens_enviados: v => parabensEnviados = v,
   cadastros: v => atualizarCadastros(v),
   pecas_pedidos: v => pecasPedidos = v,
@@ -7993,7 +7996,7 @@ function exportarParceirosCsv(){
   const cols = [
     ["Nome", p=>p.nome], ["Tipo", p=>p.tipo_pessoa], ["Categorias", p=>p.categoria], ["Região", p=>p.regiao], ["Status", p=>p.status],
     ["Classe Carol", p=>p.classe_carol], ["Nota Google", p=>p.nota_google!=null ? String(p.nota_google).replace(".",",") : ""], ["Avaliações Google", p=>p.avaliacoes_google],
-    ["Situação do site", p=>p.site_situacao], ["Site e redes", p=>doParceiro(parceiroLinks, p.id).map(l=>`${l.tipo}: ${l.url}`).join(" | ")],
+    ["Situação do site", p=>p.site_situacao], ["Site e redes", p=>redesDoCadastro(p).map(l=>`${l.tipo}: ${l.url}`).join(" | ")],
     ["Telefones", p=>doParceiro(parceiroContatos, p.id).map(c=>`${c.tipo}: ${c.numero}`).join(" | ")],
     ["Endereço", p=>doParceiro(parceiroEnderecos, p.id).map(e=>e.endereco).join(" | ")], ["Link do Maps", p=>p.link_maps],
     ["Critério mulher", p=>p.criterio_mulher], ["Como foi confirmado", p=>p.criterio_mulher_fonte], ["Elegível à certificação", p=>p.elegivel_certificacao ? "Sim" : ""],
@@ -12429,7 +12432,7 @@ const ORIGENS_LEAD = ["Instagram", "Facebook", "Google", "Site", "WhatsApp", "Li
 let editingLeadId = null;
 function openLeadModal(id){
   editingLeadId = id || null;
-  datasPendentes.f = [];
+  datasPendentes.f = []; redesPendentes.f = [];
   // Lead novo começa sem categoria nem serviço (pedido dela 27/10/2026)
   fillSelect(document.getElementById("f-categoria"), CATEGORIAS, "");
   document.getElementById("f-categoria").insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
@@ -12589,8 +12592,9 @@ async function salvarLead(){
     if(document.getElementById("fv-servico").value.trim()) await addVenda();
     if(document.getElementById("fi-assunto").value.trim()) await addInteracaoLead();
     await gravarDatasPendentes("f", editingLeadId);
+    await gravarRedesPendentes("f", editingLeadId);
   }
-  await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes", "datas_especiais");
+  await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes", "datas_especiais", "cadastro_redes");
   if(isNew){ renderVendasLead(); renderInteracoesLead(); renderLigacoes("f"); }
   else { closeModal("lead-modal"); }
 }
@@ -13470,8 +13474,8 @@ function renderProspeccaoParceiro(p){
 }
 function openParceiroModal(id){
   editingParceiroId = id || null;
-  datasPendentes.p = [];
-  parceiroContatosPendentes = []; parceiroLinksPendentes = []; parceiroEnderecosPendentes = [];
+  datasPendentes.p = []; redesPendentes.p = [];
+  parceiroContatosPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
   document.getElementById("parceiro-modal-title").textContent = id ? `Editar parceira (o) ${codigoCadastro(parceiros.find(p=>p.id===id))}`.trim() : "Nova parceira (o)";
   fecharBuscaContatoParceiro();
@@ -13504,15 +13508,12 @@ function openParceiroModal(id){
   document.getElementById("pc-tipo").value = "Celular";
   document.getElementById("pc-numero").value = "";
   document.getElementById("pc-descricao").value = "";
-  document.getElementById("pl-tipo").value = "Site";
-  document.getElementById("pl-url").value = "";
   document.getElementById("pe-endereco").value = "";
   document.getElementById("pe-descricao").value = "";
   document.getElementById("pi-data").value = "";
   document.getElementById("pi-assunto").value = "";
   document.getElementById("pi-proximos").value = "";
   renderContatosParceiro();
-  renderLinksParceiro();
   renderEnderecosParceiro();
   renderInteracoesParceiro();
   avisoAniversarioFicha("p");
@@ -13550,13 +13551,13 @@ async function saveParceiro(){
     editingParceiroId = data[0].id;
     document.getElementById("parceiro-modal-title").textContent = "Editar parceira (o)";
     await gravarContatosPendentesParceiro();
-    await gravarLinksPendentesParceiro();
     await gravarEnderecosPendentesParceiro();
     if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
     await gravarDatasPendentes("p", editingParceiroId);
+    await gravarRedesPendentes("p", editingParceiroId);
   }
-  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes", "datas_especiais");
-  if(isNew){ renderContatosParceiro(); renderLinksParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
+  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_enderecos", "parceiro_interacoes", "datas_especiais", "cadastro_redes");
+  if(isNew){ renderContatosParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
   else { closeModal("parceiro-modal"); }
 }
 async function deleteParceiro(id){
@@ -13632,64 +13633,6 @@ async function deleteContatoParceiro(id){
   parceiroContatos = data || [];
   renderContatosParceiro();
   renderParceiros();
-}
-
-// Site e redes sociais do parceiro
-let parceiroLinksPendentes = [];
-function renderLinksParceiro(){
-  const wrap = document.getElementById("p-links-lista");
-  const linha = (l, acao) => `
-    <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm); display:flex; justify-content:space-between; align-items:center; gap:8px;">
-      <span style="min-width:0; overflow:hidden; text-overflow:ellipsis;"><strong>${escapeHtml(l.tipo)}:</strong> <a href="${escapeHtml(normalizarLink(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></span>
-      ${acao}
-    </div>`;
-  if(!editingParceiroId){
-    wrap.innerHTML = parceiroLinksPendentes.map((l,i)=>linha(l, `<button class="icon-btn" type="button" onclick="removerLinkPendenteParceiro(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
-      + avisoPendentes(parceiroLinksPendentes, "link", "links");
-    return;
-  }
-  const registros = parceiroLinks.filter(l=>l.parceiro_id===editingParceiroId);
-  wrap.innerHTML = registros.map(l=>linha(l, `<button class="icon-btn" type="button" onclick="deleteLinkParceiro(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`)).join("")
-    || `<p style="color:var(--muted); font-size:var(--fs-sm);">Nenhum link cadastrado ainda.</p>`;
-}
-function lerLinkParceiroForm(){
-  const url = document.getElementById("pl-url").value.trim();
-  if(!url) return null;
-  return { tipo: document.getElementById("pl-tipo").value, url: normalizarLink(url) };
-}
-function removerLinkPendenteParceiro(i){ parceiroLinksPendentes.splice(i,1); renderLinksParceiro(); }
-async function addLinkParceiro(){
-  const l = lerLinkParceiroForm();
-  if(!l){ alert("Informe o link"); return; }
-  if(!editingParceiroId){
-    parceiroLinksPendentes.push(l);
-    document.getElementById("pl-url").value = "";
-    renderLinksParceiro();
-    return;
-  }
-  const { error } = await sb.from("parceiro_links").insert({ parceiro_id: editingParceiroId, ...l });
-  if(error){ alert("Erro ao adicionar link: " + error.message); return; }
-  const { data } = await sb.from("parceiro_links").select("*").order("id");
-  parceiroLinks = data || [];
-  document.getElementById("pl-url").value = "";
-  renderLinksParceiro();
-}
-async function gravarLinksPendentesParceiro(){
-  const digitado = lerLinkParceiroForm();
-  const lista = [...parceiroLinksPendentes, ...(digitado ? [digitado] : [])];
-  parceiroLinksPendentes = [];
-  if(!lista.length) return;
-  const { error } = await sb.from("parceiro_links").insert(lista.map(l=>({ parceiro_id: editingParceiroId, ...l })));
-  if(error){ alert("Cadastro salvo, mas houve erro ao gravar os links: " + error.message); return; }
-  document.getElementById("pl-url").value = "";
-}
-async function deleteLinkParceiro(id){
-  if(!confirm("Excluir este link?")) return;
-  const { error } = await sb.from("parceiro_links").delete().eq("id", id);
-  if(error){ alert("Erro ao excluir: " + error.message); return; }
-  const { data } = await sb.from("parceiro_links").select("*").order("id");
-  parceiroLinks = data || [];
-  renderLinksParceiro();
 }
 
 // Endereços (loja, oficina, empresa etc.) do parceiro
@@ -14844,7 +14787,7 @@ async function salvarFotoPerfil(prefixo, id, pathAtual){
 let editingMotoristaId = null;
 function openMotoristaModal(id){
   editingMotoristaId = id || null;
-  datasPendentes.mt = [];
+  datasPendentes.mt = []; redesPendentes.mt = [];
   fillSelect(document.getElementById("mt-status"), MOTORISTA_ETAPAS, MOTORISTA_STATUS_PADRAO);
   document.getElementById("motorista-modal-title").textContent = id ? `Editar motorista ${codigoCadastro(motoristas.find(m=>m.id===id))}`.trim() : "Nova motorista";
   const m = motoristas.find(x=>x.id===id) || {};
@@ -15188,13 +15131,14 @@ async function saveMotorista(){
     if(document.getElementById("mt-doc-validade").value.trim()) await addDocumentoMotorista();
     if(document.getElementById("mo-texto").value.trim()) await addObservacaoMotorista();
     await gravarDatasPendentes("mt", editingMotoristaId);
+    await gravarRedesPendentes("mt", editingMotoristaId);
   }
   await salvarDocPrincipal("cnh", editingMotoristaId);
   await salvarDocPrincipal("crlv", editingMotoristaId);
   await salvarDocPrincipal("antecedentes", editingMotoristaId);
   await salvarDocPrincipal("endereco", editingMotoristaId);
   await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
-  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "datas_especiais");
+  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "datas_especiais", "cadastro_redes");
   if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); carregarPerfilMotorista(); }
   else { closeModal("motorista-modal"); }
 }
@@ -15383,7 +15327,7 @@ function exportarClientesCsv(){
 let editingClienteTransporteId = null;
 function openClienteTransporteModal(id){
   editingClienteTransporteId = id || null;
-  datasPendentes.ct = [];
+  datasPendentes.ct = []; redesPendentes.ct = [];
   document.getElementById("cliente-transporte-modal-title").textContent = id ? `Editar cliente ${codigoCadastro(clientesTransporte.find(c=>c.id===id))}`.trim() : "Nova cliente de viagem";
   const c = clientesTransporte.find(x=>x.id===id) || {};
   document.getElementById("ct-nome").value = c.nome||"";
@@ -15712,9 +15656,10 @@ async function saveClienteTransporte(){
   const idSalvo = editingClienteTransporteId || (data && data[0] && data[0].id);
   if(idSalvo) await salvarFotoPerfil("ct", idSalvo, (clientesTransporte.find(x=>x.id===idSalvo)||{}).foto_path);
   if(!editingClienteTransporteId && idSalvo) await gravarDatasPendentes("ct", idSalvo);
+  if(!editingClienteTransporteId && idSalvo) await gravarRedesPendentes("ct", idSalvo);
   showToast("Salvo!");
   closeModal("cliente-transporte-modal");
-  await recarregarTabelas("clientes_transporte", "datas_especiais");
+  await recarregarTabelas("clientes_transporte", "datas_especiais", "cadastro_redes");
 }
 async function deleteClienteTransporte(id){
   if(!confirm("Excluir esta cliente? As viagens ligadas a ela ficam sem cliente definido (não são apagadas).")) return;
@@ -15828,6 +15773,7 @@ function opcoesAlvoLigacao(pre, modo){
 }
 function renderLigacoes(pre){
   renderDatasEspeciais(pre); // abre junto com as Ligações em todas as fichas
+  renderRedes(pre);
   const el = document.getElementById(pre+"-ligacoes");
   if(!el) return;
   const c = CADASTROS[pre], id = c.aberto();
@@ -16073,6 +16019,113 @@ async function removerDataEspecial(pre, did, idxPendente){
   if(error){ alert("Erro ao remover: " + error.message); return; }
   await recarregarTabelas("datas_especiais");
   renderDatasEspeciais(pre);
+}
+
+// ===== REDES SOCIAIS NO CADASTRO (02/11/2026) =====
+// Ficam no código da pessoa ou empresa (cadastro_redes), então aparecem em
+// todas as fichas dela: lead, cliente de viagem, motorista e parceira (o).
+// Ficha nova ainda não tem código: os links esperam em redesPendentes até o
+// Salvar (gravarRedesPendentes), igual às datas especiais.
+const TIPOS_REDE = ["Instagram","Facebook","LinkedIn","TikTok","YouTube","Site","Outro"];
+const ICONE_REDE = { Instagram:"i-brand-instagram", Facebook:"i-brand-facebook", LinkedIn:"i-brand-linkedin", TikTok:"i-brand-tiktok", YouTube:"i-brand-youtube" };
+const redesPendentes = { f:[], p:[], ct:[], mt:[] };
+function redesDoCadastro(r){
+  return r && r.cadastro_id ? cadastroRedes.filter(x=>x.cadastro_id===r.cadastro_id) : [];
+}
+// Escreveu só "@fulana" ou "fulana" no Instagram/TikTok: vira o link completo.
+function linkDaRede(tipo, texto){
+  const t = String(texto||"").trim();
+  const usuario = t.replace(/^@/, "");
+  if(!/[\/.]/.test(usuario)){
+    if(tipo==="Instagram") return "https://www.instagram.com/" + usuario + "/";
+    if(tipo==="TikTok") return "https://www.tiktok.com/@" + usuario;
+  }
+  return normalizarLink(t);
+}
+// Mostra "@usuario" quando dá pra tirar do link; senão, o link sem https://
+function textoDaRede(l){
+  const m = String(l.url||"").match(/(?:instagram\.com|tiktok\.com)\/@?([^\/?#]+)/i);
+  return m ? "@" + m[1] : String(l.url||"").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+}
+function itemRede(l, onRemover){
+  const ic = ICONE_REDE[l.tipo] || "i-link";
+  return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome"><svg class=ic aria-hidden=true><use href=#${ic} /></svg> ${escapeHtml(l.tipo)}</span>
+      <small><a href="${escapeHtml(normalizarLink(l.url))}" target="_blank" rel="noopener">${escapeHtml(textoDaRede(l))}</a></small></div><div class="lig-acoes">
+      <button type="button" class="act act-del" title="Remover link" aria-label="Remover link" onclick="${onRemover}"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div></div>`;
+}
+function renderRedes(pre){
+  const el = document.getElementById(pre+"-redes");
+  if(!el) return;
+  const c = CADASTROS[pre], id = c.aberto();
+  const cab = `<h4>Redes sociais e site</h4><p class="lig-sub">Ficam no código da pessoa: aparecem em todas as fichas dela (lead, cliente, motorista, parceira).</p>`;
+  if(cadastroRedesSqlFaltando){ el.innerHTML = cab + `<p class="lig-vazio">Rode primeiro o SQL schema_cadastro_redes.sql no Supabase (SQL Editor).</p>`; return; }
+  const r = id ? c.lista().find(x=>x.id===id) : null;
+  if(id && !(r && r.cadastro_id)){
+    el.innerHTML = cab + `<p class="lig-vazio">Esta ficha não tem código (é teste ou exemplo), por isso não guarda redes sociais.</p>`;
+    return;
+  }
+  const itens = !id
+    ? redesPendentes[pre].map((l,i)=>itemRede(l, `removerRede('${pre}',null,${i})`)).join("")
+    : redesDoCadastro(r).map(l=>itemRede(l, `removerRede('${pre}',${l.id})`)).join("");
+  el.innerHTML = cab + (itens || `<p class="lig-vazio">Nenhuma rede ainda.</p>`) + `<div class="lig-form">
+      <div><label for="${pre}-rd-tipo">Rede</label><select id="${pre}-rd-tipo">${TIPOS_REDE.map(t=>`<option>${t}</option>`).join("")}</select></div>
+      <div><label for="${pre}-rd-url">Link ou @usuário</label><input type="text" id="${pre}-rd-url" placeholder="@usuario ou https://..."></div>
+      <div style="display:flex; align-items:flex-end;"><button type="button" class="btn secondary small" style="margin-bottom:10px;" onclick="adicionarRede('${pre}')">+ Adicionar rede</button></div>
+    </div>`;
+}
+function lerFormRede(pre){
+  const urlEl = document.getElementById(pre+"-rd-url");
+  if(!urlEl || !urlEl.value.trim()) return null;
+  const tipo = document.getElementById(pre+"-rd-tipo").value;
+  return { tipo, url: linkDaRede(tipo, urlEl.value) };
+}
+async function adicionarRede(pre){
+  const c = CADASTROS[pre], id = c.aberto();
+  const nova = lerFormRede(pre);
+  if(!nova){ alert("Escreva o link ou o @usuário."); return; }
+  if(!id){
+    redesPendentes[pre].push(nova);
+    renderRedes(pre);
+    showToast("Rede guardada. Ela entra quando você salvar a ficha.");
+    return;
+  }
+  const r = c.lista().find(x=>x.id===id);
+  const { error } = await sb.from("cadastro_redes").insert({ cadastro_id:r.cadastro_id, ...nova });
+  if(error){
+    alert(/duplicate|unique/i.test(error.message) ? "Esse link já está nesta pessoa."
+      : /does not exist|schema cache/i.test(error.message) ? "Rode primeiro o SQL schema_cadastro_redes.sql no Supabase (SQL Editor)."
+      : "Não deu pra salvar a rede: " + error.message);
+    return;
+  }
+  await recarregarTabelas("cadastro_redes");
+  renderRedes(pre);
+  showToast("Rede adicionada!");
+}
+// Chamada pelo Salvar de uma ficha nova. O código nasce no banco junto com a
+// ficha, então busca o cadastro_id dela antes de gravar. Leva também o link
+// que ficou digitado sem clicar em "+ Adicionar rede".
+async function gravarRedesPendentes(pre, id){
+  const lista = [...redesPendentes[pre]];
+  const digitada = lerFormRede(pre);
+  if(digitada) lista.push(digitada);
+  redesPendentes[pre] = [];
+  if(!lista.length || !id) return;
+  const { data } = await sb.from(CADASTROS[pre].tabela).select("cadastro_id").eq("id", id).maybeSingle();
+  if(!data || !data.cadastro_id) return;
+  const { error } = await sb.from("cadastro_redes").upsert(lista.map(l=>({ cadastro_id:data.cadastro_id, ...l })), { onConflict:"cadastro_id,url", ignoreDuplicates:true });
+  if(error) alert("A ficha foi salva, mas as redes sociais não entraram. Abra a ficha de novo e adicione outra vez, por favor.");
+}
+async function removerRede(pre, rid, idxPendente){
+  if(rid==null){
+    redesPendentes[pre].splice(idxPendente, 1);
+    renderRedes(pre);
+    return;
+  }
+  if(!confirm("Remover este link? Ele sai de todas as fichas desta pessoa.")) return;
+  const { error } = await sb.from("cadastro_redes").delete().eq("id", rid);
+  if(error){ alert("Não deu pra remover: " + error.message); return; }
+  await recarregarTabelas("cadastro_redes");
+  renderRedes(pre);
 }
 
 // ===== CNPJ NA BRASILAPI (27/10/2026) =====
