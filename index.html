@@ -4486,9 +4486,13 @@ let SERVICOS = [
   {nome:"Análise de orçamento", categoria:"Consultoria"},
   // Desde 08/10/2026: a assistente do WhatsApp cria lead também pra parceria
   // e patrocínio (lista igual em whatsapp_criar_lead no Supabase).
-  {nome:"Quero ser parceira (o) da rede", categoria:"Parcerias e Patrocínio"},
-  {nome:"Patrocínio", categoria:"Parcerias e Patrocínio"},
-  {nome:"Imprensa e outras propostas", categoria:"Parcerias e Patrocínio"},
+  // 02/11/2026: Parcerias e Patrocínio viraram duas categorias; "Prospecção: ..."
+  // é quando a Go Ladies procura a pessoa (schema_separar_parcerias_patrocinio.sql).
+  {nome:"Quero ser parceira (o) da rede", categoria:"Parcerias"},
+  {nome:"Prospecção: parceria", categoria:"Parcerias"},
+  {nome:"Patrocínio", categoria:"Patrocínio"},
+  {nome:"Prospecção: patrocínio", categoria:"Patrocínio"},
+  {nome:"Imprensa e outras propostas", categoria:"Outros"},
   {nome:"Outro serviço", categoria:"Outros"},
 ];
 let CATEGORIAS = [...new Set(SERVICOS.map(s=>s.categoria))];
@@ -16026,11 +16030,13 @@ async function removerDataEspecial(pre, did, idxPendente){
 }
 
 // ===== PRÓXIMO PASSO DA LEAD (02/11/2026) =====
-// Faixa na ficha de lead, conforme a categoria: Parcerias e Patrocínio cria a
+// Faixa na ficha de lead, conforme a categoria: Parcerias ou Patrocínio cria a
 // ficha de parceira (o); Viagem cria o pedido de viagem; as outras criam o
 // pedido de serviço (orçamento). A ficha nova fica ligada à lead como mesma
 // pessoa (mesmo código). Só aparece com a lead salva.
 let parceiraDaLeadId = null;   // saveParceiro liga a parceira nova a esta lead
+// "Parcerias e Patrocínio" é a categoria antiga (antes do SQL de 02/11).
+const CATEGORIAS_PARCEIRA = ["Parcerias","Patrocínio","Parcerias e Patrocínio"];
 function papeisDaLead(leadId, tabela){
   return [...grupoMesmaPessoa("leads", leadId).keys()]
     .filter(k=>k.startsWith(tabela + ":"))
@@ -16048,12 +16054,12 @@ function renderProximoPassoLead(){
   el.style.display = "";
   const cab = `<h4>Próximo passo</h4>`;
   if(!editingLeadId){
-    el.innerHTML = cab + `<p class="lig-vazio">Salve a lead primeiro. Depois aparece aqui o botão pra criar ${cat==="Parcerias e Patrocínio" ? "a ficha de parceira (o)" : cat==="Viagem" ? "o pedido de viagem" : "o pedido (orçamento)"}.</p>`;
+    el.innerHTML = cab + `<p class="lig-vazio">Salve a lead primeiro. Depois aparece aqui o botão pra criar ${CATEGORIAS_PARCEIRA.includes(cat) ? "a ficha de parceira (o)" : cat==="Viagem" ? "o pedido de viagem" : "o pedido (orçamento)"}.</p>`;
     return;
   }
   const id = editingLeadId;
   let corpo = "";
-  if(cat==="Parcerias e Patrocínio"){
+  if(CATEGORIAS_PARCEIRA.includes(cat)){
     const ids = papeisDaLead(id, "parceiros");
     const itens = ids.map(pid=>parceiros.find(p=>p.id===pid)).filter(Boolean)
       .map(p=>itemProximo(`Parceira (o) ${escapeHtml(nomeCod(p))}`, escapeHtml([p.tipo_parceria, p.status].filter(Boolean).join(" · ")), `abrirDaLead('parceiros',${p.id})`)).join("");
@@ -16106,7 +16112,8 @@ function criarParceiraDaLead(){
     parceiroContatosPendentes.push({ tipo: "Celular", numero: l.whatsapp, descricao: "WhatsApp (veio da lead)" });
     renderContatosParceiro();
   }
-  const tipo = l.servico==="Patrocínio" ? "Patrocínio" : l.servico==="Quero ser parceira (o) da rede" ? "Mensalidade" : "";
+  const tipo = (l.categoria==="Patrocínio" || ["Patrocínio","Prospecção: patrocínio"].includes(l.servico)) ? "Patrocínio"
+    : (l.categoria==="Parcerias" || ["Quero ser parceira (o) da rede","Prospecção: parceria"].includes(l.servico)) ? "Mensalidade" : "";
   const cb = tipo && document.querySelector(`#p-tipo-parceria-wrap input[value="${tipo}"]`);
   if(cb) cb.checked = true;
   showToast("Confira a etapa e salve. A parceira fica ligada a esta lead.");
