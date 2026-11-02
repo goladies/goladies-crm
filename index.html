@@ -2927,6 +2927,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
       <div class="full"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="f-teste" style="width:auto;"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
     </div>
+    <div class="ligacoes-wrap" id="f-proximo"></div>
     <div class="ligacoes-wrap" id="f-redes"></div>
     <div class="ligacoes-wrap" id="f-datas"></div>
     <div class="ligacoes-wrap" id="f-ligacoes"></div>
@@ -12437,7 +12438,8 @@ function openLeadModal(id){
   fillSelect(document.getElementById("f-categoria"), CATEGORIAS, "");
   document.getElementById("f-categoria").insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
   document.getElementById("f-categoria").value = "";
-  document.getElementById("f-categoria").onchange = ()=>fillServicoOptions();
+  document.getElementById("f-categoria").onchange = ()=>{ fillServicoOptions(); renderProximoPassoLead(); };
+  document.getElementById("f-servico").onchange = ()=>renderProximoPassoLead();
   fillServicoOptions();
   fillSelect(document.getElementById("f-etapa"), ETAPAS, "Novo lead");
   document.getElementById("lead-modal-title").textContent = id ? `Editar lead ${codigoCadastro(leads.find(l=>l.id===id))}`.trim() : "Novo lead";
@@ -12491,6 +12493,7 @@ function openLeadModal(id){
   renderInteracoesLead();
   renderConversaWhatsLead(l);
   avisoAniversarioFicha("f");
+  renderProximoPassoLead();
   document.getElementById("lead-modal").classList.add("open");
 }
 function toggleOrigemOutro(){
@@ -12595,7 +12598,7 @@ async function salvarLead(){
     await gravarRedesPendentes("f", editingLeadId);
   }
   await recarregarTabelas("leads", "vendas", "venda_parcelas", "lead_interacoes", "datas_especiais", "cadastro_redes");
-  if(isNew){ renderVendasLead(); renderInteracoesLead(); renderLigacoes("f"); }
+  if(isNew){ renderVendasLead(); renderInteracoesLead(); renderLigacoes("f"); renderProximoPassoLead(); }
   else { closeModal("lead-modal"); }
 }
 async function deleteLead(id){
@@ -13474,7 +13477,7 @@ function renderProspeccaoParceiro(p){
 }
 function openParceiroModal(id){
   editingParceiroId = id || null;
-  datasPendentes.p = []; redesPendentes.p = [];
+  datasPendentes.p = []; redesPendentes.p = []; parceiraDaLeadId = null;
   parceiroContatosPendentes = []; parceiroEnderecosPendentes = [];
   fillSelect(document.getElementById("p-status"), PARCEIRO_ETAPAS, "Prospecção");
   document.getElementById("parceiro-modal-title").textContent = id ? `Editar parceira (o) ${codigoCadastro(parceiros.find(p=>p.id===id))}`.trim() : "Nova parceira (o)";
@@ -13555,6 +13558,7 @@ async function saveParceiro(){
     if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
     await gravarDatasPendentes("p", editingParceiroId);
     await gravarRedesPendentes("p", editingParceiroId);
+    await ligarParceiraNaLead(editingParceiroId);
   }
   await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_enderecos", "parceiro_interacoes", "datas_especiais", "cadastro_redes");
   if(isNew){ renderContatosParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
@@ -16019,6 +16023,125 @@ async function removerDataEspecial(pre, did, idxPendente){
   if(error){ alert("Erro ao remover: " + error.message); return; }
   await recarregarTabelas("datas_especiais");
   renderDatasEspeciais(pre);
+}
+
+// ===== PRÓXIMO PASSO DA LEAD (02/11/2026) =====
+// Faixa na ficha de lead, conforme a categoria: Parcerias e Patrocínio cria a
+// ficha de parceira (o); Viagem cria o pedido de viagem; as outras criam o
+// pedido de serviço (orçamento). A ficha nova fica ligada à lead como mesma
+// pessoa (mesmo código). Só aparece com a lead salva.
+let parceiraDaLeadId = null;   // saveParceiro liga a parceira nova a esta lead
+function papeisDaLead(leadId, tabela){
+  return [...grupoMesmaPessoa("leads", leadId).keys()]
+    .filter(k=>k.startsWith(tabela + ":"))
+    .map(k=>Number(k.split(":")[1]));
+}
+function itemProximo(txt, sub, onAbrir){
+  return `<div class="lig-item"><div class="lig-txt"><span class="lig-nome">${txt}</span>${sub ? `<small>${sub}</small>` : ""}</div><div class="lig-acoes">
+      <button type="button" class="act act-edit" onclick="${onAbrir}">Abrir</button></div></div>`;
+}
+function renderProximoPassoLead(){
+  const el = document.getElementById("f-proximo");
+  if(!el) return;
+  const cat = document.getElementById("f-categoria").value;
+  if(!cat){ el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "";
+  const cab = `<h4>Próximo passo</h4>`;
+  if(!editingLeadId){
+    el.innerHTML = cab + `<p class="lig-vazio">Salve a lead primeiro. Depois aparece aqui o botão pra criar ${cat==="Parcerias e Patrocínio" ? "a ficha de parceira (o)" : cat==="Viagem" ? "o pedido de viagem" : "o pedido (orçamento)"}.</p>`;
+    return;
+  }
+  const id = editingLeadId;
+  let corpo = "";
+  if(cat==="Parcerias e Patrocínio"){
+    const ids = papeisDaLead(id, "parceiros");
+    const itens = ids.map(pid=>parceiros.find(p=>p.id===pid)).filter(Boolean)
+      .map(p=>itemProximo(`Parceira (o) ${escapeHtml(nomeCod(p))}`, escapeHtml([p.tipo_parceria, p.status].filter(Boolean).join(" · ")), `abrirDaLead('parceiros',${p.id})`)).join("");
+    corpo = itens
+      ? `<p class="lig-sub">Esta pessoa já tem ficha de parceira (o).</p>` + itens
+      : `<p class="lig-sub">Cria a ficha de parceira (o) com os dados da lead. Você escolhe a etapa (prospecção, negociação ou parceria ativa) antes de salvar.</p>
+         <button type="button" class="btn secondary small" onclick="criarParceiraDaLead()">+ Criar ficha de parceira (o)</button>`;
+  }else if(cat==="Viagem"){
+    const cts = papeisDaLead(id, "clientes_transporte");
+    const vs = viagens.filter(v=>cts.includes(v.cliente_id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+    corpo = `<p class="lig-sub">Cria o pedido de viagem com a cliente já escolhida. Se ela ainda não tem ficha de viagem, o CRM cria e liga com esta lead.</p>`
+      + vs.map(v=>itemProximo(`Viagem #${v.id}`, `${v.data ? formatarDataBR(v.data) : "sem data"} · ${escapeHtml(rotuloStatusViagem(v.status||""))}`, `abrirDaLead('viagens',${v.id})`)).join("")
+      + `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="criarViagemDaLead()">+ Criar pedido de viagem</button>`;
+  }else{
+    const os = orcamentos.filter(o=>o.lead_id===id).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+    corpo = `<p class="lig-sub">Cria o pedido (orçamento) com esta lead e o serviço já escolhidos.</p>`
+      + os.map(o=>itemProximo(`Orçamento #${o.id}${o.servico ? " · " + escapeHtml(o.servico) : ""}`, `${o.data ? formatarDataBR(o.data) : "sem data"} · ${escapeHtml(o.status||"")}`, `abrirDaLead('orcamentos',${o.id})`)).join("")
+      + `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="criarOrcamentoDaLead()">+ Criar pedido (orçamento)</button>`;
+  }
+  el.innerHTML = cab + corpo;
+}
+// Mudou categoria ou serviço e não salvou: o botão usaria o dado antigo.
+function leadSalvaIgualTela(){
+  const l = leads.find(x=>x.id===editingLeadId) || {};
+  if((l.categoria||"") !== document.getElementById("f-categoria").value || (l.servico||"") !== document.getElementById("f-servico").value){
+    alert("Você mudou a categoria ou o serviço desta lead. Salve a lead primeiro e abra de novo, por favor.");
+    return null;
+  }
+  return l;
+}
+function abrirDaLead(tabela, id){
+  closeModal("lead-modal");
+  if(tabela==="parceiros") openParceiroModal(id);
+  else if(tabela==="viagens") openViagemModal(id);
+  else openOrcamentoModal(id);
+}
+function criarParceiraDaLead(){
+  const l = leadSalvaIgualTela();
+  if(!l) return;
+  closeModal("lead-modal");
+  openParceiroModal(null);
+  parceiraDaLeadId = l.id;
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
+  set("p-nome", l.nome || "");
+  set("p-regiao", [l.bairro, l.cidade, l.estado].filter(Boolean).join(" / "));
+  set("p-aniversario", l.aniversario || "");
+  carregarTipoPessoa("p", l);
+  set("p-notas", [`Veio da lead ${nomeCod(l)}${l.servico ? " (" + l.servico + ")" : ""}${l.origem ? ", origem " + l.origem : ""}.`, l.descricao, l.email ? "E-mail: " + l.email : ""].filter(Boolean).join("\n"));
+  if(l.whatsapp){
+    parceiroContatosPendentes.push({ tipo: "Celular", numero: l.whatsapp, descricao: "WhatsApp (veio da lead)" });
+    renderContatosParceiro();
+  }
+  const tipo = l.servico==="Patrocínio" ? "Patrocínio" : l.servico==="Quero ser parceira (o) da rede" ? "Mensalidade" : "";
+  const cb = tipo && document.querySelector(`#p-tipo-parceria-wrap input[value="${tipo}"]`);
+  if(cb) cb.checked = true;
+  showToast("Confira a etapa e salve. A parceira fica ligada a esta lead.");
+}
+// Chamada pelo saveParceiro de uma ficha nova vinda da lead.
+async function ligarParceiraNaLead(parceiroId){
+  const leadId = parceiraDaLeadId;
+  parceiraDaLeadId = null;
+  if(!leadId || !parceiroId) return;
+  const { error } = await sb.from("vinculos_cadastros").insert({ tipo: "mesma_pessoa", a_tabela: "parceiros", a_id: parceiroId, b_tabela: "leads", b_id: leadId });
+  if(error) alert(`A parceira foi salva, mas não consegui ligar com a lead: ${error.message}\n\nLigue depois na ficha dela (Ligações).`);
+  else await recarregarTabelas("vinculos_cadastros");
+}
+function criarOrcamentoDaLead(){
+  const l = leadSalvaIgualTela();
+  if(!l) return;
+  closeModal("lead-modal");
+  openOrcamentoModal(null);
+  document.getElementById("o-lead").value = l.id;
+  if(l.servico) fillSelect(document.getElementById("o-servico"), servicosParaLista(l.servico), l.servico);
+}
+async function criarViagemDaLead(){
+  const l = leadSalvaIgualTela();
+  if(!l) return;
+  // Já tem ficha de viagem ligada (mesma pessoa): usa ela; senão acha pelo
+  // WhatsApp ou cria (no OK dela), igual à viagem da cotação.
+  let clienteId = papeisDaLead(l.id, "clientes_transporte")[0];
+  if(!clienteId){
+    clienteId = await clienteDeViagemDeLead(l.id, "pelo botão Criar pedido de viagem");
+    if(!clienteId) return;
+  }
+  closeModal("lead-modal");
+  openViagemModal(null);
+  document.getElementById("vg-cliente").value = clienteId;
+  clienteViagemEscolhido();
 }
 
 // ===== REDES SOCIAIS NO CADASTRO (02/11/2026) =====
