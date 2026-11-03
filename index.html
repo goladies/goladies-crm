@@ -1001,6 +1001,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 .sag-it.feito .tx{text-decoration:line-through; text-decoration-color:var(--border2);}
 .sag-it .decidido{display:block; color:var(--text2); font-size:var(--fs-xs); text-decoration:none; white-space:normal;}
 .sag-quebra .sag-it{white-space:normal;}
+.sag-it[draggable="true"]{cursor:grab;} .sag-it.arrastando{opacity:.45;}
+[data-dia].sag-alvo{outline:2px dashed var(--rosa); outline-offset:-2px;}
 /* layout: calendário + coluna do lado */
 .sag-wrap{display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:14px; align-items:start;}
 .sag-lado .panel{margin-bottom:12px;}
@@ -11224,10 +11226,59 @@ function sagChip(x, detalhe){
   const ic = x.feito ? "i-circle-check" : SAG_TIPOS[x.tipo][1];
   const quem = detalhe && x.quem.length && !(x.quem.length===1 && x.quem[0]===sagEu()) ? `<span class="qm">· ${escapeHtml(x.quem.map(sagNomeQuem).join(", "))}</span>` : "";
   const rot = detalhe && x.rotulo ? `<span class="qm">· ${escapeHtml(x.rotulo)}</span>` : "";
-  return `<div class="sag-it ${cls}" role="button" tabindex="0" onclick="event.stopPropagation(); ${x.abrir}" title="${escapeHtml(x.titulo)}${x.rotulo ? " · "+escapeHtml(x.rotulo) : ""}">`
+  const arr = sagPodeArrastar(x) ? ` draggable="true" ondragstart="sagArrastarIni(event, ${x.id})" ondragend="sagArrastarFim()"` : "";
+  return `<div class="sag-it ${cls}" role="button" tabindex="0"${arr} onclick="event.stopPropagation(); ${x.abrir}" title="${escapeHtml(x.titulo)}${x.rotulo ? " · "+escapeHtml(x.rotulo) : ""}">`
     + `${detalhe && x.check ? sagCheck(x) : `<svg class=ic aria-hidden=true><use href=#${ic} /></svg>`}${x.hora && !x.feito ? `<span class="hr">${x.hora}</span>` : ""}`
     + `<span class="tx">${escapeHtml(x.titulo)}${detalhe && x.decidido ? `<span class="decidido">Decidido: ${escapeHtml(x.decidido)}</span>` : ""}${x.extra ? `<span class="decidido sag-extra">${escapeHtml(x.extra)}</span>` : ""}</span>${rot}${quem}`
     + `${x.avisar && !x.feito ? `<svg class=ic aria-hidden=true><use href=#i-bell /></svg>` : ""}</div>`;
+}
+// Arrastar pra outro dia (03/11/2026): só tarefa e decisão anotadas aqui, em aberto, e só
+// com mouse (no celular o dedo confunde com rolar; lá muda a data abrindo o item).
+// Feriado, evento, pagamento, pendência e decisão da Sede têm a data na origem e não arrastam.
+let sagArrastandoId = null;
+function sagPodeArrastar(x){ return x.origem==="agenda" && !x.feito && x.tipo!=="ideia" && window.matchMedia("(pointer:fine)").matches; }
+function sagArrastarIni(ev, id){
+  sagArrastandoId = id;
+  ev.dataTransfer.effectAllowed = "move";
+  ev.dataTransfer.setData("text/plain", String(id));
+  ev.currentTarget.classList.add("arrastando");
+}
+function sagArrastarFim(){
+  sagArrastandoId = null;
+  document.querySelectorAll(".sag-it.arrastando").forEach(e=>e.classList.remove("arrastando"));
+  document.querySelectorAll("[data-dia].sag-alvo").forEach(e=>e.classList.remove("sag-alvo"));
+}
+function sagLigarArrastar(corpo){
+  if(corpo.dataset.arrastar) return;
+  corpo.dataset.arrastar = "1";
+  const alvo = ev => sagArrastandoId ? ev.target.closest("[data-dia]") : null;
+  corpo.addEventListener("dragover", ev=>{
+    const d = alvo(ev); if(!d) return;
+    ev.preventDefault(); ev.dataTransfer.dropEffect = "move";
+    document.querySelectorAll("[data-dia].sag-alvo").forEach(e=>{ if(e!==d) e.classList.remove("sag-alvo"); });
+    d.classList.add("sag-alvo");
+  });
+  corpo.addEventListener("dragleave", ev=>{
+    const d = alvo(ev); if(d && !d.contains(ev.relatedTarget)) d.classList.remove("sag-alvo");
+  });
+  corpo.addEventListener("drop", ev=>{
+    const d = alvo(ev); if(!d) return;
+    ev.preventDefault();
+    const id = sagArrastandoId; sagArrastarFim();
+    sagMoverParaDia(id, d.dataset.dia);
+  });
+}
+// Muda só o dia: a hora fica igual; pedido da agente e lembrete da Gabi vão junto pela sincronização.
+async function sagMoverParaDia(id, iso){
+  const antes = sedeAgenda.find(x=>x.id===id);
+  if(!antes || !iso || antes.data===iso) return;
+  const r = await sb.from("sede_agenda").update({ data:iso, atualizado_em:new Date().toISOString() }).eq("id", id).select().single();
+  if(r.error){ showToast("Não consegui mudar a data. Tente de novo ou abra o item para trocar a data.", true); return; }
+  const item = await sagSincronizarPedidos({ ...antes, ...r.data });
+  sedeAgenda = sedeAgenda.map(x=>x.id===id ? item : x);
+  const d = dataDeISO(iso);
+  showToast(`Mudou para ${d.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","")}, ${iso.slice(8,10)}/${iso.slice(5,7)}`);
+  renderSede(); renderSuaSemana();
 }
 // Caixinha de concluir direto no card (só itens anotados aqui; pendência e decisão abrem na origem)
 function sagCheck(x){
@@ -11286,6 +11337,7 @@ function sagVermelhosSemana(){
 
 function renderSedeAgenda(){
   const corpo = document.getElementById("sag-corpo"); if(!corpo) return;
+  sagLigarArrastar(corpo);
   document.getElementById("sag-sql-aviso").style.display = sedeAgendaSqlFaltando ? "block" : "none";
   if(!sag.ancora){ sag.ancora = sagHojeData(); sag.diaSel = hojeLocalISO(); }
   if(!sag.filtrosIni){ sag.filtrosIni = true; if(window.innerWidth<=640) document.getElementById("sag-filtros-box").open = false; }
