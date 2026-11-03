@@ -16175,9 +16175,10 @@ function renderProximoPassoLead(){
   const el = document.getElementById("f-proximo");
   if(!el) return;
   const cat = document.getElementById("f-categoria").value;
-  if(!cat){ el.innerHTML = ""; el.style.display = "none"; return; }
+  if(!cat && !editingLeadId){ el.innerHTML = ""; el.style.display = "none"; return; }
   el.style.display = "";
   const cab = `<h4>Próximo passo</h4>`;
+  if(!cat){ el.innerHTML = cab + blocoMotoristaDaLead(editingLeadId, false); return; }
   if(!editingLeadId){
     el.innerHTML = cab + `<p class="lig-vazio">Salve a lead primeiro. Depois aparece aqui o botão pra criar ${CATEGORIAS_PARCEIRA.includes(cat) ? "a ficha de parceira (o)" : cat==="Viagem" ? "o pedido de viagem" : "o pedido (orçamento)"}.</p>`;
     return;
@@ -16204,7 +16205,26 @@ function renderProximoPassoLead(){
       + os.map(o=>itemProximo(`Orçamento #${o.id}${o.servico ? " · " + escapeHtml(o.servico) : ""}`, `${o.data ? formatarDataBR(o.data) : "sem data"} · ${escapeHtml(o.status||"")}`, `abrirDaLead('orcamentos',${o.id})`)).join("")
       + `<button type="button" class="btn secondary small" style="margin-top:8px;" onclick="criarOrcamentoDaLead()">+ Criar pedido (orçamento)</button>`;
   }
-  el.innerHTML = cab + corpo;
+  el.innerHTML = cab + corpo + blocoMotoristaDaLead(id, true);
+}
+// Em toda lead salva, seja qual for a categoria: ela também pode virar motorista.
+function blocoMotoristaDaLead(leadId, separar){
+  const ms = papeisDaLead(leadId, "motoristas").map(mid=>motoristas.find(m=>m.id===mid)).filter(Boolean);
+  const topo = separar ? `<div style="border-top:1px solid var(--border); margin-top:12px; padding-top:10px;">` : `<div>`;
+  return topo + (ms.length
+    ? `<p class="lig-sub">Esta pessoa já tem ficha de motorista.</p>`
+      + ms.map(m=>itemProximo(`Motorista ${escapeHtml(nomeCod(m))}`, escapeHtml(m.status||""), `abrirDaLead('motoristas',${m.id})`)).join("")
+    : `<p class="lig-sub">Ela também quer dirigir com a Go Ladies? Cria a ficha de motorista com os dados da lead, ligada a ela (mesmo código).</p>
+       <button type="button" class="btn secondary small" onclick="criarMotoristaDaLead()">+ Criar ficha de motorista</button>`) + `</div>`;
+}
+async function criarMotoristaDaLead(){
+  const leadId = editingLeadId;
+  if(!leadId) return;
+  closeModal("lead-modal");
+  openMotoristaModal(null);
+  await puxarMotoristaDe("leads:" + leadId);
+  // Se ela já era motorista pelo WhatsApp, puxarMotoristaDe não marca a origem.
+  if(motoristaDeOrigem) preencherPuxarMotorista();
 }
 // Mudou categoria ou serviço e não salvou: o botão usaria o dado antigo.
 function leadSalvaIgualTela(){
@@ -16218,6 +16238,7 @@ function leadSalvaIgualTela(){
 function abrirDaLead(tabela, id){
   closeModal("lead-modal");
   if(tabela==="parceiros") openParceiroModal(id);
+  else if(tabela==="motoristas") openMotoristaModal(id);
   else if(tabela==="viagens") openViagemModal(id);
   else openOrcamentoModal(id);
 }
