@@ -3392,6 +3392,12 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <button class="icon-btn" type="button" onclick="closeModal('motorista-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
     <div id="mt-candidatura" style="display:none; font-size:var(--fs-sm); color:var(--muted); margin:4px 0 12px;"></div>
+    <div id="mt-puxar-wrap" style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:12px 0 14px;">
+      <label style="display:block; margin:0 0 6px;">Puxar dados de quem já está cadastrada</label>
+      <input type="text" id="mt-puxar-busca" placeholder="Buscar por nome, código ou WhatsApp" oninput="preencherPuxarMotorista()" style="display:block; width:100%; margin-bottom:6px;">
+      <select id="mt-puxar" onchange="puxarMotoristaDe(this.value)" style="display:block; width:100%;"></select>
+      <div class="dica" id="mt-puxar-dica" style="font-size:var(--fs-xs); color:var(--muted); margin-top:6px;">Preenche nome, WhatsApp, e-mail, região, aniversário e origem. Ao salvar, as duas fichas ficam ligadas como a mesma pessoa (mesmo código).</div>
+    </div>
     <div id="ia-cnh-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
       <div style="font-size:var(--fs-sm); font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com a CNH</div>
       <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF da CNH e a IA preenche os campos abaixo.</div>
@@ -14848,6 +14854,10 @@ let editingMotoristaId = null;
 function openMotoristaModal(id){
   editingMotoristaId = id || null;
   datasPendentes.mt = []; redesPendentes.mt = [];
+  motoristaDeOrigem = null;
+  document.getElementById("mt-puxar-wrap").style.display = id ? "none" : "";
+  document.getElementById("mt-puxar-busca").value = "";
+  if(!id) preencherPuxarMotorista();
   fillSelect(document.getElementById("mt-status"), MOTORISTA_ETAPAS, MOTORISTA_STATUS_PADRAO);
   document.getElementById("motorista-modal-title").textContent = id ? `Editar motorista ${codigoCadastro(motoristas.find(m=>m.id===id))}`.trim() : "Nova motorista";
   const m = motoristas.find(x=>x.id===id) || {};
@@ -15147,6 +15157,67 @@ function sugerirCertificadaAte(){
   const d = new Date(); d.setFullYear(d.getFullYear() + 1);
   campo.value = d.toISOString().slice(0,10);
 }
+// Nova motorista a partir de quem já está no CRM (lead geral ou lead/cliente
+// de transporte): preenche os dados e, ao salvar, liga como mesma pessoa.
+let motoristaDeOrigem = null;   // { tabela, id } da ficha escolhida
+function preencherPuxarMotorista(){
+  const busca = document.getElementById("mt-puxar-busca").value.trim().toLowerCase();
+  const digitos = busca.replace(/\D/g, "");
+  const bate = r => !busca || (r.nome||"").toLowerCase().includes(busca)
+    || codigoCadastro(r).toLowerCase().replace("#","").includes(busca.replace("#",""))
+    || (digitos.length >= 3 && (r.whatsapp||"").replace(/\D/g,"").includes(digitos));
+  const ordena = lista => lista.filter(bate).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"", "pt-BR"));
+  const opt = (tabela, r) => `<option value="${tabela}:${r.id}">${escapeHtml(r.nome||"(sem nome)")}${optCod(r)}${r.whatsapp ? " · " + escapeHtml(r.whatsapp) : ""}</option>`;
+  const ls = ordena(leads.filter(l=>!l.teste)), cts = ordena(clientesTransporte);
+  const sel = document.getElementById("mt-puxar");
+  sel.innerHTML = `<option value="">${ls.length || cts.length ? "Escolha a pessoa..." : "Ninguém encontrado"}</option>`
+    + (ls.length ? `<optgroup label="Leads">${ls.map(l=>opt("leads", l)).join("")}</optgroup>` : "")
+    + (cts.length ? `<optgroup label="Leads e clientes de transporte">${cts.map(c=>opt("clientes_transporte", c)).join("")}</optgroup>` : "");
+  if(motoristaDeOrigem) sel.value = `${motoristaDeOrigem.tabela}:${motoristaDeOrigem.id}`;
+}
+async function puxarMotoristaDe(valor){
+  if(!valor){ motoristaDeOrigem = null; return; }
+  const [tabela, idTxt] = valor.split(":");
+  const r = (tabela === "leads" ? leads : clientesTransporte).find(x=>x.id===Number(idTxt));
+  if(!r) return;
+  const ja = motoristas.find(m=>(r.cadastro_id != null && m.cadastro_id === r.cadastro_id) || mesmoTelefone(m.whatsapp, r.whatsapp));
+  if(ja){
+    document.getElementById("mt-puxar").value = "";
+    if(confirm(`${nomeCod(r)} já tem ficha de motorista: ${nomeCod(ja)}.\n\nAbrir a ficha que já existe em vez de criar outra?`)) openMotoristaModal(ja.id);
+    return;
+  }
+  motoristaDeOrigem = { tabela, id: r.id };
+  const set = (id, v) => { if(v) document.getElementById(id).value = v; };
+  set("mt-nome", r.nome);
+  set("mt-whatsapp", r.whatsapp ? formatarTelefoneBR(r.whatsapp) : "");
+  set("mt-email", r.email);
+  set("mt-regiao", tabela === "leads" ? [r.bairro, r.cidade].filter(Boolean).join(", ") : r.regiao);
+  set("mt-aniversario", r.aniversario);
+  // Origem da motorista tem menos opções que a da lead: usa a que bate pelo começo.
+  const origens = [...document.getElementById("mt-origem").options].map(o=>o.value);
+  set("mt-origem", r.origem && origens.find(o=>r.origem.toLowerCase().startsWith(o.toLowerCase())));
+  fotoPerfilPendente.mt = null;   // trocou de pessoa: não fica a foto da anterior
+  if(tabela === "clientes_transporte" && r.foto_path){
+    try{
+      const url = await urlFotoCliente(r.foto_path);
+      const blob = url && await (await fetch(url)).blob();
+      if(blob){
+        fotoPerfilPendente.mt = new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" });
+        mostrarPreviewFoto("mt", URL.createObjectURL(blob));
+      }
+    }catch(e){ /* sem a foto, segue o resto */ }
+  }
+  if(!fotoPerfilPendente.mt) mostrarPreviewFoto("mt", null, r.nome);
+  showToast("Dados puxados. Confira e salve.");
+}
+// Chamada pelo saveMotorista de uma ficha nova vinda de outro cadastro.
+async function ligarMotoristaNaOrigem(motoristaId){
+  const origem = motoristaDeOrigem;
+  motoristaDeOrigem = null;
+  if(!origem || !motoristaId) return;
+  const { error } = await sb.from("vinculos_cadastros").insert({ tipo: "mesma_pessoa", a_tabela: "motoristas", a_id: motoristaId, b_tabela: origem.tabela, b_id: origem.id });
+  if(error) alert(`A motorista foi salva, mas não consegui ligar com o cadastro de origem: ${error.message}\n\nLigue depois na ficha dela (Ligações).`);
+}
 async function saveMotorista(){
   const nome = document.getElementById("mt-nome").value.trim();
   if(!nome){ alert("Nome é obrigatório"); return; }
@@ -15192,13 +15263,15 @@ async function saveMotorista(){
     if(document.getElementById("mo-texto").value.trim()) await addObservacaoMotorista();
     await gravarDatasPendentes("mt", editingMotoristaId);
     await gravarRedesPendentes("mt", editingMotoristaId);
+    await ligarMotoristaNaOrigem(editingMotoristaId);
+    document.getElementById("mt-puxar-wrap").style.display = "none";
   }
   await salvarDocPrincipal("cnh", editingMotoristaId);
   await salvarDocPrincipal("crlv", editingMotoristaId);
   await salvarDocPrincipal("antecedentes", editingMotoristaId);
   await salvarDocPrincipal("endereco", editingMotoristaId);
   await salvarFotoPerfil("mt", editingMotoristaId, (motoristas.find(x=>x.id===editingMotoristaId)||{}).foto_path);
-  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "datas_especiais", "cadastro_redes");
+  await recarregarTabelas("motoristas", "documentos_motorista", "motorista_observacoes", "datas_especiais", "cadastro_redes", "vinculos_cadastros");
   if(isNew){ renderDocumentosMotorista(); renderObservacoesMotorista(); renderLigacoes("mt"); carregarPerfilMotorista(); }
   else { closeModal("motorista-modal"); }
 }
