@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -697,6 +697,9 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 /* Endereço numa linha de 3 (Bairro, Cidade, Estado menor); quadradinho sem a margem do navegador. */
 .ficha-secoes .linha-3{grid-column:1/-1; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr); gap:10px;}
 .ficha-secoes .vg-check input{margin:0;}
+.ficha-secoes input[type=checkbox]{margin:0;}   /* quadradinho na linha da esquerda dos campos */
+.ficha-secoes .vg-sec:only-of-type .vg-num::before{content:none;}   /* com um cartão só, sem o "1." */
+.ficha-secoes .vg-sec > p:first-of-type{margin-top:0;}
 .ficha-secoes .ficha-acoes{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 0;}   /* atalhos logo abaixo do topo */
 .ficha-secoes .ficha-acoes .btn{text-decoration:none;}
 .ficha-secoes .linha-checks{grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 22px; min-height:24px; align-items:center;}   /* quadradinhos lado a lado */
@@ -2928,12 +2931,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="meus-dados-modal">
-  <div class="modal" style="width:420px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes" style="width:420px;">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 style="margin:0;">Meus dados</h3>
       <button class="icon-btn" type="button" onclick="closeModal('meus-dados-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="foto-perfil-wrap" style="margin-top:14px;">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Seus dados</span></span></div>
+      <div class="foto-perfil-wrap" style="margin-top:14px;">
       <div class="foto-perfil" id="md-foto-preview">GL</div>
       <div>
         <label style="margin:0;">Foto</label>
@@ -2945,13 +2952,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <button type="button" class="act act-del" id="md-foto-remover" onclick="removerFotoMeusDados()" style="display:none;">Remover</button>
       </div>
     </div>
-    <div class="formgrid">
+      <div class="formgrid">
       <div class="full"><label>Como você quer ser chamada no painel</label><input type="text" id="md-apelido" placeholder="Ex.: Jú" maxlength="40"></div>
       <div class="full"><label>E-mail de login</label><input type="email" id="md-email" disabled></div>
       <div class="full" style="margin-top:6px; padding-top:12px; border-top:1px solid var(--border);"><label style="font-weight:600; color:var(--text2);">Trocar senha (deixe em branco pra manter a atual)</label></div>
       <div><label>Nova senha</label><input type="password" id="md-senha" autocomplete="new-password" minlength="6"></div>
       <div><label>Confirmar nova senha</label><input type="password" id="md-senha2" autocomplete="new-password" minlength="6"></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" type="button" onclick="closeModal('meus-dados-modal')">Cancelar</button>
       <button class="btn" type="button" id="md-salvar" onclick="saveMeusDados()">Salvar</button>
@@ -3086,12 +3094,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="pedido-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="pedido-modal-title" style="margin:0;">Novo pedido</h3>
       <button class="icon-btn" type="button" onclick="closeModal('pedido-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-tool"/></svg><span class="vg-num">Pedido</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Peça *</label><input type="text" id="fp-peca" placeholder="Ex: Coxim superior do motor (lado direito)"></div>
       <div><label>Carro</label><input type="text" id="fp-carro" placeholder="Ex: Toyota RAV4 2007"></div>
       <div><label>Status</label><select id="fp-status"></select></div>
@@ -3101,8 +3113,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Origem</label><input type="text" id="fp-origem" placeholder="Ex: Grupo Mulheres V8"></div>
       <div class="full"><label>Notas</label><textarea id="fp-notas" rows="2"></textarea></div>
     </div>
-
-    <div id="fp-tentativas-wrap" style="margin-top:18px;">
+    </section>
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-list"/></svg><span class="vg-num">Tentativas por loja</span></span></div>
+      <div id="fp-tentativas-wrap" class="sec-corpo">
       <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Tentativas por loja</h4>
       <div id="fp-tentativas-lista"></div>
       <div class="formgrid" style="margin-top:8px;">
@@ -3118,7 +3132,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addTentativa()">+ Registrar tentativa</button></div>
       </div>
     </div>
-
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('pedido-modal')">Sair</button>
       <button class="btn" onclick="savePedido()">Salvar</button>
@@ -3127,13 +3141,18 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="svp-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="svp-modal-titulo" style="margin:0;">Editar</h3>
       <button class="icon-btn" type="button" onclick="closeModal('svp-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid" id="svp-modal-corpo" style="margin-top:12px;"></div>
-    <div class="svp-ajuda" id="svp-modal-info" style="margin-top:10px;"></div>
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-settings"/></svg><span class="vg-num">Dados</span></span></div>
+      <div class="formgrid" id="svp-modal-corpo" style="margin-top:12px;"></div>
+      <div class="svp-ajuda" id="svp-modal-info" style="margin-top:10px;"></div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('svp-modal')">Cancelar</button>
       <button class="btn" onclick="salvarItemSp()">Salvar</button>
@@ -3294,12 +3313,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="divulgacao-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="divulgacao-modal-title" style="margin:0;">Nova divulgação</h3>
       <button class="icon-btn" type="button" onclick="closeModal('divulgacao-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-speakerphone"/></svg><span class="vg-num">Divulgação</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Título *</label><input type="text" id="dv-titulo"></div>
       <div><label>Formato</label><select id="dv-formato"></select></div>
       <div><label>Tipo</label><select id="dv-tipo"></select></div>
@@ -3336,6 +3359,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
       <div class="full"><label>Notas</label><textarea id="dv-notas" rows="2"></textarea></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-divulgacao" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteDivulgacao()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('divulgacao-modal')">Sair</button>
@@ -3358,12 +3382,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="sede-pedido-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="sede-pedido-titulo" style="margin:0;">Novo pedido</h3>
       <button class="icon-btn" type="button" onclick="closeModal('sede-pedido-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-send"/></svg><span class="vg-num">Pedido</span></span></div>
+      <div class="formgrid">
       <div class="full">
         <label>Tipo</label>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
@@ -3380,6 +3408,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
       <div class="full" id="sp-resposta-wrap" style="display:none;"><label>Recado da agente</label><div id="sp-resposta" style="font-size:var(--fs-sm); color:var(--text2); white-space:pre-wrap;"></div></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="sp-excluir" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirPedidoSede()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('sede-pedido-modal')">Sair</button>
@@ -3389,12 +3418,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="sede-agenda-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="sag-modal-titulo" style="margin:0;">Tarefa ou decisão</h3>
       <button class="icon-btn" type="button" onclick="closeModal('sede-agenda-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-clipboard-list"/></svg><span class="vg-num">Tarefa ou decisão</span></span></div>
+      <div class="formgrid">
       <div class="full" id="sag-m-tipo-wrap">
         <label>Tipo</label>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
@@ -3430,6 +3463,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full" id="sag-m-sugestao" style="display:none;"></div>
       <div class="full sag-dica" id="sag-m-info"></div>
     </div>
+    </section>
     <div class="modal-actions" style="flex-wrap:wrap;">
       <button class="btn ghost" id="sag-m-excluir" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirItemAgenda()">Excluir</button>
       <button class="btn ghost" id="sag-m-google" type="button" onclick="abrirGoogleAgendaItem()" title="Abre o Google Agenda com o item preenchido; é só salvar lá"><svg class=ic aria-hidden=true><use href=#i-calendar-event /></svg> Google Agenda</button>
@@ -3443,12 +3477,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="link-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="link-modal-title" style="margin:0;">Novo link</h3>
       <button class="icon-btn" type="button" onclick="closeModal('link-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Link</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Título *</label><input type="text" id="lk-titulo" placeholder="Ex.: Como escolher um carro econômico pra trabalhar"></div>
       <div class="full"><label>Endereço (URL) *</label><input type="url" id="lk-url" placeholder="https://..."></div>
       <div><label>Categoria</label><select id="lk-categoria"></select></div>
@@ -3468,6 +3506,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div id="lk-retorno"></div>
       </div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-link" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteLink()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('link-modal')">Sair</button>
@@ -3477,12 +3516,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="vaga-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="vaga-modal-title" style="margin:0;">Nova vaga</h3>
       <button class="icon-btn" type="button" onclick="closeModal('vaga-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-briefcase"/></svg><span class="vg-num">Vaga</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Título *</label><input type="text" id="vg-titulo" placeholder="Ex: Mecânica em oficina parceira"></div>
       <div><label>Empresa parceira</label><select id="vg-empresa-parceira"><option value="">-</option></select></div>
       <div><label>Nome da empresa <span style="font-weight:400; color:var(--muted);">(se não for parceira cadastrada)</span></label><input type="text" id="vg-empresa-nome"></div>
@@ -3496,8 +3539,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Requisitos</label><textarea id="vg-requisitos" rows="2"></textarea></div>
       <div class="full"><label>Notas</label><textarea id="vg-notas" rows="2"></textarea></div>
     </div>
-
-    <div id="vg-candidatas-wrap" style="margin-top:18px;">
+    </section>
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-list"/></svg><span class="vg-num">Candidatas</span></span></div>
+      <div id="vg-candidatas-wrap" class="sec-corpo">
       <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Candidatas</h4>
       <div id="vg-candidatas-lista"></div>
       <div class="formgrid" style="margin-top:8px;">
@@ -3509,7 +3554,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addCandidataVaga()">+ Adicionar candidata</button></div>
       </div>
     </div>
-
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-vaga" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteVaga()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('vaga-modal')">Sair</button>
@@ -4299,12 +4344,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="documento-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="documento-modal-title" style="margin:0;">Documento</h3>
       <button class="icon-btn" type="button" onclick="closeModal('documento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-file-text"/></svg><span class="vg-num">Documento</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Nome</label><input id="doc-nome"></div>
       <div class="full"><label>Do que se trata</label><textarea id="doc-descricao" rows="2"></textarea></div>
       <div><label>Pasta</label><select id="doc-categoria"></select></div>
@@ -4313,6 +4362,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Link do arquivo no Drive</label><input id="doc-link" placeholder="https://drive.google.com/..."><span class="dica">No Drive: botão direito no arquivo › Compartilhar › Copiar link. Sem link, o botão Abrir leva para a pasta.</span></div>
       <div class="full"><label>Onde está no Drive</label><input id="doc-arquivo" placeholder="Contratos e termos/nome-do-arquivo.docx"><span class="dica">Caminho dentro de Meu Drive › Sede › Documentos.</span></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-documento" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirDocumento()">Tirar da lista</button>
       <button class="btn ghost" onclick="closeModal('documento-modal')">Sair</button>
@@ -4322,12 +4372,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="avaliacao-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="avaliacao-modal-title" style="margin:0;">Nova avaliação</h3>
       <button class="icon-btn" type="button" onclick="closeModal('avaliacao-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg><span class="vg-num">Avaliação</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Viagem</label><select id="av-viagem"></select></div>
       <div><label>Nota da motorista (recebida)</label><input type="number" id="av-nota-motorista" min="1" max="5" step="0.5"></div>
       <div><label>Nota da cliente (recebida)</label><input type="number" id="av-nota-cliente" min="1" max="5" step="0.5"></div>
@@ -4342,6 +4396,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
       <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="av-visivel" style="width:auto;"> Liberada (a motorista vê a nota e o comentário no painel dela)</label></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('avaliacao-modal')">Sair</button>
       <button class="btn" onclick="saveAvaliacao()">Salvar</button>
@@ -4505,12 +4560,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="parcela-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="parcela-modal-title" style="margin:0;">Editar parcela</h3>
       <button class="icon-btn" type="button" onclick="closeModal('parcela-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-receipt"/></svg><span class="vg-num">Parcela</span></span></div>
+      <div class="formgrid">
       <div class="full" id="pz-info" style="font-size:var(--fs-sm); color:var(--muted);"></div>
       <div><label>Valor (R$)</label><input type="number" id="pz-valor"></div>
       <div><label>Forma de pagamento</label><select id="pz-forma-pagamento"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Financiamento</option><option>Outro</option></select></div>
@@ -4520,6 +4579,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Caiu em qual conta</label><select id="pz-fin-conta"></select></div>
       <div><label>Quanto fica para a Go Ladies (R$)</label><input type="number" step="0.01" min="0" id="pz-parte" placeholder="a definir"><span class="dica">Você decide caso a caso. O resto é seu.</span></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('parcela-modal')">Sair</button>
       <button class="btn" onclick="saveParcela()">Salvar</button>
@@ -4528,12 +4588,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="conta-pagar-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="conta-pagar-modal-title" style="margin:0;">Nova despesa</h3>
       <button class="icon-btn" type="button" onclick="closeModal('conta-pagar-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-receipt"/></svg><span class="vg-num">Despesa</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Descrição *</label><input type="text" id="cp-descricao"></div>
       <div><label>Categoria</label><input type="text" id="cp-categoria" list="cp-categorias-lista" placeholder="Escolha ou digite" onchange="sugerirTipoCusto()"><datalist id="cp-categorias-lista"></datalist></div>
       <div><label>Valor (R$)</label><input type="number" id="cp-valor"></div>
@@ -4549,6 +4613,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Data de pagamento</label><input type="date" id="cp-data-pagamento"></div>
       <div><label>Status</label><select id="cp-status"><option>Pendente</option><option>Pago</option></select></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-conta-pagar" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteContaPagar()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('conta-pagar-modal')">Sair</button>
@@ -4558,12 +4623,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="fin-conta-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="fin-conta-modal-title" style="margin:0;">Nova conta</h3>
       <button class="icon-btn" type="button" onclick="closeModal('fin-conta-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-wallet"/></svg><span class="vg-num">Conta</span></span></div>
+      <div class="formgrid">
       <div class="full"><label>Nome *</label><input type="text" id="fc-nome" placeholder="Ex: Caixinha Go Ladies"></div>
       <div><label>É uma</label><select id="fc-tipo" onchange="fcTipoMudou()"><option value="Conta">Conta</option><option value="Caixinha">Caixinha</option></select></div>
       <div id="fc-mae-wrap"><label>Dentro de qual conta</label><select id="fc-mae"></select></div>
@@ -4573,6 +4642,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>No fim do dia</label><input type="date" id="fc-data"><span class="dica">Daqui pra frente o saldo se atualiza sozinho.</span></div>
       <div><label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="fc-ativa" style="width:auto;"> Conta em uso</label></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-fin-conta" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirFinConta()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('fin-conta-modal')">Sair</button>
@@ -4582,19 +4652,24 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="fin-conferir-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="fin-conferir-modal-title" style="margin:0;">Conferir saldo</h3>
       <button class="icon-btn" type="button" onclick="closeModal('fin-conferir-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <p style="font-size:var(--fs-sm); margin:10px 0 0;">O CRM calcula <b id="fcf-calculado"></b> nesta conta. Abra o app do Mercado Pago e digite o que ele mostra.</p>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-calculator"/></svg><span class="vg-num">Saldo</span></span></div>
+      <p style="font-size:var(--fs-sm); margin:10px 0 0;">O CRM calcula <b id="fcf-calculado"></b> nesta conta. Abra o app do Mercado Pago e digite o que ele mostra.</p>
+      <div class="formgrid">
       <div><label>Saldo no app (R$) *</label><input type="number" step="0.01" id="fcf-saldo" oninput="fcfAtualizar()"></div>
       <div><label>Data</label><input type="date" id="fcf-data"></div>
       <div class="full" id="fcf-resultado" style="font-size:var(--fs-sm);"></div>
       <div class="full" id="fcf-ajuste-wrap" style="display:none;"><label style="display:flex; gap:8px; align-items:center;"><input type="checkbox" id="fcf-ajuste" style="width:auto;"> Não achei a saída: registrar a diferença como ajuste</label></div>
       <div class="full"><label>Observação</label><input type="text" id="fcf-obs" placeholder="Ex: rendimento de outubro"></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-conferencia" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirConferencia()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('fin-conferir-modal')">Sair</button>
@@ -4606,13 +4681,17 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 <!-- Corrida de outro app (Comparar com outros apps, 31/10/2026). Só número e
      bairro: a Uber não deixa levar endereço nem print pra fora do app. -->
 <div class="modal-backdrop" id="outro-app-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="outro-app-modal-title" style="margin:0;">Corrida de outro app</h3>
       <button class="icon-btn" type="button" onclick="closeModal('outro-app-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <p style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;">Estudo pra comparar com a Go Ladies. Não mexe em nenhum dinheiro: o que você recebe de outro app continua indo pelo Livro-caixa. Só bairro, nunca endereço.</p>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-car"/></svg><span class="vg-num">Corrida</span></span></div>
+      <p style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;">Estudo pra comparar com a Go Ladies. Não mexe em nenhum dinheiro: o que você recebe de outro app continua indo pelo Livro-caixa. Só bairro, nunca endereço.</p>
+      <div class="formgrid">
       <div><label>Quem dirigiu? *</label><select id="oa-quem" onchange="oaMostrarCampos()"><option>Jú</option><option>Motorista parceira</option><option>Relato de grupo</option></select></div>
       <div id="oa-motorista-wrap"><label>Motorista parceira</label><select id="oa-motorista"></select></div>
       <div id="oa-grupo-wrap"><label>De onde veio o relato</label><input type="text" id="oa-grupo" placeholder="Ex.: grupo de motoristas de SC"></div>
@@ -4635,6 +4714,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>De onde veio o número</label><select id="oa-fonte"><option>Detalhe da viagem</option><option>Resumo semanal</option><option>Print de grupo</option><option>Outro</option></select></div>
       <div class="full"><label>Observação</label><input type="text" id="oa-obs"></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-outro-app" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirOutroApp()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('outro-app-modal')">Sair</button>
@@ -4644,19 +4724,24 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="fin-transf-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="fin-transf-modal-title" style="margin:0;">Transferir</h3>
       <button class="icon-btn" type="button" onclick="closeModal('fin-transf-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <p id="ft-sugestao" style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;"></p>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-arrows-exchange"/></svg><span class="vg-num">Transferência</span></span></div>
+      <p id="ft-sugestao" style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;"></p>
+      <div class="formgrid">
       <div><label>De</label><select id="ft-de"></select></div>
       <div><label>Para</label><select id="ft-para" onchange="ftSugerirValor()"></select></div>
       <div><label>Valor (R$) *</label><input type="number" step="0.01" min="0" id="ft-valor"></div>
       <div><label>Data</label><input type="date" id="ft-data"></div>
       <div class="full"><label>Observação</label><input type="text" id="ft-obs" placeholder="Ex: parte da Go Ladies das viagens da semana"></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-fin-transf" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirTransferencia()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('fin-transf-modal')">Sair</button>
@@ -4666,13 +4751,17 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="fin-entrada-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 id="fin-entrada-modal-title" style="margin:0;">Nova entrada</h3>
       <button class="icon-btn" type="button" onclick="closeModal('fin-entrada-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <p style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;">Para dinheiro que não é viagem nem venda de lead: parceiros (os), cotas de patrocínio, serviço avulso. Viagens e vendas entram sozinhas.</p>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cash"/></svg><span class="vg-num">Entrada</span></span></div>
+      <p style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;">Para dinheiro que não é viagem nem venda de lead: parceiros (os), cotas de patrocínio, serviço avulso. Viagens e vendas entram sozinhas.</p>
+      <div class="formgrid">
       <div class="full"><label>Descrição *</label><input type="text" id="fe-descricao" placeholder="Ex: Cota de patrocínio · Loja X"></div>
       <div><label>Categoria</label><input type="text" id="fe-categoria" list="fe-categorias-lista" placeholder="Escolha ou digite" onfocus="listaCompletaAoFocar(this)" onblur="listaCompletaAoSair(this)"><datalist id="fe-categorias-lista"></datalist></div>
       <div><label>Valor (R$) *</label><input type="number" step="0.01" min="0" id="fe-valor"></div>
@@ -4684,6 +4773,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Parceira (o) ligada</label><select id="fe-parceiro"></select></div>
       <div class="full"><label>Observação</label><input type="text" id="fe-obs"></div>
     </div>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-fin-entrada" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="excluirEntradaAvulsa()">Excluir</button>
       <button class="btn ghost" onclick="closeModal('fin-entrada-modal')">Sair</button>
@@ -4693,17 +4783,22 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="parabens-modal">
-  <div class="modal" style="max-width:540px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+  <div class="modal ficha-secoes" style="max-width:540px;">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
       <h3 id="parabens-titulo" style="margin:0;">Parabéns de aniversário</h3>
       <button class="icon-btn" type="button" onclick="closeModal('parabens-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
     </div>
-    <p id="parabens-para" style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;"></p>
-    <div class="formgrid">
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cake"/></svg><span class="vg-num">Mensagem</span></span></div>
+      <p id="parabens-para" style="font-size:var(--fs-sm); color:var(--text3); margin:8px 0 0;"></p>
+      <div class="formgrid">
       <div class="full"><label for="parabens-tipo">Tipo de mensagem</label><select id="parabens-tipo" onchange="trocarTipoParabens()"></select></div>
       <div class="full"><label for="parabens-texto">Mensagem</label><textarea id="parabens-texto" rows="8" oninput="atualizarParabensModal()"></textarea><span class="dica">Dá pra mudar o texto aqui ou no próprio WhatsApp, antes de enviar. Trocar o tipo volta o texto pro modelo.</span></div>
     </div>
-    <p id="parabens-status" style="font-size:var(--fs-sm); color:var(--text3); margin:10px 0 0;"></p>
+      <p id="parabens-status" style="font-size:var(--fs-sm); color:var(--text3); margin:10px 0 0;"></p>
+    </section>
     <div class="modal-actions">
       <button class="btn ghost" id="parabens-desmarcar" style="margin-right:auto; display:none;" onclick="desmarcarParabens()">Desmarcar enviado</button>
       <button class="btn ghost" id="parabens-marcar" onclick="marcarParabens()"><svg class=ic aria-hidden=true><use href=#i-check /></svg> Parabéns enviado</button>
@@ -15936,6 +16031,40 @@ function resumoFichaEvento(){
   if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('${nome ? "ev-data-inicio" : "ev-nome"}').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta ${falta} obrigatório${falta === 1 ? "" : "s"}</span>`);
   document.getElementById("ev-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
+// Campo sozinho na linha com meia linha vazia do lado (porque o vizinho está
+// escondido ou o número de campos é ímpar) passa a ocupar a linha toda, em
+// todas as fichas no modelo da viagem. Roda ao abrir, ao mudar qualquer campo
+// (que pode mostrar ou esconder outro) e ao mudar o tamanho da tela.
+function esticarCamposSozinhos(modal){
+  modal.querySelectorAll(".formgrid").forEach(g=>{
+    const itens = [...g.children];
+    itens.forEach(e=>{ if(e.dataset.esticado){ e.style.gridColumn = ""; delete e.dataset.esticado; } });
+    const largura = g.clientWidth;
+    if(!largura) return;
+    const vis = itens.map(e=>({ e, r: e.getBoundingClientRect() })).filter(x=>x.r.height > 0);
+    vis.forEach(x=>{
+      if(x.r.width > largura * 0.75) return;
+      if(vis.some(y=>y !== x && Math.abs(y.r.top - x.r.top) < 2)) return;
+      x.e.style.gridColumn = "1 / -1"; x.e.dataset.esticado = "1";
+    });
+  });
+}
+// Um observador só, no documento: pega qualquer ficha que abrir.
+(function(){
+  const rodar = m => setTimeout(()=>esticarCamposSozinhos(m), 30);   // depois de o modal aparecer e ter tamanho
+  new MutationObserver(lista=>lista.forEach(r=>{
+    const b = r.target;
+    if(b.classList && b.classList.contains("modal-backdrop") && b.classList.contains("open")){
+      const m = b.querySelector(".modal.ficha-secoes");
+      if(m) rodar(m);
+    }
+  })).observe(document.body, { attributes:true, attributeFilter:["class"], subtree:true });
+  document.addEventListener("change", e=>{
+    const m = e.target.closest && e.target.closest(".modal.ficha-secoes");
+    if(m) setTimeout(()=>rodar(m), 0);
+  });
+  window.addEventListener("resize", ()=>document.querySelectorAll(".modal-backdrop.open .modal.ficha-secoes").forEach(rodar));
+})();
 // Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
 // e placa, login no painel, e o obrigatório que falta (só o nome).
 function resumoFichaMotorista(){
