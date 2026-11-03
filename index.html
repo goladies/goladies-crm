@@ -3648,6 +3648,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full" id="ct-acesso-painel" style="font-size:var(--fs-sm); color:var(--muted);"></div>
     </div>
     <div id="ct-conversa-whats" style="display:none; margin-top:18px;"></div>
+    <div class="ligacoes-wrap" id="ct-motorista"></div>
     <div class="ligacoes-wrap" id="ct-redes"></div>
     <div class="ligacoes-wrap" id="ct-datas"></div>
     <div class="ligacoes-wrap" id="ct-ligacoes"></div>
@@ -15481,6 +15482,9 @@ function openClienteTransporteModal(id){
   renderAvaliacoesCliente();
   avisoAniversarioFicha("ct");
   renderConversaWhats("ct", c);
+  const boxMt = document.getElementById("ct-motorista");
+  boxMt.style.display = id ? "" : "none";
+  boxMt.innerHTML = id ? `<h4>Motorista</h4>` + blocoMotoristaDaLead(id, false, "clientes_transporte") : "";
   document.getElementById("cliente-transporte-modal").classList.add("open");
 }
 // O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
@@ -16207,15 +16211,26 @@ function renderProximoPassoLead(){
   }
   el.innerHTML = cab + corpo + blocoMotoristaDaLead(id, true);
 }
-// Em toda lead salva, seja qual for a categoria: ela também pode virar motorista.
-function blocoMotoristaDaLead(leadId, separar){
-  const ms = papeisDaLead(leadId, "motoristas").map(mid=>motoristas.find(m=>m.id===mid)).filter(Boolean);
+// Em toda lead salva, seja qual for a categoria, e na ficha de transporte:
+// ela também pode virar motorista.
+function blocoMotoristaDaLead(leadId, separar, tabela = "leads"){
+  const ms = [...grupoMesmaPessoa(tabela, leadId).keys()].filter(k=>k.startsWith("motoristas:"))
+    .map(k=>motoristas.find(m=>m.id===Number(k.split(":")[1]))).filter(Boolean);
+  const criar = tabela === "leads" ? "criarMotoristaDaLead()" : "criarMotoristaDaClienteViagem()";
   const topo = separar ? `<div style="border-top:1px solid var(--border); margin-top:12px; padding-top:10px;">` : `<div>`;
   return topo + (ms.length
     ? `<p class="lig-sub">Esta pessoa já tem ficha de motorista.</p>`
       + ms.map(m=>itemProximo(`Motorista ${escapeHtml(nomeCod(m))}`, escapeHtml(m.status||""), `abrirDaLead('motoristas',${m.id})`)).join("")
-    : `<p class="lig-sub">Ela também quer dirigir com a Go Ladies? Cria a ficha de motorista com os dados da lead, ligada a ela (mesmo código).</p>
-       <button type="button" class="btn secondary small" onclick="criarMotoristaDaLead()">+ Criar ficha de motorista</button>`) + `</div>`;
+    : `<p class="lig-sub">Ela também quer dirigir com a Go Ladies? Cria a ficha de motorista com os dados ${tabela === "leads" ? "da lead" : "desta ficha"}, ligada a ela (mesmo código).</p>
+       <button type="button" class="btn secondary small" onclick="${criar}">+ Criar ficha de motorista</button>`) + `</div>`;
+}
+async function criarMotoristaDaClienteViagem(){
+  const ctId = editingClienteTransporteId;
+  if(!ctId) return;
+  closeModal("cliente-transporte-modal");
+  openMotoristaModal(null);
+  await puxarMotoristaDe("clientes_transporte:" + ctId);
+  if(motoristaDeOrigem) preencherPuxarMotorista();
 }
 async function criarMotoristaDaLead(){
   const leadId = editingLeadId;
@@ -16238,7 +16253,7 @@ function leadSalvaIgualTela(){
 function abrirDaLead(tabela, id){
   closeModal("lead-modal");
   if(tabela==="parceiros") openParceiroModal(id);
-  else if(tabela==="motoristas") openMotoristaModal(id);
+  else if(tabela==="motoristas"){ closeModal("cliente-transporte-modal"); openMotoristaModal(id); }
   else if(tabela==="viagens") openViagemModal(id);
   else openOrcamentoModal(id);
 }
