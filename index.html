@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-#viagem-modal{--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] #viagem-modal{--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-#viagem-modal .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,28 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-#viagem-modal .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-#viagem-modal .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-#viagem-modal .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-#viagem-modal .formgrid .obrig>input,#viagem-modal .formgrid .obrig>select,#viagem-modal .formgrid .obrig .campo-moeda>input,#viagem-modal .formgrid .obrig .campo-endereco>input,#viagem-modal .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-#viagem-modal .formgrid .obrig.vazio>label{color:var(--text1);}
-#viagem-modal .formgrid .obrig.vazio>input,#viagem-modal .formgrid .obrig.vazio>select,#viagem-modal .formgrid .obrig.vazio .campo-moeda>input,#viagem-modal .formgrid .obrig.vazio .campo-endereco>input,#viagem-modal .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-#viagem-modal .legenda-obrig b{color:var(--rosa-texto);}
-#viagem-modal .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal) .legenda-obrig i{color:var(--vg-ambar);}
+/* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
+   da seção por contador (seção escondida não conta, não pula número); blocos
+   montados por render* trazem o próprio <h4>, que some porque o título já
+   está na faixa da seção; seção sem conteúdo some inteira. */
+.ficha-secoes{counter-reset:sec;}
+.ficha-secoes .vg-num::before{counter-increment:sec; content:counter(sec) ". ";}
+.ficha-secoes .vg-sec .ligacoes-wrap{margin-top:0; border-top:none; padding-top:0;}
+.ficha-secoes .vg-sec .sec-corpo>h4:first-child{display:none;}
+.ficha-secoes .vg-sec .lig-sub{margin:0;}
+.ficha-secoes .vg-sec:has(.sec-corpo:empty){display:none;}
+.ficha-secoes .vg-sec .foto-perfil-wrap{margin-bottom:12px;}
 /* Sugerido: o sistema preenche e dá pra trocar (caixa tracejada).
    Automático: só conta, não se digita (sem caixa, com cadeado). */
 .vg-tag{display:inline-flex; align-items:center; gap:3px; font-size:var(--fs-xs); font-weight:600; padding:1px 7px; border-radius:10px; color:var(--text3); margin-left:4px; vertical-align:1px;}
@@ -3613,53 +3624,120 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="cliente-transporte-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="cliente-transporte-modal-title" style="margin:0;">Nova cliente de viagem</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('cliente-transporte-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
-    </div>
-    <div class="foto-perfil-wrap">
-      <div class="foto-perfil" id="ct-foto-preview">GL</div>
-      <div>
-        <label style="margin:0;">Foto de perfil <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
-        <small>Só a motorista da corrida vê, pra reconhecer a cliente no embarque. Ela também pode subir em Perfil no painel dela (app.goladies.com.br).</small>
-        <input type="file" id="ct-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('ct', this)">
-        <button type="button" class="act act-edit" onclick="document.getElementById('ct-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
-        <button type="button" class="act act-del" id="ct-foto-remover" onclick="removerFotoPerfil('ct')" style="display:none;">Remover</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026): topo fixo com resumo,
+         seções numeradas (contador no CSS), Sair/Salvar fixos embaixo.
+         resumoFichaCliente() preenche o topo. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="cliente-transporte-modal-title" style="margin:0;">Nova cliente de viagem</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('cliente-transporte-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
       </div>
+      <div class="vg-resumo" id="ct-resumo"></div>
     </div>
-    <div class="formgrid">
-      <div><label>Tipo de cadastro</label><select id="ct-tipo" onchange="aplicarTipoPessoa('ct')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="ct-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="ct-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('ct')"></div>
-      <div class="full"><label id="ct-nome-lbl">Nome *</label><input type="text" id="ct-nome"></div>
-      <div><label>WhatsApp</label><input type="text" id="ct-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
-      <div><label>E-mail</label><input type="text" id="ct-email"></div>
-      <div><label>Região</label><input type="text" id="ct-regiao"></div>
-      <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
-      <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
-      <div><label>Origem</label><select id="ct-origem" onchange="toggleIndicada('ct')"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Networking Jú</option><option>Outro</option></select></div>
-      <div id="ct-indicada-wrap" class="full" style="display:none;"><label for="ct-indicada">Indicada por</label><input type="text" id="ct-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span><datalist id="lista-indicacao"></datalist></div>
-      <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, pessoas idosas etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
-      <div class="full"><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="ct-pos-pago" style="width:auto;"> Normalmente paga depois da viagem (pós-pago) <span style="color:var(--muted);">(é só o padrão: as viagens novas dela já vêm com "cobrar depois", e dá pra trocar em cada viagem. Mudar aqui não mexe nas viagens que já existem)</span></label></div>
-      <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
-      <!-- Login do painel da cliente (app.goladies.com.br): ela cria
-           sozinha, então aqui é só leitura. Se houver outra cliente com o
-           mesmo WhatsApp, aparece o botão de unificar. -->
-      <div class="full" id="ct-acesso-painel" style="font-size:var(--fs-sm); color:var(--muted);"></div>
-    </div>
-    <div id="ct-conversa-whats" style="display:none; margin-top:18px;"></div>
-    <div class="ligacoes-wrap" id="ct-motorista"></div>
-    <div class="ligacoes-wrap" id="ct-redes"></div>
-    <div class="ligacoes-wrap" id="ct-datas"></div>
-    <div class="ligacoes-wrap" id="ct-ligacoes"></div>
-    <!-- Dois lados da mesma linha de avaliacoes: nota_cliente é o que as
-         motoristas disseram dela; nota_motorista + comentario é o que ela disse. -->
-    <div id="ct-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
+    <p class="legenda-obrig"><b>*</b> obrigatório pra salvar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema mostra, não se digita</p>
+
+    <!-- ── Dados dela ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Dados dela</span></span><span class="vg-pend" id="ct-pend"></span></div>
+      <div class="foto-perfil-wrap">
+        <div class="foto-perfil" id="ct-foto-preview">GL</div>
+        <div>
+          <label style="margin:0;">Foto de perfil <span style="font-weight:400; color:var(--muted);">(opcional)</span></label>
+          <small>Só a motorista da corrida vê, pra reconhecer a cliente no embarque. Ela também pode subir em Perfil no painel dela (app.goladies.com.br).</small>
+          <input type="file" id="ct-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('ct', this)">
+          <button type="button" class="act act-edit" onclick="document.getElementById('ct-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
+          <button type="button" class="act act-del" id="ct-foto-remover" onclick="removerFotoPerfil('ct')" style="display:none;">Remover</button>
+        </div>
+      </div>
+      <div class="formgrid">
+        <div><label>Tipo de cadastro</label><select id="ct-tipo" onchange="aplicarTipoPessoa('ct'); resumoFichaCliente()"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+        <div id="ct-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="ct-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('ct')"></div>
+        <div class="full obrig destaque" id="ct-nome-wrap"><label id="ct-nome-lbl">Nome</label><input type="text" id="ct-nome" oninput="resumoFichaCliente()"></div>
+        <div><label>WhatsApp</label><input type="text" id="ct-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
+        <div><label>E-mail</label><input type="text" id="ct-email"></div>
+        <div><label>Região</label><input type="text" id="ct-regiao"></div>
+        <div><label id="ct-aniv-lbl">Aniversário</label><input type="date" id="ct-aniversario"></div>
+      </div>
+    </section>
+
+    <!-- ── Como chegou ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-compass"/></svg><span class="vg-num">Como chegou</span></span></div>
+      <div class="formgrid">
+        <div><label>Segmento</label><select id="ct-segmento"><option value="">-</option><option>Frequente</option><option>Ocasional</option><option>Empresarial</option></select></div>
+        <div><label>Origem</label><select id="ct-origem" onchange="toggleIndicada('ct')"><option>Indicação</option><option>Instagram</option><option>Facebook</option><option>Site</option><option>Networking Jú</option><option>Outro</option></select></div>
+        <div id="ct-indicada-wrap" class="full" style="display:none;"><label for="ct-indicada">Indicada por</label><input type="text" id="ct-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span><datalist id="lista-indicacao"></datalist></div>
+      </div>
+    </section>
+
+    <!-- ── Como viaja ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-users"/></svg><span class="vg-num">Como viaja</span></span></div>
+      <div class="formgrid">
+        <div class="full"><label id="ct-fam-lbl">Familiares que também viajam (crianças, pessoas idosas etc.)</label><textarea id="ct-familiares" rows="2"></textarea></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="ct-pos-pago"> Normalmente paga depois da viagem (pós-pago)</label>
+          <span class="dica">É só o padrão: as viagens novas dela já vêm com "cobrar depois", e dá pra trocar em cada viagem. Mudar aqui não mexe nas viagens que já existem.</span></div>
+      </div>
+    </section>
+
+    <!-- ── App e aceites: login do painel da cliente (app.goladies.com.br).
+         Ela cria sozinha, então aqui é só leitura. Se houver outra cliente com
+         o mesmo WhatsApp, aparece o botão de unificar. Some na ficha nova. ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-device-mobile"/></svg><span class="vg-num">App e aceites</span></span><span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></div>
+      <div class="sec-corpo" id="ct-acesso-painel" style="font-size:var(--fs-sm); color:var(--muted);"></div>
+    </section>
+
+    <!-- ── Conversa no WhatsApp: só aparece quando há conversa ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-whatsapp"/></svg><span class="vg-num">Conversa no WhatsApp</span></span></div>
+      <div class="sec-corpo" id="ct-conversa-whats" style="display:none;"></div>
+    </section>
+
+    <!-- ── Motorista ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-steering-wheel"/></svg><span class="vg-num">Motorista</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="ct-motorista"></div>
+    </section>
+
+    <!-- ── Redes sociais e site ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-instagram"/></svg><span class="vg-num">Redes sociais e site</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="ct-redes"></div>
+    </section>
+
+    <!-- ── Datas especiais ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cake"/></svg><span class="vg-num">Datas especiais</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="ct-datas"></div>
+    </section>
+
+    <!-- ── Ligações ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Ligações</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="ct-ligacoes"></div>
+    </section>
+
+    <!-- ── Avaliações: dois lados da mesma linha de avaliacoes. nota_cliente
+         é o que as motoristas disseram dela; nota_motorista + comentario é o
+         que ela disse. renderAvaliacoesCliente() esconde na ficha nova. ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="ct-avaliacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg><span class="vg-num">Avaliações</span></span></div>
       <h4 style="font-size:var(--fs-sm); margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações recebidas das motoristas <span id="ct-avaliacoes-recebidas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
       <div id="ct-avaliacoes-recebidas"></div>
       <h4 style="font-size:var(--fs-sm); margin:14px 0 8px;"><svg class=ic aria-hidden=true><use href=#i-message-circle /></svg> Avaliações que ela deu <span id="ct-avaliacoes-dadas-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
       <div id="ct-avaliacoes-dadas"></div>
-    </div>
+    </section>
+
+    <!-- ── Outros: recolhido; abre sozinho quando as notas têm texto ── -->
+    <details class="vg-sec" style="--sec-cor:var(--vg-cinza);" id="ct-outros">
+      <summary class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-dots"/></svg>Outros <span class="vg-sec-sub">(notas)</span></span></summary>
+      <div class="formgrid" style="margin-top:12px;">
+        <div class="full"><label>Notas</label><textarea id="ct-notas" rows="2"></textarea></div>
+      </div>
+    </details>
+
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('cliente-transporte-modal')">Sair</button>
       <button class="btn" onclick="saveClienteTransporte()">Salvar</button>
@@ -15482,10 +15560,32 @@ function openClienteTransporteModal(id){
   renderAvaliacoesCliente();
   avisoAniversarioFicha("ct");
   renderConversaWhats("ct", c);
-  const boxMt = document.getElementById("ct-motorista");
-  boxMt.style.display = id ? "" : "none";
-  boxMt.innerHTML = id ? `<h4>Motorista</h4>` + blocoMotoristaDaLead(id, false, "clientes_transporte") : "";
+  // Vazio na ficha nova: a seção Motorista some (CSS .sec-corpo:empty).
+  document.getElementById("ct-motorista").innerHTML = id ? `<h4>Motorista</h4>` + blocoMotoristaDaLead(id, false, "clientes_transporte") : "";
+  document.getElementById("ct-outros").open = !!(c.notas||"").trim();
+  resumoFichaCliente();
   document.getElementById("cliente-transporte-modal").classList.add("open");
+  document.querySelector("#cliente-transporte-modal .modal").scrollTop = 0;
+}
+// Topo fixo da ficha de cliente, no mesmo jeito do resumo da viagem: quem é,
+// PF/PJ, viagens, login no app, Cliente/Lead e o obrigatório que falta (só o nome).
+function resumoFichaCliente(){
+  const c = clientesTransporte.find(x=>x.id===editingClienteTransporteId) || {};
+  const nome = document.getElementById("ct-nome").value.trim();
+  const falta = nome ? 0 : 1;
+  document.getElementById("ct-nome-wrap").classList.toggle("vazio", !nome);
+  document.getElementById("ct-pend").textContent = falta ? "falta 1" : "";
+  const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}${c.id ? " " + escapeHtml(codigoCadastro(c)) : ""}</b>`];
+  partes.push(ic(document.getElementById("ct-tipo").value==="PJ" ? "building" : "user") + " " + (document.getElementById("ct-tipo").value==="PJ" ? "Empresa" : "Pessoa física"));
+  if(c.id){
+    const vs = viagens.filter(v=>v.cliente_id===c.id);
+    const feitas = vs.filter(v=>v.status==="Concluída").length;
+    partes.push(ic("car") + " " + (vs.length ? `${vs.length} viage${vs.length === 1 ? "m" : "ns"} (${feitas} concluída${feitas === 1 ? "" : "s"})` : "nenhuma viagem"));
+    partes.push(ic("device-mobile") + " " + (c.auth_user_id ? "login no app" : "sem login no app"));
+    partes.push(`<span class="tag">${ehClienteTransporte(c) ? "Cliente" : "Lead"}</span>`);
+  }
+  if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('ct-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
+  document.getElementById("ct-resumo").innerHTML = partes.join("<span style=\"color:var(--border2);\">·</span>");
 }
 // O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
 // campo a campo em preenchido_pela_cliente. A ficha mostra a etiqueta embaixo
@@ -15839,7 +15939,8 @@ function formatarCNPJ(v){
 function aplicarTipoPessoa(pre){
   const pj = document.getElementById(pre+"-tipo").value==="PJ";
   document.getElementById(pre+"-cnpj-wrap").style.display = pj ? "block" : "none";
-  document.getElementById(pre+"-nome-lbl").textContent = pj ? "Razão social / nome fantasia *" : "Nome *";
+  // Na ficha no modelo da viagem (ct) o * vem do CSS (.obrig), não do texto.
+  document.getElementById(pre+"-nome-lbl").textContent = (pj ? "Razão social / nome fantasia" : "Nome") + (pre==="ct" ? "" : " *");
   document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
   const fam = document.getElementById(pre+"-fam-lbl");
   if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, pessoas idosas etc.)";
