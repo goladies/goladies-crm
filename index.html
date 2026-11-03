@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -697,6 +697,7 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 /* Endereço numa linha de 3 (Bairro, Cidade, Estado menor); quadradinho sem a margem do navegador. */
 .ficha-secoes .linha-3{grid-column:1/-1; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr); gap:10px;}
 .ficha-secoes .vg-check input{margin:0;}
+.ficha-secoes .linha-checks{grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 22px; min-height:24px; align-items:center;}   /* quadradinhos lado a lado */
 .ficha-secoes .ligacoes-wrap>.btn{align-self:flex-start;}   /* botão do tamanho do texto, não esticado */
 /* Nome com busca (parceira): o campo fica dentro de .busca-contato, então repete o destaque e o âmbar. */
 .ficha-secoes .destaque .busca-contato>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
@@ -3516,31 +3517,56 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="orcamento-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="orcamento-modal-title" style="margin:0;">Novo orçamento</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('orcamento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026), igual às outras fichas:
+         topo fixo com resumo (resumoFichaOrcamento), seções numeradas pelo
+         CSS, Sair/Salvar fixos. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="orcamento-modal-title" style="margin:0;">Novo orçamento</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('orcamento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="o-resumo"></div>
     </div>
-    <div class="formgrid">
-      <div class="full"><label>Lead/Cliente <a href="#" class="o-abrir-ficha" onclick="abrirFichaDoOrcamento('leads','o-lead'); return false;">Abrir ficha</a></label><select id="o-lead"></select></div>
-      <div class="full"><label>Serviço</label><select id="o-servico"></select></div>
-      <div class="full"><label>Parceiro <a href="#" class="o-abrir-ficha" id="o-parceiro-abrir" onclick="abrirFichaDoOrcamento('parceiros','o-parceiro'); return false;">Abrir ficha</a></label><select id="o-parceiro" onchange="mostrarAbrirParceiroOrc()"></select></div>
-      <div><label>Valor cotado (R$)</label><input type="number" id="o-cotado"></div>
-      <div><label>Valor final (R$)</label><input type="number" id="o-final"></div>
-      <div><label>Status</label><select id="o-status"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select></div>
-      <div><label>Data</label><input type="date" id="o-data"></div>
-    </div>
+    <p class="legenda-obrig"><b>*</b> obrigatório pra salvar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema faz sozinho</p>
 
-    <h4 style="font-size:var(--fs-sm); margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;"><svg class=ic aria-hidden=true><use href=#i-coins /></svg> Pagamento <span style="font-weight:400; color:var(--muted);">(se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho)</span></h4>
-    <div class="formgrid">
-      <div><label>Forma de pagamento</label><select id="o-forma-pagamento"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Financiamento</option><option>Outro</option></select></div>
-      <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="o-parcelado" style="width:auto;" onchange="toggleOrcamentoParcelado()"> É parcelado?</label></div>
-      <div id="o-num-parcelas-wrap" style="display:none;"><label>Quantas vezes</label><input type="number" id="o-num-parcelas" min="2" value="2"></div>
-      <div id="o-pago-wrap"><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="o-pago" style="width:auto;" onchange="toggleOrcamentoPago()"> Já foi pago (à vista)?</label></div>
-      <div><label>Data prevista do pagamento</label><input type="date" id="o-pag-data-prevista"></div>
-      <div id="o-pag-data-realizada-wrap" style="display:none;"><label>Data realizada do pagamento</label><input type="date" id="o-pag-data-realizada"></div>
-      <div class="full" id="o-venda-aviso" style="color:var(--muted); font-size:var(--fs-xs);"></div>
-    </div>
+    <!-- ── Pedido ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Pedido</span></span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque"><label>Lead/Cliente <a href="#" class="o-abrir-ficha" onclick="abrirFichaDoOrcamento('leads','o-lead'); return false;">Abrir ficha</a></label><select id="o-lead" onchange="resumoFichaOrcamento()"></select></div>
+        <div class="full"><label>Serviço</label><select id="o-servico" onchange="resumoFichaOrcamento()"></select></div>
+        <div class="full"><label>Parceiro <a href="#" class="o-abrir-ficha" id="o-parceiro-abrir" onclick="abrirFichaDoOrcamento('parceiros','o-parceiro'); return false;">Abrir ficha</a></label><select id="o-parceiro" onchange="mostrarAbrirParceiroOrc()"></select></div>
+      </div>
+    </section>
+
+    <!-- ── Valores e status ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-calculator"/></svg><span class="vg-num">Valores e status</span></span></div>
+      <div class="formgrid">
+        <div><label>Valor cotado (R$)</label><input type="number" id="o-cotado" oninput="resumoFichaOrcamento()"></div>
+        <div><label>Valor final (R$)</label><input type="number" id="o-final" oninput="resumoFichaOrcamento()"></div>
+        <div><label>Status</label><select id="o-status" onchange="resumoFichaOrcamento()"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select></div>
+        <div><label>Data</label><input type="date" id="o-data" onchange="resumoFichaOrcamento()"></div>
+      </div>
+    </section>
+
+    <!-- ── Pagamento: com status Aceito, saveOrcamento gera a venda e as parcelas ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-coins"/></svg><span class="vg-num">Pagamento</span></span><span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>gera no Financeiro</span></div>
+      <p class="lig-sub" style="margin:0 0 12px;">Se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho.</p>
+      <div class="formgrid">
+        <div class="linha-checks">
+          <label class="vg-check"><input type="checkbox" id="o-parcelado" onchange="toggleOrcamentoParcelado()"> É parcelado?</label>
+          <div id="o-pago-wrap"><label class="vg-check"><input type="checkbox" id="o-pago" onchange="toggleOrcamentoPago()"> Já foi pago (à vista)?</label></div>
+        </div>
+        <div><label>Forma de pagamento</label><select id="o-forma-pagamento"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Financiamento</option><option>Outro</option></select></div>
+        <div><label>Data prevista do pagamento</label><input type="date" id="o-pag-data-prevista"></div>
+        <div id="o-num-parcelas-wrap" class="full" style="display:none;"><label>Quantas vezes</label><input type="number" id="o-num-parcelas" min="2" value="2"></div>
+        <div id="o-pag-data-realizada-wrap" class="full" style="display:none;"><label>Data realizada do pagamento</label><input type="date" id="o-pag-data-realizada"></div>
+        <div class="full" id="o-venda-aviso" style="color:var(--muted); font-size:var(--fs-xs);"></div>
+      </div>
+    </section>
 
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('orcamento-modal')">Sair</button>
@@ -14114,7 +14140,7 @@ function openOrcamentoModal(id){
   // Opção vazia: orçamento aberto sozinho pelo site/WhatsApp chega sem
   // parceira; sem ela o select mostrava a 1ª da lista e salvava errado.
   document.getElementById("o-parceiro").innerHTML = `<option value="">Ainda sem parceira (o)</option>` + parceiros.map(p=>`<option value="${p.id}">${escapeHtml(p.nome)}${optCod(p)}</option>`).join("");
-  document.getElementById("orcamento-modal-title").textContent = id ? "Editar orçamento" : "Novo orçamento";
+  document.getElementById("orcamento-modal-title").textContent = id ? `Editar orçamento #${id}` : "Novo orçamento";
   const o = orcamentos.find(x=>x.id===id) || {};
   if(o.lead_id) document.getElementById("o-lead").value = o.lead_id;
   if(o.servico) document.getElementById("o-servico").value = o.servico;
@@ -14134,7 +14160,9 @@ function openOrcamentoModal(id){
   toggleOrcamentoPago();
   const vendaLigada = vendas.find(v=>v.orcamento_id===id);
   document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas; edite direto em Financeiro se precisar.` : "";
+  resumoFichaOrcamento();
   document.getElementById("orcamento-modal").classList.add("open");
+  document.querySelector("#orcamento-modal .modal").scrollTop = 0;
 }
 // "Abrir ficha" ao lado da lead e da parceira: fecha o orçamento e abre o cadastro.
 function abrirFichaDoOrcamento(tabela, selectId){
@@ -15833,6 +15861,19 @@ function resumoFichaParceiro(){
   if(!nome) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('p-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
   document.getElementById("p-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
+// Topo fixo da ficha de orçamento: de quem é, status, serviço, valor (final
+// ou, sem ele, o cotado) e data.
+function resumoFichaOrcamento(){
+  const val = id => document.getElementById(id).value;
+  const l = leads.find(x=>x.id===Number(val("o-lead")));
+  const partes = [`<b>${escapeHtml(l ? nomeCod(l) : "Lead não escolhida")}</b>`];
+  if(val("o-status")) partes.push(`<span class="tag">${escapeHtml(val("o-status"))}</span>`);
+  if(val("o-servico")) partes.push(`<span>${ic("tool")} ${escapeHtml(val("o-servico"))}</span>`);
+  const valor = val("o-final") !== "" ? val("o-final") : val("o-cotado");
+  if(valor !== "") partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(valor))}</span>`);
+  if(val("o-data")) partes.push(`<span>${ic("calendar")} ${formatarDataBR(val("o-data"))}</span>`);
+  document.getElementById("o-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
+}
 // Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
 // e placa, login no painel, e o obrigatório que falta (só o nome).
 function resumoFichaMotorista(){
@@ -16661,6 +16702,7 @@ function criarOrcamentoDaLead(){
   openOrcamentoModal(null);
   document.getElementById("o-lead").value = l.id;
   if(l.servico) fillSelect(document.getElementById("o-servico"), servicosParaLista(l.servico), l.servico);
+  resumoFichaOrcamento();
 }
 async function criarViagemDaLead(){
   const l = leadSalvaIgualTela();
