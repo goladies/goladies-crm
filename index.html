@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -675,7 +675,47 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .ficha-secoes .vg-sec .sec-corpo>h4:first-child{display:none;}
 .ficha-secoes .vg-sec .lig-sub{margin:0;}
 .ficha-secoes .vg-sec:has(.sec-corpo:empty){display:none;}
-.ficha-secoes .vg-sec .foto-perfil-wrap{margin-bottom:12px;}
+.ficha-secoes .vg-sec .foto-perfil-wrap{margin-bottom:14px;}
+/* Revisão de margens (03/11/2026, ficha de motorista): marcador com o
+   quadradinho ao lado do texto (o .formgrid label é display:block e o
+   input é 100%); avisos antes das seções com o mesmo espaço delas;
+   subtítulo com linha fina em cima separa blocos dentro da seção. */
+.formgrid label.chip-check{display:inline-flex; margin:0;}
+.chip-check input{width:auto !important;}
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.ficha-secoes .vg-sep{color:var(--border2);}
+.ficha-secoes .vg-resumo>span{white-space:nowrap;}   /* ícone nunca separado do texto */
+.ficha-secoes .ficha-aviso{margin:14px 0 0; padding:10px 14px; border-radius:0 12px 12px 0; border:1px solid var(--border); border-left:4px solid var(--c-blue); background:var(--c-blue-bg); font-size:var(--fs-sm);}
+.ficha-secoes .ficha-aviso.rosa{border-left-color:var(--vg-rosa); background:var(--vg-corpo);}
+.ficha-secoes .sub-tit{display:flex; align-items:center; flex-wrap:wrap; gap:6px; font-size:var(--fs-sm); font-weight:700; color:var(--text1); margin:16px 0 10px; padding-top:14px; border-top:1px solid var(--border);}
+.ficha-secoes .sub-tit.primeiro{margin-top:0; padding-top:0; border-top:none;}
+.ficha-secoes .caixa-ia{background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:14px;}
+.ficha-secoes .arquivo-atual{font-size:var(--fs-xs); color:var(--text2);}
+.ficha-secoes .campo-arquivo{display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:38px;}
+.ficha-secoes .campo-arquivo small{color:var(--text3); font-size:var(--fs-xs);}
+.ficha-secoes .linha-acao{grid-column:1/-1; display:flex; gap:8px; align-items:center;}
+@media (max-width:900px){
+  .ficha-secoes.modal{max-width:96vw;}
+}
+/* Celular: menos margem somada (janela + seção), topo compacto sem os
+   pontinhos soltos (nome numa linha, o resto embaixo), foto menor. */
+@media (max-width:600px){
+  .ficha-secoes.modal{max-width:100vw; padding-left:12px; padding-right:12px;}
+  .ficha-secoes .vg-topo{padding:12px 0 8px;}
+  .ficha-secoes .vg-topo h3{font-size:17px;}
+  .ficha-secoes .vg-resumo{gap:4px 12px; font-size:var(--fs-xs); margin-top:6px;}
+  .ficha-secoes .vg-resumo b{flex-basis:100%;}
+  .ficha-secoes .vg-sep{display:none;}
+  .ficha-secoes .legenda-obrig{margin:6px 0 4px; line-height:1.6;}
+  .ficha-secoes .vg-sec{padding:0 12px 14px;}
+  .ficha-secoes .vg-sec-tit{margin:0 -12px 12px; padding:10px 12px;}
+  .ficha-secoes .ficha-aviso{padding:10px 12px;}
+  .ficha-secoes .foto-perfil-wrap{align-items:flex-start; gap:12px; padding:10px;}
+  .ficha-secoes .foto-perfil{width:52px; height:52px; font-size:17px; flex-shrink:0;}
+  .ficha-secoes .linha-acao{flex-wrap:wrap;}
+  .ficha-secoes .linha-acao .btn{flex:1 1 auto;}
+  .ficha-secoes .modal-actions .btn{flex:1;}
+}
 /* Sugerido: o sistema preenche e dá pra trocar (caixa tracejada).
    Automático: só conta, não se digita (sem caixa, com cadeado). */
 .vg-tag{display:inline-flex; align-items:center; gap:3px; font-size:var(--fs-xs); font-weight:600; padding:1px 7px; border-radius:10px; color:var(--text3); margin-left:4px; vertical-align:1px;}
@@ -3397,102 +3437,119 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="motorista-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="motorista-modal-title" style="margin:0;">Nova motorista</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('motorista-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026), igual à de cliente de
+         transporte: topo fixo com resumo (resumoFichaMotorista), seções
+         numeradas pelo CSS, Sair/Salvar fixos. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="motorista-modal-title" style="margin:0;">Nova motorista</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('motorista-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="mt-resumo"></div>
     </div>
-    <div id="mt-candidatura" style="display:none; font-size:var(--fs-sm); color:var(--muted); margin:4px 0 12px;"></div>
-    <div id="mt-puxar-wrap" style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:12px 0 14px;">
-      <label style="display:block; margin:0 0 6px;">Puxar dados de quem já está cadastrada</label>
-      <input type="text" id="mt-puxar-busca" placeholder="Buscar por nome, código ou WhatsApp" oninput="preencherPuxarMotorista()" style="display:block; width:100%; margin-bottom:6px;">
-      <select id="mt-puxar" onchange="puxarMotoristaDe(this.value)" style="display:block; width:100%;"></select>
-      <div class="dica" id="mt-puxar-dica" style="font-size:var(--fs-xs); color:var(--muted); margin-top:6px;">Preenche nome, WhatsApp, e-mail, região, aniversário e origem. Ao salvar, as duas fichas ficam ligadas como a mesma pessoa (mesmo código).</div>
+    <p class="legenda-obrig"><b>*</b> obrigatório pra salvar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema mostra, não se digita</p>
+
+    <div id="mt-candidatura" class="ficha-aviso" style="display:none;"></div>
+    <div id="mt-puxar-wrap" class="ficha-aviso rosa">
+      <b>Puxar dados de quem já está cadastrada</b>
+      <div class="formgrid" style="margin-top:8px;">
+        <div><input type="text" id="mt-puxar-busca" placeholder="Buscar por nome, código ou WhatsApp" oninput="preencherPuxarMotorista()"></div>
+        <div><select id="mt-puxar" onchange="puxarMotoristaDe(this.value)"></select></div>
+      </div>
+      <div class="dica" id="mt-puxar-dica" style="font-size:var(--fs-xs); color:var(--text3); margin-top:6px;">Preenche nome, WhatsApp, e-mail, região, aniversário e origem. Ao salvar, as duas fichas ficam ligadas como a mesma pessoa (mesmo código).</div>
     </div>
-    <div id="ia-cnh-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
-      <div style="font-size:var(--fs-sm); font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com a CNH</div>
-      <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF da CNH e a IA preenche os campos abaixo.</div>
-      <input type="file" id="ia-cnh-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('cnh', this)">
-      <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CNH (foto ou PDF)</button>
-      <div id="ia-cnh-confirm" style="display:none; margin-top:10px;">
-        <div style="font-size:var(--fs-xs); margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong>. É mesmo a CNH dela?</div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
-          <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('cnh')">Trocar arquivo</button>
+
+    <!-- ── Dados dela ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Dados dela</span></span><span class="vg-pend" id="mt-pend"></span></div>
+      <div class="foto-perfil-wrap">
+        <div class="foto-perfil" id="mt-foto-preview">GL</div>
+        <div>
+          <label style="margin:0;">Foto de perfil</label>
+          <small>A cliente vê essa foto com nome, carro e placa antes de embarcar. Rosto visível, fundo neutro, sem óculos escuros. Ela também pode trocar em Perfil no painel dela (motora.goladies.com.br).</small>
+          <input type="file" id="mt-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('mt', this)">
+          <button type="button" class="act act-edit" onclick="document.getElementById('mt-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
+          <button type="button" class="act act-del" id="mt-foto-remover" onclick="removerFotoPerfil('mt')" style="display:none;">Remover</button>
         </div>
       </div>
-      <div id="ia-cnh-status" style="display:none; margin-top:8px; font-size:var(--fs-sm);"></div>
-    </div>
-    <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
-      <span id="dp-cnh-arquivo-atual" style="font-size:var(--fs-xs);"></span>
-      <div class="formgrid" style="margin-top:6px;">
+      <div class="formgrid">
+        <div class="full obrig destaque" id="mt-nome-wrap"><label>Nome</label><input type="text" id="mt-nome" oninput="resumoFichaMotorista()"></div>
+        <div><label>WhatsApp</label><input type="text" id="mt-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
+        <div><label>E-mail</label><input type="text" id="mt-email"></div>
+        <div><label>Região</label><input type="text" id="mt-regiao"></div>
+        <div><label>Aniversário</label><input type="date" id="mt-aniversario"></div>
+        <div><label>CPF</label><input type="text" id="mt-cpf"></div>
+        <div><label>Origem</label><select id="mt-origem"><option>Site</option><option>Instagram</option><option>Facebook</option><option>Networking</option><option>Indicação</option><option>Outro</option></select></div>
+      </div>
+    </section>
+
+    <!-- ── Status e certificação ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-certificate"/></svg><span class="vg-num">Status e certificação</span></span></div>
+      <div class="formgrid">
+        <div><label>Status</label><select id="mt-status" onchange="sugerirCertificadaAte(); resumoFichaMotorista()"></select></div>
+        <div><label>Certificada até <span style="font-weight:400; color:var(--muted);">(12 meses)</span></label><input type="date" id="mt-certificada-ate" onchange="resumoFichaMotorista()"></div>
+      </div>
+    </section>
+
+    <!-- ── CNH e EAR ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-license"/></svg><span class="vg-num">CNH e EAR</span></span></div>
+      <div id="ia-cnh-wrap" class="caixa-ia">
+        <div style="font-size:var(--fs-sm); font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com a CNH</div>
+        <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF da CNH e a IA preenche os campos abaixo.</div>
+        <input type="file" id="ia-cnh-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('cnh', this)">
+        <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CNH (foto ou PDF)</button>
+        <div id="ia-cnh-confirm" style="display:none; margin-top:10px;">
+          <div style="font-size:var(--fs-xs); margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong>. É mesmo a CNH dela?</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
+            <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('cnh')">Trocar arquivo</button>
+          </div>
+        </div>
+        <div id="ia-cnh-status" style="display:none; margin-top:8px; font-size:var(--fs-sm);"></div>
+      </div>
+      <div class="formgrid">
+        <div><label>Nº de registro da CNH</label><input type="text" id="mt-cnh-registro"></div>
+        <div><label>Validade da CNH</label><input type="date" id="mt-cnh-validade"></div>
+        <div>
+          <label>Categoria da CNH <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
+          <div id="mt-cnh-categoria-wrap" class="chips">
+            <label class="chip-check"><input type="checkbox" value="B"> B</label>
+            <label class="chip-check"><input type="checkbox" value="D"> D</label>
+            <label class="chip-check"><input type="checkbox" value="Outra"> Outra</label>
+          </div>
+        </div>
+        <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
+      </div>
+      <div class="sub-tit">Conferência do arquivo da CNH <span id="dp-cnh-arquivo-atual" class="arquivo-atual" style="font-weight:400;"></span></div>
+      <div class="formgrid">
         <div><label>Data de verificação</label><input type="date" id="dp-cnh-data"></div>
         <div><label>Status</label><select id="dp-cnh-status"><option value="">-</option><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
       </div>
-    </div>
-    <div class="foto-perfil-wrap">
-      <div class="foto-perfil" id="mt-foto-preview">GL</div>
-      <div>
-        <label style="margin:0;">Foto de perfil</label>
-        <small>A cliente vê essa foto com nome, carro e placa antes de embarcar. Rosto visível, fundo neutro, sem óculos escuros. Ela também pode trocar em Perfil no painel dela (motora.goladies.com.br).</small>
-        <input type="file" id="mt-foto-file" accept="image/*" style="display:none;" onchange="escolherFotoPerfil('mt', this)">
-        <button type="button" class="act act-edit" onclick="document.getElementById('mt-foto-file').click()"><svg class=ic aria-hidden=true><use href=#i-camera /></svg> Escolher foto</button>
-        <button type="button" class="act act-del" id="mt-foto-remover" onclick="removerFotoPerfil('mt')" style="display:none;">Remover</button>
-      </div>
-    </div>
-    <div class="formgrid">
-      <div class="full"><label>Nome *</label><input type="text" id="mt-nome"></div>
-      <div><label>WhatsApp</label><input type="text" id="mt-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
-      <div><label>E-mail</label><input type="text" id="mt-email"></div>
-      <div><label>Região</label><input type="text" id="mt-regiao"></div>
-      <div><label>Aniversário</label><input type="date" id="mt-aniversario"></div>
-      <div><label>Status</label><select id="mt-status" onchange="sugerirCertificadaAte()"></select></div>
-      <div><label>Certificada até <span style="font-weight:400; color:var(--muted);">(12 meses)</span></label><input type="date" id="mt-certificada-ate"></div>
-      <div><label>Origem</label><select id="mt-origem"><option>Site</option><option>Instagram</option><option>Facebook</option><option>Networking</option><option>Indicação</option><option>Outro</option></select></div>
-      <div><label>CPF</label><input type="text" id="mt-cpf"></div>
-      <div><label>Nº de registro da CNH</label><input type="text" id="mt-cnh-registro"></div>
-      <div class="full">
-        <label>Categoria da CNH <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
-        <div id="mt-cnh-categoria-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
-          <label class="chip-check"><input type="checkbox" value="B"> B</label>
-          <label class="chip-check"><input type="checkbox" value="D"> D</label>
-          <label class="chip-check"><input type="checkbox" value="Outra"> Outra</label>
-        </div>
-      </div>
-      <div><label>Validade da CNH</label><input type="date" id="mt-cnh-validade"></div>
-      <div><label>Situação do EAR</label><select id="mt-cnh-ear"><option value="">-</option><option value="Já tenho EAR">Já tenho EAR</option><option value="Não tenho EAR">Não tenho EAR</option><option value="Estou em processo">Estou em processo</option></select></div>
-    </div>
-    <div id="mt-conversa-whats" style="display:none; margin-top:18px;"></div>
-    <div class="ligacoes-wrap" id="mt-redes"></div>
-    <div class="ligacoes-wrap" id="mt-datas"></div>
-    <div class="ligacoes-wrap" id="mt-ligacoes"></div>
+    </section>
 
-    <div style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 10px;">Veículo (CRLV)</h4>
-      <div class="full" id="ia-crlv-wrap" style="background:var(--pink-light); border:1px solid var(--pink-mid); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+    <!-- ── Carro (CRLV) ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-car"/></svg><span class="vg-num">Carro (CRLV)</span></span></div>
+      <div id="ia-crlv-wrap" class="caixa-ia">
         <div style="font-size:var(--fs-sm); font-weight:600; color:var(--pink); margin-bottom:6px;"><svg class=ic aria-hidden=true><use href=#i-robot /></svg> Preencher automaticamente com o CRLV</div>
         <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:10px;">Envie uma foto ou PDF do CRLV (documento do carro) e a IA preenche os campos abaixo. Se ela trocar de carro, é só ler o CRLV novo de novo.</div>
         <input type="file" id="ia-crlv-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('crlv', this)">
         <button type="button" class="btn secondary small" id="ia-crlv-btn" onclick="document.getElementById('ia-crlv-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CRLV (foto ou PDF)</button>
         <div id="ia-crlv-confirm" style="display:none; margin-top:10px;">
           <div style="font-size:var(--fs-xs); margin-bottom:6px;">Arquivo selecionado: <strong id="ia-crlv-nome-arquivo"></strong>. É mesmo o CRLV do carro dela?</div>
-          <div style="display:flex; gap:8px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn small" onclick="confirmarLeituraIA('crlv')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
             <button type="button" class="btn ghost small" onclick="cancelarSelecaoIA('crlv')">Trocar arquivo</button>
           </div>
         </div>
         <div id="ia-crlv-status" style="display:none; margin-top:8px; font-size:var(--fs-sm);"></div>
       </div>
-      <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
-        <span id="dp-crlv-arquivo-atual" style="font-size:var(--fs-xs);"></span>
-        <div class="formgrid" style="margin-top:6px;">
-          <div><label>Data de verificação</label><input type="date" id="dp-crlv-data"></div>
-          <div><label>Status</label><select id="dp-crlv-status"><option value="">-</option><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
-        </div>
-      </div>
       <div class="formgrid">
-        <div><label>Veículo</label><input type="text" id="mt-veiculo" placeholder="Ex: Fiat Argo prata"></div>
-        <div><label>Placa</label><input type="text" id="mt-placa" placeholder="ABC1D23"></div>
+        <div><label>Veículo</label><input type="text" id="mt-veiculo" placeholder="Ex: Fiat Argo prata" oninput="resumoFichaMotorista()"></div>
+        <div><label>Placa</label><input type="text" id="mt-placa" placeholder="ABC1D23" oninput="resumoFichaMotorista()"></div>
         <div><label>Marca</label><input type="text" id="mt-marca"></div>
         <div><label>Modelo</label><input type="text" id="mt-modelo"></div>
         <div><label>Ano de fabricação</label><input type="text" id="mt-ano-fab"></div>
@@ -3501,49 +3558,75 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Combustível</label><input type="text" id="mt-combustivel"></div>
         <div><label>Renavam</label><input type="text" id="mt-renavam"></div>
         <div><label>Chassi</label><input type="text" id="mt-chassi"></div>
-        <div><label>Proprietário do veículo <span style="font-weight:400; color:var(--muted);">(no documento)</span></label><input type="text" id="mt-proprietario"></div>
+        <div class="full"><label>Proprietário do veículo <span style="font-weight:400; color:var(--muted);">(no documento)</span></label><input type="text" id="mt-proprietario"></div>
       </div>
-    </div>
-
-    <div id="mt-documentos-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 10px;">Antecedentes Criminais</h4>
-      <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
-        <input type="file" id="dp-antecedentes-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('antecedentes', this)">
-        <button type="button" class="btn secondary small" id="dp-antecedentes-btn" onclick="document.getElementById('dp-antecedentes-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Anexar arquivo</button>
-        <span id="dp-antecedentes-arquivo-atual" style="font-size:var(--fs-xs); margin-left:6px;"></span>
-        <div class="formgrid" style="margin-top:10px;">
-          <div><label>Data da consulta</label><input type="date" id="dp-antecedentes-data"></div>
-          <div><label>Status</label><select id="dp-antecedentes-status"><option value="">-</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
-        </div>
+      <div class="sub-tit">Conferência do arquivo do CRLV <span id="dp-crlv-arquivo-atual" class="arquivo-atual" style="font-weight:400;"></span></div>
+      <div class="formgrid">
+        <div><label>Data de verificação</label><input type="date" id="dp-crlv-data"></div>
+        <div><label>Status</label><select id="dp-crlv-status"><option value="">-</option><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
       </div>
+      <div class="sub-tit"><svg class=ic aria-hidden=true><use href=#i-car /></svg> O que tem no carro e o que topa</div>
+      <p style="color:var(--muted); font-size:var(--fs-xs); margin:0 0 8px;">Ela também marca no painel dela (Meu carro). Serve para o ✓ ou o aviso ao escolher a motorista de uma viagem.</p>
+      <div id="mt-recursos"></div>
+    </section>
 
-      <h4 style="font-size:var(--fs-sm); margin:0 0 10px;">Comprovante de Endereço</h4>
-      <div style="border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px;">
-        <input type="file" id="dp-endereco-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('endereco', this)">
-        <button type="button" class="btn secondary small" id="dp-endereco-btn" onclick="document.getElementById('dp-endereco-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Anexar arquivo</button>
-        <span id="dp-endereco-arquivo-atual" style="font-size:var(--fs-xs); margin-left:6px;"></span>
-        <div class="formgrid" style="margin-top:10px;">
-          <div><label>Data do documento</label><input type="date" id="dp-endereco-data"></div>
-          <div><label>Status</label><select id="dp-endereco-status"><option value="">-</option><option>Pendente</option><option>Verificado</option><option>Vencido</option></select></div>
-        </div>
+    <!-- ── Documentos ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);" id="mt-documentos-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-folder"/></svg><span class="vg-num">Documentos</span></span></div>
+      <div class="sub-tit primeiro">Antecedentes criminais</div>
+      <div class="formgrid">
+        <div><label>Data da consulta</label><input type="date" id="dp-antecedentes-data"></div>
+        <div><label>Status</label><select id="dp-antecedentes-status"><option value="">-</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+        <div class="full"><label>Arquivo</label><div class="campo-arquivo">
+          <input type="file" id="dp-antecedentes-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('antecedentes', this)">
+          <button type="button" class="btn secondary small" id="dp-antecedentes-btn" onclick="document.getElementById('dp-antecedentes-file').click()"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> Anexar arquivo</button>
+          <span id="dp-antecedentes-arquivo-atual" class="arquivo-atual"></span>
+        </div></div>
       </div>
-
-      <h4 style="font-size:var(--fs-sm); margin:18px 0 8px; border-top:1px solid var(--border); padding-top:14px;">Outros documentos</h4>
+      <div class="sub-tit">Comprovante de endereço</div>
+      <div class="formgrid">
+        <div><label>Data do documento</label><input type="date" id="dp-endereco-data"></div>
+        <div><label>Status</label><select id="dp-endereco-status"><option value="">-</option><option>Pendente</option><option>Verificado</option><option>Vencido</option></select></div>
+        <div class="full"><label>Arquivo</label><div class="campo-arquivo">
+          <input type="file" id="dp-endereco-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoDocPrincipal('endereco', this)">
+          <button type="button" class="btn secondary small" id="dp-endereco-btn" onclick="document.getElementById('dp-endereco-file').click()"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> Anexar arquivo</button>
+          <span id="dp-endereco-arquivo-atual" class="arquivo-atual"></span>
+        </div></div>
+      </div>
+      <div class="sub-tit">Outros documentos</div>
       <div id="mt-documentos-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Tipo de documento</label><select id="mt-doc-tipo"><option>CNH EAR</option><option>Curso ConduApp (16h)</option><option>Curso Transporte Infantil (50h CONTRAN)</option><option>Outro</option></select></div>
         <div><label>Validade</label><input type="date" id="mt-doc-validade"></div>
         <div><label>Status</label><select id="mt-doc-status"><option>Pendente</option><option>Lido por IA</option><option>Verificado</option><option>Vencido</option></select></div>
-        <div><label>Arquivo (opcional)</label><input type="file" id="mt-doc-file" accept="image/*,.pdf"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addDocumentoMotorista()">+ Adicionar documento</button></div>
+        <div><label>Arquivo (opcional)</label><div class="campo-arquivo">
+          <input type="file" id="mt-doc-file" accept="image/*,.pdf" style="display:none" onchange="document.getElementById('mt-doc-file-nome').textContent = this.files[0] ? this.files[0].name : 'nenhum'">
+          <!-- label, não button: renderDocumentosMotorista desliga os botões da
+               seção na ficha nova, e o arquivo do 1º documento vale antes do Salvar. -->
+          <label for="mt-doc-file" class="btn secondary small" style="margin:0; cursor:pointer;"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> Escolher arquivo</label>
+          <small id="mt-doc-file-nome">nenhum</small>
+        </div></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addDocumentoMotorista()">+ Adicionar documento</button></div>
       </div>
-    </div>
+      <div class="sub-tit">Histórico de documentos</div>
+      <div id="mt-historico-wrap"><div id="mt-historico-lista"></div></div>
+    </section>
 
-    <!-- Perfil e cuidado (schema_motorista_perfil.sql): base da Clara. Só grava
-         depois que a motorista toca em "Autorizo" no painel dela. -->
-    <div id="mt-perfil-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-heart /></svg> Perfil e cuidado</h4>
-      <div id="mt-perfil-status" style="font-size:var(--fs-sm); margin-bottom:10px;"></div>
+    <!-- ── Acesso ao painel e pasta ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="mt-acesso-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-device-mobile"/></svg><span class="vg-num">Acesso ao painel e pasta</span></span></div>
+      <div class="formgrid">
+        <div class="full"><label>UID do login (Supabase Authentication)</label><input type="text" id="mt-auth-uid" placeholder="ex: 0fe07c05-f040-468b-b351-a464a3065f33"><span class="dica">Crie o login em Supabase → Authentication → Users → Add user (e-mail + senha inicial), copie o UID gerado e cole aqui. Isso liga esse login ao cadastro dela.</span></div>
+        <div class="full" id="mt-acesso-status" style="font-size:var(--fs-sm);"></div>
+        <div class="full"><label>Pasta no Google Drive (motorista + Go Ladies)</label><input type="url" id="mt-pasta-drive" placeholder="https://drive.google.com/drive/folders/..."><span class="dica">Crie a pasta no Drive da Go Ladies, compartilhe com o e-mail dela e cole o link. Aparece no painel dela em Perfil e em Carro → Documentos.</span></div>
+      </div>
+    </section>
+
+    <!-- ── Perfil e cuidado (schema_motorista_perfil.sql): base da Clara. Só
+         grava depois que a motorista toca em "Autorizo" no painel dela. ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);" id="mt-perfil-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-heart"/></svg><span class="vg-num">Perfil e cuidado</span></span><span class="vg-sec-sub">só grava depois do "Autorizo" dela</span></div>
+      <div id="mt-perfil-status" style="font-size:var(--fs-sm); margin-bottom:12px;"></div>
       <div id="mt-perfil-campos">
         <div class="formgrid">
           <div class="full"><label>Trajetória e por que quer dirigir</label><textarea id="mp-trajetoria" rows="2"></textarea></div>
@@ -3551,70 +3634,69 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <div class="full"><label>O que quer aprender</label><textarea id="mp-quer-aprender" rows="2"></textarea></div>
           <div><label>Filhos <span style="font-weight:400; color:var(--muted);">(se ela quiser contar)</span></label><input type="text" id="mp-filhos" placeholder="Ex.: 2, de 5 e 9 anos"></div>
           <div><label>Estado civil <span style="font-weight:400; color:var(--muted);">(se ela quiser contar)</span></label><input type="text" id="mp-estado-civil"></div>
-          <div class="full"><span class="dica">Idade vem do Aniversário, lá em cima. Filhos, estado civil e idade nunca decidem quem pega a corrida, e a Clara não vê esses dados.</span></div>
+          <div class="full"><span class="dica" style="margin-top:0;">Idade vem do Aniversário, lá em cima. Filhos, estado civil e idade nunca decidem quem pega a corrida, e a Clara não vê esses dados.</span></div>
           <div class="full"><label>Competências</label><div id="mp-competencias" class="mp-grade"></div></div>
           <div class="full"><label>Corridas</label><div id="mp-corridas" class="mp-grade"></div></div>
-          <div class="full"><label>Horários em que costuma estar disponível</label><div id="mp-turnos" style="display:flex; flex-wrap:wrap; gap:6px;"></div></div>
-          <div class="full"><label>Dias em que costuma estar disponível</label><div id="mp-dias" style="display:flex; flex-wrap:wrap; gap:6px;"></div></div>
+          <div><label>Horários em que costuma estar disponível</label><div id="mp-turnos" class="chips"></div></div>
+          <div><label>Dias em que costuma estar disponível</label><div id="mp-dias" class="chips"></div></div>
           <div class="full"><label>Onde ou quando se sente insegura</label><textarea id="mp-inseguranca" rows="2"></textarea></div>
+          <div class="linha-acao">
+            <button type="button" class="btn small" onclick="salvarPerfilMotorista()">Salvar perfil</button>
+            <button type="button" class="btn ghost small" style="color:var(--red); border-color:var(--red); margin-left:auto;" onclick="apagarPerfilMotorista()">Ela pediu para apagar</button>
+          </div>
         </div>
-        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-          <button type="button" class="btn small" onclick="salvarPerfilMotorista()">Salvar perfil</button>
-          <button type="button" class="btn ghost small" style="color:var(--red); border-color:var(--red); margin-left:auto;" onclick="apagarPerfilMotorista()">Ela pediu para apagar</button>
-        </div>
-        <h4 style="font-size:var(--fs-sm); margin:16px 0 6px;">Conversas</h4>
+        <div class="sub-tit">Conversas</div>
         <div id="mp-cuidado-lista"></div>
-        <div class="formgrid" style="margin-top:8px;">
+        <div class="formgrid" style="margin-top:10px;">
           <div><label>Data</label><input type="date" id="mc-data"></div>
+          <div><label>Próximo passo</label><input type="text" id="mc-proximo"></div>
           <div class="full"><label>Resumo</label><textarea id="mc-resumo" rows="2" placeholder="Como ela está e o que quis contar"></textarea><span class="dica">Ela vê estas anotações no painel. Não escreva diagnóstico, remédio nem nada de saúde (dado sensível na LGPD), nem cobrança ou ordem: ela é parceira autônoma.</span></div>
-          <div class="full"><label>Próximo passo</label><input type="text" id="mc-proximo"></div>
-          <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addCuidadoMotorista()">+ Adicionar conversa</button></div>
+          <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addCuidadoMotorista()">+ Adicionar conversa</button></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div id="mt-observacoes-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Observações</h4>
+    <!-- ── Observações ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);" id="mt-observacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-message-dots"/></svg><span class="vg-num">Observações</span></span></div>
       <div id="mt-observacoes-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
-        <div><label>Data da conversa</label><input type="date" id="mo-data"></div>
-        <div class="full"><label>Observação</label><textarea id="mo-texto" rows="2"></textarea></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addObservacaoMotorista()">+ Adicionar observação</button></div>
-      </div>
-    </div>
-
-    <div id="mt-historico-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;">Histórico de documentos</h4>
-      <div id="mt-historico-lista"></div>
-    </div>
-
-    <div id="mt-acesso-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;">Acesso ao painel da motorista</h4>
-      <p style="color:var(--muted); font-size:var(--fs-sm); margin:0 0 8px;">
-        Crie o login em Supabase → Authentication → Users → Add user (e-mail + senha inicial),
-        copie o UID gerado e cole aqui. Isso liga esse login ao cadastro dela.
-      </p>
-      <div class="formgrid">
-        <div class="full"><label>UID do login (Supabase Authentication)</label><input type="text" id="mt-auth-uid" placeholder="ex: 0fe07c05-f040-468b-b351-a464a3065f33"></div>
-      </div>
-      <div id="mt-acesso-status" style="font-size:var(--fs-sm); margin-top:4px;"></div>
       <div class="formgrid" style="margin-top:10px;">
-        <div class="full"><label>Pasta no Google Drive (motorista + Go Ladies)</label><input type="url" id="mt-pasta-drive" placeholder="https://drive.google.com/drive/folders/..."></div>
+        <div class="full"><label>Observação</label><textarea id="mo-texto" rows="2"></textarea></div>
+        <div><label>Data da conversa</label><input type="date" id="mo-data"></div>
+        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" style="margin-bottom:2px;" onclick="addObservacaoMotorista()">+ Adicionar observação</button></div>
       </div>
-      <p style="color:var(--muted); font-size:var(--fs-xs); margin:4px 0 0;">
-        Crie a pasta no Drive da Go Ladies, compartilhe com o e-mail dela e cole o link. Aparece no painel dela em Perfil e em Carro → Documentos.
-      </p>
-      <h4 style="font-size:var(--fs-sm); margin:16px 0 4px;"><svg class=ic aria-hidden=true><use href=#i-car /></svg> O que tem no carro e o que topa</h4>
-      <p style="color:var(--muted); font-size:var(--fs-xs); margin:0 0 4px;">Ela também marca no painel dela (Meu carro). Serve para o ✓ ou o aviso ao escolher a motorista de uma viagem.</p>
-      <div id="mt-recursos"></div>
-    </div>
+    </section>
 
-    <!-- Avaliações que as clientes deram pra ela. "Liberar" é o que faz a
-         nota aparecer no painel da motorista (minhas_avaliacoes só lê visivel). -->
-    <div id="mt-avaliacoes-wrap" style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;"><svg class=ic aria-hidden=true><use href=#i-star /></svg> Avaliações recebidas <span id="mt-avaliacoes-resumo" style="font-weight:400; color:var(--muted);"></span></h4>
+    <!-- ── Avaliações que as clientes deram pra ela. "Liberar" é o que faz a
+         nota aparecer no painel da motorista (minhas_avaliacoes só lê visivel). ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="mt-avaliacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-star"/></svg><span class="vg-num">Avaliações recebidas</span></span><span id="mt-avaliacoes-resumo" class="vg-sec-sub"></span></div>
       <div id="mt-avaliacoes-lista"></div>
-    </div>
+    </section>
+
+    <!-- ── Conversa no WhatsApp: só aparece quando há conversa ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-whatsapp"/></svg><span class="vg-num">Conversa no WhatsApp</span></span></div>
+      <div class="sec-corpo" id="mt-conversa-whats" style="display:none;"></div>
+    </section>
+
+    <!-- ── Redes sociais e site ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-instagram"/></svg><span class="vg-num">Redes sociais e site</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="mt-redes"></div>
+    </section>
+
+    <!-- ── Datas especiais ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cake"/></svg><span class="vg-num">Datas especiais</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="mt-datas"></div>
+    </section>
+
+    <!-- ── Ligações ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Ligações</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="mt-ligacoes"></div>
+    </section>
 
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('motorista-modal')">Sair</button>
@@ -7934,6 +8016,7 @@ function convCadastrar(tel, tipo){
   }else if(tipo==="motorista"){
     openMotoristaModal(null);
     set("mt-nome", nome); set("mt-whatsapp", whats);
+    resumoFichaMotorista();
   }
 }
 
@@ -14669,6 +14752,7 @@ function aplicarDadosIACNH(d){
   }
   if(d.tem_ear === true) document.getElementById("mt-cnh-ear").value = "Já tenho EAR";
   else if(d.tem_ear === false) document.getElementById("mt-cnh-ear").value = "Não tenho EAR";
+  resumoFichaMotorista();
 }
 // "NISSAN VERSA 16UNIQUECVT" vira "Nissan Versa": nome de rua, não nome de
 // Detran. Mesma regra do site (cliente.html e acompanhar.html), que limpa na
@@ -14709,6 +14793,7 @@ function aplicarDadosIACRLV(d){
     // guardada nos campos Marca e Modelo, que o CRLV e o seguro precisam.
     document.getElementById("mt-veiculo").value = nomeCarro([d.marca, d.modelo].filter(Boolean).join(" "));
   }
+  resumoFichaMotorista();
 }
 
 // ===== DOCUMENTOS PRINCIPAIS (CNH, CRLV, Antecedentes, Comprovante — 1 arquivo cada, sem histórico) =====
@@ -15007,7 +15092,9 @@ function openMotoristaModal(id){
   carregarPerfilMotorista();
   avisoAniversarioFicha("mt");
   renderConversaWhats("mt", m);
+  resumoFichaMotorista();
   document.getElementById("motorista-modal").classList.add("open");
+  document.querySelector("#motorista-modal .modal").scrollTop = 0;
 }
 function renderDocumentosMotorista(){
   const wrap = document.getElementById("mt-documentos-lista");
@@ -15056,6 +15143,7 @@ async function addDocumentoMotorista(){
   documentosMotorista = data || [];
   document.getElementById("mt-doc-validade").value = "";
   arquivoInput.value = "";
+  document.getElementById("mt-doc-file-nome").textContent = "nenhum";
   renderDocumentosMotorista();
   renderTransporteMotoristas();
 }
@@ -15287,6 +15375,7 @@ async function puxarMotoristaDe(valor){
     }catch(e){ /* sem a foto, segue o resto */ }
   }
   if(!fotoPerfilPendente.mt) mostrarPreviewFoto("mt", null, r.nome);
+  resumoFichaMotorista();
   showToast("Dados puxados. Confira e salve.");
 }
 // Chamada pelo saveMotorista de uma ficha nova vinda de outro cadastro.
@@ -15576,16 +15665,34 @@ function resumoFichaCliente(){
   document.getElementById("ct-nome-wrap").classList.toggle("vazio", !nome);
   document.getElementById("ct-pend").textContent = falta ? "falta 1" : "";
   const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}${c.id ? " " + escapeHtml(codigoCadastro(c)) : ""}</b>`];
-  partes.push(ic(document.getElementById("ct-tipo").value==="PJ" ? "building" : "user") + " " + (document.getElementById("ct-tipo").value==="PJ" ? "Empresa" : "Pessoa física"));
+  partes.push(`<span>${ic(document.getElementById("ct-tipo").value==="PJ" ? "building" : "user")} ${document.getElementById("ct-tipo").value==="PJ" ? "Empresa" : "Pessoa física"}</span>`);
   if(c.id){
     const vs = viagens.filter(v=>v.cliente_id===c.id);
     const feitas = vs.filter(v=>v.status==="Concluída").length;
-    partes.push(ic("car") + " " + (vs.length ? `${vs.length} viage${vs.length === 1 ? "m" : "ns"} (${feitas} concluída${feitas === 1 ? "" : "s"})` : "nenhuma viagem"));
-    partes.push(ic("device-mobile") + " " + (c.auth_user_id ? "login no app" : "sem login no app"));
+    partes.push(`<span>${ic("car")} ${vs.length ? `${vs.length} viage${vs.length === 1 ? "m" : "ns"} (${feitas} concluída${feitas === 1 ? "" : "s"})` : "nenhuma viagem"}</span>`);
+    partes.push(`<span>${ic("device-mobile")} ${c.auth_user_id ? "login no app" : "sem login no app"}</span>`);
     partes.push(`<span class="tag">${ehClienteTransporte(c) ? "Cliente" : "Lead"}</span>`);
   }
   if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('ct-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
-  document.getElementById("ct-resumo").innerHTML = partes.join("<span style=\"color:var(--border2);\">·</span>");
+  document.getElementById("ct-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
+}
+// Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
+// e placa, login no painel, e o obrigatório que falta (só o nome).
+function resumoFichaMotorista(){
+  const m = motoristas.find(x=>x.id===editingMotoristaId) || {};
+  const val = id => document.getElementById(id).value.trim();
+  const nome = val("mt-nome");
+  document.getElementById("mt-nome-wrap").classList.toggle("vazio", !nome);
+  document.getElementById("mt-pend").textContent = nome ? "" : "falta 1";
+  const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}${m.id ? " " + escapeHtml(codigoCadastro(m)) : ""}</b>`];
+  const status = val("mt-status"), ate = val("mt-certificada-ate");
+  if(status) partes.push(`<span class="tag">${escapeHtml(status)}</span>`);
+  if(ate) partes.push(`<span>${ic("certificate")} certificada até ${formatarDataBR(ate)}</span>`);
+  const carro = [val("mt-veiculo"), val("mt-placa")].filter(Boolean).join(" · ");
+  if(carro) partes.push(`<span>${ic("car")} ${escapeHtml(carro)}</span>`);
+  if(m.id) partes.push(`<span>${ic("device-mobile")} ${m.auth_user_id ? "login no painel" : "sem login no painel"}</span>`);
+  if(!nome) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('mt-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
+  document.getElementById("mt-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
 // O que a cliente preencheu no app (schema_dados_da_cliente.sql): o banco marca
 // campo a campo em preenchido_pela_cliente. A ficha mostra a etiqueta embaixo
