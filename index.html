@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -697,6 +697,8 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 /* Endereço numa linha de 3 (Bairro, Cidade, Estado menor); quadradinho sem a margem do navegador. */
 .ficha-secoes .linha-3{grid-column:1/-1; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr); gap:10px;}
 .ficha-secoes .vg-check input{margin:0;}
+.ficha-secoes .ficha-acoes{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 0;}   /* atalhos logo abaixo do topo */
+.ficha-secoes .ficha-acoes .btn{text-decoration:none;}
 .ficha-secoes .linha-checks{grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 22px; min-height:24px; align-items:center;}   /* quadradinhos lado a lado */
 .ficha-secoes .ligacoes-wrap>.btn{align-self:flex-start;}   /* botão do tamanho do texto, não esticado */
 /* Nome com busca (parceira): o campo fica dentro de .busca-contato, então repete o destaque e o âmbar. */
@@ -4376,81 +4378,123 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="evento-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="evento-modal-title" style="margin:0;">Novo evento</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('evento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026), igual às outras fichas:
+         topo fixo com resumo (resumoFichaEvento), atalhos logo abaixo, seções
+         numeradas pelo CSS, rodapé fixo. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="evento-modal-title" style="margin:0;">Novo evento</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('evento-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="ev-resumo"></div>
     </div>
-    <div class="formgrid">
-      <div class="full"><label>Nome do evento *</label><input type="text" id="ev-nome" placeholder="Ex: Feira do Livro, Show da Ivete, Congresso de Enfermagem"></div>
-      <div><label>Tipo</label><select id="ev-tipo"></select></div>
-      <div><label>Status</label><select id="ev-status"></select></div>
-      <div><label>Data de início *</label><input type="date" id="ev-data-inicio"></div>
-      <div><label>Data de fim <span style="font-weight:400; color:var(--muted);">(se for mais de um dia)</span></label><input type="date" id="ev-data-fim"></div>
-      <div><label>Horário de início</label><input type="time" id="ev-hora-inicio"></div>
-      <div><label>Horário de fim</label><input type="time" id="ev-hora-fim"></div>
-      <div class="full"><label>Nome do local</label><input type="text" id="ev-local-nome" placeholder="Ex: Centro de Eventos FIERGS, Arena do Grêmio"></div>
-      <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" id="ev-endereco" placeholder="Rua, número, bairro" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
-      <div><label>Cidade</label><input type="text" id="ev-cidade" placeholder="Porto Alegre"></div>
-      <div><label>Estado</label><select id="ev-estado"></select></div>
-      <div><label>Organizador (a)</label><input type="text" id="ev-organizador" placeholder="Empresa ou pessoa que organiza"></div>
-      <div><label>Público estimado</label><input type="number" id="ev-publico" min="0" placeholder="Ex: 5000"></div>
-      <div><label>Onde você viu</label><select id="ev-origem"></select></div>
-      <div><label>Parceira (o) ligada <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><select id="ev-parceiro"><option value="">-</option></select></div>
-      <div><label><svg class=ic aria-hidden=true><use href=#i-bell /></svg> Lembrar de fazer contato em</label><input type="date" id="ev-lembrar-em"></div>
-      <div><label style="visibility:hidden;">.</label><div id="ev-lembrete-info" style="font-size:var(--fs-xs); color:var(--muted);"></div></div>
-      <div class="full" id="ev-motivo-perda-wrap"><label>Motivo (se não fechou)</label><input type="text" id="ev-motivo-perda" placeholder="Ex: já tinham transporte, preço, sem retorno"></div>
-      <div class="full"><label>Observações</label><textarea id="ev-observacoes" rows="2"></textarea></div>
-    </div>
-
-    <div id="ev-acoes-wrap" style="display:none; margin-top:14px; gap:8px; flex-wrap:wrap;">
+    <p class="legenda-obrig"><b>*</b> obrigatório pra salvar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema mostra, não se digita</p>
+    <div id="ev-acoes-wrap" class="ficha-acoes" style="display:none;">
       <button class="btn secondary small" type="button" onclick="criarViagemDoEvento()"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Criar viagem a partir deste evento</button>
-      <a class="btn secondary small" id="ev-link-gcal" href="#" target="_blank" rel="noopener" style="text-decoration:none;"><svg class=ic aria-hidden=true><use href=#i-calendar-event /></svg> Adicionar ao Google Agenda</a>
-      <a class="btn secondary small" id="ev-link-maps" href="#" target="_blank" rel="noopener" style="text-decoration:none;"><svg class=ic aria-hidden=true><use href=#i-map-pin /></svg> Ver no Google Maps</a>
+      <a class="btn secondary small" id="ev-link-gcal" href="#" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-calendar-event /></svg> Adicionar ao Google Agenda</a>
+      <a class="btn secondary small" id="ev-link-maps" href="#" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-map-pin /></svg> Ver no Google Maps</a>
     </div>
 
-    <div id="ev-contatos-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Contatos do organizador</h4>
+    <!-- ── O evento ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-confetti"/></svg><span class="vg-num">O evento</span></span><span class="vg-pend" id="ev-pend"></span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque" id="ev-nome-wrap"><label>Nome do evento</label><input type="text" id="ev-nome" placeholder="Ex: Feira do Livro, Show da Ivete, Congresso de Enfermagem" oninput="resumoFichaEvento()"></div>
+        <div><label>Tipo</label><select id="ev-tipo"></select></div>
+        <div><label>Status</label><select id="ev-status" onchange="resumoFichaEvento()"></select></div>
+        <div><label>Organizador (a)</label><input type="text" id="ev-organizador" placeholder="Empresa ou pessoa que organiza"></div>
+        <div><label>Público estimado</label><input type="number" id="ev-publico" min="0" placeholder="Ex: 5000"></div>
+        <div><label>Onde você viu</label><select id="ev-origem"></select></div>
+        <div><label>Parceira (o) ligada <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><select id="ev-parceiro"><option value="">-</option></select></div>
+      </div>
+    </section>
+
+    <!-- ── Quando ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-calendar"/></svg><span class="vg-num">Quando</span></span></div>
+      <div class="formgrid">
+        <div class="obrig" id="ev-data-inicio-wrap"><label>Data de início</label><input type="date" id="ev-data-inicio" onchange="resumoFichaEvento()"></div>
+        <div><label>Data de fim <span style="font-weight:400; color:var(--muted);">(se for mais de um dia)</span></label><input type="date" id="ev-data-fim" onchange="resumoFichaEvento()"></div>
+        <div><label>Horário de início</label><input type="time" id="ev-hora-inicio" onchange="resumoFichaEvento()"></div>
+        <div><label>Horário de fim</label><input type="time" id="ev-hora-fim"></div>
+      </div>
+    </section>
+
+    <!-- ── Onde ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="vg-num">Onde</span></span></div>
+      <div class="formgrid">
+        <div class="full"><label>Nome do local</label><input type="text" id="ev-local-nome" placeholder="Ex: Centro de Eventos FIERGS, Arena do Grêmio" oninput="resumoFichaEvento()"></div>
+        <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" id="ev-endereco" placeholder="Rua, número, bairro" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
+        <div><label>Cidade</label><input type="text" id="ev-cidade" placeholder="Porto Alegre" oninput="resumoFichaEvento()"></div>
+        <div><label>Estado</label><select id="ev-estado"></select></div>
+      </div>
+    </section>
+
+    <!-- ── Acompanhamento ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-bell"/></svg><span class="vg-num">Acompanhamento</span></span></div>
+      <div class="formgrid">
+        <div><label><svg class=ic aria-hidden=true><use href=#i-bell /></svg> Lembrar de fazer contato em</label><input type="date" id="ev-lembrar-em" onchange="resumoFichaEvento()"></div>
+        <div style="display:flex; align-items:flex-end;"><div id="ev-lembrete-info" style="font-size:var(--fs-xs); color:var(--muted); padding-bottom:10px;"></div></div>
+        <div class="full" id="ev-motivo-perda-wrap"><label>Motivo (se não fechou)</label><input type="text" id="ev-motivo-perda" placeholder="Ex: já tinham transporte, preço, sem retorno"></div>
+        <div class="full"><label>Observações</label><textarea id="ev-observacoes" rows="2"></textarea></div>
+      </div>
+    </section>
+
+    <!-- ── Contatos do organizador ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);" id="ev-contatos-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-users"/></svg><span class="vg-num">Contatos do organizador</span></span></div>
       <div id="ev-contatos-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Nome</label><input type="text" id="evc-nome"></div>
         <div><label>Cargo / função</label><input type="text" id="evc-cargo" placeholder="Ex: produtora, coordenadora"></div>
         <div><label>Telefone / WhatsApp</label><input type="text" id="evc-telefone" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
         <div><label>E-mail</label><input type="email" id="evc-email"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addContatoEvento()">+ Adicionar contato</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addContatoEvento()">+ Adicionar contato</button></div>
       </div>
-    </div>
+    </section>
 
-    <div id="ev-links-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Redes sociais e links</h4>
+    <!-- ── Redes sociais e links ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="ev-links-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Redes sociais e links</span></span></div>
       <div id="ev-links-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Tipo</label><select id="evl-tipo"><option>Instagram</option><option>Site</option><option>Sympla / Ingressos</option><option>Facebook</option><option>LinkedIn</option><option>WhatsApp (grupo)</option><option>Outro</option></select></div>
-        <div class="full"><label>Link</label><input type="text" id="evl-url" placeholder="https://..."></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addLinkEvento()">+ Adicionar link</button></div>
+        <div><label>Link</label><input type="text" id="evl-url" placeholder="https://..."></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addLinkEvento()">+ Adicionar link</button></div>
       </div>
-    </div>
+    </section>
 
-    <div id="ev-arquivos-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Fotos, prints e PDFs</h4>
+    <!-- ── Fotos, prints e PDFs (bucket privado eventos-arquivos) ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);" id="ev-arquivos-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-photo"/></svg><span class="vg-num">Fotos, prints e PDFs</span></span></div>
       <div id="ev-arquivos-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
-        <div class="full"><label>Arquivo <span style="font-weight:400; color:var(--muted);">(imagem ou PDF, pode escolher vários)</span></label><input type="file" id="ev-arquivo-file" accept="image/*,.pdf" multiple></div>
-        <div class="full"><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="ev-arquivo-descricao" placeholder="Ex: print do Instagram, programação"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" id="btn-add-arquivo-evento" onclick="addArquivoEvento()">+ Enviar arquivo</button></div>
+      <div class="formgrid" style="margin-top:10px;">
+        <div><label>Arquivo <span style="font-weight:400; color:var(--muted);">(imagem ou PDF, pode escolher vários)</span></label><div class="campo-arquivo">
+          <input type="file" id="ev-arquivo-file" accept="image/*,.pdf" multiple style="display:none" onchange="document.getElementById('ev-arquivo-nomes').textContent = this.files.length ? (this.files.length === 1 ? this.files[0].name : this.files.length + ' arquivos') : 'nenhum'">
+          <!-- label, não button: renderArquivosEvento desliga os botões da seção
+               no evento novo, e o 1º arquivo pode ser escolhido antes do Salvar. -->
+          <label for="ev-arquivo-file" class="btn secondary small" style="margin:0; cursor:pointer;"><svg class=ic aria-hidden=true><use href=#i-paperclip /></svg> Escolher arquivos</label>
+          <small id="ev-arquivo-nomes">nenhum</small>
+        </div></div>
+        <div><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="ev-arquivo-descricao" placeholder="Ex: print do Instagram, programação"></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" id="btn-add-arquivo-evento" onclick="addArquivoEvento()">+ Enviar arquivo</button></div>
       </div>
-    </div>
+    </section>
 
-    <div id="ev-interacoes-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Histórico de conversas</h4>
+    <!-- ── Histórico de conversas ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);" id="ev-interacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-message-dots"/></svg><span class="vg-num">Histórico de conversas</span></span></div>
       <div id="ev-interacoes-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Data</label><input type="date" id="evi-data"></div>
         <div><label>Assunto</label><input type="text" id="evi-assunto"></div>
         <div class="full"><label>Próximos passos</label><input type="text" id="evi-proximos"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addInteracaoEvento()">+ Adicionar registro</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addInteracaoEvento()">+ Adicionar registro</button></div>
       </div>
-    </div>
+    </section>
 
     <div class="modal-actions">
       <button class="btn ghost" id="btn-excluir-evento" style="color:var(--red); border-color:var(--red); margin-right:auto; display:none;" onclick="deleteEvento()">Excluir</button>
@@ -15874,6 +15918,24 @@ function resumoFichaOrcamento(){
   if(val("o-data")) partes.push(`<span>${ic("calendar")} ${formatarDataBR(val("o-data"))}</span>`);
   document.getElementById("o-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
+// Topo fixo da ficha de evento: nome, status, datas e horário, local e cidade,
+// lembrete e os obrigatórios que faltam (nome e data de início).
+function resumoFichaEvento(){
+  const val = id => document.getElementById(id).value.trim();
+  const nome = val("ev-nome"), ini = val("ev-data-inicio"), fim = val("ev-data-fim");
+  document.getElementById("ev-nome-wrap").classList.toggle("vazio", !nome);
+  document.getElementById("ev-data-inicio-wrap").classList.toggle("vazio", !ini);
+  const falta = (nome ? 0 : 1) + (ini ? 0 : 1);
+  document.getElementById("ev-pend").textContent = nome ? "" : "falta 1";
+  const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}</b>`];
+  if(val("ev-status")) partes.push(`<span class="tag">${escapeHtml(val("ev-status"))}</span>`);
+  if(ini) partes.push(`<span>${ic("calendar")} ${formatarDataBR(ini)}${fim && fim !== ini ? " a " + formatarDataBR(fim) : ""}${val("ev-hora-inicio") ? " · " + val("ev-hora-inicio") : ""}</span>`);
+  const onde = [val("ev-local-nome"), val("ev-cidade")].filter(Boolean).join(" · ");
+  if(onde) partes.push(`<span>${ic("map-pin")} ${escapeHtml(onde)}</span>`);
+  if(val("ev-lembrar-em")) partes.push(`<span>${ic("bell")} lembrar ${formatarDataBR(val("ev-lembrar-em")).slice(0,5)}</span>`);
+  if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('${nome ? "ev-data-inicio" : "ev-nome"}').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta ${falta} obrigatório${falta === 1 ? "" : "s"}</span>`);
+  document.getElementById("ev-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
+}
 // Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
 // e placa, login no painel, e o obrigatório que falta (só o nome).
 function resumoFichaMotorista(){
@@ -20096,13 +20158,16 @@ function openEventoModal(id, dataPre, horaPre){
   ["evc-nome","evc-cargo","evc-telefone","evc-email","evl-url","ev-arquivo-descricao","evi-data","evi-assunto","evi-proximos"].forEach(i=>document.getElementById(i).value="");
   document.getElementById("evl-tipo").value = "Instagram";
   document.getElementById("ev-arquivo-file").value = "";
+  document.getElementById("ev-arquivo-nomes").textContent = "nenhum";
   document.getElementById("btn-excluir-evento").style.display = id ? "inline-block" : "none";
   atualizarAcoesEvento(e);
   renderContatosEvento();
   renderLinksEvento();
   renderArquivosEvento();
   renderInteracoesEvento();
+  resumoFichaEvento();
   document.getElementById("evento-modal").classList.add("open");
+  document.querySelector("#evento-modal .modal").scrollTop = 0;
 }
 document.getElementById("ev-lembrar-em").addEventListener("change", ()=>{
   const info = document.getElementById("ev-lembrete-info");
@@ -20498,6 +20563,7 @@ async function addArquivoEvento(){
   const { data } = await sb.from("evento_arquivos").select("*").order("id");
   eventoArquivos = data || [];
   input.value = "";
+  document.getElementById("ev-arquivo-nomes").textContent = "nenhum";
   document.getElementById("ev-arquivo-descricao").value = "";
   renderArquivosEvento();
   renderEventos();
