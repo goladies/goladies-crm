@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -694,6 +694,10 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .ficha-secoes .campo-arquivo{display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:38px;}
 .ficha-secoes .campo-arquivo small{color:var(--text3); font-size:var(--fs-xs);}
 .ficha-secoes .linha-acao{grid-column:1/-1; display:flex; gap:8px; align-items:center;}
+/* Endereço numa linha de 3 (Bairro, Cidade, Estado menor); quadradinho sem a margem do navegador. */
+.ficha-secoes .linha-3{grid-column:1/-1; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr); gap:10px;}
+.ficha-secoes .vg-check input{margin:0;}
+.ficha-secoes .ligacoes-wrap>.btn{align-self:flex-start;}   /* botão do tamanho do texto, não esticado */
 @media (max-width:900px){
   .ficha-secoes.modal{max-width:96vw;}
 }
@@ -712,6 +716,7 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
   .ficha-secoes .ficha-aviso{padding:10px 12px;}
   .ficha-secoes .foto-perfil-wrap{align-items:flex-start; gap:12px; padding:10px;}
   .ficha-secoes .foto-perfil{width:52px; height:52px; font-size:17px; flex-shrink:0;}
+  .ficha-secoes .linha-3{grid-template-columns:minmax(0,1fr);}
   .ficha-secoes .linha-acao{flex-wrap:wrap;}
   .ficha-secoes .linha-acao .btn{flex:1 1 auto;}
   .ficha-secoes .modal-actions .btn{flex:1;}
@@ -2949,69 +2954,123 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="lead-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="lead-modal-title" style="margin:0;">Novo lead</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('lead-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026), igual às de cliente e
+         motorista: topo fixo com resumo (resumoFichaLead), seções numeradas
+         pelo CSS, Sair/Salvar fixos. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="lead-modal-title" style="margin:0;">Novo lead</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('lead-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="f-resumo"></div>
     </div>
-    <div class="formgrid">
-      <div><label>Tipo de cadastro</label><select id="f-tipo" onchange="aplicarTipoPessoa('f')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="f-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('f')"></div>
-      <div><label id="f-nome-lbl">Nome *</label><input type="text" id="f-nome"></div>
-      <div><label>WhatsApp *</label><input type="text" id="f-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
-      <div><label>E-mail</label><input type="text" id="f-email"></div>
-      <div><label>Bairro</label><input type="text" id="f-bairro"></div>
-      <div><label>Cidade</label><input type="text" id="f-cidade"></div>
-      <div><label>Estado</label><input type="text" id="f-estado"></div>
-      <div><label>Categoria de serviço</label><select id="f-categoria"></select></div>
-      <div><label>Serviço específico</label><select id="f-servico"></select></div>
-      <div><label>Tipo de veículo</label><input type="text" id="f-veiculo"></div>
-      <div><label>Urgência</label><select id="f-urgencia"><option>Urgente</option><option>Essa semana</option><option>Sem pressa</option></select></div>
-      <div class="f-contato-pref"><label for="f-contato-preferido">Prefere contato por</label><input type="text" id="f-contato-preferido" placeholder="Ex.: Mensagem no WhatsApp, Ligação"></div>
-      <div class="f-contato-pref"><label for="f-melhor-horario">Melhor horário</label><input type="text" id="f-melhor-horario" placeholder="Ex.: Manhã (8h–12h)"></div>
-      <div class="full"><label>Descrição</label><textarea id="f-descricao" rows="2"></textarea></div>
-      <div><label>Etapa</label><select id="f-etapa"></select></div>
-      <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"></select></div>
-      <div id="f-origem-outro-wrap" style="display:none;"><label>Qual?</label><input type="text" id="f-origem-outro" placeholder="Descreva a origem"></div>
-      <div id="f-indicada-wrap" class="full" style="display:none;"><label for="f-indicada">Indicada por</label><input type="text" id="f-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span></div>
-      <div><label>Data de entrada</label><input type="date" id="f-data"></div>
-      <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
-      <div><label>Responsável</label><input type="text" id="f-responsavel" value="Jú"></div>
-      <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
-      <div class="full"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="f-teste" style="width:auto;"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
-    </div>
-    <div class="ligacoes-wrap" id="f-proximo"></div>
-    <div class="ligacoes-wrap" id="f-redes"></div>
-    <div class="ligacoes-wrap" id="f-datas"></div>
-    <div class="ligacoes-wrap" id="f-ligacoes"></div>
+    <p class="legenda-obrig"><b>*</b> obrigatório · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema mostra, não se digita</p>
 
-    <div id="f-vendas-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Vendas</h4>
+    <!-- ── Dados dela ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Dados dela</span></span><span class="vg-pend" id="f-pend"></span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque" id="f-nome-wrap"><label id="f-nome-lbl">Nome</label><input type="text" id="f-nome" oninput="resumoFichaLead()"></div>
+        <div class="obrig" id="f-whatsapp-wrap"><label>WhatsApp</label><input type="text" id="f-whatsapp" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value); resumoFichaLead()"></div>
+        <div><label>E-mail</label><input type="text" id="f-email"></div>
+        <div class="f-contato-pref"><label for="f-contato-preferido">Prefere contato por</label><input type="text" id="f-contato-preferido" placeholder="Ex.: Mensagem no WhatsApp, Ligação"></div>
+        <div class="f-contato-pref"><label for="f-melhor-horario">Melhor horário</label><input type="text" id="f-melhor-horario" placeholder="Ex.: Manhã (8h–12h)"></div>
+        <div><label>Tipo de cadastro</label><select id="f-tipo" onchange="aplicarTipoPessoa('f')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+        <div><label id="f-aniv-lbl">Aniversário</label><input type="date" id="f-aniversario"></div>
+        <div id="f-cnpj-wrap" class="full" style="display:none;"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('f')"></div>
+        <div class="linha-3">
+          <div><label>Bairro</label><input type="text" id="f-bairro"></div>
+          <div><label>Cidade</label><input type="text" id="f-cidade"></div>
+          <div><label>Estado</label><input type="text" id="f-estado"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── O que ela quer ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-tag"/></svg><span class="vg-num">O que ela quer</span></span></div>
+      <div class="formgrid">
+        <div><label>Categoria de serviço</label><select id="f-categoria"></select></div>
+        <div><label>Serviço específico</label><select id="f-servico"></select></div>
+        <div><label>Tipo de veículo</label><input type="text" id="f-veiculo"></div>
+        <div><label>Urgência</label><select id="f-urgencia" onchange="resumoFichaLead()"><option>Urgente</option><option>Essa semana</option><option>Sem pressa</option></select></div>
+        <div class="full"><label>Descrição</label><textarea id="f-descricao" rows="2"></textarea></div>
+      </div>
+    </section>
+
+    <!-- ── Funil e acompanhamento ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-trending-up"/></svg><span class="vg-num">Funil e acompanhamento</span></span></div>
+      <div class="formgrid">
+        <div><label>Etapa</label><select id="f-etapa" onchange="resumoFichaLead()"></select></div>
+        <div><label>Origem</label><select id="f-origem" onchange="toggleOrigemOutro()"></select></div>
+        <div id="f-origem-outro-wrap" class="full" style="display:none;"><label>Qual?</label><input type="text" id="f-origem-outro" placeholder="Descreva a origem"></div>
+        <div id="f-indicada-wrap" class="full" style="display:none;"><label for="f-indicada">Indicada por</label><input type="text" id="f-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span></div>
+        <div><label>Data de entrada</label><input type="date" id="f-data" onchange="resumoFichaLead()"></div>
+        <div><label>Responsável</label><input type="text" id="f-responsavel" value="Jú"></div>
+        <div class="full"><label>Notas internas</label><textarea id="f-notas" rows="2"></textarea></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="f-teste"> É teste (aparece na lista, mas não entra nas contagens)</label></div>
+      </div>
+    </section>
+
+    <!-- ── Próximo passo: renderProximoPassoLead() preenche; some quando vazio ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-arrow-right"/></svg><span class="vg-num">Próximo passo</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="f-proximo"></div>
+    </section>
+
+    <!-- ── Vendas ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);" id="f-vendas-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cash"/></svg><span class="vg-num">Vendas</span></span></div>
       <div id="f-vendas-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div class="full"><label>Serviço/produto contratado</label><input type="text" id="fv-servico" placeholder="Ex: Peugeot 208 Allure"></div>
         <div><label>Preço unitário (R$)</label><input type="number" id="fv-preco-unitario"></div>
         <div><label>Preço total (R$)</label><input type="number" id="fv-preco-total"></div>
         <div><label>Forma de pagamento</label><select id="fv-forma-pagamento"><option value="">-</option><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Financiamento</option><option>Outro</option></select></div>
-        <div><label style="visibility:hidden;">.</label><label style="display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--ink); font-weight:400;"><input type="checkbox" id="fv-parcelado" style="width:auto;" onchange="toggleVendaParcelado()"> É parcelado?</label></div>
-        <div id="fv-num-parcelas-wrap" style="display:none;"><label>Quantas vezes</label><input type="number" id="fv-num-parcelas" min="2" value="2"></div>
         <div><label>Data prevista (1ª/única parcela)</label><input type="date" id="fv-data-prevista"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addVenda()">+ Registrar venda</button></div>
+        <div style="display:flex; align-items:flex-end;"><label class="vg-check" style="min-height:38px;"><input type="checkbox" id="fv-parcelado" onchange="toggleVendaParcelado()"> É parcelado?</label></div>
+        <div id="fv-num-parcelas-wrap" style="display:none;"><label>Quantas vezes</label><input type="number" id="fv-num-parcelas" min="2" value="2"></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addVenda()">+ Registrar venda</button></div>
       </div>
-    </div>
+    </section>
 
-    <div id="f-conversa-whats" style="display:none; margin-top:18px;"></div>
-
-    <div id="f-interacoes-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Histórico de conversas</h4>
+    <!-- ── Histórico de conversas ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="f-interacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-message-dots"/></svg><span class="vg-num">Histórico de conversas</span></span></div>
       <div id="f-interacoes-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Data</label><input type="date" id="fi-data"></div>
         <div><label>Assunto</label><input type="text" id="fi-assunto"></div>
         <div class="full"><label>Próximos passos</label><input type="text" id="fi-proximos"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addInteracaoLead()">+ Adicionar registro</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addInteracaoLead()">+ Adicionar registro</button></div>
       </div>
-    </div>
+    </section>
+
+    <!-- ── Conversa no WhatsApp: só aparece quando há conversa ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-whatsapp"/></svg><span class="vg-num">Conversa no WhatsApp</span></span></div>
+      <div class="sec-corpo" id="f-conversa-whats" style="display:none;"></div>
+    </section>
+
+    <!-- ── Redes sociais e site ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-instagram"/></svg><span class="vg-num">Redes sociais e site</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="f-redes"></div>
+    </section>
+
+    <!-- ── Datas especiais ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cake"/></svg><span class="vg-num">Datas especiais</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="f-datas"></div>
+    </section>
+
+    <!-- ── Ligações ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Ligações</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="f-ligacoes"></div>
+    </section>
 
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('lead-modal')">Sair</button>
@@ -12662,8 +12721,8 @@ function openLeadModal(id){
   fillSelect(document.getElementById("f-categoria"), CATEGORIAS, "");
   document.getElementById("f-categoria").insertAdjacentHTML("afterbegin", `<option value="">Escolha</option>`);
   document.getElementById("f-categoria").value = "";
-  document.getElementById("f-categoria").onchange = ()=>{ fillServicoOptions(); renderProximoPassoLead(); };
-  document.getElementById("f-servico").onchange = ()=>renderProximoPassoLead();
+  document.getElementById("f-categoria").onchange = ()=>{ fillServicoOptions(); renderProximoPassoLead(); resumoFichaLead(); };
+  document.getElementById("f-servico").onchange = ()=>{ renderProximoPassoLead(); resumoFichaLead(); };
   fillServicoOptions();
   fillSelect(document.getElementById("f-etapa"), ETAPAS, "Novo lead");
   document.getElementById("lead-modal-title").textContent = id ? `Editar lead ${codigoCadastro(leads.find(l=>l.id===id))}`.trim() : "Novo lead";
@@ -12718,7 +12777,9 @@ function openLeadModal(id){
   renderConversaWhatsLead(l);
   avisoAniversarioFicha("f");
   renderProximoPassoLead();
+  resumoFichaLead();
   document.getElementById("lead-modal").classList.add("open");
+  document.querySelector("#lead-modal .modal").scrollTop = 0;
 }
 function toggleOrigemOutro(){
   const sel = document.getElementById("f-origem");
@@ -15676,6 +15737,25 @@ function resumoFichaCliente(){
   if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('ct-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
   document.getElementById("ct-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
+// Topo fixo da ficha de lead: quem é, etapa, categoria e serviço, urgência,
+// data de entrada e os obrigatórios que faltam (nome e WhatsApp).
+function resumoFichaLead(){
+  const l = leads.find(x=>x.id===editingLeadId) || {};
+  const val = id => document.getElementById(id).value.trim();
+  const nome = val("f-nome"), whats = val("f-whatsapp");
+  document.getElementById("f-nome-wrap").classList.toggle("vazio", !nome);
+  document.getElementById("f-whatsapp-wrap").classList.toggle("vazio", !whats);
+  const falta = (nome ? 0 : 1) + (whats ? 0 : 1);
+  document.getElementById("f-pend").textContent = falta ? `falta ${falta}` : "";
+  const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}${l.id ? " " + escapeHtml(codigoCadastro(l)) : ""}</b>`];
+  if(val("f-etapa")) partes.push(`<span class="tag">${escapeHtml(val("f-etapa"))}</span>`);
+  const oQue = [val("f-categoria"), val("f-servico")].filter(Boolean).join(" · ");
+  if(oQue) partes.push(`<span>${ic("tag")} ${escapeHtml(oQue)}</span>`);
+  if(val("f-urgencia")) partes.push(`<span>${ic("urgent")} ${escapeHtml(val("f-urgencia"))}</span>`);
+  if(val("f-data")) partes.push(`<span>${ic("calendar")} entrou ${formatarDataBR(val("f-data"))}</span>`);
+  if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('${nome ? "f-whatsapp" : "f-nome"}').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta ${falta} obrigatório${falta === 1 ? "" : "s"}</span>`);
+  document.getElementById("f-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
+}
 // Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
 // e placa, login no painel, e o obrigatório que falta (só o nome).
 function resumoFichaMotorista(){
@@ -16046,8 +16126,8 @@ function formatarCNPJ(v){
 function aplicarTipoPessoa(pre){
   const pj = document.getElementById(pre+"-tipo").value==="PJ";
   document.getElementById(pre+"-cnpj-wrap").style.display = pj ? "block" : "none";
-  // Na ficha no modelo da viagem (ct) o * vem do CSS (.obrig), não do texto.
-  document.getElementById(pre+"-nome-lbl").textContent = (pj ? "Razão social / nome fantasia" : "Nome") + (pre==="ct" ? "" : " *");
+  // Nas fichas no modelo da viagem (ct, f) o * vem do CSS (.obrig), não do texto.
+  document.getElementById(pre+"-nome-lbl").textContent = (pj ? "Razão social / nome fantasia" : "Nome") + (pre==="ct" || pre==="f" ? "" : " *");
   document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
   const fam = document.getElementById(pre+"-fam-lbl");
   if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, pessoas idosas etc.)";
