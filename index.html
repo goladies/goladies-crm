@@ -596,13 +596,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -654,17 +654,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -698,6 +698,9 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .ficha-secoes .linha-3{grid-column:1/-1; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr); gap:10px;}
 .ficha-secoes .vg-check input{margin:0;}
 .ficha-secoes .ligacoes-wrap>.btn{align-self:flex-start;}   /* botão do tamanho do texto, não esticado */
+/* Nome com busca (parceira): o campo fica dentro de .busca-contato, então repete o destaque e o âmbar. */
+.ficha-secoes .destaque .busca-contato>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
+.ficha-secoes .obrig.vazio .busca-contato>input{border-bottom:2px solid var(--vg-ambar);}
 @media (max-width:900px){
   .ficha-secoes.modal{max-width:96vw;}
 }
@@ -3136,98 +3139,149 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 </div>
 
 <div class="modal-backdrop" id="parceiro-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="parceiro-modal-title" style="margin:0;">Nova parceira (o)</h3>
-      <button class="icon-btn" type="button" onclick="closeModal('parceiro-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+  <div class="modal ficha-secoes">
+    <!-- Ficha no modelo da Nova viagem (03/11/2026), igual às de cliente,
+         motorista e lead: topo fixo com resumo (resumoFichaParceiro), seções
+         numeradas pelo CSS, Sair/Salvar fixos. Todos os ids de antes ficaram. -->
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="parceiro-modal-title" style="margin:0;">Nova parceira (o)</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('parceiro-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+      <div class="vg-resumo" id="p-resumo"></div>
     </div>
-    <div class="formgrid">
-      <div><label>Tipo de cadastro</label><select id="p-tipo" onchange="aplicarTipoPessoa('p')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
-      <div id="p-cnpj-wrap" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('p')"></div>
-      <div class="full"><label id="p-nome-lbl">Nome *</label>
-        <div class="busca-contato">
-          <input type="text" id="p-nome" autocomplete="off" placeholder="Digite para buscar nos cadastros ou escrever um nome novo" oninput="buscarContatoParceiro(this.value)" onfocus="buscarContatoParceiro(this.value)" onkeydown="if(event.key==='Escape') fecharBuscaContatoParceiro()">
-          <div class="search-results" id="p-busca-contato-resultados"></div>
-        </div>
-      </div>
-      <div class="full">
-        <label>Categorias <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
-        <div id="p-categorias-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
-          <label class="chip-check"><input type="checkbox" value="Oficina mecânica"> Oficina mecânica</label>
-          <label class="chip-check"><input type="checkbox" value="Autoelétrica"> Autoelétrica</label>
-          <label class="chip-check"><input type="checkbox" value="Lava-rápido / Estética"> Lava-rápido / Estética</label>
-          <label class="chip-check"><input type="checkbox" value="Guincho"> Guincho</label>
-          <label class="chip-check"><input type="checkbox" value="Chaveiro"> Chaveiro</label>
-          <label class="chip-check"><input type="checkbox" value="Seguradora"> Seguradora</label>
-          <label class="chip-check"><input type="checkbox" value="Loja de peças"> Loja de peças</label>
-          <label class="chip-check"><input type="checkbox" value="Despachante"> Despachante</label>
-          <label class="chip-check"><input type="checkbox" value="Funilaria/Pintura"> Funilaria/Pintura</label>
-          <label class="chip-check"><input type="checkbox" value="Cursos"> Cursos</label>
-          <label class="chip-check"><input type="checkbox" value="Empresa de transporte"> Empresa de transporte</label>
-          <label class="chip-check"><input type="checkbox" value="Indústria"> Indústria</label>
-          <label class="chip-check"><input type="checkbox" value="Loja de carro"> Loja de carro</label>
-          <label class="chip-check"><input type="checkbox" value="Concessionária"> Concessionária</label>
-          <label class="chip-check"><input type="checkbox" value="Outro"> Outro</label>
-        </div>
-      </div>
-      <div><label>Região atendida</label><input type="text" id="p-regiao"></div>
-      <div><label>Selo Go Ladies</label><select id="p-selo"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-      <div id="p-plano-wrap" style="display:none;"><label>Plano</label><select id="p-plano"></select></div>
-      <div><label>Status</label><select id="p-status"></select></div>
-      <div class="full" id="p-prospeccao" style="display:none;"></div>
-      <div><label title="A empresa é de mulher, tem gestão feminina ou equipe com mulheres?">Critério mulher</label><select id="p-criterio-mulher"></select></div>
-      <div style="display:flex; align-items:flex-end;"><label class="chip-check" title="Passa nos outros critérios, mas não é de mulher nem tem equipe feminina: pode entrar pela certificação"><input type="checkbox" id="p-elegivel-cert"> Elegível à certificação</label></div>
-      <div class="full"><label>Como você confirmou <span style="font-weight:400; color:var(--muted);">(trecho do site, conversa, visita; nunca pelo nome)</span></label><input type="text" id="p-criterio-fonte" placeholder="Ex: site diz &quot;oficina fundada por duas mecânicas&quot;"></div>
-      <div class="full">
-        <label>Tipo de parceria <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
-        <div id="p-tipo-parceria-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
-          <label class="chip-check"><input type="checkbox" value="Mensalidade"> Mensalidade</label>
-          <label class="chip-check"><input type="checkbox" value="Patrocínio"> Patrocínio</label>
-          <label class="chip-check"><input type="checkbox" value="Embaixadora"> Embaixadora</label>
-        </div>
-      </div>
-      <div><label id="p-aniv-lbl">Aniversário</label><input type="date" id="p-aniversario"></div>
-      <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
-      <div class="full"><label>Notas</label><textarea id="p-notas" rows="2"></textarea></div>
-    </div>
-    <div id="p-conversa-whats" style="display:none; margin-top:18px;"></div>
-    <div class="ligacoes-wrap" id="p-datas"></div>
-    <div class="ligacoes-wrap" id="p-ligacoes"></div>
+    <p class="legenda-obrig"><b>*</b> obrigatório pra salvar · <i>sublinhado âmbar</i> = ainda vazio · <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span> o sistema mostra, não se digita</p>
 
-    <div id="p-contatos-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px;">Celular / Telefone</h4>
+    <!-- ── Quem é ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-building"/></svg><span class="vg-num">Quem é</span></span><span class="vg-pend" id="p-pend"></span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque" id="p-nome-wrap"><label id="p-nome-lbl">Nome</label>
+          <div class="busca-contato">
+            <input type="text" id="p-nome" autocomplete="off" placeholder="Digite para buscar nos cadastros ou escrever um nome novo" oninput="buscarContatoParceiro(this.value); resumoFichaParceiro()" onfocus="buscarContatoParceiro(this.value)" onkeydown="if(event.key==='Escape') fecharBuscaContatoParceiro()">
+            <div class="search-results" id="p-busca-contato-resultados"></div>
+          </div>
+        </div>
+        <div><label>Tipo de cadastro</label><select id="p-tipo" onchange="aplicarTipoPessoa('p')"><option value="PF">Pessoa física</option><option value="PJ">Empresa (CNPJ)</option></select></div>
+        <div><label id="p-aniv-lbl">Aniversário</label><input type="date" id="p-aniversario"></div>
+        <div id="p-cnpj-wrap" class="full" style="display:none;"><label>CNPJ</label><input type="text" id="p-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=formatarCNPJ(this.value); buscarCNPJ('p')"></div>
+        <div class="full"><label>Região atendida</label><input type="text" id="p-regiao"></div>
+      </div>
+    </section>
+
+    <!-- ── O que faz ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-tool"/></svg><span class="vg-num">O que faz</span></span></div>
+      <label>Categorias <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
+      <div id="p-categorias-wrap" class="chips" style="margin-top:6px;" onchange="resumoFichaParceiro()">
+        <label class="chip-check"><input type="checkbox" value="Oficina mecânica"> Oficina mecânica</label>
+        <label class="chip-check"><input type="checkbox" value="Autoelétrica"> Autoelétrica</label>
+        <label class="chip-check"><input type="checkbox" value="Lava-rápido / Estética"> Lava-rápido / Estética</label>
+        <label class="chip-check"><input type="checkbox" value="Guincho"> Guincho</label>
+        <label class="chip-check"><input type="checkbox" value="Chaveiro"> Chaveiro</label>
+        <label class="chip-check"><input type="checkbox" value="Seguradora"> Seguradora</label>
+        <label class="chip-check"><input type="checkbox" value="Loja de peças"> Loja de peças</label>
+        <label class="chip-check"><input type="checkbox" value="Despachante"> Despachante</label>
+        <label class="chip-check"><input type="checkbox" value="Funilaria/Pintura"> Funilaria/Pintura</label>
+        <label class="chip-check"><input type="checkbox" value="Cursos"> Cursos</label>
+        <label class="chip-check"><input type="checkbox" value="Empresa de transporte"> Empresa de transporte</label>
+        <label class="chip-check"><input type="checkbox" value="Indústria"> Indústria</label>
+        <label class="chip-check"><input type="checkbox" value="Loja de carro"> Loja de carro</label>
+        <label class="chip-check"><input type="checkbox" value="Concessionária"> Concessionária</label>
+        <label class="chip-check"><input type="checkbox" value="Outro"> Outro</label>
+      </div>
+    </section>
+
+    <!-- ── Critério mulher ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-woman"/></svg><span class="vg-num">Critério mulher</span></span></div>
+      <div class="formgrid">
+        <div><label title="A empresa é de mulher, tem gestão feminina ou equipe com mulheres?">Critério mulher</label><select id="p-criterio-mulher"></select></div>
+        <div style="display:flex; align-items:flex-end;"><label class="chip-check" style="min-height:38px;" title="Passa nos outros critérios, mas não é de mulher nem tem equipe feminina: pode entrar pela certificação"><input type="checkbox" id="p-elegivel-cert"> Elegível à certificação</label></div>
+        <div class="full"><label>Como você confirmou <span style="font-weight:400; color:var(--muted);">(trecho do site, conversa, visita; nunca pelo nome)</span></label><input type="text" id="p-criterio-fonte" placeholder="Ex: site diz &quot;oficina fundada por duas mecânicas&quot;"></div>
+      </div>
+    </section>
+
+    <!-- ── Parceria ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-heart-handshake"/></svg><span class="vg-num">Parceria</span></span></div>
+      <div class="formgrid">
+        <div><label>Status</label><select id="p-status" onchange="resumoFichaParceiro()"></select></div>
+        <div id="p-plano-wrap" style="display:none;"><label>Plano</label><select id="p-plano"></select></div>
+        <div class="full" id="p-prospeccao" style="display:none;"></div>
+        <div class="full">
+          <label>Tipo de parceria <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma)</span></label>
+          <div id="p-tipo-parceria-wrap" class="chips" onchange="resumoFichaParceiro()">
+            <label class="chip-check"><input type="checkbox" value="Mensalidade"> Mensalidade</label>
+            <label class="chip-check"><input type="checkbox" value="Patrocínio"> Patrocínio</label>
+            <label class="chip-check"><input type="checkbox" value="Embaixadora"> Embaixadora</label>
+          </div>
+        </div>
+        <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
+        <div><label>Selo Go Ladies</label><select id="p-selo" onchange="resumoFichaParceiro()"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+        <div class="full"><label>Notas</label><textarea id="p-notas" rows="2"></textarea></div>
+      </div>
+    </section>
+
+    <!-- ── Celular / Telefone ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);" id="p-contatos-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-phone"/></svg><span class="vg-num">Celular / Telefone</span></span></div>
       <div id="p-contatos-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Tipo</label><select id="pc-tipo"><option>Celular</option><option>Fixo</option></select></div>
         <div><label>Número</label><input type="text" id="pc-numero" placeholder="(51) 99999-9999" oninput="this.value=formatarTelefoneBR(this.value)"></div>
         <div class="full"><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="pc-descricao" placeholder="Ex: Marcelo, dono da oficina"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addContatoParceiro()">+ Adicionar contato</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addContatoParceiro()">+ Adicionar contato</button></div>
       </div>
-    </div>
+    </section>
 
-    <div class="ligacoes-wrap" id="p-redes"></div>
-
-    <div id="p-enderecos-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Endereços</h4>
+    <!-- ── Endereços ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="p-enderecos-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="vg-num">Endereços</span></span></div>
       <div id="p-enderecos-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div class="full"><label>Endereço</label><div class="campo-endereco"><input type="text" id="pe-endereco" placeholder="Rua, número, bairro, cidade" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
         <div class="full"><label>Descrição <span style="font-weight:400; color:var(--muted);">(opcional, ex: "Loja Centro")</span></label><input type="text" id="pe-descricao"></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addEnderecoParceiro()">+ Adicionar endereço</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addEnderecoParceiro()">+ Adicionar endereço</button></div>
       </div>
-    </div>
+    </section>
 
-    <div id="p-interacoes-wrap" style="margin-top:18px;">
-      <h4 style="font-size:var(--fs-sm); margin:0 0 8px; border-top:1px solid var(--border); padding-top:14px;">Histórico de conversas</h4>
+    <!-- ── Histórico de conversas ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-lilas);" id="p-interacoes-wrap">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-message-dots"/></svg><span class="vg-num">Histórico de conversas</span></span></div>
       <div id="p-interacoes-lista"></div>
-      <div class="formgrid" style="margin-top:8px;">
+      <div class="formgrid" style="margin-top:10px;">
         <div><label>Data</label><input type="date" id="pi-data"></div>
         <div><label>Assunto</label><input type="text" id="pi-assunto"></div>
         <div class="full"><label>Próximos passos</label><input type="text" id="pi-proximos"></div>
         <div class="full"><label>Link do Google Drive <span style="font-weight:400; color:var(--muted);">(documentos da parceria)</span></label><input type="text" id="pi-link" placeholder="https://drive.google.com/..."></div>
-        <div style="display:flex; align-items:flex-end;"><button class="btn secondary small" type="button" onclick="addInteracaoParceiro()">+ Adicionar registro</button></div>
+        <div class="linha-acao"><button class="btn secondary small" type="button" onclick="addInteracaoParceiro()">+ Adicionar registro</button></div>
       </div>
-    </div>
+    </section>
+
+    <!-- ── Conversa no WhatsApp: só aparece quando há conversa ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-whatsapp"/></svg><span class="vg-num">Conversa no WhatsApp</span></span></div>
+      <div class="sec-corpo" id="p-conversa-whats" style="display:none;"></div>
+    </section>
+
+    <!-- ── Redes sociais e site ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-brand-instagram"/></svg><span class="vg-num">Redes sociais e site</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="p-redes"></div>
+    </section>
+
+    <!-- ── Datas especiais ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-cake"/></svg><span class="vg-num">Datas especiais</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="p-datas"></div>
+    </section>
+
+    <!-- ── Ligações ── -->
+    <section class="vg-sec" style="--sec-cor:var(--vg-roxo);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-link"/></svg><span class="vg-num">Ligações</span></span></div>
+      <div class="ligacoes-wrap sec-corpo" id="p-ligacoes"></div>
+    </section>
 
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('parceiro-modal')">Sair</button>
@@ -8072,6 +8126,7 @@ function convCadastrar(tel, tipo){
       const cb = document.querySelector('#p-tipo-parceria-wrap input[value="Patrocínio"]');
       if(cb) cb.checked = true;
     }
+    resumoFichaParceiro();
   }else if(tipo==="motorista"){
     openMotoristaModal(null);
     set("mt-nome", nome); set("mt-whatsapp", whats);
@@ -13733,6 +13788,7 @@ function usarContatoParceiro(idx){
       notas.value = notas.value ? notas.value + "\n" + notaEmail : notaEmail;
     }
   }
+  resumoFichaParceiro();
   showToast(document.getElementById("pc-numero").value ? "Dados puxados. Confira e clique em + Adicionar contato" : "Dados puxados");
 }
 document.addEventListener("click", e=>{
@@ -13807,7 +13863,9 @@ function openParceiroModal(id){
   avisoAniversarioFicha("p");
   // Parceira (o): o WhatsApp da ficha ou, sem ele, o 1º contato com número
   renderConversaWhats("p", p, p.whatsapp || (parceiroContatos.find(x=>x.parceiro_id===p.id && String(x.numero||"").replace(/\D/g,"").length >= 10) || {}).numero);
+  resumoFichaParceiro();
   document.getElementById("parceiro-modal").classList.add("open");
+  document.querySelector("#parceiro-modal .modal").scrollTop = 0;
 }
 async function saveParceiro(){
   const nome = document.getElementById("p-nome").value.trim();
@@ -15756,6 +15814,25 @@ function resumoFichaLead(){
   if(falta) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('${nome ? "f-whatsapp" : "f-nome"}').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta ${falta} obrigatório${falta === 1 ? "" : "s"}</span>`);
   document.getElementById("f-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
+// Topo fixo da ficha de parceira (o): quem é, status, categorias, selo, tipo
+// de parceria e o obrigatório que falta (só o nome).
+function resumoFichaParceiro(){
+  const p = parceiros.find(x=>x.id===editingParceiroId) || {};
+  const nome = document.getElementById("p-nome").value.trim();
+  document.getElementById("p-nome-wrap").classList.toggle("vazio", !nome);
+  document.getElementById("p-pend").textContent = nome ? "" : "falta 1";
+  const marcados = sel => [...document.querySelectorAll(sel + " input[type=checkbox]:checked")].map(cb=>cb.value).join(", ");
+  const partes = [`<b>${escapeHtml(nome || "Nome não preenchido")}${p.id ? " " + escapeHtml(codigoCadastro(p)) : ""}</b>`];
+  const status = document.getElementById("p-status").value;
+  if(status) partes.push(`<span class="tag">${escapeHtml(status)}</span>`);
+  const cats = marcados("#p-categorias-wrap");
+  if(cats) partes.push(`<span>${ic("tool")} ${escapeHtml(cats)}</span>`);
+  if(document.getElementById("p-selo").value === "sim") partes.push(`<span>${ic("certificate")} Selo Go Ladies</span>`);
+  const tipos = marcados("#p-tipo-parceria-wrap");
+  if(tipos) partes.push(`<span>${ic("heart-handshake")} ${escapeHtml(tipos)}</span>`);
+  if(!nome) partes.push(`<span class="vg-resumo-falta" onclick="document.getElementById('p-nome').focus()" title="Ir pro campo vazio">${ic("alert-circle")} falta 1 obrigatório</span>`);
+  document.getElementById("p-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
+}
 // Topo fixo da ficha de motorista: quem é, status (com a certificação), carro
 // e placa, login no painel, e o obrigatório que falta (só o nome).
 function resumoFichaMotorista(){
@@ -16126,8 +16203,8 @@ function formatarCNPJ(v){
 function aplicarTipoPessoa(pre){
   const pj = document.getElementById(pre+"-tipo").value==="PJ";
   document.getElementById(pre+"-cnpj-wrap").style.display = pj ? "block" : "none";
-  // Nas fichas no modelo da viagem (ct, f) o * vem do CSS (.obrig), não do texto.
-  document.getElementById(pre+"-nome-lbl").textContent = (pj ? "Razão social / nome fantasia" : "Nome") + (pre==="ct" || pre==="f" ? "" : " *");
+  // Nas fichas no modelo da viagem (ct, f, p) o * vem do CSS (.obrig), não do texto.
+  document.getElementById(pre+"-nome-lbl").textContent = (pj ? "Razão social / nome fantasia" : "Nome") + (["ct","f","p"].includes(pre) ? "" : " *");
   document.getElementById(pre+"-aniv-lbl").textContent = pj ? "Abertura do CNPJ" : "Aniversário";
   const fam = document.getElementById(pre+"-fam-lbl");
   if(fam) fam.textContent = pj ? "Sócios e colaboradores que também viajam (nomes)" : "Familiares que também viajam (crianças, pessoas idosas etc.)";
@@ -16565,6 +16642,7 @@ function criarParceiraDaLead(){
     : (l.categoria==="Parcerias" || ["Quero ser parceira (o) da rede","Prospecção: parceria"].includes(l.servico)) ? "Mensalidade" : "";
   const cb = tipo && document.querySelector(`#p-tipo-parceria-wrap input[value="${tipo}"]`);
   if(cb) cb.checked = true;
+  resumoFichaParceiro();
   showToast("Confira a etapa e salve. A parceira fica ligada a esta lead.");
 }
 // Chamada pelo saveParceiro de uma ficha nova vinda da lead.
