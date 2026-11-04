@@ -3688,6 +3688,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <input type="file" id="ia-cnh-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('cnh', this)">
         <button type="button" class="btn secondary small" id="ia-cnh-btn" onclick="document.getElementById('ia-cnh-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CNH (foto ou PDF)</button>
         <div id="ia-cnh-confirm" style="display:none; margin-top:10px;">
+          <img id="ia-cnh-mini" alt="Arquivo escolhido" style="display:none; max-width:100%; max-height:160px; border-radius:8px; margin-bottom:6px;">
           <div style="font-size:var(--fs-xs); margin-bottom:6px;">Arquivo selecionado: <strong id="ia-cnh-nome-arquivo"></strong>. É mesmo a CNH dela?</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn small" onclick="confirmarLeituraIA('cnh')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
@@ -3725,6 +3726,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <input type="file" id="ia-crlv-file" accept="image/*,.pdf" style="display:none" onchange="selecionarArquivoIA('crlv', this)">
         <button type="button" class="btn secondary small" id="ia-crlv-btn" onclick="document.getElementById('ia-crlv-file').click()"><svg class=ic aria-hidden=true><use href=#i-file-text /></svg> Selecionar CRLV (foto ou PDF)</button>
         <div id="ia-crlv-confirm" style="display:none; margin-top:10px;">
+          <img id="ia-crlv-mini" alt="Arquivo escolhido" style="display:none; max-width:100%; max-height:160px; border-radius:8px; margin-bottom:6px;">
           <div style="font-size:var(--fs-xs); margin-bottom:6px;">Arquivo selecionado: <strong id="ia-crlv-nome-arquivo"></strong>. É mesmo o CRLV do carro dela?</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn small" onclick="confirmarLeituraIA('crlv')"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Confirmar e ler com IA</button>
@@ -14988,11 +14990,25 @@ let iaArquivoSelecionado = { cnh: null, crlv: null };
 function selecionarArquivoIA(tipo, input){
   const arquivo = input.files[0]; if(!arquivo) return;
   iaArquivoSelecionado[tipo] = arquivo;
-  document.getElementById(`ia-${tipo}-nome-arquivo`).textContent = arquivo.name;
+  const kb = arquivo.size / 1024;
+  document.getElementById(`ia-${tipo}-nome-arquivo`).textContent = `${arquivo.name} (${kb >= 1024 ? (kb/1024).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(kb)) + " KB"})`;
+  miniaturaArquivoIA(tipo, arquivo);
   document.getElementById(`ia-${tipo}-confirm`).style.display = "block";
   document.getElementById(`ia-${tipo}-status`).style.display = "none";
 }
+// Miniatura da foto escolhida na confirmação "É mesmo a CNH/CRLV?" (PDF fica só com nome e tamanho)
+const iaMiniUrl = {};
+function miniaturaArquivoIA(tipo, arquivo){
+  const img = document.getElementById(`ia-${tipo}-mini`);
+  if(iaMiniUrl[tipo]){ URL.revokeObjectURL(iaMiniUrl[tipo]); iaMiniUrl[tipo] = null; }
+  if(!img) return;
+  if(arquivo && arquivo.type.startsWith("image/")){
+    iaMiniUrl[tipo] = URL.createObjectURL(arquivo);
+    img.src = iaMiniUrl[tipo]; img.style.display = "block";
+  } else { img.removeAttribute("src"); img.style.display = "none"; }
+}
 function cancelarSelecaoIA(tipo){
+  miniaturaArquivoIA(tipo, null);
   iaArquivoSelecionado[tipo] = null;
   document.getElementById(`ia-${tipo}-confirm`).style.display = "none";
   document.getElementById(`ia-${tipo}-file`).value = "";
