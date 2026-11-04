@@ -7646,7 +7646,7 @@ function renderLeads(){
       <td><span class="tag ${URG_CLASS[l.urgencia]||''}">${escapeHtml(l.urgencia||"-")}</span></td>
       <td><span class="status-badge ${ETAPA_CLASS[l.etapa]||''}">${escapeHtml(l.etapa)}</span></td>
       <td>${escapeHtml(l.origem||"-")}${l.canal?`<br><span style="color:var(--muted); font-size:var(--fs-xs);"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> ${escapeHtml(l.canal)}</span>`:""}</td>
-      <td>${l.data||"-"}</td>
+      <td>${fmtDataBR(l.data)||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(l.whatsapp, l.nome)} <button class="act act-edit" onclick="openLeadModal(${l.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteLead(${l.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>
   `).join("") || `<tr><td class="empty" colspan="8">Nenhum lead encontrado</td></tr>`;
@@ -8549,7 +8549,7 @@ function renderOrcamentos(){
       <td>${o.valor_cotado!=null?formatarMoedaBR(o.valor_cotado):"-"}</td>
       <td>${o.valor_final!=null?formatarMoedaBR(o.valor_final):"-"}</td>
       <td><span class="tag ${o.status==='Aceito'?'ganho':o.status==='Recusado'?'perdido':'orc-env'}">${o.status}</span></td>
-      <td>${o.data||"-"}</td>
+      <td>${fmtDataBR(o.data)||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openOrcamentoModal(${o.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteOrcamento(${o.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="8">Nenhum orçamento registrado</td></tr>`;
@@ -13205,7 +13205,7 @@ function renderTentativasPedido(){
   wrap.innerHTML = registros.map(t=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${escapeHtml(t.data_contato||"Sem data")} · ${escapeHtml(t.loja_nome||"-")}</strong>
+        <strong>${escapeHtml(fmtDataBR(t.data_contato)||"Sem data")} · ${escapeHtml(t.loja_nome||"-")}</strong>
         <button class="icon-btn" type="button" onclick="deleteTentativa(${t.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">
@@ -13862,7 +13862,7 @@ function renderInteracoesLead(){
   wrap.innerHTML = registros.map(i=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
+        <strong>${fmtDataBR(i.data)||"Sem data"} · ${i.assunto||"-"}</strong>
         <button class="icon-btn" type="button" onclick="deleteInteracaoLead(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
@@ -14242,7 +14242,7 @@ function renderInteracoesParceiro(){
   wrap.innerHTML = registros.map(i=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${i.data||"Sem data"} · ${i.assunto||"-"}</strong>
+        <strong>${fmtDataBR(i.data)||"Sem data"} · ${i.assunto||"-"}</strong>
         <button class="icon-btn" type="button" onclick="deleteInteracaoParceiro(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       ${i.proximos_passos?`<div style="color:var(--muted); margin-top:2px;">Próximos passos: ${i.proximos_passos}</div>`:""}
@@ -15496,7 +15496,7 @@ function renderObservacoesMotorista(){
   wrap.innerHTML = registros.map(o=>`
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:var(--fs-sm);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${o.data||"Sem data"}</strong>
+        <strong>${fmtDataBR(o.data)||"Sem data"}</strong>
         <button class="icon-btn" type="button" onclick="deleteObservacaoMotorista(${o.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
       </div>
       <div style="color:var(--muted); margin-top:2px;">${escapeHtml(o.observacao||"")}</div>
