@@ -8526,7 +8526,7 @@ function renderParceiros(){
       <td>${[planoDaParceira(p) ? `<span class="tag svp-tag-plano" title="Plano">${escapeHtml(planoDaParceira(p).nome)}</span>` : "", ...(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`)].filter(Boolean).join(" ")||"-"}</td>
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
       <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
-      <td>${ultimoContato||"-"}</td>
+      <td>${fmtDataBR(ultimoContato)||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="openParceiroModal(${p.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="9">Nenhuma parceira (o) encontrada</td></tr>`;
