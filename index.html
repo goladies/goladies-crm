@@ -7376,10 +7376,13 @@ function irParaFinanceiro(subtab){
 
 function proximoAniversario(dataStr){
   if(!dataStr) return null;
-  const nasc = new Date(dataStr+"T00:00:00");
+  const [, mes, dia] = String(dataStr).slice(0,10).split("-").map(Number);
+  if(!mes || !dia) return null;
   const hoje = new Date(); hoje.setHours(0,0,0,0);
-  let prox = new Date(hoje.getFullYear(), nasc.getMonth(), nasc.getDate());
-  if(prox < hoje) prox = new Date(hoje.getFullYear()+1, nasc.getMonth(), nasc.getDate());
+  // 29/02 conta em 28/02 quando o ano não é bissexto (igual ao aviso das 9h).
+  const noAno = a => (mes===2 && dia===29 && new Date(a,1,29).getMonth()!==1) ? new Date(a,1,28) : new Date(a, mes-1, dia);
+  let prox = noAno(hoje.getFullYear());
+  if(prox < hoje) prox = noAno(hoje.getFullYear()+1);
   return prox;
 }
 // Todo mundo com aniversário no CRM (fichas + Datas especiais). Usada pelo
@@ -16659,7 +16662,9 @@ async function removerLigacao(pre, vid){
 // Dashboard e no aviso das 9h do WhatsApp (schema_datas_especiais.sql).
 const RELACOES_DATA = ["Filha","Filho","Mãe","Pai","Companheira","Companheiro","Irmã","Irmão","Neta","Neto","Sobrinha","Sobrinho","Amiga","Amigo","Outra"];
 const RELACOES_MASC = ["Filho","Pai","Companheiro","Irmão","Neto","Sobrinho","Amigo"];
-// Ano 0001 = sem ano (mesmo jeito do campo Aniversário).
+// Ano 0001 = sem ano (mesmo jeito do campo Aniversário). 29/02 sem ano usa
+// 0004: o ano 1 não é bissexto e o banco recusava a data (03/11/2026).
+// Qualquer ano até 1900 quer dizer "sem ano".
 function dataEspecialTexto(d){
   const [ano, mes, dia] = String(d||"").split("-");
   return dia && mes ? `${dia}/${mes}${Number(ano) > 1900 ? "/" + ano : ""}` : "";
@@ -16667,9 +16672,10 @@ function dataEspecialTexto(d){
 function lerDataEspecial(txt){
   const m = String(txt||"").trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
   if(!m) return null;
-  const dia = Number(m[1]), mes = Number(m[2]), ano = m[3] ? Number(m[3]) : 1;
+  const dia = Number(m[1]), mes = Number(m[2]), ano = m[3] ? Number(m[3]) : (dia===29 && mes===2 ? 4 : 1);
   const teste = new Date(2000, mes-1, dia); // 2000 é bissexto: 29/02 passa
   if(mes < 1 || mes > 12 || teste.getMonth() !== mes-1 || (m[3] && (ano < 1900 || ano > new Date().getFullYear()))) return null;
+  if(m[3] && new Date(ano, mes-1, dia).getMonth() !== mes-1) return null; // 29/02 num ano que não é bissexto
   return `${String(ano).padStart(4,"0")}-${String(mes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
 }
 // Datas da ficha aberta e das outras fichas da mesma pessoa.
@@ -16699,7 +16705,8 @@ function renderDatasEspeciais(pre){
     .map(e=>{
       const daqui = e.tabela===c.tabela && e.registro_id===id;
       const outra = !daqui && cadastroDaTabela(e.tabela);
-      return itemDataEspecial(e, outra ? ` · lançada na ficha de ${outra.rotulo.toLowerCase()}` : "", `removerDataEspecial('${pre}',${e.id})`);
+      const app = e.criado_pelo_app ? " · cadastrada pela pessoa no app" : "";
+      return itemDataEspecial(e, (outra ? ` · lançada na ficha de ${outra.rotulo.toLowerCase()}` : "") + app, `removerDataEspecial('${pre}',${e.id})`);
     }).join("");
   el.innerHTML = cab + (itens || `<p class="lig-vazio">Nenhuma data ainda.</p>`) + `<div class="lig-form">
       <div><label for="${pre}-de-nome">Nome</label><input type="text" id="${pre}-de-nome" placeholder="Ex: Lucas"></div>
