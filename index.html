@@ -2956,8 +2956,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="full"><label>Como você quer ser chamada no painel</label><input type="text" id="md-apelido" placeholder="Ex.: Jú" maxlength="40"></div>
       <div class="full"><label>E-mail de login</label><input type="email" id="md-email" disabled></div>
       <div class="full" style="margin-top:6px; padding-top:12px; border-top:1px solid var(--border);"><label style="font-weight:600; color:var(--text2);">Trocar senha (deixe em branco pra manter a atual)</label></div>
-      <div><label>Nova senha</label><input type="password" id="md-senha" autocomplete="new-password" minlength="6"></div>
-      <div><label>Confirmar nova senha</label><input type="password" id="md-senha2" autocomplete="new-password" minlength="6"></div>
+      <div><label>Nova senha</label><div class="campo-senha"><input type="password" id="md-senha" autocomplete="new-password" minlength="6"><button type="button" class="js-olho" data-alvo="md-senha" aria-label="Mostrar senha"><svg class=ic aria-hidden=true><use href=#i-eye /></svg></button></div></div>
+      <div><label>Confirmar nova senha</label><div class="campo-senha"><input type="password" id="md-senha2" autocomplete="new-password" minlength="6"><button type="button" class="js-olho" data-alvo="md-senha2" aria-label="Mostrar senha"><svg class=ic aria-hidden=true><use href=#i-eye /></svg></button></div></div>
     </div>
     </section>
     <div class="modal-actions">
@@ -5392,6 +5392,8 @@ function openMeusDadosModal(){
   document.getElementById("md-email").value = u.email || "";
   document.getElementById("md-senha").value = "";
   document.getElementById("md-senha2").value = "";
+  // Abre sempre com a senha escondida (volta o olho se ficou aberto)
+  document.querySelectorAll("#meus-dados-modal .js-olho").forEach(b => { if (document.getElementById(b.dataset.alvo).type !== "password") b.click(); });
   fotoMeusDadosPendente = null;
   mostrarFotoMeusDados(fotosEquipe.porUser[u.id] || null);
   document.getElementById("meus-dados-modal").classList.add("open");
@@ -5563,6 +5565,15 @@ document.getElementById("toggle-senha").addEventListener("click", ()=>{
   btn.innerHTML = mostrando ? "<svg class=ic aria-hidden=true><use href=#i-eye /></svg>" : "<svg class=ic aria-hidden=true><use href=#i-eye-off /></svg>";
   btn.setAttribute("aria-label", mostrando ? "Mostrar senha" : "Ocultar senha");
 });
+
+// Mostrar/ocultar senha nos campos de Meus dados (nova e confirmar)
+document.querySelectorAll(".js-olho").forEach(b => b.addEventListener("click", function(){
+  const inp = document.getElementById(this.dataset.alvo);
+  const mostrando = inp.type === "text";
+  inp.type = mostrando ? "password" : "text";
+  this.innerHTML = mostrando ? "<svg class=ic aria-hidden=true><use href=#i-eye /></svg>" : "<svg class=ic aria-hidden=true><use href=#i-eye-off /></svg>";
+  this.setAttribute("aria-label", mostrando ? "Mostrar senha" : "Ocultar senha");
+}));
 
 // Guarda no navegador (não no servidor) que esse login já foi confirmado
 // como staff (não motorista) uma vez. Usado só pra decidir se mostra o
