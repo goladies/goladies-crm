@@ -13111,6 +13111,8 @@ async function salvarLead(){
     : await sb.from("leads").insert(payload).select();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   showToast("Salvo!");
+  // Lead que já existia: conversa preenchida e não adicionada vai junto no Salvar (04/11/2026)
+  if(!isNew && ["fi-assunto","fi-proximos"].some(id=>document.getElementById(id).value.trim())) await addInteracaoLead();
   if(isNew){
     editingLeadId = data[0].id;
     document.getElementById("lead-modal-title").textContent = "Editar lead";
@@ -14075,12 +14077,15 @@ async function saveParceiro(){
     : await sb.from("parceiros").insert(payload).select();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   showToast("Salvo!");
+  // Ficha que já existia: conversa preenchida e não adicionada vai junto no Salvar
+  // (04/11/2026: a Jú preencheu, clicou Salvar e a conversa sumia).
+  if(!isNew && interacaoParceiroPreenchida()) await addInteracaoParceiro();
   if(isNew){
     editingParceiroId = data[0].id;
     document.getElementById("parceiro-modal-title").textContent = "Editar parceira (o)";
     await gravarContatosPendentesParceiro();
     await gravarEnderecosPendentesParceiro();
-    if(document.getElementById("pi-assunto").value.trim()) await addInteracaoParceiro();
+    if(interacaoParceiroPreenchida()) await addInteracaoParceiro();
     await gravarDatasPendentes("p", editingParceiroId);
     await gravarRedesPendentes("p", editingParceiroId);
     await ligarParceiraNaLead(editingParceiroId);
@@ -14245,11 +14250,16 @@ function renderInteracoesParceiro(){
     </div>
   `).join("") || `<p style="color:var(--muted); font-size:var(--fs-sm);">Nenhuma conversa registrada ainda.</p>`;
 }
+function interacaoParceiroPreenchida(){
+  return ["pi-data","pi-assunto","pi-proximos","pi-link"].some(id=>document.getElementById(id).value.trim());
+}
 async function addInteracaoParceiro(){
   if(!editingParceiroId) return;
+  if(!interacaoParceiroPreenchida()){ alert("Preencha a data, o assunto ou os próximos passos da conversa antes de adicionar."); return; }
   const payload = {
     parceiro_id: editingParceiroId,
-    data: document.getElementById("pi-data").value || null,
+    // Sem data, conta como hoje: é a data que aparece em "Último contato" na lista.
+    data: document.getElementById("pi-data").value || hojeISO(),
     assunto: document.getElementById("pi-assunto").value,
     proximos_passos: document.getElementById("pi-proximos").value,
     link_drive: normalizarLink(document.getElementById("pi-link").value),
@@ -20418,6 +20428,8 @@ async function saveEvento(){
     : await sb.from("eventos").insert(payload).select();
   if(error){ alert("Erro ao salvar: " + error.message); return; }
   showToast("Salvo!");
+  // Evento que já existia: conversa preenchida e não adicionada vai junto no Salvar (04/11/2026)
+  if(!isNew && document.getElementById("evi-assunto").value.trim()) await addInteracaoEvento();
   if(isNew){
     editingEventoId = data[0].id;
     document.getElementById("evento-modal-title").textContent = "Editar evento";
