@@ -1386,6 +1386,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-tabelas .tp-lista th{text-align:left; font-size:var(--fs-xs); font-weight:600; color:var(--text3); padding:6px 8px; border-bottom:1px solid var(--border2);}
 #ft-tabelas .tp-lista td{padding:8px; border-bottom:1px solid var(--border); color:var(--text1); font-variant-numeric:tabular-nums;}
 #ft-tabelas .tp-lista tr.inativa td{opacity:.5;}
+#ft-tabelas .tp-lista th.tp-ord{cursor:pointer; user-select:none; white-space:nowrap;}
+#ft-tabelas .tp-lista th.tp-ord:hover, #ft-tabelas .tp-lista th.tp-ord.on{color:var(--text1);}
+#ft-tabelas .tp-lista .tp-seta{margin-left:4px; font-size:10px; opacity:.5;}
+#ft-tabelas .tp-lista th.tp-ord.on .tp-seta{opacity:1; color:var(--rosa);}
 #ft-tabelas .tp-lista tr:hover td{background:var(--bg-hover);}
 #ft-tabelas .tp-editor{margin-top:14px; background:var(--bg-card2); border:1px solid var(--rosa-borda); border-radius:12px; padding:13px 14px;}
 #ft-tabelas .tp-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
@@ -10383,6 +10387,36 @@ function renderDetalheFtValidacao(cotacoes){
 // Clicar na linha abre o editor; Salvar e Ativa sempre pedem confirmação
 // mostrando o antes e o depois.
 let tabelaPrecoEditando = undefined;   // id da tabela aberta; null = nova
+// Clique no cabeçalho ordena (06/11/2026): 1º clique crescente, 2º decrescente,
+// 3º volta pra ordem de desempate. Fica guardado neste navegador, igual às outras listas.
+const ORDEM_DIAS_TP = { semana: 1, fim_semana: 2, feriado: 3, qualquer: 4 };
+const ORDEM_QUANDO_TP = { dia: 1, noite: 2, qualquer: 3 };
+function valorOrdemTabelaPreco(t, campo){
+  if(campo === "nome") return String(t.nome || "").toLowerCase();
+  if(campo === "tipo") return t.tipo_servico ? String(rotuloOpcao(t.tipo_servico)).toLowerCase() : "todos";
+  if(campo === "dias") return ORDEM_DIAS_TP[t.dias || "qualquer"] || 9;
+  if(campo === "quando") return ORDEM_QUANDO_TP[t.quando] || 9;
+  if(campo === "ativa") return t.ativa ? 0 : 1;
+  return t[campo] == null ? -1 : Number(t[campo]);   // "sem" mínimo fica antes do menor valor
+}
+function tabelasPrecoOrdenadas(){
+  const st = sortState.tabelasPreco;
+  const base = [...tabelasPreco].sort((a, b) => ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
+  if(!st) return base;
+  return base.sort((a, b) => {
+    const va = valorOrdemTabelaPreco(a, st.campo), vb = valorOrdemTabelaPreco(b, st.campo);
+    const c = typeof va === "string" ? va.localeCompare(vb, "pt-BR") : va - vb;
+    return c * st.dir;
+  });
+}
+function ordenarTabelasPreco(campo){
+  const st = sortState.tabelasPreco;
+  if(!st || st.campo !== campo) sortState.tabelasPreco = { campo, dir: 1 };
+  else if(st.dir === 1) sortState.tabelasPreco = { campo, dir: -1 };
+  else delete sortState.tabelasPreco;
+  try { localStorage.setItem("crm_ordenacao", JSON.stringify(sortState)); } catch(e){}
+  renderTabelasPreco();
+}
 function renderTabelasPreco(){
   const box = document.getElementById("tp-conteudo");
   if(!box) return;
@@ -10398,10 +10432,16 @@ function renderTabelasPreco(){
     return;
   }
   const sem = `<span style="color:var(--text3);">sem</span>`;
+  const st = sortState.tabelasPreco;
+  const th = (campo, rot, cls) => {
+    const ativo = st && st.campo === campo;
+    return `<th class="tp-ord${ativo ? " on" : ""}${cls ? " " + cls : ""}" onclick="ordenarTabelasPreco('${campo}')" title="Ordenar por ${rot.toLowerCase()}"
+      aria-sort="${ativo ? (st.dir === 1 ? "ascending" : "descending") : "none"}">${rot}<span class="tp-seta">${ativo ? (st.dir === 1 ? "▲" : "▼") : "↕"}</span></th>`;
+  };
   box.innerHTML = `<div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
-      <th>Tabela</th><th>Vale para</th><th>Dias</th><th>Quando</th><th>Fixa por trecho</th><th>Por km</th><th class="tp-opc">Mínimo</th><th>Adicional</th><th class="tp-opc">Taxa Go Ladies</th><th>Ativa</th><th></th>
+      ${th("nome", "Tabela")}${th("tipo", "Vale para")}${th("dias", "Dias")}${th("quando", "Quando")}${th("tarifa_fixa", "Fixa por trecho")}${th("valor_km", "Por km")}${th("valor_minimo", "Mínimo", "tp-opc")}${th("adicional_pct", "Adicional")}${th("taxa_go_ladies_pct", "Taxa Go Ladies", "tp-opc")}${th("ativa", "Ativa")}<th></th>
     </tr></thead><tbody>` +
-    tabelasPreco.map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
+    tabelasPrecoOrdenadas().map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
       <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:var(--fs-xs); color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
       <td>${escapeHtml(rotuloOpcao(t.tipo_servico) || "Todos")}</td>
       <td>${DIAS_TABELA_PRECO[t.dias || "qualquer"] || escapeHtml(t.dias)}</td>
