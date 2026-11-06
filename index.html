@@ -1387,6 +1387,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-tabelas .tp-lista td{padding:8px; border-bottom:1px solid var(--border); color:var(--text1); font-variant-numeric:tabular-nums;}
 #ft-tabelas .tp-lista tr.inativa td{opacity:.5;}
 #ft-tabelas .tp-lista td:not(:first-child){white-space:nowrap;}
+#ft-tabelas .tp-km-compara{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; font-size:var(--fs-sm); color:var(--text2);}
+#ft-tabelas .tp-km-compara input{width:90px;}
 #ft-tabelas .tp-lista th.tp-ord{cursor:pointer; user-select:none; white-space:nowrap;}
 #ft-tabelas .tp-lista th.tp-ord:hover, #ft-tabelas .tp-lista th.tp-ord.on{color:var(--text1);}
 #ft-tabelas .tp-lista .tp-seta{margin-left:4px; font-size:10px; opacity:.5;}
@@ -2290,7 +2292,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
             <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
           </div>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, e "10 km" é um exemplo pra comparar; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, "5 km" e a coluna do km que você escolher são exemplos pra comparar; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
           <div id="tp-conteudo"></div>
           <div id="tp-editor" class="tp-editor" style="display:none;"></div>
         </div>
@@ -10399,7 +10401,8 @@ function valorOrdemTabelaPreco(t, campo){
   if(campo === "quando") return ORDEM_QUANDO_TP[t.quando] || 9;
   if(campo === "ativa") return t.ativa ? 0 : 1;
   if(campo === "menor") return precoTrechoTabela(t, 0, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
-  if(campo === "ex10") return precoTrechoTabela(t, 10, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
+  if(campo === "ex5") return precoTrechoTabela(t, 5, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
+  if(campo === "exkm") return precoTrechoTabela(t, kmComparaTabela(), Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
   return t[campo] == null ? -1 : Number(t[campo]);   // "sem" mínimo fica antes do menor valor
 }
 // Menor preço de um trecho: o que a cliente paga numa viagem bem curta
@@ -10410,10 +10413,23 @@ function contaMenorPrecoTabela(t){
   return `Viagem bem curta: o maior entre a fixa (${formatarMoedaBR(fixa)}) e o mínimo (${min ? formatarMoedaBR(min) : "sem"}) = ${formatarMoedaBR(base)}`
     + (ad ? ` × ${(1 + ad / 100).toFixed(2).replace(".", ",")} (+${ad}%) = ${formatarMoedaBR(base * (1 + ad / 100))}` : "");
 }
-function contaDezKmTabela(t){
+// Km pra comparar (06/11/2026): ela digita acima da lista; fica guardado neste navegador.
+let kmComparaTp = (()=>{ try { return Number(localStorage.getItem("crm_tp_km")) || 10; } catch(e){ return 10; } })();
+function kmComparaTabela(){ return kmComparaTp > 0 ? kmComparaTp : 10; }
+function trocarKmComparaTabela(el){
+  const v = Number(String(el.value).replace(",", "."));
+  if(!(v > 0)) return;
+  kmComparaTp = Math.round(v * 10) / 10;
+  try { localStorage.setItem("crm_tp_km", String(kmComparaTp)); } catch(e){}
+  renderTabelasPreco();
+  const novo = document.getElementById("tp-km-compara");
+  if(novo) novo.focus();
+}
+const kmTxt = km => String(km).replace(".", ",");
+function contaKmTabela(t, kmV){
   const fixa = Number(t.tarifa_fixa) || 0, km = Number(t.valor_km) || 0, min = Number(t.valor_minimo) || 0, ad = Number(t.adicional_pct) || 0;
-  const corrida = fixa + km * 10, base = Math.max(corrida, min);
-  return `10 km: ${formatarMoedaBR(fixa)} + 10 × ${formatarMoedaBR(km)} = ${formatarMoedaBR(corrida)}`
+  const corrida = fixa + km * kmV, base = Math.max(corrida, min);
+  return `${kmTxt(kmV)} km: ${formatarMoedaBR(fixa)} + ${kmTxt(kmV)} × ${formatarMoedaBR(km)} = ${formatarMoedaBR(corrida)}`
     + (min > corrida ? `, abaixo do mínimo, vale ${formatarMoedaBR(min)}` : "")
     + (ad ? ` × ${(1 + ad / 100).toFixed(2).replace(".", ",")} (+${ad}%) = ${formatarMoedaBR(base * (1 + ad / 100))}` : "");
 }
@@ -10456,8 +10472,8 @@ function renderTabelasPreco(){
     return `<th class="tp-ord${ativo ? " on" : ""}${cls ? " " + cls : ""}" onclick="ordenarTabelasPreco('${campo}')" title="Ordenar por ${rot.toLowerCase()}"
       aria-sort="${ativo ? (st.dir === 1 ? "ascending" : "descending") : "none"}">${rot}<span class="tp-seta">${ativo ? (st.dir === 1 ? "▲" : "▼") : "↕"}</span></th>`;
   };
-  box.innerHTML = `<div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
-      ${th("nome", "Tabela")}${th("tipo", "Vale para")}${th("dias", "Dias")}${th("quando", "Quando")}${th("tarifa_fixa", "Fixa por trecho")}${th("valor_km", "Por km")}${th("valor_minimo", "Mínimo", "tp-opc")}${th("adicional_pct", "Adicional")}${th("menor", "Menor preço")}${th("ex10", "10 km")}${th("taxa_go_ladies_pct", "Taxa Go Ladies", "tp-opc")}${th("ativa", "Ativa")}<th></th>
+  box.innerHTML = `<div class="tp-km-compara"><label for="tp-km-compara">Comparar com</label> <input type="number" id="tp-km-compara" min="0.1" step="0.1" inputmode="decimal" value="${kmComparaTabela()}" oninput="trocarKmComparaTabela(this)"> <span>km (a coluna depois de "5 km")</span></div><div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
+      ${th("nome", "Tabela")}${th("tipo", "Vale para")}${th("dias", "Dias")}${th("quando", "Quando")}${th("tarifa_fixa", "Fixa por trecho")}${th("valor_km", "Por km")}${th("valor_minimo", "Mínimo", "tp-opc")}${th("adicional_pct", "Adicional")}${th("menor", "Menor preço")}${th("ex5", "5 km")}${th("exkm", kmTxt(kmComparaTabela()) + " km")}${th("taxa_go_ladies_pct", "Taxa Go Ladies", "tp-opc")}${th("ativa", "Ativa")}<th></th>
     </tr></thead><tbody>` +
     tabelasPrecoOrdenadas().map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
       <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:var(--fs-xs); color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
@@ -10469,7 +10485,8 @@ function renderTabelasPreco(){
       <td class="tp-opc">${t.valor_minimo != null ? formatarMoedaBR(Number(t.valor_minimo)) : sem}</td>
       <td>${Number(t.adicional_pct) ? "+" + Number(t.adicional_pct) + "%" : sem}</td>
       <td title="${escapeHtml(contaMenorPrecoTabela(t))}"><b>${formatarMoedaBR(valorOrdemTabelaPreco(t, "menor"))}</b></td>
-      <td title="${escapeHtml(contaDezKmTabela(t))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "ex10"))}</td>
+      <td title="${escapeHtml(contaKmTabela(t, 5))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "ex5"))}</td>
+      <td title="${escapeHtml(contaKmTabela(t, kmComparaTabela()))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "exkm"))}</td>
       <td class="tp-opc">${Number(t.taxa_go_ladies_pct)}%</td>
       <td onclick="event.stopPropagation();"><input type="checkbox" style="width:auto;" ${t.ativa ? "checked" : ""} onchange="alternarTabelaPrecoAtiva(${t.id}, this)" aria-label="Ativa"></td>
       <td><button type="button" class="icon-btn" title="Editar" aria-label="Editar"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></td>
