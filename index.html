@@ -2292,7 +2292,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
             <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
           </div>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, "5 km" e a coluna do km que você escolher são exemplos pra comparar; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, "5 km" e a coluna do km que você escolher são exemplos pra comparar (o que a cliente paga); "Motorista" e "Go Ladies" mostram quanto fica com cada uma nesse km. O desconto pra cliente sai da parte da Go Ladies; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
           <div id="tp-conteudo"></div>
           <div id="tp-editor" class="tp-editor" style="display:none;"></div>
         </div>
@@ -9720,7 +9720,7 @@ function simPrecoTabela(v){
   let base = precoCom(t) * v.trechos;
   const info = document.getElementById("sim-tabela-info");
   const fer = simFeriadoNome();
-  let infoTxt = (fer ? fer + " é feriado. " : "") + "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
+  let infoTxt = (fer ? fer + " é feriado. " : "") + "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + String(Math.round(taxaTabelaPreco(t) * 100) / 100).replace(".", ",") + "%).";
   // Parte da corrida depois das 22h (26/10/2026): o preço é dividido pelos km,
   // cada parte com a sua tabela, sem cobrar a tarifa fixa duas vezes. Com a
   // noite marcada ou a tabela escolhida na mão, vale uma tabela só.
@@ -10403,6 +10403,9 @@ function valorOrdemTabelaPreco(t, campo){
   if(campo === "menor") return precoTrechoTabela(t, 0, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
   if(campo === "ex5") return precoTrechoTabela(t, 5, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
   if(campo === "exkm") return precoTrechoTabela(t, kmComparaTabela(), Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
+  if(campo === "motkm") return divisaoTrechoTabela(t, kmComparaTabela()).motorista;
+  if(campo === "glkm") return divisaoTrechoTabela(t, kmComparaTabela()).goLadies;
+  if(campo === "desconto_cliente_pct") return descontoTabelaPreco(t);
   return t[campo] == null ? -1 : Number(t[campo]);   // "sem" mínimo fica antes do menor valor
 }
 // Menor preço de um trecho: o que a cliente paga numa viagem bem curta
@@ -10411,7 +10414,15 @@ function contaMenorPrecoTabela(t){
   const fixa = Number(t.tarifa_fixa) || 0, min = Number(t.valor_minimo) || 0, ad = Number(t.adicional_pct) || 0;
   const base = Math.max(fixa, min);
   return `Viagem bem curta: o maior entre a fixa (${formatarMoedaBR(fixa)}) e o mínimo (${min ? formatarMoedaBR(min) : "sem"}) = ${formatarMoedaBR(base)}`
-    + (ad ? ` × ${(1 + ad / 100).toFixed(2).replace(".", ",")} (+${ad}%) = ${formatarMoedaBR(base * (1 + ad / 100))}` : "");
+    + contaAdicionalDesconto(t, base);
+}
+// Final da conta: × adicional e × desconto pra cliente, cada um só se tiver
+function contaAdicionalDesconto(t, base){
+  const ad = Number(t.adicional_pct) || 0, desc = descontoTabelaPreco(t);
+  let txt = "", v = base;
+  if(ad){ v = v * (1 + ad / 100); txt += ` × ${(1 + ad / 100).toFixed(2).replace(".", ",")} (+${ad}%) = ${formatarMoedaBR(v)}`; }
+  if(desc){ v = v * (1 - desc / 100); txt += ` × ${(1 - desc / 100).toFixed(2).replace(".", ",")} (${desc}% de desconto) = ${formatarMoedaBR(v)}`; }
+  return txt;
 }
 // Km pra comparar (06/11/2026): ela digita acima da lista; fica guardado neste navegador.
 let kmComparaTp = (()=>{ try { return Number(localStorage.getItem("crm_tp_km")) || 10; } catch(e){ return 10; } })();
@@ -10431,7 +10442,16 @@ function contaKmTabela(t, kmV){
   const corrida = fixa + km * kmV, base = Math.max(corrida, min);
   return `${kmTxt(kmV)} km: ${formatarMoedaBR(fixa)} + ${kmTxt(kmV)} × ${formatarMoedaBR(km)} = ${formatarMoedaBR(corrida)}`
     + (min > corrida ? `, abaixo do mínimo, vale ${formatarMoedaBR(min)}` : "")
-    + (ad ? ` × ${(1 + ad / 100).toFixed(2).replace(".", ",")} (+${ad}%) = ${formatarMoedaBR(base * (1 + ad / 100))}` : "");
+    + contaAdicionalDesconto(t, base);
+}
+function contaDivisaoTabela(t, kmV, quem){
+  const d = divisaoTrechoTabela(t, kmV), taxa = Number(t.taxa_go_ladies_pct) || 0, desc = descontoTabelaPreco(t);
+  const semDesc = d.cliente / (1 - desc / 100);
+  if(quem === "motorista") return desc
+    ? `${kmTxt(kmV)} km sem o desconto: ${formatarMoedaBR(semDesc)} × ${100 - taxa}% = ${formatarMoedaBR(d.motorista)} (o desconto não mexe na parte dela)`
+    : `${kmTxt(kmV)} km: ${formatarMoedaBR(d.cliente)} × ${100 - taxa}% = ${formatarMoedaBR(d.motorista)}`;
+  return `Cliente paga ${formatarMoedaBR(d.cliente)} − motorista ${formatarMoedaBR(d.motorista)} = ${formatarMoedaBR(d.goLadies)}`
+    + (desc ? ` (sem o desconto seria ${formatarMoedaBR(semDesc * taxa / 100)}; o desconto sai daqui)` : "");
 }
 function tabelasPrecoOrdenadas(){
   const st = sortState.tabelasPreco;
@@ -10473,7 +10493,7 @@ function renderTabelasPreco(){
       aria-sort="${ativo ? (st.dir === 1 ? "ascending" : "descending") : "none"}">${rot}<span class="tp-seta">${ativo ? (st.dir === 1 ? "▲" : "▼") : "↕"}</span></th>`;
   };
   box.innerHTML = `<div class="tp-km-compara"><label for="tp-km-compara">Comparar com</label> <input type="number" id="tp-km-compara" min="0.1" step="0.1" inputmode="decimal" value="${kmComparaTabela()}" oninput="trocarKmComparaTabela(this)"> <span>km (a coluna depois de "5 km")</span></div><div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
-      ${th("nome", "Tabela")}${th("tipo", "Vale para")}${th("dias", "Dias")}${th("quando", "Quando")}${th("tarifa_fixa", "Fixa por trecho")}${th("valor_km", "Por km")}${th("valor_minimo", "Mínimo", "tp-opc")}${th("adicional_pct", "Adicional")}${th("menor", "Menor preço")}${th("ex5", "5 km")}${th("exkm", kmTxt(kmComparaTabela()) + " km")}${th("taxa_go_ladies_pct", "Taxa Go Ladies", "tp-opc")}${th("ativa", "Ativa")}<th></th>
+      ${th("nome", "Tabela")}${th("tipo", "Vale para")}${th("dias", "Dias")}${th("quando", "Quando")}${th("tarifa_fixa", "Fixa por trecho")}${th("valor_km", "Por km")}${th("valor_minimo", "Mínimo", "tp-opc")}${th("adicional_pct", "Adicional")}${tabelasPrecoTemDesconto() ? th("desconto_cliente_pct", "Desconto cliente") : ""}${th("menor", "Menor preço")}${th("ex5", "5 km")}${th("exkm", kmTxt(kmComparaTabela()) + " km")}${th("motkm", "Motorista " + kmTxt(kmComparaTabela()) + " km")}${th("glkm", "Go Ladies " + kmTxt(kmComparaTabela()) + " km")}${th("taxa_go_ladies_pct", "Taxa Go Ladies", "tp-opc")}${th("ativa", "Ativa")}<th></th>
     </tr></thead><tbody>` +
     tabelasPrecoOrdenadas().map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
       <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:var(--fs-xs); color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
@@ -10484,9 +10504,12 @@ function renderTabelasPreco(){
       <td>${formatarMoedaBR(Number(t.valor_km))}</td>
       <td class="tp-opc">${t.valor_minimo != null ? formatarMoedaBR(Number(t.valor_minimo)) : sem}</td>
       <td>${Number(t.adicional_pct) ? "+" + Number(t.adicional_pct) + "%" : sem}</td>
+      ${tabelasPrecoTemDesconto() ? `<td>${descontoTabelaPreco(t) ? "−" + descontoTabelaPreco(t) + "%" : sem}</td>` : ""}
       <td title="${escapeHtml(contaMenorPrecoTabela(t))}"><b>${formatarMoedaBR(valorOrdemTabelaPreco(t, "menor"))}</b></td>
       <td title="${escapeHtml(contaKmTabela(t, 5))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "ex5"))}</td>
       <td title="${escapeHtml(contaKmTabela(t, kmComparaTabela()))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "exkm"))}</td>
+      <td title="${escapeHtml(contaDivisaoTabela(t, kmComparaTabela(), "motorista"))}">${formatarMoedaBR(valorOrdemTabelaPreco(t, "motkm"))}</td>
+      <td title="${escapeHtml(contaDivisaoTabela(t, kmComparaTabela(), "goladies"))}"><b>${formatarMoedaBR(valorOrdemTabelaPreco(t, "glkm"))}</b></td>
       <td class="tp-opc">${Number(t.taxa_go_ladies_pct)}%</td>
       <td onclick="event.stopPropagation();"><input type="checkbox" style="width:auto;" ${t.ativa ? "checked" : ""} onchange="alternarTabelaPrecoAtiva(${t.id}, this)" aria-label="Ativa"></td>
       <td><button type="button" class="icon-btn" title="Editar" aria-label="Editar"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg></button></td>
@@ -10512,8 +10535,9 @@ function editarTabelaPreco(id){
       <div><label>Valor por km (R$)</label><input type="number" id="tp-km" step="0.01" min="0" value="${t.valor_km}"></div>
       <div><label>Valor mínimo por trecho (R$)</label><input type="number" id="tp-min" step="0.01" min="0" value="${t.valor_minimo ?? ""}" placeholder="sem mínimo"></div>
       <div><label>Adicional (%)</label><input type="number" id="tp-adic" step="1" min="0" value="${t.adicional_pct}"></div>
+      ${tabelasPrecoTemDesconto() ? `<div><label>Desconto pra cliente (%)</label><input type="number" id="tp-desc" step="0.5" min="0" max="100" value="${Number(t.desconto_cliente_pct) || 0}"><span class="dica">Sai da parte da Go Ladies; a motorista recebe igual.</span></div>` : ""}
       <div><label>Ordem (desempate)</label><input type="number" id="tp-ordem" step="1" value="${t.ordem}"></div>
-      <div class="tp-obs" style="grid-column:span ${tabelasPrecoTemDias() ? 2 : 3};"><label>Observação</label><input type="text" id="tp-obs" value="${escapeHtml(t.observacao || "")}" placeholder="Ex.: testando preço de dia mais baixo"></div>
+      <div class="tp-obs" style="grid-column:1 / -1;"><label>Observação</label><input type="text" id="tp-obs" value="${escapeHtml(t.observacao || "")}" placeholder="Ex.: testando preço de dia mais baixo"></div>
     </div>
     <div class="tp-exemplo" id="tp-exemplo"></div>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
@@ -10538,6 +10562,7 @@ function lerEditorTabelaPreco(){
     valor_minimo: num("tp-min"),
     adicional_pct: num("tp-adic") ?? 0,
     taxa_go_ladies_pct: num("tp-taxa") ?? 25,
+    ...(document.getElementById("tp-desc") ? { desconto_cliente_pct: num("tp-desc") ?? 0 } : {}),
     ordem: num("tp-ordem") ?? 100,
     observacao: document.getElementById("tp-obs").value.trim() || null,
   };
@@ -10545,8 +10570,8 @@ function lerEditorTabelaPreco(){
 function exemploTabelaPreco(){
   const d = lerEditorTabelaPreco();
   const ex = km => {
-    const p = precoTrechoTabela(d, km, d.tarifa_fixa, d.valor_km);
-    return `${km} km = <b>${formatarMoedaBR(p)}</b> (motorista ${formatarMoedaBR(p * (1 - d.taxa_go_ladies_pct / 100))})`;
+    const x = divisaoTrechoTabela(d, km);
+    return `${km} km = <b>${formatarMoedaBR(x.cliente)}</b> (motorista ${formatarMoedaBR(x.motorista)}, Go Ladies ${formatarMoedaBR(x.goLadies)})`;
   };
   document.getElementById("tp-exemplo").innerHTML = "Exemplos de um trecho com essa tabela: " + [3, 10, 20].map(ex).join(" · ");
 }
@@ -10560,15 +10585,18 @@ async function salvarTabelaPreco(){
   const d = lerEditorTabelaPreco();
   if(!d.nome){ alert("Dê um nome pra tabela."); return; }
   if(d.taxa_go_ladies_pct < 0 || d.taxa_go_ladies_pct > 100){ alert("A taxa da Go Ladies vai de 0 a 100%."); return; }
+  if(d.desconto_cliente_pct != null && (d.desconto_cliente_pct < 0 || d.desconto_cliente_pct > d.taxa_go_ladies_pct)){
+    alert("O desconto pra cliente sai da parte da Go Ladies, então vai de 0 até a taxa da Go Ladies (" + d.taxa_go_ladies_pct + "%)."); return;
+  }
   if([d.tarifa_fixa, d.valor_km, d.adicional_pct].some(x => x < 0) || (d.valor_minimo != null && d.valor_minimo < 0)){ alert("Os valores não podem ser negativos."); return; }
   const id = tabelaPrecoEditando;
   const antes = id ? tabelasPreco.find(x => x.id === id) : null;
   const rot = { nome: "Nome", tipo_servico: "Vale para", ...("dias" in d ? { dias: "Dias" } : {}), quando: "Quando", tarifa_fixa: "Taxa fixa por trecho", valor_km: "Valor por km",
-    valor_minimo: "Valor mínimo", adicional_pct: "Adicional", taxa_go_ladies_pct: "Taxa Go Ladies", ordem: "Ordem", observacao: "Observação" };
+    valor_minimo: "Valor mínimo", adicional_pct: "Adicional", taxa_go_ladies_pct: "Taxa Go Ladies", ...("desconto_cliente_pct" in d ? { desconto_cliente_pct: "Desconto pra cliente" } : {}), ordem: "Ordem", observacao: "Observação" };
   const fmt = (k, v) => {
     if(v == null || v === "") return k === "tipo_servico" ? "Todos" : "sem";
     if(["tarifa_fixa", "valor_km", "valor_minimo"].includes(k)) return formatarMoedaBR(Number(v));
-    if(["adicional_pct", "taxa_go_ladies_pct"].includes(k)) return Number(v) + "%";
+    if(["adicional_pct", "taxa_go_ladies_pct", "desconto_cliente_pct"].includes(k)) return Number(v) + "%";
     if(k === "quando") return QUANDO_TABELA_PRECO[v] || v;
     if(k === "dias") return DIAS_TABELA_PRECO[v] || v;
     return String(v);
@@ -17836,6 +17864,7 @@ function viagemJaPaga(){
 const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 22h)", noite: "Noite (22h às 6h)", qualquer: "Qualquer horário" };
 const DIAS_TABELA_PRECO = { semana: "Seg a sex", fim_semana: "Sáb e dom", feriado: "Feriado", qualquer: "Qualquer dia" };
 // O CRM já tem a coluna "dias"? (falta rodar schema_tabelas_preco_dias.sql se não)
+function tabelasPrecoTemDesconto(){ return tabelasPreco.length > 0 && ("desconto_cliente_pct" in tabelasPreco[0]); }
 function tabelasPrecoTemDias(){ return tabelasPreco.length > 0 && ("dias" in tabelasPreco[0]); }
 // Que tipo de dia é: feriado ganha; sem data, conta como dia de semana.
 function tipoDiaTabela(iso, feriado){
@@ -17863,16 +17892,32 @@ function escolherTabelaPreco(tipo, noturno, dataIso, feriado){
   cand.sort((a, b) => (rankDias(a) - rankDias(b)) || (!!b.tipo_servico - !!a.tipo_servico) || ((b.quando !== "qualquer") - (a.quando !== "qualquer")) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
   return cand[0] || tabelaPrecoPadraoSistema(noturno || feriado);
 }
-function taxaTabelaPreco(t){ return t && t.taxa_go_ladies_pct != null ? Number(t.taxa_go_ladies_pct) : 25; }
-// maior entre (fixa + km × valor) e o mínimo, × (1 + adicional %)
+// Desconto pra cliente (schema_tabelas_preco_desconto.sql, 06/11/2026): sai
+// da parte da Go Ladies. A motorista recebe o mesmo que sem desconto.
+function descontoTabelaPreco(t){ return t && Number(t.desconto_cliente_pct) > 0 ? Number(t.desconto_cliente_pct) : 0; }
+// Taxa da Go Ladies sobre o que a cliente paga: com desconto, fica menor que a
+// taxa da tabela (ex.: taxa 25% com desconto 5% = 21,05% do preço com desconto).
+function taxaTabelaPreco(t){
+  const taxa = t && t.taxa_go_ladies_pct != null ? Number(t.taxa_go_ladies_pct) : 25;
+  const desc = descontoTabelaPreco(t);
+  return desc ? (1 - (1 - taxa / 100) / (1 - desc / 100)) * 100 : taxa;
+}
+// maior entre (fixa + km × valor) e o mínimo, × (1 + adicional %), × (1 − desconto %)
 function precoTrechoTabela(t, km, fixa, valorKm){
   const base = Math.max(fixa + valorKm * km, Number(t.valor_minimo) || 0);
-  return base * (1 + (Number(t.adicional_pct) || 0) / 100);
+  return base * (1 + (Number(t.adicional_pct) || 0) / 100) * (1 - descontoTabelaPreco(t) / 100);
+}
+// O que cada um recebe num trecho: cliente paga, motorista, Go Ladies
+function divisaoTrechoTabela(t, km){
+  const cliente = precoTrechoTabela(t, km, Number(t.tarifa_fixa) || 0, Number(t.valor_km) || 0);
+  const motorista = cliente * (1 - taxaTabelaPreco(t) / 100);
+  return { cliente, motorista, goLadies: cliente - motorista };
 }
 function resumoTabelaPreco(t){
   const partes = [formatarMoedaBR(Number(t.tarifa_fixa) || 0) + " + " + formatarMoedaBR(Number(t.valor_km) || 0) + "/km"];
   if(Number(t.valor_minimo)) partes.push("mínimo " + formatarMoedaBR(Number(t.valor_minimo)));
   if(Number(t.adicional_pct)) partes.push("+" + Number(t.adicional_pct) + "%");
+  if(descontoTabelaPreco(t)) partes.push(descontoTabelaPreco(t) + "% de desconto pra cliente");
   return partes.join(", ");
 }
 // A escolhida na mão no modal vale pros dois trechos; senão, automática.
