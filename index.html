@@ -1393,7 +1393,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-tabelas input,#ft-tabelas select{width:100%; padding:6px 9px; font-size:var(--fs-sm);}
 #ft-tabelas .tp-exemplo{margin-top:10px; padding:8px 10px; border-radius:9px; background:var(--bg-card); font-size:var(--fs-sm); color:var(--text2);}
 #ft-tabelas .tp-exemplo b{color:var(--text1);}
-@media (max-width:900px){ #ft-tabelas .tp-grid{grid-template-columns:1fr 1fr;} #ft-tabelas .tp-lista .tp-opc{display:none;} }
+@media (max-width:900px){ #ft-tabelas .tp-grid{grid-template-columns:1fr 1fr;} #ft-tabelas .tp-grid .tp-obs{grid-column:1 / -1 !important;} #ft-tabelas .tp-lista .tp-opc{display:none;} }
 @media (max-width:1100px){
   #ft-sim .sim-cols{grid-template-columns:1fr 1fr;}
   #ft-sim .sim-saida{grid-template-columns:1fr;}
@@ -2160,7 +2160,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <!-- Horários (26/10/2026): dia + "sai às" no embarque e "volta a
                      sair às" nas paradas; o Calcular rota usa o trânsito previsto,
                      o intervalo de cada parada e a noite trecho por trecho. -->
-                <div class="sim-dia"><label for="sim-dia">Dia da viagem</label><input type="date" id="sim-dia" onchange="simGuardar()"></div>
+                <div class="sim-dia"><label for="sim-dia">Dia da viagem</label><input type="date" id="sim-dia" onchange="simGuardar(); simTabelaTrocada()"></div>
                 <label>Motorista sai de</label>
                 <div class="campo-endereco"><input type="text" id="sim-end-saida" placeholder="Rua, número, bairro" autocomplete="off" oninput="simSalvarSaida()"><div class="sugestoes-endereco"></div></div>
                 <div id="sim-end-lista"></div>
@@ -2285,7 +2285,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
             <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
           </div>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o tipo de serviço e o horário: tipo exato vale mais que "Todos", dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h, ou quando você marca feriado na viagem. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
           <div id="tp-conteudo"></div>
           <div id="tp-editor" class="tp-editor" style="display:none;"></div>
         </div>
@@ -2295,7 +2295,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
              na cidade de onde a viagem sai. -->
         <div class="panel" id="ft-feriados">
           <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-calendar /></svg> Feriados</h3>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">Na data de um feriado, o pedido pelo app usa a tabela da noite ou feriado. Nacional vale em todo lugar; estadual, no RS; municipal, só quando a viagem sai daquela cidade. Ponto facultativo só aparece na lista, sem acréscimo.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">Na data de um feriado, o pedido pelo app e a viagem no CRM usam a tabela de feriado (sem ela, a de sáb e dom). Nacional vale em todo lugar; estadual, no RS; municipal, só quando a viagem sai daquela cidade. Ponto facultativo só aparece na lista, sem acréscimo.</p>
           <div id="fer-conteudo"></div>
           <div class="formgrid" style="margin-top:12px;">
             <div><label>Data</label><input type="date" id="fer-data"></div>
@@ -4132,13 +4132,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
           <div id="vg-km-real" class="dica" style="display:none; margin-top:8px; line-height:1.55;"></div>
         </div>
-        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-adicional-noturno')"></div>
+        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-feriado')"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
         <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
         <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
         <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
         <div><label>Pessoas na ida</label><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span class="dica" id="vg-pessoas-dica">Contando a cliente. Vazio = não informado.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h) ou feriado: +30% na ida</span></label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado" onchange="periodoTrechoTrocado()"> <span>Feriado na ida</span></label></div>
       </div>
     </section>
 
@@ -4150,13 +4151,14 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <label class="vg-check" style="font-weight:600;"><input type="checkbox" id="vg-tem-volta" onchange="alternarVoltaViagem()"> Tem volta</label>
       </div>
       <div class="formgrid" id="vg-volta-campos">
-        <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno" onchange="avisarFeriadoViagem('vg-data-retorno', 'vg-adicional-noturno-retorno')"></div>
+        <div class="destaque"><label>Data da volta</label><input type="date" id="vg-data-retorno" onchange="avisarFeriadoViagem('vg-data-retorno', 'vg-feriado-retorno')"></div>
         <div class="destaque"><label>Horário do embarque na volta</label><input type="time" id="vg-horario-retorno" oninput="recalcularHorarioChegadaRetorno()"></div>
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno()"><span class="dica">Do embarque da volta até o destino final.</span></div>
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
         <div><label>Pessoas na volta</label><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h) ou feriado: +30% na volta</span></label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h): +30% na volta</span></label></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado-retorno" onchange="periodoTrechoTrocado()"> <span>Feriado na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
         <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
       </div>
@@ -9390,6 +9392,7 @@ function preencherViagemDaCotacao(c){
   if(min) preencherMedidaRota("vg-duracao-min", min, true);
   const noturno = !!campos["sim-noturno"];
   document.getElementById("vg-adicional-noturno").checked = noturno;
+  document.getElementById("vg-feriado").checked = !!simFeriadoNome();
   if(Number(campos["sim-espera"]) > 0) document.getElementById("vg-espera-extra-min").value = Number(campos["sim-espera"]);
   if(campos["sim-idavolta"]){
     // Ida e volta do Simulador = o mesmo trajeto de volta, mesmo km e tempo
@@ -9398,6 +9401,7 @@ function preencherViagemDaCotacao(c){
     preencherMedidaRota("vg-distancia-retorno-km", km, true);
     if(min) preencherMedidaRota("vg-duracao-retorno-min", min, true);
     document.getElementById("vg-adicional-noturno-retorno").checked = noturno;
+    document.getElementById("vg-feriado-retorno").checked = !!simFeriadoNome();
   }
   aplicarTabelaNosCampos();
   recalcularCotacao();
@@ -9676,15 +9680,19 @@ function simTabelaAtual(){
   const sel = document.getElementById("sim-tabela-preco");
   const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
   const tipo = (document.getElementById("sim-tipo") || {}).value || "Padrão";
-  return forcada || escolherTabelaPreco(tipo, simCheck("sim-noturno"));
+  return forcada || escolherTabelaPreco(tipo, simCheck("sim-noturno"), simDiaIso(), !!simFeriadoNome());
 }
+// Dia da viagem do simulador (sáb e dom têm tabela própria) e feriado pela
+// lista, na cidade do primeiro endereço (06/11/2026).
+function simDiaIso(){ return (document.getElementById("sim-dia") || {}).value || ""; }
+function simFeriadoNome(){ return feriadoNaData(simDiaIso(), simEnderecos[0] || ""); }
 // Preenche os selects mantendo o que ela escolheu; chamado a cada render.
 function simPrepararTabelas(){
   const selTipo = document.getElementById("sim-tipo"), selTab = document.getElementById("sim-tabela-preco");
   if(!selTipo || !selTab) return;
   const usa = !tabelasPrecoSqlFaltando;
   document.querySelectorAll("#ft-sim .sim-tabela-preco").forEach(el => { el.style.display = usa ? "" : "none"; });
-  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite" : "Madrugada (22h às 6h) ou feriado: +30%";
+  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (22h às 6h): usa a tabela da noite" : "Madrugada (22h às 6h) ou feriado: +30%";
   if(!usa) return;
   const tipoAtual = selTipo.value || "Padrão";
   fillSelect(selTipo, TIPO_SERVICO_VIAGEM, tipoAtual);
@@ -9704,14 +9712,15 @@ function simPrecoTabela(v){
   const precoCom = tab => precoTrechoTabela(tab, km, Number(tab.tarifa_fixa) || 0, Number(tab.valor_km) || 0);
   let base = precoCom(t) * v.trechos;
   const info = document.getElementById("sim-tabela-info");
-  let infoTxt = "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
+  const fer = simFeriadoNome();
+  let infoTxt = (fer ? fer + " é feriado. " : "") + "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + taxaTabelaPreco(t) + "%).";
   // Parte da corrida depois das 22h (26/10/2026): o preço é dividido pelos km,
   // cada parte com a sua tabela, sem cobrar a tarifa fixa duas vezes. Com a
   // noite marcada ou a tabela escolhida na mão, vale uma tabela só.
   const kmNoite = Math.min(simNum("sim-km-noite"), km);
   const sel = document.getElementById("sim-tabela-preco");
   if(kmNoite > 0 && km > 0 && !simCheck("sim-noturno") && !(sel && sel.value)){
-    const tNoite = escolherTabelaPreco((document.getElementById("sim-tipo") || {}).value || "Padrão", true);
+    const tNoite = escolherTabelaPreco((document.getElementById("sim-tipo") || {}).value || "Padrão", true, simDiaIso(), !!simFeriadoNome());
     base = (precoCom(t) * (km - kmNoite) / km + precoCom(tNoite) * kmNoite / km) * v.trechos;
     infoTxt += ` ${String(kmNoite).replace(".", ",")} de ${String(km).replace(".", ",")} km na noite: essa parte usa ${tNoite.nome} (${resumoTabelaPreco(tNoite)}).`;
   }
@@ -10390,11 +10399,12 @@ function renderTabelasPreco(){
   }
   const sem = `<span style="color:var(--text3);">sem</span>`;
   box.innerHTML = `<div style="overflow-x:auto;"><table class="tp-lista"><thead><tr>
-      <th>Tabela</th><th>Vale para</th><th>Quando</th><th>Fixa por trecho</th><th>Por km</th><th class="tp-opc">Mínimo</th><th>Adicional</th><th class="tp-opc">Taxa Go Ladies</th><th>Ativa</th><th></th>
+      <th>Tabela</th><th>Vale para</th><th>Dias</th><th>Quando</th><th>Fixa por trecho</th><th>Por km</th><th class="tp-opc">Mínimo</th><th>Adicional</th><th class="tp-opc">Taxa Go Ladies</th><th>Ativa</th><th></th>
     </tr></thead><tbody>` +
     tabelasPreco.map(t => `<tr class="${t.ativa ? "" : "inativa"}" style="cursor:pointer;" onclick="editarTabelaPreco(${t.id})" title="Editar">
       <td><b>${escapeHtml(t.nome)}</b>${t.observacao ? `<br><span style="font-size:var(--fs-xs); color:var(--text3);">${escapeHtml(t.observacao)}</span>` : ""}</td>
       <td>${escapeHtml(rotuloOpcao(t.tipo_servico) || "Todos")}</td>
+      <td>${DIAS_TABELA_PRECO[t.dias || "qualquer"] || escapeHtml(t.dias)}</td>
       <td>${QUANDO_TABELA_PRECO[t.quando] || escapeHtml(t.quando)}</td>
       <td>${formatarMoedaBR(Number(t.tarifa_fixa))}</td>
       <td>${formatarMoedaBR(Number(t.valor_km))}</td>
@@ -10407,7 +10417,7 @@ function renderTabelasPreco(){
 }
 function editarTabelaPreco(id){
   const maiorOrdem = tabelasPreco.reduce((m, t) => Math.max(m, Number(t.ordem) || 0), 0);
-  const t = id ? tabelasPreco.find(x => x.id === id) : { nome: "", tipo_servico: null, quando: "qualquer",
+  const t = id ? tabelasPreco.find(x => x.id === id) : { nome: "", tipo_servico: null, quando: "qualquer", dias: "qualquer",
     tarifa_fixa: TAXA_FIXA_CLIENTE, valor_km: TARIFA_KM_CLIENTE, valor_minimo: null, adicional_pct: 0,
     taxa_go_ladies_pct: 25, ordem: maiorOrdem + 10, observacao: "" };
   if(!t) return;
@@ -10418,6 +10428,7 @@ function editarTabelaPreco(id){
     <div class="tp-grid">
       <div><label>Nome</label><input type="text" id="tp-nome" value="${escapeHtml(t.nome)}" placeholder="Ex.: Criança à noite"></div>
       <div><label>Vale para</label><select id="tp-tipo">${opTipo.map(([v, r]) => `<option value="${v}" ${(t.tipo_servico || "") === v ? "selected" : ""}>${r}</option>`).join("")}</select></div>
+      ${tabelasPrecoTemDias() ? `<div><label>Dias</label><select id="tp-dias">${Object.entries(DIAS_TABELA_PRECO).map(([v, r]) => `<option value="${v}" ${(t.dias || "qualquer") === v ? "selected" : ""}>${r}</option>`).join("")}</select></div>` : ""}
       <div><label>Quando</label><select id="tp-quando">${Object.entries(QUANDO_TABELA_PRECO).map(([v, r]) => `<option value="${v}" ${t.quando === v ? "selected" : ""}>${r}</option>`).join("")}</select></div>
       <div><label>Taxa Go Ladies (%)</label><input type="number" id="tp-taxa" step="0.5" min="0" max="100" value="${t.taxa_go_ladies_pct}"></div>
       <div><label>Taxa fixa por trecho (R$)</label><input type="number" id="tp-fixa" step="0.01" min="0" value="${t.tarifa_fixa}"></div>
@@ -10425,7 +10436,7 @@ function editarTabelaPreco(id){
       <div><label>Valor mínimo por trecho (R$)</label><input type="number" id="tp-min" step="0.01" min="0" value="${t.valor_minimo ?? ""}" placeholder="sem mínimo"></div>
       <div><label>Adicional (%)</label><input type="number" id="tp-adic" step="1" min="0" value="${t.adicional_pct}"></div>
       <div><label>Ordem (desempate)</label><input type="number" id="tp-ordem" step="1" value="${t.ordem}"></div>
-      <div style="grid-column:span 3;"><label>Observação</label><input type="text" id="tp-obs" value="${escapeHtml(t.observacao || "")}" placeholder="Ex.: testando preço de dia mais baixo"></div>
+      <div class="tp-obs" style="grid-column:span ${tabelasPrecoTemDias() ? 2 : 3};"><label>Observação</label><input type="text" id="tp-obs" value="${escapeHtml(t.observacao || "")}" placeholder="Ex.: testando preço de dia mais baixo"></div>
     </div>
     <div class="tp-exemplo" id="tp-exemplo"></div>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
@@ -10439,9 +10450,11 @@ function editarTabelaPreco(id){
 }
 function lerEditorTabelaPreco(){
   const num = id => { const v = document.getElementById(id).value; return v === "" ? null : Number(v); };
+  const selDias = document.getElementById("tp-dias");
   return {
     nome: document.getElementById("tp-nome").value.trim(),
     tipo_servico: document.getElementById("tp-tipo").value || null,
+    ...(selDias ? { dias: selDias.value } : {}),
     quando: document.getElementById("tp-quando").value,
     tarifa_fixa: num("tp-fixa") ?? 0,
     valor_km: num("tp-km") ?? 0,
@@ -10473,13 +10486,14 @@ async function salvarTabelaPreco(){
   if([d.tarifa_fixa, d.valor_km, d.adicional_pct].some(x => x < 0) || (d.valor_minimo != null && d.valor_minimo < 0)){ alert("Os valores não podem ser negativos."); return; }
   const id = tabelaPrecoEditando;
   const antes = id ? tabelasPreco.find(x => x.id === id) : null;
-  const rot = { nome: "Nome", tipo_servico: "Vale para", quando: "Quando", tarifa_fixa: "Taxa fixa por trecho", valor_km: "Valor por km",
+  const rot = { nome: "Nome", tipo_servico: "Vale para", ...("dias" in d ? { dias: "Dias" } : {}), quando: "Quando", tarifa_fixa: "Taxa fixa por trecho", valor_km: "Valor por km",
     valor_minimo: "Valor mínimo", adicional_pct: "Adicional", taxa_go_ladies_pct: "Taxa Go Ladies", ordem: "Ordem", observacao: "Observação" };
   const fmt = (k, v) => {
     if(v == null || v === "") return k === "tipo_servico" ? "Todos" : "sem";
     if(["tarifa_fixa", "valor_km", "valor_minimo"].includes(k)) return formatarMoedaBR(Number(v));
     if(["adicional_pct", "taxa_go_ladies_pct"].includes(k)) return Number(v) + "%";
     if(k === "quando") return QUANDO_TABELA_PRECO[v] || v;
+    if(k === "dias") return DIAS_TABELA_PRECO[v] || v;
     return String(v);
   };
   const linhas = antes
@@ -17738,10 +17752,20 @@ function viagemJaPaga(){
   return !!(pg && pg.status === "Pago");
 }
 // ── Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026) ──────────────
-// Cada trecho usa a tabela ativa que mais combina com o tipo de serviço e o
-// período (noite = 22h às 6h ou feriado marcado). Mesma escolha do
-// calcular_cotacao_tabela no banco, que cota os pedidos do app.
-const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 22h)", noite: "Noite (22h às 6h) ou feriado", qualquer: "Qualquer horário" };
+// Cada trecho usa a tabela ativa que mais combina com os dias (seg a sex, sáb
+// e dom, feriado), o tipo de serviço e o horário (noite = 22h às 6h). Mesma
+// escolha do calcular_cotacao_tabela no banco, que cota os pedidos do app
+// (schema_tabelas_preco_dias.sql, 06/11/2026).
+const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 22h)", noite: "Noite (22h às 6h)", qualquer: "Qualquer horário" };
+const DIAS_TABELA_PRECO = { semana: "Seg a sex", fim_semana: "Sáb e dom", feriado: "Feriado", qualquer: "Qualquer dia" };
+// O CRM já tem a coluna "dias"? (falta rodar schema_tabelas_preco_dias.sql se não)
+function tabelasPrecoTemDias(){ return tabelasPreco.length > 0 && ("dias" in tabelasPreco[0]); }
+// Que tipo de dia é: feriado ganha; sem data, conta como dia de semana.
+function tipoDiaTabela(iso, feriado){
+  if(feriado) return "feriado";
+  if(iso){ const d = new Date(iso + "T12:00:00").getDay(); if(d === 0 || d === 6) return "fim_semana"; }
+  return "semana";
+}
 let tabelaPrecoMexida = false;      // o preço foi refeito nesta edição da viagem
 let tabelaPrecoNomeSalvo = "";      // nome guardado na viagem quando abriu
 let repasseTabelaRatio = null;      // parte da motorista no preço de tabela calculado
@@ -17751,12 +17775,16 @@ function tabelaPrecoPadraoSistema(noturno){
     adicional_pct: noturno ? ADICIONAL_NOTURNO * 100 : 0,
     taxa_go_ladies_pct: Math.round((1 - PERCENTUAL_REPASSE_MOTORISTA) * 100), ativa: true };
 }
-function escolherTabelaPreco(tipo, noturno){
-  if(tabelasPrecoSqlFaltando) return tabelaPrecoPadraoSistema(noturno);
+// Ordem: dias exato (no feriado sem tabela de feriado, vale a de sáb e dom) >
+// "Qualquer dia"; depois tipo exato > Todos; dia/noite exato > Qualquer horário; ordem.
+function escolherTabelaPreco(tipo, noturno, dataIso, feriado){
+  if(tabelasPrecoSqlFaltando) return tabelaPrecoPadraoSistema(noturno || feriado);
   const periodo = noturno ? "noite" : "dia";
-  const cand = tabelasPreco.filter(t => t.ativa && (!t.tipo_servico || t.tipo_servico === tipo) && (t.quando === "qualquer" || t.quando === periodo));
-  cand.sort((a, b) => (!!b.tipo_servico - !!a.tipo_servico) || ((b.quando !== "qualquer") - (a.quando !== "qualquer")) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
-  return cand[0] || tabelaPrecoPadraoSistema(noturno);
+  const dia = tipoDiaTabela(dataIso, feriado);
+  const rankDias = t => { const d = t.dias || "qualquer"; return d === dia ? 0 : d === "qualquer" ? 2 : (dia === "feriado" && d === "fim_semana") ? 1 : -1; };
+  const cand = tabelasPreco.filter(t => t.ativa && (!t.tipo_servico || t.tipo_servico === tipo) && (t.quando === "qualquer" || t.quando === periodo) && rankDias(t) >= 0);
+  cand.sort((a, b) => (rankDias(a) - rankDias(b)) || (!!b.tipo_servico - !!a.tipo_servico) || ((b.quando !== "qualquer") - (a.quando !== "qualquer")) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
+  return cand[0] || tabelaPrecoPadraoSistema(noturno || feriado);
 }
 function taxaTabelaPreco(t){ return t && t.taxa_go_ladies_pct != null ? Number(t.taxa_go_ladies_pct) : 25; }
 // maior entre (fixa + km × valor) e o mínimo, × (1 + adicional %)
@@ -17775,9 +17803,11 @@ function tabelasDoModal(){
   const tipo = document.getElementById("vg-tipo-servico").value || "Padrão";
   const sel = document.getElementById("vg-tabela-preco");
   const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
+  const val = id => document.getElementById(id).value;
+  const marcado = id => document.getElementById(id).checked;
   return {
-    ida: forcada || escolherTabelaPreco(tipo, document.getElementById("vg-adicional-noturno").checked),
-    volta: forcada || escolherTabelaPreco(tipo, document.getElementById("vg-adicional-noturno-retorno").checked),
+    ida: forcada || escolherTabelaPreco(tipo, marcado("vg-adicional-noturno"), val("vg-data"), marcado("vg-feriado")),
+    volta: forcada || escolherTabelaPreco(tipo, marcado("vg-adicional-noturno-retorno"), val("vg-data-retorno") || val("vg-data"), marcado("vg-feriado-retorno")),
     forcada: !!forcada,
   };
 }
@@ -17795,8 +17825,8 @@ function atualizarInfoTabelaPreco(){
   const info = document.getElementById("vg-tabela-preco-info");
   const usa = !tabelasPrecoSqlFaltando;
   wrap.style.display = usa ? "" : "none";
-  document.getElementById("vg-adicional-noturno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite na ida" : "Madrugada (22h às 6h) ou feriado: +30% na ida";
-  document.getElementById("vg-adicional-noturno-retorno-rot").textContent = usa ? "Noite (22h às 6h) ou feriado: usa a tabela da noite na volta" : "Madrugada (22h às 6h) ou feriado: +30% na volta";
+  document.getElementById("vg-adicional-noturno-rot").textContent = usa ? "Noite (22h às 6h) na ida" : "Madrugada (22h às 6h): +30% na ida";
+  document.getElementById("vg-adicional-noturno-retorno-rot").textContent = usa ? "Noite (22h às 6h) na volta" : "Madrugada (22h às 6h): +30% na volta";
   if(!usa){ info.textContent = ""; return; }
   const { ida, volta } = tabelasDoModal();
   const temVolta = (Number(document.getElementById("vg-distancia-retorno-km").value) || 0) > 0;
@@ -18749,7 +18779,8 @@ async function removerFeriado(id){
   feriadosLista = null; renderFeriados();
 }
 // Na viagem: escolheu uma data que é feriado (na lista ou no calendário da
-// Sede) → marca a tabela da noite ou feriado e avisa. Desmarcar continua livre.
+// Sede) → marca o quadrinho Feriado e avisa. Desmarcar continua livre.
+// Trocar a data sempre refaz a tabela (sáb e dom têm tabela própria).
 function feriadoNaData(iso, endereco){
   if(!iso) return null;
   const end = String(endereco || "");
@@ -18761,13 +18792,14 @@ function feriadoNaData(iso, endereco){
   return f2 ? f2.nome : null;
 }
 function avisarFeriadoViagem(idData, idCheck){
-  const origem = document.getElementById(idCheck === "vg-adicional-noturno" ? "vg-origem-endereco" : "vg-destino-endereco").value;
+  const origem = document.getElementById(idCheck === "vg-feriado" ? "vg-origem-endereco" : "vg-destino-endereco").value;
   const nome = feriadoNaData(document.getElementById(idData).value, origem);
   const chk = document.getElementById(idCheck);
-  if(!nome || chk.checked) return;
-  chk.checked = true;
+  if(nome && !chk.checked){
+    chk.checked = true;
+    showToast(`${nome} é feriado: marquei Feriado na viagem`);
+  }
   periodoTrechoTrocado();
-  showToast(`${nome} é feriado: marquei a tabela da noite ou feriado`);
 }
 
 // ===== MOTIVO PADRÃO DE "NÃO FECHOU" (27/10/2026) =====
@@ -19127,6 +19159,8 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
   document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
+  document.getElementById("vg-feriado").checked = !!v.feriado;
+  document.getElementById("vg-feriado-retorno").checked = !!v.feriado_retorno;
   prepararTabelaPrecoModal(v);
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
   document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
@@ -19319,6 +19353,7 @@ function alternarVoltaViagem(){
     if(preenchida && !confirm("Tirar a volta desta viagem? Os dados da volta serão apagados ao salvar.")){ cb.checked = true; return; }
     CAMPOS_VOLTA_VIAGEM.forEach(id=>{ document.getElementById(id).value = ""; });
     document.getElementById("vg-adicional-noturno-retorno").checked = false;
+    document.getElementById("vg-feriado-retorno").checked = false;
     recalcularCotacao();
   }
   document.getElementById("vg-volta-campos").style.display = cb.checked ? "" : "none";
@@ -19422,6 +19457,15 @@ async function saveViagem(){
   const colunasVoltaExistem = viagens.length > 0 && ("distancia_km_retorno" in viagens[0]);
   if(colunasVoltaExistem || volta.distancia_km_retorno != null || volta.adicional_noturno_retorno){
     Object.assign(payload, volta);
+  }
+  // Colunas de schema_tabelas_preco_dias.sql (06/11/2026): mesmo cuidado.
+  const feriados = {
+    feriado: document.getElementById("vg-feriado").checked,
+    feriado_retorno: document.getElementById("vg-feriado-retorno").checked,
+  };
+  const colunasFeriadoExistem = viagens.length > 0 && ("feriado" in viagens[0]);
+  if(colunasFeriadoExistem || feriados.feriado || feriados.feriado_retorno){
+    Object.assign(payload, feriados);
   }
   // Colunas de schema_garupa_pessoas.sql (23/10/2026): mesmo cuidado.
   const numPessoas = id => document.getElementById(id).value === "" ? null : Math.round(Number(document.getElementById(id).value));
