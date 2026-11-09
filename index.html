@@ -3478,7 +3478,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <button class="btn ghost" id="sag-m-arquivar" style="display:none;" onclick="marcarItemAgenda('Arquivado')">Arquivar</button>
       <button class="btn ghost" id="sag-m-adiar" style="display:none;" onclick="adiarItemAgenda()">Adiar 1 semana</button>
       <button class="btn ghost" id="sag-m-reabrir" style="display:none;" onclick="marcarItemAgenda('Aberto')">Reabrir</button>
-      <button class="btn secondary" id="sag-m-concluir" style="display:none;" onclick="marcarItemAgenda('Feito')">Concluir</button>
+      <button class="btn secondary" id="sag-m-concluir" style="display:none;" onclick="marcarItemAgenda('Feito')">Finalizar tarefa</button>
       <button class="btn" onclick="salvarItemAgenda()">Salvar</button>
     </div>
   </div>
@@ -11867,7 +11867,7 @@ async function sagMoverParaDia(id, iso){
 function sagCheck(x){
   if(!x.check) return "";
   const st = x.feito ? "Aberto" : "Feito";
-  return `<button type="button" class="sag-ck ${x.feito?"on":""}" title="${x.feito?"Reabrir":"Concluir"}" aria-label="${x.feito?"Reabrir":"Concluir"}: ${escapeHtml(x.titulo)}" onclick="event.stopPropagation(); sagConcluirRapido(${x.check}, '${st}')">${x.feito?`<svg class=ic aria-hidden=true><use href=#i-check /></svg>`:""}</button>`;
+  return `<button type="button" class="sag-ck ${x.feito?"on":""}" title="${x.feito?"Reabrir":(x.tipo==="decidir"?"Marcar como decidido":"Finalizar tarefa")}" aria-label="${x.feito?"Reabrir":(x.tipo==="decidir"?"Marcar como decidido":"Finalizar tarefa")}: ${escapeHtml(x.titulo)}" onclick="event.stopPropagation(); sagConcluirRapido(${x.check}, '${st}')">${x.feito?`<svg class=ic aria-hidden=true><use href=#i-check /></svg>`:""}</button>`;
 }
 async function sagConcluirRapido(id, status){
   const agora = new Date().toISOString();
@@ -11876,7 +11876,7 @@ async function sagConcluirRapido(id, status){
   if(r.error){ showToast("Não salvou: " + r.error.message, true); return; }
   const item = await sagSincronizarPedidos(r.data);
   sedeAgenda = sedeAgenda.map(x=>x.id===item.id ? item : x);
-  showToast(status==="Aberto" ? "Reaberto" : (item.tipo==="decidir" ? "Decidido!" : "Feito!"));
+  showToast(status==="Aberto" ? "Reaberto" : (item.tipo==="decidir" ? "Decidido!" : "Tarefa finalizada!"));
   renderSede(); renderSuaSemana();
 }
 // Card do Quadro: caixinha, título e etiquetas (prioridade escrita, data, de onde vem, quem)
@@ -12123,7 +12123,8 @@ function abrirItemAgenda(id, dataPre, areaPre){
   document.getElementById("sag-m-reabrir").style.display = x && !aberto ? "" : "none";
   // Ideia também conclui (ex.: já foi feita), para ficar no histórico em vez de sumir como no Arquivar
   document.getElementById("sag-m-concluir").style.display = x && aberto ? "" : "none";
-  document.getElementById("sag-m-concluir").textContent = x && x.tipo==="decidir" ? "Decidido" : "Concluir";
+  // 09/11/2026: "Concluir" confundia (parecia "terminar de preencher"); agora diz o que faz
+  document.getElementById("sag-m-concluir").textContent = x && x.tipo==="decidir" ? "Decidido" : x && x.tipo==="ideia" ? "Finalizar ideia" : "Finalizar tarefa";
   let info = "";
   if(x) info = `Anotado por ${escapeHtml(x.criado_por||"-")} em ${sedeDataHora(x.criado_em)}${x.status!=="Aberto" ? ` · ${x.status==="Feito"?"feito":"arquivado"}${x.feito_por?" por "+escapeHtml(x.feito_por):""}${x.feito_em?" em "+sedeDataHora(x.feito_em):""}` : ""}`;
   if(x && x.tipo==="ideia") info += (info?"<br>":"") + "Para virar tarefa ou decisão, troque o <b>Tipo</b> acima, escolha a cor e salve.";
@@ -12186,7 +12187,7 @@ async function salvarItemAgenda(statusNovo){
   const item = await sagSincronizarPedidos(r.data);
   sedeAgenda = sagEditando ? sedeAgenda.map(x=>x.id===item.id ? item : x) : [...sedeAgenda, item];
   closeModal("sede-agenda-modal");
-  showToast(statusNovo==="Feito" ? (tipo==="decidir" ? "Decidido!" : "Feito!") : statusNovo==="Arquivado" ? "Arquivado" : "Salvo!");
+  showToast(statusNovo==="Feito" ? (tipo==="decidir" ? "Decidido!" : tipo==="ideia" ? "Ideia finalizada!" : "Tarefa finalizada!") : statusNovo==="Arquivado" ? "Arquivado" : "Salvo!");
   renderSede(); renderSuaSemana();
 }
 function marcarItemAgenda(status){ salvarItemAgenda(status); }
