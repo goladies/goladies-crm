@@ -11787,16 +11787,21 @@ function sagFeriadoHtml(iso, curto){
   return sagAniversarioHtml(iso, curto) + sagFeriados(iso).map(f=>`<div class="sag-fer ${f.facultativo?"fac":""}" title="${escapeHtml(f.nome)} · ${f.facultativo?"ponto facultativo":"feriado "+(f.onde==="Brasil"?"nacional":f.onde==="RS"?"no RS":"em "+f.onde)}"><svg class=ic aria-hidden=true><use href=#i-flag /></svg><span>${escapeHtml(f.nome)}${curto?"":` · ${escapeHtml(f.onde)}`}</span></div>`).join("");
 }
 
+// 09/11/2026: tarefa anotada aqui e finalizada fica no dia MARCADO (não no dia em que foi finalizada).
+// Se esse dia é hoje ou depois, ela continua aparecendo (cinza e riscada) mesmo com o filtro Feito
+// desligado, para não "sumir"; finalizadas de dias passados seguem só com o filtro Feito (histórico).
+function sagDiaNaAgenda(x){ return x.feito ? (x.origem==="agenda" && x.data ? x.data : x.feito) : x.data; }
+function sagFinalizadaVisivel(x){ return !!x.feito && x.origem==="agenda" && !!x.data && x.data >= hojeLocalISO(); }
 function sagPassa(x){
   const tipo = x.feito ? "feito" : x.tipo;
-  if(!sag.tipos.has(tipo)) return false;
+  if(!sag.tipos.has(tipo) && !(sagFinalizadaVisivel(x) && sag.tipos.has(x.tipo))) return false;
   if(!x.feito && !sag.cores.has(x.cor)) return false;
   if(sag.area && x.area!==sag.area) return false;
   if(sag.quem && !x.quem.includes(sag.quem)) return false;
   return true;
 }
 function sagNoDia(x, iso){
-  if(x.feito) return x.feito===iso;
+  if(x.feito) return sagDiaNaAgenda(x)===iso;
   if(!x.data) return false;
   if(x.dataFim && x.dataFim > x.data) return x.data<=iso && x.dataFim>=iso;
   return x.data===iso;
@@ -11869,7 +11874,24 @@ function sagCheck(x){
   const st = x.feito ? "Aberto" : "Feito";
   return `<button type="button" class="sag-ck ${x.feito?"on":""}" title="${x.feito?"Reabrir":(x.tipo==="decidir"?"Marcar como decidido":"Finalizar tarefa")}" aria-label="${x.feito?"Reabrir":(x.tipo==="decidir"?"Marcar como decidido":"Finalizar tarefa")}: ${escapeHtml(x.titulo)}" onclick="event.stopPropagation(); sagConcluirRapido(${x.check}, '${st}')">${x.feito?`<svg class=ic aria-hidden=true><use href=#i-check /></svg>`:""}</button>`;
 }
+// Data por extenso para as perguntas: "quarta-feira, 11/11"
+function sagDataExtenso(iso){
+  if(!iso) return "";
+  const d = dataDeISO(iso);
+  return `${d.toLocaleDateString("pt-BR",{weekday:"long"})}, ${iso.slice(8,10)}/${iso.slice(5,7)}`;
+}
+// 09/11/2026: finalizar sempre pergunta antes (a bolinha e o botão finalizavam sem avisar).
+// Se o dia marcado ainda não chegou, a pergunta avisa isso.
+function sagConfirmarFinalizar(x){
+  if(!x) return true;
+  const nome = x.tipo==="decidir" ? "Marcar como decidido" : x.tipo==="ideia" ? "Finalizar a ideia" : "Finalizar a tarefa";
+  let txt = `${nome} "${x.titulo}"${x.data ? ` de ${sagDataExtenso(x.data)}${x.hora ? " às "+x.hora.slice(0,5) : ""}` : ""}?`;
+  if(x.data && x.data > hojeLocalISO()) txt += `\n\nAtenção: o dia dela ainda não chegou.`;
+  txt += `\n\nEla fica cinza e riscada no dia marcado. Para desfazer, abra e clique em Reabrir.`;
+  return confirm(txt);
+}
 async function sagConcluirRapido(id, status){
+  if(status==="Feito" && !sagConfirmarFinalizar(sedeAgenda.find(i=>i.id===id))) return;
   const agora = new Date().toISOString();
   const reg = { status, feito_em: status==="Aberto" ? null : agora, feito_por: status==="Aberto" ? null : sagEu(), atualizado_em: agora };
   const r = await sb.from("sede_agenda").update(reg).eq("id", id).select().single();
@@ -12161,6 +12183,18 @@ async function salvarItemAgenda(statusNovo){
   const titulo = document.getElementById("sag-m-titulo").value.trim();
   if(!titulo){ showToast("Escreva o que é", true); return; }
   const tipo = document.querySelector('input[name="sag-m-tipo"]:checked').value, ideia = tipo==="ideia";
+  // 09/11/2026: sem data o item some do calendário (fica só no Quadro). Data pela metade conta como sem data.
+  const elData = document.getElementById("sag-m-data"), temHora = !!document.getElementById("sag-m-hora").value;
+  const deIdeia = sagEditando && (sedeAgenda.find(i=>i.id===sagEditando)||{}).tipo==="ideia"; // ideia virando tarefa: sem data é o normal
+  if(!ideia && !statusNovo && !elData.value && !(deIdeia && !temHora && !(elData.validity && elData.validity.badInput))){
+    if(elData.validity && elData.validity.badInput){ showToast("A data ficou incompleta. Confira dia, mês e ano.", true); elData.focus(); return; }
+    if(temHora){ showToast("Tem hora, mas falta a data. Escolha o dia para aparecer no calendário.", true); elData.focus(); return; }
+    if(!confirm("Salvar sem data?\n\nSem data, ela não aparece no calendário: fica só no Quadro e no aviso \"sem data\". Para pôr no calendário, clique em Cancelar e escolha o dia.")) { elData.focus(); return; }
+  }
+  if(statusNovo==="Feito"){
+    const base = sagEditando ? sedeAgenda.find(i=>i.id===sagEditando) : null;
+    if(!sagConfirmarFinalizar({ tipo, titulo, data: ideia ? null : (elData.value || null), hora: document.getElementById("sag-m-hora").value || (base && base.hora) || "" })) return;
+  }
   const agora = new Date().toISOString();
   const reg = { tipo, titulo, detalhe:document.getElementById("sag-m-detalhe").value.trim() || null,
     cor: ideia ? "branco" : document.querySelector('input[name="sag-m-cor"]:checked').value,
