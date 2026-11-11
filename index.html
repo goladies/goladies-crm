@@ -4073,7 +4073,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="full obrig destaque"><label>Cliente</label><select id="vg-cliente" onchange="clienteViagemEscolhido()"></select>
           <div id="vg-cliente-foto" style="display:none; align-items:center; gap:12px; margin-top:8px;"></div></div>
         <div class="obrig destaque"><label>Status da viagem</label><select id="vg-viagem-status" onchange="statusViagemMudou()"></select></div>
-        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado(); renderPontosPassageiros()"></select></div>
+        <div><label>Tipo de serviço</label><select id="vg-tipo-servico" onchange="mostrarCampoEvento(); periodoTrechoTrocado(); renderPontosPassageiros(); atualizarAutorizacaoNaTela()"></select></div>
         <div class="full" id="vg-evento-wrap"><label>Descrição do evento</label><input type="text" id="vg-evento-descricao" placeholder="Ex.: aniversário, formatura, show"></div>
         <!-- O que sobra depois de tirar "Embarque:"/"Destino:" (ver vg-origem-obs/
              vg-destino-obs no Trajeto da ida): recado geral da cliente ao pedir
@@ -18319,6 +18319,7 @@ async function clienteViagemEscolhido(){
   }
   clienteViagemMudou();
   atualizarFotoClienteViagem();
+  atualizarAutorizacaoNaTela();
 }
 function clienteViagemMudou(){
   if(!editingViagemId){
@@ -18997,16 +18998,63 @@ function precisaAutorizacao(v){
   if(!v.passageira_cliente_id && teen && teen.aniversario && idadeAnos(teen.aniversario) >= 18) return false;
   return true;
 }
+// Com o modal da viagem aberto, depois do aviso a tela sobe até o quadro
+// amarelo e ele pisca (viagem #67, 11/11/2026: o Salvar travava e ela não
+// achava onde registrar, porque o quadro só olhava o que estava salvo).
 function avisoSemAutorizacao(){
-  alert("Esta viagem é de adolescente e ainda não tem a autorização do responsável legal.\n\nPor favor, registre a autorização no quadro do topo da viagem antes de seguir.");
+  const modalAberto = document.getElementById("viagem-modal").classList.contains("open");
+  alert("Esta viagem é de adolescente e ainda não tem a autorização do responsável legal.\n\n"
+    + (modalAberto ? "Ao fechar este aviso, a tela sobe até o quadro amarelo da autorização, no topo da viagem." : "Por favor, abra a viagem e registre a autorização no quadro amarelo do topo antes de seguir."));
+  if(!modalAberto) return;
+  atualizarAutorizacaoNaTela();
+  const box = document.getElementById("vg-autorizacao-box");
+  if(box.style.display === "none") return;
+  // O título da viagem fica fixo no alto: desconta a altura dele.
+  const topo = document.querySelector("#viagem-modal .vg-topo");
+  box.style.scrollMarginTop = ((topo ? topo.offsetHeight : 0) + 12) + "px";
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+  if(box.animate) box.animate([{ boxShadow: "0 0 0 0 var(--c-amber)" }, { boxShadow: "0 0 0 6px var(--c-amber)" }, { boxShadow: "0 0 0 0 var(--c-amber)" }], { duration: 700, iterations: 3 });
 }
-function renderAutorizacaoViagem(v){
+// O quadro acompanha o que está NA TELA (tipo, cliente, status), não só o
+// que está salvo: assim, ao escolher "Adolescente" ou trocar a cliente, ele
+// já aparece. Chamado pelos onchange do tipo, da cliente e do status.
+function atualizarAutorizacaoNaTela(){
+  if(!document.getElementById("viagem-modal").classList.contains("open")) return;
+  const salva = editingViagemId ? (viagens.find(x=>x.id===editingViagemId) || {}) : {};
+  const naTela = {
+    ...salva,
+    id: editingViagemId || null,
+    tipo_servico: document.getElementById("vg-tipo-servico").value,
+    cliente_id: Number(document.getElementById("vg-cliente").value) || null,
+    status: document.getElementById("vg-viagem-status").value
+  };
+  // Trocou a cliente na tela: a passageira salva era de outra cliente.
+  if(salva.cliente_id && naTela.cliente_id !== salva.cliente_id) naTela.passageira_cliente_id = null;
+  const naoSalva = !editingViagemId || salva.tipo_servico !== naTela.tipo_servico || salva.cliente_id !== naTela.cliente_id;
+  renderAutorizacaoViagem(naTela, naoSalva);
+}
+function mudarViagemParaSolicitada(){
+  document.getElementById("vg-viagem-status").value = "Solicitada";
+  statusViagemMudou();
+  showToast("Status mudou pra Solicitada. Agora é só clicar em Salvar.");
+}
+function renderAutorizacaoViagem(v, naoSalva){
   const box = document.getElementById("vg-autorizacao-box");
   if(!v || !(precisaAutorizacao(v) || v.autorizacao_status === "autorizada")){ box.style.display = "none"; box.innerHTML = ""; return; }
   const teenId = v.passageira_cliente_id || v.cliente_id;
   const teen = clientesTransporte.find(c=>c.id===teenId);
   const primeiro = teen ? String(teen.nome||"").split(" ")[0] : "a (o) adolescente";
   box.style.display = "block";
+  // A autorização é gravada na viagem salva. Se o tipo ou a cliente mudou só
+  // na tela (ou a viagem é nova), primeiro salva como Solicitada.
+  if(naoSalva && v.autorizacao_status !== "autorizada"){
+    box.style.borderLeftColor = "var(--c-amber)"; box.style.background = "var(--c-amber-bg)";
+    const jaSolicitada = v.status === "Solicitada";
+    box.innerHTML = `<b>🧒 Adolescente: falta a autorização do responsável legal</b>
+      <div style="margin-top:4px;">Pra registrar a autorização, ${v.id ? "salve esta viagem" : "lance a viagem"} com o status <b>Solicitada</b>. Depois abra a viagem de novo: os campos do responsável legal aparecem aqui, neste quadro.</div>
+      ${jaSolicitada ? "" : `<button type="button" class="btn sec" style="margin-top:8px;" onclick="mudarViagemParaSolicitada()">Mudar o status pra Solicitada</button>`}`;
+    return;
+  }
   if(v.autorizacao_status === "autorizada"){
     box.style.borderLeftColor = "var(--c-green)"; box.style.background = "var(--c-green-bg)";
     box.innerHTML = `<b><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Autorização do responsável legal registrada</b>`
@@ -19529,6 +19577,7 @@ function marcarConfirmadoSeAguardandoPagamento(){
 function statusViagemMudou(){
   marcarConfirmadoSeAguardandoPagamento();
   atualizarStatusOferta();
+  atualizarAutorizacaoNaTela();
 }
 async function saveViagem(){
   const feita = lancandoViagemFeita ? validarViagemFeita() : null;
