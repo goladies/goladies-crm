@@ -17790,8 +17790,11 @@ function htmlGarupaCliente(c){
 function textoPessoasViagem(v){
   if(v.pessoas_ida && v.pessoas_volta && v.pessoas_ida !== v.pessoas_volta) return `${v.pessoas_ida} na ida · ${v.pessoas_volta} na volta`;
   if(v.pessoas_ida || v.pessoas_volta){ const n = v.pessoas_ida || v.pessoas_volta; return `${n} ${Number(n) === 1 ? "pessoa" : "pessoas"}`; }
+  // Soma a cliente só quando ela vai no carro (viagem #67, 11/11/2026: a mãe
+  // pediu e só a filha foi, e o cartão mostrava "2 pessoas").
   const n = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id).length;
-  return n ? `${n + 1} pessoas` : "";
+  const total = n + (v.cliente_vai_no_carro === false ? 0 : 1);
+  return n ? `${total} ${total === 1 ? "pessoa" : "pessoas"}` : "";
 }
 function renderParadasModal(){
   const el = document.getElementById("vg-paradas-lista");
@@ -19099,7 +19102,7 @@ function renderAutorizacaoViagem(v, naoSalva){
       <div><label>CPF <span style="font-weight:400; color:var(--muted);">(opcional)</span></label><input type="text" id="vg-aut-cpf" inputmode="numeric" value="${escapeHtml(v.responsavel_cpf||"")}"></div>
       <div><label>Como foi a conversa</label><select id="vg-aut-forma">${["Ligação","WhatsApp","Pessoalmente"].map(o=>`<option>${o}</option>`).join("")}</select></div>
       <div class="full"><label>Observação</label><textarea id="vg-aut-obs" rows="2" placeholder="O que vocês combinaram, cuidados pedidos, quem busca..."></textarea></div>
-      <div class="full"><label class="vg-check"><input type="checkbox" id="vg-aut-ligar" checked> Criar a ficha do responsável (ou usar a que já existe com esse WhatsApp), ligar à conta de ${escapeHtml(primeiro)} e passar a viagem pro nome dele (a), como na Conta Adolescente</label></div>
+      <div class="full"><label class="vg-check"><input type="checkbox" id="vg-aut-ligar" ${v.autorizacao_status === "pendente" ? "checked" : ""}> Criar a ficha do responsável (ou usar a que já existe com esse WhatsApp), ligar à conta de ${escapeHtml(primeiro)} e passar a viagem pro nome dele (a), como na Conta Adolescente</label></div>
     </div>
     <button type="button" class="btn" style="margin-top:8px;" onclick="registrarAutorizacaoViagem(${v.id})"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Tenho a autorização, seguir com a viagem</button>
     </div>`;
