@@ -16429,9 +16429,9 @@ function htmlAcessoPainelCliente(c){
   const dups = duplicatasCliente(c);
   if(dups.length){
     html += `<div style="margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink);"><svg class=ic aria-hidden=true><use href=#i-alert-triangle /></svg> Mesmo WhatsApp de: ` +
-      dups.map(d=>`<b>${escapeHtml(nomeCod(d))}</b> (ficha nº ${d.id}${d.auth_user_id ? ", com login" : ""})`).join(", ") +
+      dups.map(d=>`<b>${escapeHtml(nomeCod(d))}</b>${d.auth_user_id ? " (com login)" : ""}`).join(", ") +
       `.<br><small>Unificar traz tudo da outra pra esta (viagens, lugares salvos, pedidos, ligações), completa o que estiver vazio e apaga a outra. Antes, mostra as duas lado a lado pra você escolher o que fica onde for diferente.</small><br>` +
-      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (ficha nº ${c.id}) e apagando a nº ${d.id}</button>`).join(" ") +
+      dups.map(d=>`<button type="button" class="act act-edit" style="margin-top:6px;" onclick="unificarClientes(${c.id}, ${d.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> Unificar, mantendo esta (${escapeHtml(nomeCod(c))}) e apagando ${escapeHtml(nomeCod(d))}</button>`).join(" ") +
       `</div>`;
   }
   return html;
@@ -16497,7 +16497,7 @@ function unificarClientes(manter, remover){
     const diferente = cheio(m[k]) && cheio(r[k]) && String(m[k]).trim().toLowerCase() !== String(r[k]).trim().toLowerCase();
     if(!diferente){
       const de = cheio(m[k]) ? m : r;
-      linhas += `<tr><th>${ROTULO_CAMPO_CLIENTE[k]}</th><td colspan="2">${mostrar(k, de)} <small style="color:var(--muted)">${cheio(m[k]) ? "" : `(vem da ficha nº ${remover})`}</small></td></tr>`;
+      linhas += `<tr><th>${ROTULO_CAMPO_CLIENTE[k]}</th><td colspan="2">${mostrar(k, de)} <small style="color:var(--muted)">${cheio(m[k]) ? "" : `(vem de ${escapeHtml(nomeCod(r))})`}</small></td></tr>`;
       return;
     }
     difs++;
@@ -16512,11 +16512,11 @@ function unificarClientes(manter, remover){
     ? `<b>${difs} ${difs===1 ? "dado está diferente" : "dados estão diferentes"}</b> nas duas fichas. Escolha qual fica; já vem marcado o que a cliente preencheu no app. O outro valor fica guardado nas notas.`
     : "Nenhum dado diferente: o que estiver vazio numa ficha é completado com o da outra.";
   document.getElementById("unificar-tabela").innerHTML =
-    `<tr><th></th><th>Ficha nº ${manter} <small>(fica)</small></th><th>Ficha nº ${remover} <small>(é apagada)</small></th></tr>` + linhas;
+    `<tr><th></th><th>${escapeHtml(nomeCod(m))} <small>(fica)</small></th><th>${escapeHtml(nomeCod(r))} <small>(é apagada)</small></th></tr>` + linhas;
   document.getElementById("unificar-rodape").textContent =
-    `Vai para a ficha nº ${manter}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros`
+    `Vai para ${nomeCod(m)}: ${qtdViagens} ${qtdViagens===1?"viagem":"viagens"} (com pagamentos, avaliações e mensagens), lugares salvos, pedidos fora da área e ligações com outros cadastros`
     + (r.auth_user_id && !m.auth_user_id ? ", e o login do app" : "")
-    + `. Depois disso a ficha nº ${remover} é apagada. Não dá pra desfazer.`;
+    + `. Depois disso a ficha ${nomeCod(r)} é apagada. Não dá pra desfazer.`;
   document.getElementById("unificar-modal").classList.add("open");
 }
 async function confirmarUnificarClientes(){
@@ -16543,7 +16543,7 @@ async function confirmarUnificarClientes(){
 }
 async function aposUnificarClientes(manter, resumo){
   showToast(resumo && typeof resumo === "object"
-    ? `Unificadas! ${resumo.viagens||0} viagem(ns), ${resumo.lugares||0} lugar(es) salvo(s) e ${resumo.ligacoes||0} ligação(ões) passaram para a ficha nº ${manter}.`
+    ? `Unificadas! ${resumo.viagens||0} viagem(ns), ${resumo.lugares||0} lugar(es) salvo(s) e ${resumo.ligacoes||0} ligação(ões) passaram para ${nomeCod(clientesTransporte.find(x=>x.id===manter))}.`
     : "Clientes unificadas!");
   closeModal("cliente-transporte-modal");
   await recarregarTabelas("clientes_transporte", "viagens");
