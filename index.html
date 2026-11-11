@@ -19038,6 +19038,23 @@ function mudarViagemParaSolicitada(){
   statusViagemMudou();
   showToast("Status mudou pra Solicitada. Agora é só clicar em Salvar.");
 }
+// Quando quem pediu foi a própria responsável legal (a mãe, já cliente), não
+// precisa digitar nada: marca a caixa e o Salvar grava a autorização no nome
+// da cliente da viagem (pedido da Jú, 11/11/2026, viagem #67). Não aparece
+// quando a (o) adolescente pediu pelo app (aí a cliente é ela/ele).
+function caixaPropriaResponsavel(v){
+  if(v.autorizacao_status === "pendente") return "";
+  const cli = clientesTransporte.find(c=>c.id===v.cliente_id);
+  if(!cli) return "";
+  return `<label class="vg-check" style="margin-top:8px; font-weight:600;"><input type="checkbox" id="vg-aut-propria" onchange="propriaResponsavelMudou()"> ${escapeHtml(cli.nome||"A cliente")} é a responsável legal e foi ela quem pediu. Já tenho a autorização.</label>
+    <div id="vg-aut-propria-dica" style="display:none; margin-top:4px; color:var(--muted);">Ao clicar em Salvar, a autorização fica registrada no nome dela. Não precisa preencher mais nada.</div>`;
+}
+function propriaResponsavelMudou(){
+  const marcada = document.getElementById("vg-aut-propria").checked;
+  document.getElementById("vg-aut-propria-dica").style.display = marcada ? "" : "none";
+  const det = document.getElementById("vg-aut-detalhes");
+  if(det) det.style.display = marcada ? "none" : "";
+}
 function renderAutorizacaoViagem(v, naoSalva){
   const box = document.getElementById("vg-autorizacao-box");
   if(!v || !(precisaAutorizacao(v) || v.autorizacao_status === "autorizada")){ box.style.display = "none"; box.innerHTML = ""; return; }
@@ -19051,8 +19068,9 @@ function renderAutorizacaoViagem(v, naoSalva){
     box.style.borderLeftColor = "var(--c-amber)"; box.style.background = "var(--c-amber-bg)";
     const jaSolicitada = v.status === "Solicitada";
     box.innerHTML = `<b>🧒 Adolescente: falta a autorização do responsável legal</b>
-      <div style="margin-top:4px;">Pra registrar a autorização, ${v.id ? "salve esta viagem" : "lance a viagem"} com o status <b>Solicitada</b>. Depois abra a viagem de novo: os campos do responsável legal aparecem aqui, neste quadro.</div>
-      ${jaSolicitada ? "" : `<button type="button" class="btn sec" style="margin-top:8px;" onclick="mudarViagemParaSolicitada()">Mudar o status pra Solicitada</button>`}`;
+      ${caixaPropriaResponsavel(v)}
+      <div id="vg-aut-detalhes"><div style="margin-top:4px;">Se o responsável legal for outra pessoa: pra registrar a autorização, ${v.id ? "salve esta viagem" : "lance a viagem"} com o status <b>Solicitada</b>. Depois abra a viagem de novo: os campos do responsável legal aparecem aqui, neste quadro.</div>
+      ${jaSolicitada ? "" : `<button type="button" class="btn sec" style="margin-top:8px;" onclick="mudarViagemParaSolicitada()">Mudar o status pra Solicitada</button>`}</div>`;
     return;
   }
   if(v.autorizacao_status === "autorizada"){
@@ -19070,6 +19088,8 @@ function renderAutorizacaoViagem(v, naoSalva){
     + `Posso te ligar? Se preferir, me diga o melhor horário.`;
   const lk = linkWhats(v.responsavel_whatsapp, msg);
   box.innerHTML = `<b>🧒 Adolescente: falta a autorização do responsável legal</b>
+    ${caixaPropriaResponsavel(v)}
+    <div id="vg-aut-detalhes">
     <div style="margin-top:4px;">${v.autorizacao_status === "pendente" ? `${escapeHtml(primeiro)} pediu esta viagem pelo app e informou o responsável abaixo. ` : ""}A viagem só segue depois que você registrar a autorização.</div>
     ${lk?`<div style="margin:8px 0;"><a class="btn sec" href="${escapeHtml(lk)}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-brand-whatsapp /></svg> Chamar o responsável no WhatsApp</a></div>`:""}
     <div class="formgrid" style="margin-top:8px;">
@@ -19081,7 +19101,8 @@ function renderAutorizacaoViagem(v, naoSalva){
       <div class="full"><label>Observação</label><textarea id="vg-aut-obs" rows="2" placeholder="O que vocês combinaram, cuidados pedidos, quem busca..."></textarea></div>
       <div class="full"><label class="vg-check"><input type="checkbox" id="vg-aut-ligar" checked> Criar a ficha do responsável (ou usar a que já existe com esse WhatsApp), ligar à conta de ${escapeHtml(primeiro)} e passar a viagem pro nome dele (a), como na Conta Adolescente</label></div>
     </div>
-    <button type="button" class="btn" style="margin-top:8px;" onclick="registrarAutorizacaoViagem(${v.id})"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Tenho a autorização, seguir com a viagem</button>`;
+    <button type="button" class="btn" style="margin-top:8px;" onclick="registrarAutorizacaoViagem(${v.id})"><svg class=ic aria-hidden=true><use href=#i-circle-check /></svg> Tenho a autorização, seguir com a viagem</button>
+    </div>`;
 }
 async function registrarAutorizacaoViagem(id){
   const nome = document.getElementById("vg-aut-nome").value.trim();
@@ -19624,6 +19645,17 @@ async function saveViagem(){
     saida_confirmada: document.getElementById("vg-saida").checked,
     grupo_whatsapp_criado: document.getElementById("vg-grupo-whats").checked,
   };
+  const propria = document.getElementById("vg-aut-propria");
+  if(propria && propria.checked){
+    const cliAut = clientesTransporte.find(c=>c.id===payload.cliente_id);
+    if(cliAut) Object.assign(payload, {
+      autorizacao_status: "autorizada",
+      autorizacao_em: new Date().toISOString(),
+      autorizacao_forma: "Pedido da própria responsável",
+      responsavel_nome: cliAut.nome || null,
+      responsavel_whatsapp: cliAut.whatsapp || null
+    });
+  }
   if(!lancandoViagemFeita && STATUS_ANDANDO_SEM_AUTORIZACAO.includes(payload.status)){
     const atual = viagens.find(x=>x.id===editingViagemId) || {};
     if(precisaAutorizacao({ ...atual, ...payload, id: editingViagemId })) return avisoSemAutorizacao();
