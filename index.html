@@ -1317,6 +1317,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 #ft-sim .sim-bloco .sim-ajuda{margin:0 0 10px; font-size:var(--fs-xs); color:var(--text3); line-height:1.45;}
 #ft-sim .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
 #ft-sim .sim-grid .full{grid-column:1/-1;}
+.espera-linha{display:flex; gap:6px; align-items:stretch;}
+.espera-linha input{flex:1 1 auto; min-width:0;}
+.espera-linha select{flex:0 0 auto; width:auto !important;}
+.espera-conta{font-size:var(--fs-xs); color:var(--text3); line-height:1.45;}
+@media (max-width:900px){ #ft-sim .sim-grid .espera-cel{grid-column:1/-1;} }
 #ft-sim label{display:block; font-size:var(--fs-xs); color:var(--text3); margin-bottom:3px;}
 #ft-sim input[type=number],#ft-sim input[type=text],#ft-sim select{width:100%; padding:6px 9px; font-size:var(--fs-sm);}
 #ft-sim .sim-enderecos{margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border2);}
@@ -2195,7 +2200,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
                 <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
                 <div class="full"><label>Desses, km com a cliente das 22h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simular()"></div>
-                <div class="full"><label>Espera combinada, além dos 10 min inclusos (min)</label><input type="number" id="sim-espera" step="1" min="0" value="0" oninput="simular()"></div>
+                <!-- Espera em min ou horas e valor escolhido (11/11/2026) -->
+                <div class="espera-cel"><label for="sim-espera">Espera combinada, além dos 10 min inclusos</label><div class="espera-linha"><input type="number" id="sim-espera" step="any" min="0" value="0" oninput="esperaMudou('sim')"><select id="sim-espera-unid" aria-label="Unidade da espera" onchange="esperaUnidadeTrocada('sim')"><option value="min">min</option><option value="h">horas</option></select></div></div>
+                <div class="espera-cel"><label for="sim-espera-valor" id="sim-espera-valor-rot">Valor da espera (R$ por minuto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="sim-espera-valor" step="0.01" min="0" value="1.00" oninput="esperaMudou('sim')"></div></div>
+                <div class="full"><p class="sim-nota espera-conta" id="sim-espera-conta" style="margin:0;"></p></div>
                 <!-- Tabelas de preço (21/10/2026): mesma escolha da viagem -->
                 <div class="sim-tabela-preco"><label>Tipo de serviço</label><select id="sim-tipo" onchange="simTabelaTrocada()"></select></div>
                 <div class="sim-tabela-preco"><label>Tabela de preço</label><select id="sim-tabela-preco" onchange="simTabelaTrocada()"></select></div>
@@ -4182,9 +4190,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="full" id="vg-tabela-preco-wrap" style="display:none;"><label>Tabela de preço</label><select id="vg-tabela-preco" onchange="tabelaPrecoTrocada()"></select><span class="dica" id="vg-tabela-preco-info"></span></div>
         <div class="sugerido"><label>Tarifa fixa por trecho <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-tarifa-fixa" step="0.01" oninput="tarifaDigitada(this)"></div></div>
         <div class="sugerido"><label>Valor por km <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-valor-km" step="0.01" oninput="tarifaDigitada(this)"></div></div>
-        <!-- Espera combinada decidida em 18/09/2026: R$1/min além dos 10
-             inclusos, 100% pra motorista. -->
-        <div><label>Espera combinada (min)</label><input type="number" id="vg-espera-extra-min" min="0" step="1" placeholder="0" oninput="recalcularCotacao()"><span class="dica">Além dos 10 inclusos; R$ 1/min, 100% pra motorista.</span></div>
+        <!-- Espera combinada (18/09/2026): além dos 10 inclusos, 100% pra
+             motorista. Em min ou horas e com valor escolhido desde 11/11/2026. -->
+        <div><label for="vg-espera-extra-min">Espera combinada, além dos 10 min inclusos</label><div class="espera-linha"><input type="number" id="vg-espera-extra-min" min="0" step="any" placeholder="0" oninput="esperaMudou('vg')"><select id="vg-espera-unid" aria-label="Unidade da espera" onchange="esperaUnidadeTrocada('vg')"><option value="min">min</option><option value="h">horas</option></select></div></div>
+        <div><label for="vg-espera-valor" id="vg-espera-valor-rot">Valor da espera (R$ por minuto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-espera-valor" step="0.01" min="0" value="1.00" oninput="esperaMudou('vg')"></div></div>
+        <div class="full"><span class="dica espera-conta" id="vg-espera-conta"></span></div>
         <div class="sugerido"><label>Preço de tabela <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div><span class="dica">Sem desconto; preenche sozinho pelo km.</span></div>
         <div><label>Motivo do desconto</label>
           <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
@@ -5018,6 +5028,84 @@ const PERCENTUAL_REPASSE_MOTORISTA = 0.75; // % do preço cobrado repassado à m
 // Regras decididas em 18/09/2026 (estudo v2 + Termo de Adesão v2, cl. 9.6 e 9.7).
 const ESPERA_INCLUSA_MIN = 10;      // minutos de espera já dentro do preço
 const VALOR_MIN_ESPERA = 1.00;      // R$ por minuto além dos inclusos; vai 100% pra motorista
+// Espera em min ou horas, com o valor escolhido por viagem (11/11/2026,
+// schema_espera_valor_viagem.sql). O campo da quantidade e o do valor seguem
+// a unidade do seletor; por dentro tudo vira minutos e R$ por minuto.
+const ESPERA_CAMPOS = {
+  sim: { qtd: "sim-espera", unid: "sim-espera-unid", valor: "sim-espera-valor", rot: "sim-espera-valor-rot", conta: "sim-espera-conta" },
+  vg:  { qtd: "vg-espera-extra-min", unid: "vg-espera-unid", valor: "vg-espera-valor", rot: "vg-espera-valor-rot", conta: "vg-espera-conta" },
+};
+function esperaEl(qual, campo){ return document.getElementById(ESPERA_CAMPOS[qual][campo]); }
+function esperaNum(el){ return el ? Math.max(0, Number(String(el.value).replace(",", ".")) || 0) : 0; }
+function esperaEmHoras(qual){ const u = esperaEl(qual, "unid"); return !!(u && u.value === "h"); }
+// Minutos de espera além dos inclusos (inteiro).
+function esperaMinutos(qual){
+  const q = esperaNum(esperaEl(qual, "qtd"));
+  return Math.round(esperaEmHoras(qual) ? q * 60 : q);
+}
+// R$ por minuto; campo vazio = padrão.
+function esperaValorMin(qual){
+  const el = esperaEl(qual, "valor");
+  if(!el || el.value === "") return VALOR_MIN_ESPERA;
+  const v = esperaNum(el);
+  return esperaEmHoras(qual) ? v / 60 : v;
+}
+function esperaValor(qual){ return Math.round(esperaMinutos(qual) * esperaValorMin(qual) * 100) / 100; }
+function esperaHorasTxt(min){ const h = Math.floor(min / 60), m = min % 60; return h ? `${h}h${m ? String(m).padStart(2, "0") : ""}` : `${m} min`; }
+function esperaArred(n, casas){ const f = Math.pow(10, casas); return Math.round(n * f) / f; }
+// Rótulo do valor e a conta à mostra embaixo.
+function esperaAtualizarConta(qual){
+  const horas = esperaEmHoras(qual);
+  const rot = esperaEl(qual, "rot");
+  if(rot) rot.textContent = `Valor da espera (R$ por ${horas ? "hora" : "minuto"})`;
+  const conta = esperaEl(qual, "conta");
+  if(!conta) return;
+  const min = esperaMinutos(qual);
+  const valorMin = esperaValorMin(qual);
+  const unidTxt = horas
+    ? `${formatarMoedaBR(esperaArred(valorMin * 60, 2))}/hora`
+    : `${formatarMoedaBR(esperaArred(valorMin, 2))}/min`;
+  conta.textContent = min
+    ? `${min >= 60 ? esperaHorasTxt(min) + " = " : ""}${min} min além dos ${ESPERA_INCLUSA_MIN} inclusos × ${unidTxt} = ${formatarMoedaBR(esperaValor(qual))}, 100% pra motorista.`
+    : `Os primeiros ${ESPERA_INCLUSA_MIN} min de espera já estão no preço. Depois disso, ${unidTxt}, 100% pra motorista.`;
+}
+function esperaMudou(qual){
+  esperaAtualizarConta(qual);
+  if(qual === "sim") simular(); else recalcularCotacao();
+}
+// Trocar min ↔ horas converte a quantidade e o valor, e o total fica igual.
+function esperaUnidadeTrocada(qual){
+  const horas = esperaEmHoras(qual);
+  const q = esperaEl(qual, "qtd"), v = esperaEl(qual, "valor");
+  if(q && q.value !== "") q.value = horas ? esperaArred(esperaNum(q) / 60, 2) : Math.round(esperaNum(q) * 60);
+  if(v && v.value !== "") v.value = (horas ? esperaNum(v) * 60 : esperaNum(v) / 60).toFixed(2);
+  esperaMudou(qual);
+}
+// Preenche minutos e R$/min, mostrando em horas quando passa de 60 min
+// (ou na unidade pedida). Não recalcula: quem chama decide.
+function esperaPreencher(qual, minutos, valorMin, unidade){
+  minutos = Math.max(0, Math.round(Number(minutos) || 0));
+  valorMin = valorMin == null || valorMin === "" ? VALOR_MIN_ESPERA : Math.max(0, Number(valorMin) || 0);
+  const horas = unidade ? unidade === "h" : minutos > 60;
+  esperaEl(qual, "unid").value = horas ? "h" : "min";
+  const q = esperaEl(qual, "qtd");
+  q.value = !minutos ? (qual === "vg" ? "" : 0) : (horas ? esperaArred(minutos / 60, 2) : minutos);
+  esperaEl(qual, "valor").value = (horas ? valorMin * 60 : valorMin).toFixed(2);
+  esperaAtualizarConta(qual);
+}
+// Minutos e R$/min de uma cotação guardada do Simulador (campos salvos).
+// Cotação antiga não tem unidade nem valor: minutos e R$ 1/min.
+function esperaDosCamposSim(campos){
+  const horas = campos["sim-espera-unid"] === "h";
+  const q = Math.max(0, Number(String(campos["sim-espera"] ?? "").replace(",", ".")) || 0);
+  const vTxt = campos["sim-espera-valor"];
+  const v = vTxt == null || vTxt === "" ? null : Math.max(0, Number(String(vTxt).replace(",", ".")) || 0);
+  return {
+    minutos: Math.round(horas ? q * 60 : q),
+    valorMin: v == null ? VALOR_MIN_ESPERA : (horas ? v / 60 : v),
+    unidade: horas ? "h" : "min",
+  };
+}
 const ADICIONAL_NOTURNO = 0.30;     // +30% com início entre 22h e 6h ou em feriado
 const TAXA_CANCELAMENTO = {         // % do preço cotado que a cliente paga
   "2h":     { pct: 0.50, rotulo: "Cancelou com menos de 2 h: 50%" },
@@ -9054,7 +9142,7 @@ function simViagem(){
   const trechos = simCheck("sim-idavolta") ? 2 : 1;
   const kmCliente = simNum("sim-km-cliente") * trechos;
   const minCliente = simNum("sim-min-cliente") * trechos;
-  const esperaMin = simNum("sim-espera");
+  const esperaMin = esperaMinutos("sim");
   return {
     trechos, kmCliente, minCliente, esperaMin,
     kmVazio: simNum("sim-km-vazio"),
@@ -9191,6 +9279,7 @@ function simNovaCotacao(){
   document.getElementById("sim-dia").value = "";
   simRenderEnderecos();
   ["sim-km-cliente","sim-min-cliente","sim-km-vazio","sim-min-vazio","sim-espera","sim-km-noite"].forEach(id=>{ document.getElementById(id).value = 0; });
+  esperaPreencher("sim", 0, VALOR_MIN_ESPERA, "min");
   ["sim-idavolta","sim-noturno","sim-premium"].forEach(id=>{ document.getElementById(id).checked = false; });
   const elCobrado = document.getElementById("sim-cobrado");
   delete elCobrado.dataset.manual;
@@ -9400,7 +9489,8 @@ function preencherViagemDaCotacao(c){
   const noturno = !!campos["sim-noturno"];
   document.getElementById("vg-adicional-noturno").checked = noturno;
   document.getElementById("vg-feriado").checked = !!simFeriadoNome();
-  if(Number(campos["sim-espera"]) > 0) document.getElementById("vg-espera-extra-min").value = Number(campos["sim-espera"]);
+  const esperaSim = esperaDosCamposSim(campos);
+  if(esperaSim.minutos > 0) esperaPreencher("vg", esperaSim.minutos, esperaSim.valorMin, esperaSim.unidade);
   if(campos["sim-idavolta"]){
     // Ida e volta do Simulador = o mesmo trajeto de volta, mesmo km e tempo
     document.getElementById("vg-tem-volta").checked = true;
@@ -9605,7 +9695,8 @@ async function simCalcularRotaComHorario(pts, saida, volta){
     document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
   }else linhas.push("Sem ponto de saída: km vazio ficou como estava");
   if(!saida && minVazio) document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
-  document.getElementById("sim-espera").value = Math.max(0, esperaMin - (esperaMin ? ESPERA_INCLUSA_MIN : 0));
+  // Passou de 1 hora, mostra em horas; o valor que ela escolheu fica.
+  esperaPreencher("sim", Math.max(0, esperaMin - (esperaMin ? ESPERA_INCLUSA_MIN : 0)), esperaValorMin("sim"));
   document.getElementById("sim-km-noite").value = Math.round(kmNoite * 10) / 10;
   if(kmNoite >= 0.1) avisos.push(`${kmTxt(kmNoite)} km com a cliente caem das 22h às 6h: essa parte usa a tabela da noite.`);
   const futuro = inicio.getTime() > Date.now() + 60000;
@@ -9734,7 +9825,7 @@ function simPrecoTabela(v){
   if(info) info.textContent = infoTxt;
   const elRep = document.getElementById("sim-repasse");
   if(elRep && !elRep.dataset.manual) elRep.value = String(Math.round((100 - taxaTabelaPreco(t)) * 100) / 100);
-  const espera = v.esperaMin * VALOR_MIN_ESPERA;
+  const espera = esperaValor("sim");
   const premium = simCheck("sim-premium") ? SIM_ADICIONAL_PREMIUM * v.trechos : 0;
   return { base, espera, premium, adicionais100: espera + premium, total: base + espera + premium };
 }
@@ -9763,6 +9854,7 @@ function simularVoltarTabela(){ delete document.getElementById("sim-cobrado").da
 function simular(){
   const cascata = document.getElementById("sim-cascata");
   if(!cascata) return;
+  esperaAtualizarConta("sim");
   const v = simViagem(), p = simPrecoTabela(v), custo = simCustoKm();
   const fmt = n => formatarMoedaBR(n);
 
@@ -18042,7 +18134,6 @@ function dadosTabelaPrecoModal(){
 function calcularTabela(){
   const km = Number(document.getElementById("vg-distancia-km").value) || 0;
   if(!km) return null;
-  const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
   // Cada trecho (ida e, se tiver km, volta) usa a sua tabela; a espera
   // combinada é somada por fora e vai inteira pra motorista. Mesma conta do
   // pedir_viagem_cliente (schema_tabelas_preco.sql).
@@ -18061,7 +18152,7 @@ function calcularTabela(){
     motorista += pVolta * (1 - taxaTabelaPreco(volta) / 100);
   }
   repasseTabelaRatio = base ? motorista / base : null;
-  return base + esperaMin * VALOR_MIN_ESPERA;
+  return base + esperaValor("vg");
 }
 // Parte da motorista pela tabela (taxa da Go Ladies de cada trecho).
 function ratioRepasseModal(){
@@ -18118,8 +18209,7 @@ function acrescimoAtual(){
 function recalcularRepasseMotorista(){
   const cotado = Number(document.getElementById("vg-preco-cotado").value) || 0;
   if(!cotado) return;
-  const esperaMin = Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0);
-  const espera = esperaMin * VALOR_MIN_ESPERA;
+  const espera = esperaValor("vg");
   const base = Math.max(0, cotado - espera);
   document.getElementById("vg-preco-motorista").value = (base * ratioRepasseModal() + espera).toFixed(2);
 }
@@ -19386,7 +19476,7 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-adicional-noturno-retorno").checked = !!v.adicional_noturno_retorno;
   document.getElementById("vg-tarifa-fixa").value = v.tarifa_fixa ?? TAXA_FIXA_CLIENTE;
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
-  document.getElementById("vg-espera-extra-min").value = v.espera_extra_min ? v.espera_extra_min : "";
+  esperaPreencher("vg", v.espera_extra_min || 0, v.espera_valor_min, v.espera_unidade || "min");
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
   document.getElementById("vg-feriado").checked = !!v.feriado;
   document.getElementById("vg-feriado-retorno").checked = !!v.feriado_retorno;
@@ -19667,7 +19757,7 @@ async function saveViagem(){
   // no payload se ela preencheu algo (aí o erro de coluna avisa que falta rodar);
   // depois que existem, vão sempre, pra conseguir voltar a zero/nenhum.
   const adicionais = {
-    espera_extra_min: Math.max(0, Number(document.getElementById("vg-espera-extra-min").value) || 0),
+    espera_extra_min: esperaMinutos("vg"),
     adicional_noturno: document.getElementById("vg-adicional-noturno").checked,
     cancelamento_cobrado: document.getElementById("vg-cancelamento").value || null,
   };
@@ -19680,6 +19770,13 @@ async function saveViagem(){
   // tabela que não foi a da cotação dela.
   if(!tabelasPrecoSqlFaltando && tabelaPrecoMexida && ("tabela_preco_id" in (viagens[0] || {tabela_preco_id:null}))){
     Object.assign(payload, dadosTabelaPrecoModal());
+  }
+  // Colunas de schema_espera_valor_viagem.sql (11/11/2026): mesmo cuidado.
+  // Sem o SQL, só falha se ela mudou o valor da espera do padrão R$ 1/min.
+  const esperaValorEscolhido = Math.round(esperaValorMin("vg") * 10000) / 10000;
+  const colunasEsperaExistem = viagens.length > 0 && ("espera_valor_min" in viagens[0]);
+  if(colunasEsperaExistem || Math.abs(esperaValorEscolhido - VALOR_MIN_ESPERA) > 0.00005){
+    Object.assign(payload, { espera_valor_min: esperaValorEscolhido, espera_unidade: esperaEmHoras("vg") ? "h" : "min" });
   }
   // Colunas de schema_cancelamento_multa.sql (05/10/2026): mesmo cuidado.
   const multa = {
