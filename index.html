@@ -5868,6 +5868,19 @@ const NOME_ENVIO_SITE = {
   "motora-foto-perfil": "Foto da motorista",
 };
 const ENVIO_SITE_FOTO = ["app-foto-perfil", "motora-foto-perfil"];
+// O que a equipe faz pra resolver, conforme o motivo que o foto-perfil.js
+// gravou (16/11/2026). "login tinha vencido" é o texto antigo do mesmo caso.
+function oQueFazerFoto(motivo){
+  const m = String(motivo || "");
+  if(/login (tinha caído|tinha vencido)/i.test(m)) return "Ela já pode tentar de novo: é só entrar no app e colocar a foto. Se preferir, ela manda pelo WhatsApp e você sobe na ficha (Foto de perfil).";
+  if(/não está ligado à ficha/i.test(m)) return "O login dela não está ligado à ficha. Peça a foto pelo WhatsApp e suba na ficha, e avise o Claude pra ligar o login.";
+  if(/formato do iPhone/i.test(m)) return "Desde 16/11 o app converte a foto do iPhone sozinho: ela já pode tentar de novo. Se preferir, peça a foto pelo WhatsApp e suba na ficha (Foto de perfil).";
+  if(/foto não abriu/i.test(m)) return "Peça a foto pelo WhatsApp e suba na ficha (Foto de perfil).";
+  if(/internet/i.test(m)) return "Peça pra ela tentar de novo com uma internet boa (Wi-Fi), ou mandar a foto pelo WhatsApp.";
+  if(/pesada/i.test(m)) return "Peça pra ela escolher outra foto ou tirar uma na hora, ou mandar pelo WhatsApp.";
+  if(/galeria não abriu/i.test(m)) return "Ela vai mandar a foto pelo WhatsApp: suba na ficha (Foto de perfil) quando chegar.";
+  return "Peça a foto pelo WhatsApp e suba na ficha. Se acontecer de novo, avise o Claude.";
+}
 let errosSite = [];
 let avisoSiteAberto = false;
 function errosSiteResolvidosLocal(){
@@ -5905,7 +5918,7 @@ function renderAvisoSite(){
       const quando = new Date(e.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       return '<div class="aviso-site-item"><div><b>' + escapeHtml(NOME_ENVIO_SITE[e.contexto] || e.contexto) + '</b> · ' + quando +
         '<div>' + escapeHtml(resumo) + '</div>' + (motivo ? '<small>Motivo: ' + escapeHtml(motivo) + '</small>' : "") +
-        (ENVIO_SITE_FOTO.includes(e.contexto) ? '<small>Ofereça ajuda: ela pode mandar a foto pelo WhatsApp e você sobe na ficha (Foto de perfil).</small>' : "") + '</div>' +
+        (ENVIO_SITE_FOTO.includes(e.contexto) ? '<small><b>O que fazer:</b> ' + escapeHtml(oQueFazerFoto(motivo)) + '</small>' : "") + '</div>' +
         '<div class="aviso-site-acoes">' + whats + '<button type="button" class="btn" onclick="resolverErroSite(' + Number(e.id) + ')">Resolvido</button></div></div>';
     }).join("");
   }
