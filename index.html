@@ -4277,16 +4277,17 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label for="vg-espera-valor" id="vg-espera-valor-rot">Valor da espera (R$ por minuto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-espera-valor" step="0.01" min="0" value="1.00" oninput="esperaMudou('vg')"></div></div>
         <div class="full"><span class="dica espera-conta" id="vg-espera-conta"></span></div>
         <div class="sugerido"><label>Preço de tabela <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-preco-tabela" step="0.01" oninput="atualizarDesconto()"></div><span class="dica">Sem desconto; preenche sozinho pelo km.</span></div>
-        <div><label>Motivo do desconto</label>
-          <select id="vg-desconto-motivo" onchange="atualizarDesconto()">
-            <option value="">Nenhum</option>
-            <option>Primeira viagem</option>
-            <option>Fidelidade</option>
-            <option>Correção de erro</option>
-            <option>Cortesia</option>
-            <option>Indicação</option>
-            <option>Outro</option>
-          </select>
+        <!-- 20/11/2026: caixas de marcar, pode ter mais de um motivo. Salva
+             em desconto_motivo como texto separado por "; ". -->
+        <div class="full"><label>Motivo do desconto <span style="font-weight:400; color:var(--muted);">(pode marcar mais de um)</span></label>
+          <div id="vg-desconto-motivo" class="chips" style="margin-top:6px;" onchange="atualizarDesconto()">
+            <label class="chip-check"><input type="checkbox" value="Primeira viagem"> Primeira viagem</label>
+            <label class="chip-check"><input type="checkbox" value="Fidelidade"> Fidelidade</label>
+            <label class="chip-check"><input type="checkbox" value="Correção de erro"> Correção de erro</label>
+            <label class="chip-check"><input type="checkbox" value="Cortesia"> Cortesia</label>
+            <label class="chip-check"><input type="checkbox" value="Indicação"> Indicação</label>
+            <label class="chip-check"><input type="checkbox" value="Outro"> Outro</label>
+          </div>
           <span class="dica">Se cobrou menos que a tabela.</span>
         </div>
         <div class="automatico"><label>Desconto dado <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-desconto-valor" step="0.01" min="0" readonly tabindex="-1"></div><span class="dica">Calculado: tabela − cobrado.</span></div>
@@ -5201,9 +5202,24 @@ const DESCONTO_MOTIVOS = ["Primeira viagem", "Fidelidade", "Correção de erro",
 // Acréscimo (31/10/2026): o contrário do desconto, quando ela cobra acima da
 // tabela. Dividido como o resto (75% motorista), decidido pela Jú.
 const ACRESCIMO_MOTIVOS = ["Deslocamento longo até a partida", "Horário com trânsito ou pico", "Espera combinada", "Pedágio ou estacionamento", "Outro"];
-// Motivos marcados nas caixas do acréscimo (pode ser mais de um, 20/11/2026).
-function acrescimoMotivosMarcados(){
-  return [...document.querySelectorAll('#vg-acrescimo-motivo input[type=checkbox]:checked')].map(cb => cb.value);
+// Motivo do desconto e do acréscimo em caixas de marcar (20/11/2026): pode
+// ter mais de um. Salvo como "A; B; texto livre"; o que não é da lista
+// volta como "Outro" com o texto no campo de baixo.
+function motivosMarcados(idGrupo){
+  return [...document.querySelectorAll('#' + idGrupo + ' input[type=checkbox]:checked')].map(cb => cb.value);
+}
+function marcarMotivosSalvos(idGrupo, idOutro, lista, salvo){
+  const partes = (salvo || "").split(";").map(t => t.trim()).filter(Boolean);
+  const outros = partes.filter(t => !lista.includes(t));
+  const marcar = partes.filter(t => lista.includes(t));
+  if(outros.length && !marcar.includes("Outro")) marcar.push("Outro");
+  document.querySelectorAll('#' + idGrupo + ' input[type=checkbox]').forEach(cb => { cb.checked = marcar.includes(cb.value); });
+  document.getElementById(idOutro).value = outros.join("; ");
+}
+function motivosParaSalvar(idGrupo, idOutro){
+  const outro = document.getElementById(idOutro).value.trim();
+  const motivos = motivosMarcados(idGrupo).map(m => m === "Outro" ? (outro || "Outro") : m);
+  return motivos.length ? motivos.join("; ") : null;
 }
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
@@ -18583,17 +18599,19 @@ function atualizarDesconto(){
   const motivo = document.getElementById("vg-desconto-motivo");
   campo.value = desconto ? desconto.toFixed(2) : "";
   campo.dataset.valor = desconto || "";
-  document.getElementById("vg-desconto-outro-wrap").style.display = motivo.value === "Outro" ? "" : "none";
+  const marcadosDesc = motivosMarcados("vg-desconto-motivo");
+  document.getElementById("vg-desconto-outro-wrap").style.display = marcadosDesc.includes("Outro") ? "" : "none";
   // Desconto sem motivo escolhido perde o rastro, que é justamente o ponto:
   // marca o campo em vez de travar o Salvar.
-  motivo.style.borderColor = (desconto && !motivo.value) ? "var(--c-red)" : "";
+  motivo.style.outline = (desconto && !marcadosDesc.length) ? "1px solid var(--c-red)" : "";
+  motivo.style.borderRadius = "8px";
   // Acréscimo: mesmos campos ao contrário, só aparecem quando existe.
   const acrescimo = acrescimoAtual();
   const motAcr = document.getElementById("vg-acrescimo-motivo");
   const campoAcr = document.getElementById("vg-acrescimo-valor");
   campoAcr.value = acrescimo ? acrescimo.toFixed(2) : "";
   campoAcr.dataset.valor = acrescimo || "";
-  const marcadosAcr = acrescimoMotivosMarcados();
+  const marcadosAcr = motivosMarcados("vg-acrescimo-motivo");
   const mostraAcr = !!acrescimo || marcadosAcr.length > 0;
   document.getElementById("vg-acrescimo-motivo-wrap").style.display = mostraAcr ? "" : "none";
   document.getElementById("vg-acrescimo-valor-wrap").style.display = mostraAcr ? "" : "none";
@@ -19830,18 +19848,8 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
   document.getElementById("vg-repasse-multa").value = v.repasse_multa ?? "";
   document.getElementById("vg-preco-tabela").value = v.preco_tabela ?? "";
-  const motivoSalvo = v.desconto_motivo || "";
-  const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
-  document.getElementById("vg-desconto-motivo").value = motivoConhecido;
-  document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
-  // Vários motivos ficam salvos como "A; B; texto livre". O que não é da
-  // lista vira "Outro" com o texto no campo de baixo.
-  const acrPartes = (v.acrescimo_motivo || "").split(";").map(t => t.trim()).filter(Boolean);
-  const acrOutros = acrPartes.filter(t => !ACRESCIMO_MOTIVOS.includes(t));
-  const acrMarcar = acrPartes.filter(t => ACRESCIMO_MOTIVOS.includes(t));
-  if(acrOutros.length && !acrMarcar.includes("Outro")) acrMarcar.push("Outro");
-  document.querySelectorAll('#vg-acrescimo-motivo input[type=checkbox]').forEach(cb => { cb.checked = acrMarcar.includes(cb.value); });
-  document.getElementById("vg-acrescimo-outro").value = acrOutros.join("; ");
+  marcarMotivosSalvos("vg-desconto-motivo", "vg-desconto-outro", DESCONTO_MOTIVOS, v.desconto_motivo);
+  marcarMotivosSalvos("vg-acrescimo-motivo", "vg-acrescimo-outro", ACRESCIMO_MOTIVOS, v.acrescimo_motivo);
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   // Viagem paga fica como está, pra não inventar desconto em cobrança antiga.
@@ -20176,9 +20184,7 @@ async function saveViagem(){
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
     desconto_valor: document.getElementById("vg-desconto-valor").dataset.valor ? Number(document.getElementById("vg-desconto-valor").dataset.valor) : null,
-    desconto_motivo: document.getElementById("vg-desconto-motivo").value === "Outro"
-      ? (document.getElementById("vg-desconto-outro").value || null)
-      : (document.getElementById("vg-desconto-motivo").value || null),
+    desconto_motivo: motivosParaSalvar("vg-desconto-motivo", "vg-desconto-outro"),
   };
   const colunasDescontoExistem = viagens.length > 0 && ("preco_tabela" in viagens[0]);
   if(colunasDescontoExistem || desconto.preco_tabela != null || desconto.desconto_valor != null || desconto.desconto_motivo){
@@ -20188,8 +20194,7 @@ async function saveViagem(){
   if(viagens.length > 0 && ("acrescimo_motivo" in viagens[0])){
     const valAcr = document.getElementById("vg-acrescimo-valor").dataset.valor;
     payload.acrescimo_valor = valAcr ? Number(valAcr) : null;
-    const motivosAcr = acrescimoMotivosMarcados().map(m => m === "Outro" ? (document.getElementById("vg-acrescimo-outro").value.trim() || "Outro") : m);
-    payload.acrescimo_motivo = !valAcr || !motivosAcr.length ? null : motivosAcr.join("; ");
+    payload.acrescimo_motivo = !valAcr ? null : motivosParaSalvar("vg-acrescimo-motivo", "vg-acrescimo-outro");
   }
 
   // Viagem já feita: nasce Concluída, sem motorista_ids (quem marca a
