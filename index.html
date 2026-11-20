@@ -650,6 +650,8 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
 @media (max-width:600px){ .vg-pass-campos.ovc-campos{grid-template-columns:minmax(0,1fr);} }
 .vg-pass-lig{margin-top:6px; font-size:var(--fs-xs); display:flex; flex-wrap:wrap; gap:4px; align-items:center;}
 .vg-pass-botoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
+.vg-pass-grupo{font-size:var(--fs-xs); font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:6px;}
+.vg-pass-curta{padding:6px 10px;}
 details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
 details.vg-sec:not([open]){padding-bottom:0;}
 details.vg-sec:not([open])>summary{border-bottom:none;}
@@ -18038,6 +18040,17 @@ function htmlPessoaNoPonto(j, ponto){
   const arg = ehCliente ? "'cliente'" : j;
   const outroSel = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap;">${embarca ? "desce em" : "embarcou em"} <select onchange="mudarOutroPonto(${arg}, ${embarca}, this.value)">${opcoes}</select></label>`;
   const acao = `<span class="vg-pass-acao ${embarca ? "emb" : "des"}">${embarca ? "Embarca" : "Desce"}</span>`;
+  // Onde desce (20/11/2026): só o nome numa linha curta. Os dados da pessoa
+  // ficam uma vez só, no ponto onde ela embarca.
+  if(!embarca){
+    const c = ehCliente ? clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value)) : null;
+    const nome = ehCliente ? (c ? c.nome : "Cliente da viagem") : (p.nome.trim() || "(sem nome)");
+    const extra = ehCliente ? "cliente da viagem" : (p.cliente_id ? "" : "sem cadastro");
+    const rotulo = Object.fromEntries(pontosDoTrajeto());
+    const veio = ehCliente ? clientePontosModal.embarque : p.embarque_ponto;
+    const trocar = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap; color:var(--muted);">trocar pra <select onchange="mudarOutroPonto(${arg}, true, this.value)">${pontosDoTrajeto().filter(([k])=>posicaoPonto(k) > posicaoPonto(veio)).map(([k, r])=>`<option value="${k}" ${k===ponto?"selected":""}>${r}</option>`).join("")}</select></label>`;
+    return `<div class="vg-pass vg-pass-curta"><div class="vg-pass-topo">${acao} <b>${escapeHtml(nome)}</b> <span style="color:var(--muted)">${extra ? escapeHtml(extra) + " · " : ""}embarcou em ${escapeHtml((rotulo[veio] || "").replace(/^\d+\. /, ""))}</span><span style="flex:1"></span>${trocar}</div></div>`;
+  }
   if(ehCliente){
     const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
     const tipoViagem = document.getElementById("vg-tipo-servico").value;
@@ -18066,16 +18079,28 @@ function renderPontosPassageiros(){
   pontosDoTrajeto().forEach(([k])=>{
     const el = document.getElementById("vg-pass-" + k);
     if(!el) return;
-    const linhas = [];
-    if(clienteVaiModal && (clientePontosModal.embarque === k || clientePontosModal.desembarque === k)) linhas.push(htmlPessoaNoPonto("cliente", k));
-    pessoasModal.forEach((p,j)=>{ if(p.embarque_ponto === k || p.desembarque_ponto === k) linhas.push(htmlPessoaNoPonto(j, k)); });
-    const botoes = [];
-    if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Outra pessoa embarca aqui</button>`);
-    if(k !== "origem"){
-      if(quemPodeDescerEm(k).length) botoes.push(`<button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button>`);
-      botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Pessoa nova desce aqui</button>`);
+    // 20/11/2026: cada ponto em dois grupos. No embarque só se embarca, no
+    // destino só se desce; nas paradas, os dois.
+    const embarcam = [], descem = [];
+    if(clienteVaiModal && clientePontosModal.embarque === k) embarcam.push(htmlPessoaNoPonto("cliente", k));
+    if(clienteVaiModal && clientePontosModal.desembarque === k) descem.push(htmlPessoaNoPonto("cliente", k));
+    pessoasModal.forEach((p,j)=>{
+      if(p.embarque_ponto === k) embarcam.push(htmlPessoaNoPonto(j, k));
+      if(p.desembarque_ponto === k) descem.push(htmlPessoaNoPonto(j, k));
+    });
+    const titulo = (txt, n) => `<div class="vg-pass-grupo">${txt}${n ? ` (${n})` : ""}</div>`;
+    let html = "";
+    if(k !== "destino"){
+      // Parada sem ninguém embarcando: só o botão, sem título vazio
+      html += (embarcam.length ? titulo("Embarcam aqui", embarcam.length) + embarcam.join("") : k === "origem" ? titulo("Embarcam aqui", 0) + `<div class="dica">Ninguém embarca ainda.</div>` : "")
+        + `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Pessoa embarca aqui</button></div>`;
     }
-    el.innerHTML = linhas.join("") + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "") + `<div class="vg-pass-botoes">${botoes.join("")}</div>`;
+    if(k !== "origem"){
+      html += titulo("Descem aqui", descem.length) + (descem.join("") || `<div class="dica">Ninguém desce neste ponto.</div>`)
+        + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "")
+        + (quemPodeDescerEm(k).length && escolhaDesceModal !== k ? `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button></div>` : "");
+    }
+    el.innerHTML = html;
   });
   const dica = document.getElementById("vg-pessoas-dica");
   const outras = pessoasModal.filter(p=>!ehAClienteDaViagem(p)).length;
@@ -18131,7 +18156,8 @@ function adicionarPessoaViagem(ponto, embarca){
   pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
     embarque_ponto: embarca ? ponto : "origem", desembarque_ponto: embarca ? "destino" : ponto });
   renderPontosPassageiros();
-  const cartoes = document.querySelectorAll(`#vg-pass-${ponto} .vg-pass`);
+  const nova = pessoasModal[pessoasModal.length-1];
+  const cartoes = document.querySelectorAll(`#vg-pass-${nova.embarque_ponto} .vg-pass:not(.vg-pass-curta)`);
   const campo = cartoes.length && cartoes[cartoes.length-1].querySelector(".vg-pass-campos input[type=text]");
   if(campo) campo.focus();
 }
