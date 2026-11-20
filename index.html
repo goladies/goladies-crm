@@ -4293,15 +4293,16 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div id="vg-desconto-outro-wrap" class="full" style="display:none;"><label>Qual motivo?</label><input type="text" id="vg-desconto-outro" placeholder="Descreva o motivo"></div>
         <!-- Acréscimo (31/10/2026, schema_acrescimo_viagem.sql): aparece só
              quando o cobrado passa da tabela. -->
-        <div id="vg-acrescimo-motivo-wrap" style="display:none;"><label>Motivo do acréscimo</label>
-          <select id="vg-acrescimo-motivo" onchange="atualizarDesconto()">
-            <option value="">Escolha o motivo</option>
-            <option>Deslocamento longo até a partida</option>
-            <option>Horário com trânsito ou pico</option>
-            <option>Espera combinada</option>
-            <option>Pedágio ou estacionamento</option>
-            <option>Outro</option>
-          </select>
+        <!-- 20/11/2026: caixas de marcar, pode ter mais de um motivo. Salva
+             em acrescimo_motivo como texto separado por "; ". -->
+        <div id="vg-acrescimo-motivo-wrap" class="full" style="display:none;"><label>Motivo do acréscimo <span style="font-weight:400; color:var(--muted);">(pode marcar mais de um)</span></label>
+          <div id="vg-acrescimo-motivo" class="chips" style="margin-top:6px;" onchange="atualizarDesconto()">
+            <label class="chip-check"><input type="checkbox" value="Deslocamento longo até a partida"> Deslocamento longo até a partida</label>
+            <label class="chip-check"><input type="checkbox" value="Horário com trânsito ou pico"> Horário com trânsito ou pico</label>
+            <label class="chip-check"><input type="checkbox" value="Espera combinada"> Espera combinada</label>
+            <label class="chip-check"><input type="checkbox" value="Pedágio ou estacionamento"> Pedágio ou estacionamento</label>
+            <label class="chip-check"><input type="checkbox" value="Outro"> Outro</label>
+          </div>
           <span class="dica">Cobrou mais que a tabela.</span>
         </div>
         <div id="vg-acrescimo-valor-wrap" class="automatico" style="display:none;"><label>Acréscimo <span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>automático</span></label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="vg-acrescimo-valor" step="0.01" min="0" readonly tabindex="-1"></div><span class="dica">Calculado: cobrado − tabela.</span></div>
@@ -5200,6 +5201,10 @@ const DESCONTO_MOTIVOS = ["Primeira viagem", "Fidelidade", "Correção de erro",
 // Acréscimo (31/10/2026): o contrário do desconto, quando ela cobra acima da
 // tabela. Dividido como o resto (75% motorista), decidido pela Jú.
 const ACRESCIMO_MOTIVOS = ["Deslocamento longo até a partida", "Horário com trânsito ou pico", "Espera combinada", "Pedágio ou estacionamento", "Outro"];
+// Motivos marcados nas caixas do acréscimo (pode ser mais de um, 20/11/2026).
+function acrescimoMotivosMarcados(){
+  return [...document.querySelectorAll('#vg-acrescimo-motivo input[type=checkbox]:checked')].map(cb => cb.value);
+}
 const SEGMENTO_CLIENTE = ["Frequente","Ocasional","Empresarial"];
 
 // Funil de parceiros — o mesmo que a Juliana já documenta e usa
@@ -18588,11 +18593,13 @@ function atualizarDesconto(){
   const campoAcr = document.getElementById("vg-acrescimo-valor");
   campoAcr.value = acrescimo ? acrescimo.toFixed(2) : "";
   campoAcr.dataset.valor = acrescimo || "";
-  const mostraAcr = !!acrescimo || !!motAcr.value;
+  const marcadosAcr = acrescimoMotivosMarcados();
+  const mostraAcr = !!acrescimo || marcadosAcr.length > 0;
   document.getElementById("vg-acrescimo-motivo-wrap").style.display = mostraAcr ? "" : "none";
   document.getElementById("vg-acrescimo-valor-wrap").style.display = mostraAcr ? "" : "none";
-  document.getElementById("vg-acrescimo-outro-wrap").style.display = mostraAcr && motAcr.value === "Outro" ? "" : "none";
-  motAcr.style.borderColor = (acrescimo && !motAcr.value) ? "var(--c-red)" : "";
+  document.getElementById("vg-acrescimo-outro-wrap").style.display = mostraAcr && marcadosAcr.includes("Outro") ? "" : "none";
+  motAcr.style.outline = (acrescimo && !marcadosAcr.length) ? "1px solid var(--c-red)" : "";
+  motAcr.style.borderRadius = "8px";
   recalcularComissaoCotacao();
 }
 // Cancelamento (05/10/2026): multa e repasse sobre ela combinados caso a
@@ -19827,10 +19834,14 @@ function openViagemModal(id, opcoes){
   const motivoConhecido = motivoSalvo && DESCONTO_MOTIVOS.includes(motivoSalvo) ? motivoSalvo : (motivoSalvo ? "Outro" : "");
   document.getElementById("vg-desconto-motivo").value = motivoConhecido;
   document.getElementById("vg-desconto-outro").value = motivoConhecido === "Outro" ? motivoSalvo : "";
-  const acrSalvo = v.acrescimo_motivo || "";
-  const acrConhecido = acrSalvo && ACRESCIMO_MOTIVOS.includes(acrSalvo) ? acrSalvo : (acrSalvo ? "Outro" : "");
-  document.getElementById("vg-acrescimo-motivo").value = acrConhecido;
-  document.getElementById("vg-acrescimo-outro").value = acrConhecido === "Outro" ? acrSalvo : "";
+  // Vários motivos ficam salvos como "A; B; texto livre". O que não é da
+  // lista vira "Outro" com o texto no campo de baixo.
+  const acrPartes = (v.acrescimo_motivo || "").split(";").map(t => t.trim()).filter(Boolean);
+  const acrOutros = acrPartes.filter(t => !ACRESCIMO_MOTIVOS.includes(t));
+  const acrMarcar = acrPartes.filter(t => ACRESCIMO_MOTIVOS.includes(t));
+  if(acrOutros.length && !acrMarcar.includes("Outro")) acrMarcar.push("Outro");
+  document.querySelectorAll('#vg-acrescimo-motivo input[type=checkbox]').forEach(cb => { cb.checked = acrMarcar.includes(cb.value); });
+  document.getElementById("vg-acrescimo-outro").value = acrOutros.join("; ");
   document.getElementById("vg-preco-cotado").value = v.preco_cotado ?? "";
   document.getElementById("vg-preco-motorista").value = v.preco_motorista ?? "";
   // Viagem paga fica como está, pra não inventar desconto em cobrança antiga.
@@ -20175,10 +20186,10 @@ async function saveViagem(){
   }
   // Colunas de schema_acrescimo_viagem.sql (31/10/2026): só manda se já existem.
   if(viagens.length > 0 && ("acrescimo_motivo" in viagens[0])){
-    const motAcr = document.getElementById("vg-acrescimo-motivo").value;
     const valAcr = document.getElementById("vg-acrescimo-valor").dataset.valor;
     payload.acrescimo_valor = valAcr ? Number(valAcr) : null;
-    payload.acrescimo_motivo = !valAcr ? null : motAcr === "Outro" ? (document.getElementById("vg-acrescimo-outro").value || "Outro") : (motAcr || null);
+    const motivosAcr = acrescimoMotivosMarcados().map(m => m === "Outro" ? (document.getElementById("vg-acrescimo-outro").value.trim() || "Outro") : m);
+    payload.acrescimo_motivo = !valAcr || !motivosAcr.length ? null : motivosAcr.join("; ");
   }
 
   // Viagem já feita: nasce Concluída, sem motorista_ids (quem marca a
