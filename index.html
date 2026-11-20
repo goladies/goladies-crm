@@ -3820,7 +3820,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <section class="vg-sec" style="--sec-cor:var(--vg-teal);" id="mt-acesso-wrap">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-device-mobile"/></svg><span class="vg-num">Acesso ao painel e pasta</span></span></div>
       <div class="formgrid">
-        <div class="full"><label>UID do login (Supabase Authentication)</label><input type="text" id="mt-auth-uid" placeholder="ex: 0fe07c05-f040-468b-b351-a464a3065f33"><span class="dica">Crie o login em Supabase → Authentication → Users → Add user (e-mail + senha inicial), copie o UID gerado e cole aqui. Isso liga esse login ao cadastro dela.</span></div>
+        <div class="full"><label>UID do login (Supabase Authentication)</label><input type="text" id="mt-auth-uid" placeholder="ex: 0fe07c05-f040-468b-b351-a464a3065f33"><span class="dica">Use o botão "Criar acesso ao app" logo abaixo (aparece depois de salvar a ficha). Ele cria o login e preenche este campo sozinho. Só cole um UID aqui se o login foi criado direto no Supabase.</span></div>
         <div class="full" id="mt-acesso-status" style="font-size:var(--fs-sm);"></div>
         <div class="full"><label>Pasta no Google Drive (motorista + Go Ladies)</label><input type="url" id="mt-pasta-drive" placeholder="https://drive.google.com/drive/folders/..."><span class="dica">Crie a pasta no Drive da Go Ladies, compartilhe com o e-mail dela e cole o link. Aparece no painel dela em Perfil e em Carro → Documentos.</span></div>
       </div>
@@ -15665,6 +15665,7 @@ function openMotoristaModal(id){
     : '<span class="tag urg-media">Sem login vinculado ainda</span>')
     + (cliDaMotorista ? ` <span class="tag" title="Usa o mesmo login no painel da cliente"><svg class=ic aria-hidden=true><use href=#i-car /></svg> Também é cliente${optCod(cliDaMotorista)}</span>` : "")
     + (id ? htmlPedidoExclusao(m, "motorista") : "")
+    + (id && !m.auth_user_id ? botaoCriarAcessoMotorista(m.id) : "")
     + (id && m.auth_user_id ? botaoSenhaProvisoria("motorista", m.id) : "")
     + (id ? botaoComprovanteAceites("motorista", id) : "");
   document.getElementById("mt-doc-tipo").value = "CNH EAR";
@@ -16546,6 +16547,40 @@ function htmlAcessoPainelCliente(c){
 // e o CRM oferece o WhatsApp com a mensagem pronta.
 function botaoSenhaProvisoria(tipo, id){
   return `<div style="margin-top:6px;"><button type="button" class="act act-edit" onclick="definirSenhaProvisoria('${tipo}', ${Number(id)})"><svg class=ic aria-hidden=true><use href=#i-key /></svg> Senha provisória</button> <small style="color:var(--muted)">quando o e-mail de senha nova não chega</small></div>`;
+}
+// Criar acesso ao app (schema_criar_acesso_motorista.sql): cria o login da
+// motorista já confirmado e liga na ficha, sem passar pelo Supabase.
+function botaoCriarAcessoMotorista(id){
+  return `<div style="margin-top:6px;"><button type="button" class="act act-edit" onclick="criarAcessoMotorista(${Number(id)})"><svg class=ic aria-hidden=true><use href=#i-key /></svg> Criar acesso ao app</button> <small style="color:var(--muted)">cria o login dela em motora.goladies.com.br</small></div>`;
+}
+async function criarAcessoMotorista(id){
+  const ficha = motoristas.find(x=>x.id===id);
+  if(!ficha) return;
+  const nome = String(ficha.nome||"").split(" ")[0];
+  const email = prompt(`E-mail que ${nome} vai usar para entrar no app da motorista:`, (document.getElementById("mt-email").value || ficha.email || "").trim());
+  if(email === null) return;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())){ alert("Confira o e-mail: parece que falta alguma parte."); return; }
+  const sugestao = "goladies" + String(Math.floor(1000 + Math.random()*9000));
+  const senha = prompt(`Senha inicial para ${nome} (mínimo 6 caracteres). Ela troca depois no app.\n\nSe esse e-mail já tiver login no app da cliente, a senha dela continua a mesma e esta é ignorada.`, sugestao);
+  if(senha === null) return;
+  if(senha.trim().length < 6){ alert("A senha precisa ter pelo menos 6 caracteres."); return; }
+  if(!confirm(`Confirma? ${nome} vai poder entrar em motora.goladies.com.br com o e-mail ${email.trim()} a partir de agora.`)) return;
+  const { data, error } = await sb.rpc("criar_acesso_motorista", { p_id: id, p_email: email.trim(), p_senha: senha.trim() });
+  if(error){ alert("Não foi possível criar o acesso: " + error.message); return; }
+  // Mantém a ficha aberta coerente: se a equipe clicar em Salvar depois, o login não se perde.
+  document.getElementById("mt-auth-uid").value = data.auth_user_id;
+  if(!document.getElementById("mt-email").value.trim()) document.getElementById("mt-email").value = email.trim();
+  await recarregarTabelas("motoristas");
+  const m = motoristas.find(x=>x.id===id) || ficha;
+  document.getElementById("mt-acesso-status").innerHTML = '<span class="tag ativo">✓ Login vinculado</span>'
+    + botaoSenhaProvisoria("motorista", id) + botaoComprovanteAceites("motorista", id);
+  showToast("Acesso criado.");
+  const senhaTxt = data.ja_existia
+    ? "a mesma senha que você já usa no app da Go Ladies"
+    : `a senha ${senha.trim()}`;
+  const msg = `Oi, ${nome}! Seu acesso ao app da motorista Go Ladies está pronto. 🩷\n\nEntre em motora.goladies.com.br com o e-mail ${email.trim()} e ${senhaTxt}.\n\nNo primeiro acesso:\n1. Instale na tela de início do celular (o app mostra como).\n2. Permita os avisos e a localização, pra receber as corridas.\n3. Em Perfil > Meus dados > Trocar senha, troque por uma senha sua.\n\nQualquer dúvida, me chama por aqui.`;
+  const link = m.whatsapp ? linkWhats(m.whatsapp, msg) : null;
+  if(link && confirm("Abrir o WhatsApp com a mensagem pronta pra ela?")) window.open(link, "_blank");
 }
 async function definirSenhaProvisoria(tipo, id){
   const ficha = (tipo==="motorista" ? motoristas : tipo==="conta_app" ? contasApp : clientesTransporte).find(x=>x.id===id);
