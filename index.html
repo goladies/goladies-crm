@@ -18274,6 +18274,15 @@ async function criarLeadPessoa(j){
 async function gravarPassageirosViagem(viagemId){
   if(!listaPassageirosExiste()) return true;
   pessoasModal = pessoasModal.filter(p=>!ehAClienteDaViagem(p));
+  // Mesma pessoa duas vezes (mesmo nome, ficha e pontos) conta em dobro no
+  // cartão (viagem #69, 20/11/2026: "7 pessoas"). Grava uma vez só.
+  const vistas = new Set();
+  pessoasModal = pessoasModal.filter(p=>{
+    if(!p.nome.trim()) return true;
+    const chave = [semAcentoMin(p.nome), p.cliente_id || "", p.embarque_ponto, p.desembarque_ponto].join("|");
+    if(vistas.has(chave)) return false;
+    vistas.add(chave); return true;
+  });
   const existiam = viagemPassageiros.some(p=>p.viagem_id===viagemId);
   if(!pessoasModal.length && !existiam) return true;
   const del = await sb.from("viagem_passageiros").delete().eq("viagem_id", viagemId);
