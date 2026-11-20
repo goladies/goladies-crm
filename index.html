@@ -646,6 +646,8 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
 .vg-pass-acao.des{background:var(--c-amber-bg); color:var(--ink, inherit);}
 .vg-pass-campos{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:6px;}
 .vg-pass-campos label{font-size:var(--fs-xs); margin-bottom:2px;}
+.vg-pass-campos.ovc-campos{grid-template-columns:repeat(2, minmax(0,1fr));}   /* venda do carro: 2 colunas certinhas */
+@media (max-width:600px){ .vg-pass-campos.ovc-campos{grid-template-columns:minmax(0,1fr);} }
 .vg-pass-lig{margin-top:6px; font-size:var(--fs-xs); display:flex; flex-wrap:wrap; gap:4px; align-items:center;}
 .vg-pass-botoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
 details.vg-sec>summary{cursor:pointer; list-style:none; margin-bottom:0;}
@@ -3598,8 +3600,86 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-user"/></svg><span class="vg-num">Pedido</span></span></div>
       <div class="formgrid">
         <div class="full obrig destaque"><label>Lead/Cliente <a href="#" class="o-abrir-ficha" onclick="abrirFichaDoOrcamento('leads','o-lead'); return false;">Abrir ficha</a></label><select id="o-lead" onchange="resumoFichaOrcamento()"></select></div>
-        <div class="full"><label>Serviço</label><select id="o-servico" onchange="resumoFichaOrcamento()"></select></div>
+        <div class="full"><label>Serviço</label><select id="o-servico" onchange="mostrarVendaCarroOrc(); resumoFichaOrcamento()"></select></div>
         <div class="full"><label>Parceiro <a href="#" class="o-abrir-ficha" id="o-parceiro-abrir" onclick="abrirFichaDoOrcamento('parceiros','o-parceiro'); return false;">Abrir ficha</a></label><select id="o-parceiro" onchange="mostrarAbrirParceiroOrc()"></select></div>
+      </div>
+    </section>
+
+    <!-- ── Venda do carro (20/11/2026): só com o serviço "Venda do meu carro".
+         Tudo vai na coluna orcamentos.venda_carro (jsonb), montada por
+         lerVendaCarroOrc(). A comissão calculada aqui preenche Valor cotado
+         (prevista) e Valor final (real): é ela que vai pro Financeiro. ── -->
+    <section class="vg-sec" id="o-vc-sec-carro" style="--sec-cor:var(--vg-laranja); display:none;">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-car-suv"/></svg><span class="vg-num">Venda do carro</span></span><span class="vg-pend" id="ovc-pend"></span></div>
+      <div class="formgrid">
+        <div class="sub-tit primeiro full">Carro</div>
+        <div><label>Modelo</label><input type="text" id="ovc-modelo" placeholder="Ex.: Jeep Compass Sport" oninput="calcVendaCarroOrc()"></div>
+        <div><label>Ano</label><input type="text" id="ovc-ano" placeholder="Ex.: 2020" oninput="calcVendaCarroOrc()"></div>
+        <div><label>Cor</label><input type="text" id="ovc-cor"></div>
+        <div><label>Km</label><input type="number" id="ovc-km" min="0"></div>
+        <div><label>Placa <span class="vg-tag"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>só interno</span></label><input type="text" id="ovc-placa" maxlength="8" style="text-transform:uppercase;"><span class="dica">Nunca vai pro site nem pros anúncios.</span></div>
+        <div><label>Aceita troca?</label><select id="ovc-troca"><option value="">-</option><option>Não</option><option>Sim</option><option>Talvez</option></select></div>
+        <div class="full"><label>Como a compradora (o) paga</label><input type="text" id="ovc-pag-compradora" placeholder="Ex.: só Pix; Pix + financiamento"></div>
+
+        <div class="sub-tit full">Preços</div>
+        <div><label>Valor FIPE</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-fipe" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div></div>
+        <div><label>Mês da FIPE</label><input type="month" id="ovc-fipe-mes"></div>
+        <div><label>Valor inicial de venda</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-preco-inicial" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div><span class="dica">O 1º preço do anúncio.</span></div>
+        <div class="obrig" id="ovc-minimo-wrap"><label>Valor mínimo de venda</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-preco-minimo" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div><span class="dica">Abaixo dele, só com o ok da vendedora.</span></div>
+        <div><label>Preço atual do anúncio</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-preco-atual" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div></div>
+        <div><label>Desde</label><input type="date" id="ovc-preco-atual-data"></div>
+        <div class="linha-checks"><label class="vg-check"><input type="checkbox" id="ovc-preco-ok"> Vendedora deu o ok por escrito pro preço atual</label></div>
+        <div class="full" id="ovc-precos-info" style="font-size:var(--fs-sm); color:var(--text2);"></div>
+
+        <div class="sub-tit full">Acerto (comissão da Go Ladies)</div>
+        <div class="obrig" id="ovc-acerto-wrap"><label>Acerto (%)</label><input type="number" id="ovc-acerto" step="0.1" min="0" max="100" placeholder="Ex.: 2,5" oninput="calcVendaCarroOrc()"><span class="dica">Sobre o valor final, só se vender.</span></div>
+        <div><label>Valor de venda do carro</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-valor-venda" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div><span class="dica">Preencha quando vender.</span></div>
+        <div><label>Data da venda</label><input type="date" id="ovc-data-venda"></div>
+        <div><label>Tráfego pago gasto</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="ovc-trafego" step="0.01" min="0" oninput="calcVendaCarroOrc()"></div><span class="dica">Sai da comissão (limite R$ 200).</span></div>
+        <div class="full" id="ovc-comissao-info" style="font-size:var(--fs-sm); color:var(--text2);"></div>
+      </div>
+    </section>
+
+    <section class="vg-sec" id="o-vc-sec-divulga" style="--sec-cor:var(--vg-roxo); display:none;">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-speakerphone"/></svg><span class="vg-num">Onde está e onde anunciamos</span></span></div>
+      <div class="formgrid">
+        <div class="sub-tit primeiro full">Onde o carro está</div>
+        <div><label>Com quem está</label><select id="ovc-onde-esta" onchange="mostrarTermoVendaCarro()"><option value="">-</option><option>Com a vendedora</option><option>Em loja</option><option>Com a Go Ladies</option><option>Outro lugar</option></select></div>
+        <div><label>Desde</label><input type="date" id="ovc-onde-desde"></div>
+        <div class="full" id="ovc-onde-qual-wrap"><label>Qual loja ou lugar</label><input type="text" id="ovc-onde-qual" placeholder="Nome e bairro da loja"></div>
+        <div class="linha-checks" id="ovc-termo-checks"><label class="vg-check"><input type="checkbox" id="ovc-termo-ok" onchange="mostrarTermoVendaCarro()"> Termo de responsabilidade do carro assinado</label></div>
+        <div id="ovc-termo-data-wrap"><label>Data do termo</label><input type="date" id="ovc-termo-data"></div>
+        <div id="ovc-termo-link-wrap"><label>Link do termo assinado <a href="#" class="o-abrir-ficha" id="ovc-termo-link-abrir" target="_blank" rel="noopener">Abrir</a></label><input type="url" id="ovc-termo-link" placeholder="https://drive.google.com/..." oninput="linksVendaCarroOrc()"></div>
+
+        <div class="sub-tit full">Onde foi anunciado <span class="vg-sec-sub" id="ovc-anuncios-conta"></span></div>
+        <div class="full"><div class="vg-pass-lista" id="ovc-anuncios"></div>
+          <button class="btn secondary small" type="button" style="margin-top:8px;" onclick="addAnuncioVendaCarro()">+ Adicionar anúncio, site ou loja</button></div>
+
+        <div class="sub-tit full">Interessadas (os) <span class="vg-sec-sub">só o primeiro nome · é a prova da comissão</span></div>
+        <div class="full"><div class="vg-pass-lista" id="ovc-interessadas"></div>
+          <button class="btn secondary small" type="button" style="margin-top:8px;" onclick="addInteressadaVendaCarro()">+ Adicionar interessada (o)</button></div>
+
+        <div class="sub-tit full">Contrato e documentos</div>
+        <div><label>Contrato</label><select id="ovc-contrato"><option value="">-</option><option>Rascunho</option><option>Enviado</option><option>Assinado</option></select></div>
+        <div><label>Data da assinatura</label><input type="date" id="ovc-contrato-data"></div>
+        <div class="linha-checks" id="ovc-docs">
+          <label class="vg-check"><input type="checkbox" data-doc="questionario"> Questionário respondido</label>
+          <label class="vg-check"><input type="checkbox" data-doc="crlv"> CRLV-e no nome dela</label>
+          <label class="vg-check"><input type="checkbox" data-doc="rg_cnh"> RG ou CNH</label>
+          <label class="vg-check"><input type="checkbox" data-doc="quitacao"> Quitado (ou carta de quitação)</label>
+          <label class="vg-check"><input type="checkbox" data-doc="ipva"> IPVA e licenciamento pagos</label>
+          <label class="vg-check"><input type="checkbox" data-doc="detran"> Detran sem débitos e multas</label>
+          <label class="vg-check"><input type="checkbox" data-doc="recall"> Recall e roubo conferidos</label>
+          <label class="vg-check"><input type="checkbox" data-doc="revisoes"> Notas de revisão</label>
+          <label class="vg-check"><input type="checkbox" data-doc="laudo"> Laudo cautelar</label>
+        </div>
+        <div><label>Despachante</label><input type="text" id="ovc-despachante" placeholder="Nome de quem faz a transferência"></div>
+        <div class="linha-checks"><label class="vg-check"><input type="checkbox" id="ovc-despachante-ok"> Vendedora e compradora (o) sabem quem é o despachante</label></div>
+
+        <div class="sub-tit full">Pastas e links</div>
+        <div class="full"><label>Pasta do Drive da cliente <a href="#" class="o-abrir-ficha" id="ovc-pasta-abrir" target="_blank" rel="noopener">Abrir pasta</a></label><input type="url" id="ovc-pasta" placeholder="https://drive.google.com/drive/folders/..." oninput="linksVendaCarroOrc()"></div>
+        <div class="full"><label>Pasta da divulgação (Reels, posts) <a href="#" class="o-abrir-ficha" id="ovc-pasta-div-abrir" target="_blank" rel="noopener">Abrir pasta</a></label><input type="url" id="ovc-pasta-div" placeholder="https://drive.google.com/drive/folders/..." oninput="linksVendaCarroOrc()"></div>
+        <div class="full"><label>Anotações</label><textarea id="ovc-obs" rows="3"></textarea></div>
       </div>
     </section>
 
@@ -3607,9 +3687,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-calculator"/></svg><span class="vg-num">Valores e status</span></span></div>
       <div class="formgrid">
-        <div><label>Valor cotado (R$)</label><input type="number" id="o-cotado" oninput="resumoFichaOrcamento()"></div>
-        <div><label>Valor final (R$)</label><input type="number" id="o-final" oninput="resumoFichaOrcamento()"></div>
-        <div><label>Status</label><select id="o-status" onchange="resumoFichaOrcamento()"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select></div>
+        <div><label id="o-cotado-rot">Valor cotado (R$)</label><input type="number" id="o-cotado" oninput="resumoFichaOrcamento()"></div>
+        <div><label id="o-final-rot">Valor final (R$)</label><input type="number" id="o-final" oninput="resumoFichaOrcamento()"></div>
+        <div><label>Status</label><select id="o-status" onchange="resumoFichaOrcamento()"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select><span class="dica" id="o-status-dica" style="display:none;">Aceito = carro vendido: gera a comissão no Financeiro.</span></div>
         <div><label>Data</label><input type="date" id="o-data" onchange="resumoFichaOrcamento()"></div>
       </div>
     </section>
@@ -14586,6 +14666,8 @@ function openOrcamentoModal(id){
   toggleOrcamentoPago();
   const vendaLigada = vendas.find(v=>v.orcamento_id===id);
   document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas; edite direto em Financeiro se precisar.` : "";
+  preencherVendaCarroOrc(o.venda_carro);
+  mostrarVendaCarroOrc();
   resumoFichaOrcamento();
   document.getElementById("orcamento-modal").classList.add("open");
   document.querySelector("#orcamento-modal .modal").scrollTop = 0;
@@ -14599,6 +14681,189 @@ function abrirFichaDoOrcamento(tabela, selectId){
 }
 function mostrarAbrirParceiroOrc(){
   document.getElementById("o-parceiro-abrir").style.display = document.getElementById("o-parceiro").value ? "" : "none";
+}
+
+// ── Venda do carro (20/11/2026) ──
+// Seções "Venda do carro" e "Onde está e onde anunciamos" só aparecem com o
+// serviço "Venda do meu carro". Tudo vai em orcamentos.venda_carro (jsonb).
+// Nesse serviço Valor cotado = comissão prevista (acerto × preço atual) e
+// Valor final = comissão real (acerto × valor de venda), calculados aqui e
+// travados: o Financeiro recebe a comissão, nunca o preço do carro.
+const SERVICO_VENDA_CARRO = "Venda do meu carro";
+const ANUNCIO_TIPOS = ["Site Go Ladies","Loja","Marketplace (OLX, Webmotors...)","Rede social","Grupo de WhatsApp","Outro"];
+const INTERESSADA_ORIGENS = ["Site Go Ladies","WhatsApp Go Ladies","Instagram","Loja","Marketplace","Indicação","Outro"];
+let ovcAnuncios = [], ovcInteressadas = [];
+const ehVendaCarroOrc = () => document.getElementById("o-servico").value === SERVICO_VENDA_CARRO;
+const numOuNull = v => v === "" || v == null ? null : Number(v);
+function mostrarVendaCarroOrc(){
+  const sim = ehVendaCarroOrc();
+  document.getElementById("o-vc-sec-carro").style.display = sim ? "" : "none";
+  document.getElementById("o-vc-sec-divulga").style.display = sim ? "" : "none";
+  document.getElementById("o-status-dica").style.display = sim ? "" : "none";
+  document.getElementById("o-cotado-rot").textContent = sim ? "Comissão prevista (R$)" : "Valor cotado (R$)";
+  document.getElementById("o-final-rot").textContent = sim ? "Comissão real (R$)" : "Valor final (R$)";
+  ["o-cotado","o-final"].forEach(id=>{
+    const el = document.getElementById(id);
+    el.readOnly = sim; el.tabIndex = sim ? -1 : 0;
+    el.title = sim ? "Calculado pela seção Venda do carro" : "";
+  });
+  if(sim) calcVendaCarroOrc();
+}
+function preencherVendaCarroOrc(vc){
+  vc = vc || {};
+  const set = (id, v) => { document.getElementById(id).value = v ?? ""; };
+  set("ovc-modelo", vc.modelo); set("ovc-ano", vc.ano); set("ovc-cor", vc.cor);
+  set("ovc-km", vc.km); set("ovc-placa", vc.placa); set("ovc-troca", vc.aceita_troca);
+  set("ovc-pag-compradora", vc.pagamento_compradora);
+  set("ovc-fipe", vc.fipe); set("ovc-fipe-mes", vc.fipe_mes);
+  set("ovc-preco-inicial", vc.preco_inicial); set("ovc-preco-minimo", vc.preco_minimo);
+  set("ovc-preco-atual", vc.preco_atual); set("ovc-preco-atual-data", vc.preco_atual_data);
+  document.getElementById("ovc-preco-ok").checked = !!vc.preco_ok_escrito;
+  set("ovc-acerto", vc.acerto_pct); set("ovc-valor-venda", vc.valor_venda);
+  set("ovc-data-venda", vc.data_venda); set("ovc-trafego", vc.trafego_gasto);
+  set("ovc-onde-esta", vc.onde_esta); set("ovc-onde-desde", vc.onde_desde); set("ovc-onde-qual", vc.onde_qual);
+  document.getElementById("ovc-termo-ok").checked = !!vc.termo_assinado;
+  set("ovc-termo-data", vc.termo_data); set("ovc-termo-link", vc.termo_link);
+  set("ovc-contrato", vc.contrato); set("ovc-contrato-data", vc.contrato_data);
+  const docs = vc.documentos || {};
+  document.querySelectorAll("#ovc-docs input[data-doc]").forEach(c=>{ c.checked = !!docs[c.dataset.doc]; });
+  set("ovc-despachante", vc.despachante);
+  document.getElementById("ovc-despachante-ok").checked = !!vc.despachante_informado;
+  set("ovc-pasta", vc.pasta_drive); set("ovc-pasta-div", vc.pasta_divulgacao); set("ovc-obs", vc.obs);
+  ovcAnuncios = (vc.anuncios || []).map(a=>({...a}));
+  ovcInteressadas = (vc.interessadas || []).map(a=>({...a}));
+  renderAnunciosVendaCarro(); renderInteressadasVendaCarro();
+  mostrarTermoVendaCarro(); linksVendaCarroOrc();
+}
+function lerVendaCarroOrc(){
+  const v = id => document.getElementById(id).value.trim();
+  const docs = {};
+  document.querySelectorAll("#ovc-docs input[data-doc]").forEach(c=>{ if(c.checked) docs[c.dataset.doc] = true; });
+  return {
+    modelo: v("ovc-modelo"), ano: v("ovc-ano"), cor: v("ovc-cor"), km: numOuNull(v("ovc-km")),
+    placa: v("ovc-placa").toUpperCase(), aceita_troca: v("ovc-troca"), pagamento_compradora: v("ovc-pag-compradora"),
+    fipe: numOuNull(v("ovc-fipe")), fipe_mes: v("ovc-fipe-mes"),
+    preco_inicial: numOuNull(v("ovc-preco-inicial")), preco_minimo: numOuNull(v("ovc-preco-minimo")),
+    preco_atual: numOuNull(v("ovc-preco-atual")), preco_atual_data: v("ovc-preco-atual-data"),
+    preco_ok_escrito: document.getElementById("ovc-preco-ok").checked,
+    acerto_pct: numOuNull(v("ovc-acerto")), valor_venda: numOuNull(v("ovc-valor-venda")),
+    data_venda: v("ovc-data-venda"), trafego_gasto: numOuNull(v("ovc-trafego")),
+    onde_esta: v("ovc-onde-esta"), onde_desde: v("ovc-onde-desde"), onde_qual: v("ovc-onde-qual"),
+    termo_assinado: document.getElementById("ovc-termo-ok").checked,
+    termo_data: v("ovc-termo-data"), termo_link: v("ovc-termo-link"),
+    contrato: v("ovc-contrato"), contrato_data: v("ovc-contrato-data"), documentos: docs,
+    despachante: v("ovc-despachante"), despachante_informado: document.getElementById("ovc-despachante-ok").checked,
+    pasta_drive: v("ovc-pasta"), pasta_divulgacao: v("ovc-pasta-div"), obs: v("ovc-obs"),
+    anuncios: ovcAnuncios.filter(a=>a.onde || a.link),
+    interessadas: ovcInteressadas.filter(i=>i.nome),
+  };
+}
+// Contas à mostra: FIPE x preço, aviso de mínimo, comissão prevista e real.
+function calcVendaCarroOrc(){
+  if(!ehVendaCarroOrc()) return;
+  const n = id => numOuNull(document.getElementById(id).value);
+  const fipe = n("ovc-fipe"), ini = n("ovc-preco-inicial"), atual = n("ovc-preco-atual"), min = n("ovc-preco-minimo");
+  const pct = n("ovc-acerto"), venda = n("ovc-valor-venda"), trafego = n("ovc-trafego");
+  const precoBase = atual ?? ini;
+  const R = formatarMoedaBR, pctBR = x => x.toLocaleString("pt-BR", {maximumFractionDigits:1}) + "%";
+  const info = [];
+  if(fipe && precoBase){
+    const dif = fipe - precoBase;
+    info.push(`Anúncio ${dif >= 0 ? "abaixo" : "acima"} da FIPE: <b>${R(Math.abs(dif))}</b> (${pctBR(Math.abs(dif)/fipe*100)}) · conta: FIPE ${R(fipe)} − anúncio ${R(precoBase)}`);
+  }
+  if(ini && atual && ini !== atual) info.push(`Do inicial ao atual: ${R(ini)} → ${R(atual)} (${atual < ini ? "−" : "+"}${R(Math.abs(ini-atual))})`);
+  if(min && precoBase && precoBase < min) info.push(`<span style="color:var(--c-red); font-weight:600;">${ic("alert-triangle")} Preço do anúncio abaixo do mínimo: precisa do ok escrito da vendedora.</span>`);
+  if(min && venda && venda < min) info.push(`<span style="color:var(--c-red); font-weight:600;">${ic("alert-triangle")} Venda abaixo do mínimo: precisa do ok escrito da vendedora.</span>`);
+  document.getElementById("ovc-precos-info").innerHTML = info.join("<br>");
+  document.getElementById("ovc-minimo-wrap").classList.toggle("vazio", min == null);
+  document.getElementById("ovc-acerto-wrap").classList.toggle("vazio", pct == null);
+  const prevista = pct != null && precoBase ? Math.round(precoBase * pct) / 100 : null;
+  const real = pct != null && venda ? Math.round(venda * pct) / 100 : null;
+  document.getElementById("o-cotado").value = prevista ?? "";
+  document.getElementById("o-final").value = real ?? "";
+  const com = [];
+  if(prevista != null) com.push(`Comissão prevista: <b>${R(prevista)}</b> · conta: ${pctBR(pct)} × ${R(precoBase)} (${atual != null ? "preço atual" : "valor inicial"})`);
+  if(real != null) com.push(`Comissão real: <b>${R(real)}</b> · conta: ${pctBR(pct)} × ${R(venda)} (valor de venda)`);
+  const base = real ?? prevista;
+  if(base != null && trafego) com.push(`Sobra depois do tráfego: <b>${R(base - trafego)}</b> · conta: ${R(base)} − tráfego ${R(trafego)}`);
+  if(trafego > 200) com.push(`<span style="color:var(--vg-ambar); font-weight:600;">${ic("alert-circle")} Tráfego passou de R$ 200.</span>`);
+  if(pct == null) com.push(`<span style="color:var(--vg-ambar);">Preencha o acerto (%) pra calcular a comissão.</span>`);
+  document.getElementById("ovc-comissao-info").innerHTML = com.join("<br>");
+  const falta = (min == null ? 1 : 0) + (pct == null ? 1 : 0);
+  document.getElementById("ovc-pend").textContent = falta ? `falta ${falta}` : "";
+  resumoFichaOrcamento();
+}
+function mostrarTermoVendaCarro(){
+  const onde = document.getElementById("ovc-onde-esta").value;
+  const fora = onde && onde !== "Com a vendedora";
+  document.getElementById("ovc-onde-qual-wrap").style.display = fora ? "" : "none";
+  document.getElementById("ovc-termo-checks").style.display = fora || document.getElementById("ovc-termo-ok").checked ? "" : "none";
+  const termo = document.getElementById("ovc-termo-ok").checked;
+  document.getElementById("ovc-termo-data-wrap").style.display = termo ? "" : "none";
+  document.getElementById("ovc-termo-link-wrap").style.display = termo ? "" : "none";
+}
+function linkSeguro(url){ return /^https?:\/\//i.test(url || "") ? url : ""; }
+function linksVendaCarroOrc(){
+  [["ovc-pasta","ovc-pasta-abrir"],["ovc-pasta-div","ovc-pasta-div-abrir"],["ovc-termo-link","ovc-termo-link-abrir"]].forEach(([campo, link])=>{
+    const url = linkSeguro(document.getElementById(campo).value.trim());
+    const a = document.getElementById(link);
+    a.href = url || "#"; a.style.display = url ? "" : "none";
+  });
+}
+function opcoesSelect(lista, atual){
+  const extra = atual && !lista.includes(atual) ? [atual] : [];
+  return [`<option value="">-</option>`, ...[...lista, ...extra].map(x=>`<option${x===atual?" selected":""}>${escapeHtml(x)}</option>`)].join("");
+}
+function renderAnunciosVendaCarro(){
+  const wrap = document.getElementById("ovc-anuncios");
+  const ativos = ovcAnuncios.filter(a=>!a.ate).length;
+  document.getElementById("ovc-anuncios-conta").textContent = ovcAnuncios.length ? `${ativos} no ar de ${ovcAnuncios.length}` : "";
+  wrap.innerHTML = ovcAnuncios.map((a, i)=>{
+    const url = linkSeguro(a.link);
+    return `<div class="vg-pass">
+      <div class="vg-pass-topo"><b>${escapeHtml(a.onde || "Anúncio novo")}</b>
+        ${a.ate ? `<span class="tag">saiu do ar</span>` : `<span class="tag">no ar</span>`}
+        ${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:var(--pink); font-size:var(--fs-xs);">${ic("external-link")} Abrir</a>` : ""}
+        <button class="icon-btn" type="button" style="margin-left:auto;" title="Tirar da lista" aria-label="Tirar da lista" onclick="tirarItemVendaCarro('anuncios', ${i})">${ic("trash")}</button></div>
+      <div class="vg-pass-campos ovc-campos">
+        <div><label>Onde (nome da loja, site)</label><input type="text" value="${escapeHtml(a.onde||"")}" oninput="ovcAnuncios[${i}].onde=this.value"></div>
+        <div><label>Tipo</label><select onchange="ovcAnuncios[${i}].tipo=this.value">${opcoesSelect(ANUNCIO_TIPOS, a.tipo)}</select></div>
+        <div style="grid-column:1/-1;"><label>Link do anúncio</label><input type="url" value="${escapeHtml(a.link||"")}" placeholder="https://..." onchange="ovcAnuncios[${i}].link=this.value.trim(); renderAnunciosVendaCarro()"></div>
+        <div><label>No ar desde</label><input type="date" value="${escapeHtml(a.desde||"")}" onchange="ovcAnuncios[${i}].desde=this.value"></div>
+        <div><label>Saiu do ar em</label><input type="date" value="${escapeHtml(a.ate||"")}" onchange="ovcAnuncios[${i}].ate=this.value; renderAnunciosVendaCarro()"></div>
+        <div><label>Preço anunciado (R$)</label><input type="number" step="0.01" min="0" value="${a.preco ?? ""}" oninput="ovcAnuncios[${i}].preco=numOuNull(this.value)"></div>
+        <div><label>Combinado (comissão da loja, contato, observação)</label><input type="text" value="${escapeHtml(a.obs||"")}" oninput="ovcAnuncios[${i}].obs=this.value"></div>
+      </div></div>`;
+  }).join("") || `<p class="lig-sub">Nenhum anúncio registrado ainda.</p>`;
+}
+function renderInteressadasVendaCarro(){
+  const wrap = document.getElementById("ovc-interessadas");
+  wrap.innerHTML = ovcInteressadas.map((p, i)=>`<div class="vg-pass">
+      <div class="vg-pass-topo"><b>${escapeHtml(p.nome || "Interessada (o) nova")}</b>
+        <button class="icon-btn" type="button" style="margin-left:auto;" title="Tirar da lista" aria-label="Tirar da lista" onclick="tirarItemVendaCarro('interessadas', ${i})">${ic("trash")}</button></div>
+      <div class="vg-pass-campos ovc-campos">
+        <div><label>Primeiro nome</label><input type="text" value="${escapeHtml(p.nome||"")}" oninput="ovcInteressadas[${i}].nome=this.value"></div>
+        <div><label>Data do contato</label><input type="date" value="${escapeHtml(p.data||"")}" onchange="ovcInteressadas[${i}].data=this.value"></div>
+        <div><label>Por onde chegou</label><select onchange="ovcInteressadas[${i}].origem=this.value">${opcoesSelect(INTERESSADA_ORIGENS, p.origem)}</select></div>
+        <div><label>Como foi (visita, proposta, desistiu)</label><input type="text" value="${escapeHtml(p.obs||"")}" oninput="ovcInteressadas[${i}].obs=this.value"></div>
+      </div></div>`).join("") || `<p class="lig-sub">Ninguém registrado ainda.</p>`;
+}
+function addAnuncioVendaCarro(){
+  ovcAnuncios.push({ onde:"", tipo:"", link:"", desde:new Date().toISOString().slice(0,10), preco:numOuNull(document.getElementById("ovc-preco-atual").value), obs:"" });
+  renderAnunciosVendaCarro();
+  document.querySelector("#ovc-anuncios .vg-pass:last-child input")?.focus();
+}
+function addInteressadaVendaCarro(){
+  ovcInteressadas.push({ nome:"", data:new Date().toISOString().slice(0,10), origem:"", obs:"" });
+  renderInteressadasVendaCarro();
+  document.querySelector("#ovc-interessadas .vg-pass:last-child input")?.focus();
+}
+function tirarItemVendaCarro(lista, i){
+  const arr = lista === "anuncios" ? ovcAnuncios : ovcInteressadas;
+  const nome = arr[i].onde || arr[i].nome;
+  if(nome && !confirm(`Tirar "${nome}" da lista? Só sai de vez quando você clicar em Salvar.`)) return;
+  arr.splice(i, 1);
+  lista === "anuncios" ? renderAnunciosVendaCarro() : renderInteressadasVendaCarro();
 }
 async function saveOrcamento(){
   if(!leads.length){ alert("Cadastre pelo menos um lead antes."); return; }
@@ -14621,13 +14886,33 @@ async function saveOrcamento(){
     data_prevista_pagamento: document.getElementById("o-pag-data-prevista").value || null,
     data_realizada_pagamento: pago ? (document.getElementById("o-pag-data-realizada").value || new Date().toISOString().slice(0,10)) : null,
   };
+  // Venda do carro: guarda a seção e confere antes de marcar como vendido.
+  if(payload.servico === SERVICO_VENDA_CARRO){
+    calcVendaCarroOrc();
+    payload.venda_carro = lerVendaCarroOrc();
+    payload.valor_cotado = numOuNull(document.getElementById("o-cotado").value);
+    payload.valor_final = numOuNull(document.getElementById("o-final").value);
+    // A comissão é paga no dia em que o dinheiro da compradora cai.
+    if(!payload.data_prevista_pagamento && payload.venda_carro.data_venda) payload.data_prevista_pagamento = payload.venda_carro.data_venda;
+    const jaTinhaVenda = vendas.some(v=>v.orcamento_id===editingOrcamentoId);
+    if(payload.status === "Aceito" && !jaTinhaVenda){
+      if(payload.valor_final == null){
+        alert("Pra marcar como Aceito (carro vendido), preencha o acerto (%) e o valor de venda do carro na seção Venda do carro. É com eles que o CRM calcula a comissão que vai pro Financeiro.");
+        return;
+      }
+      if(!confirm(`Marcar o carro como vendido?\n\nVai pro Financeiro a comissão da Go Ladies: ${formatarMoedaBR(payload.valor_final)} (${payload.venda_carro.acerto_pct}% de ${formatarMoedaBR(payload.venda_carro.valor_venda)}).`)) return;
+    }
+  }
+  const erroSalvar = error => error.message.includes("venda_carro")
+    ? "Ainda não deu pra salvar a seção Venda do carro: falta rodar o arquivo schema_orcamento_venda_carro.sql no Supabase. Depois disso, é só salvar de novo."
+    : "Não consegui salvar o orçamento. Confira a internet e tente de novo. Se continuar, me mande um print desta mensagem: " + error.message;
   let orcamentoId = editingOrcamentoId;
   if(orcamentoId){
     const { error } = await sb.from("orcamentos").update(payload).eq("id", orcamentoId);
-    if(error){ alert("Erro ao salvar: " + error.message); return; }
+    if(error){ alert(erroSalvar(error)); return; }
   } else {
     const { data, error } = await sb.from("orcamentos").insert(payload).select();
-    if(error){ alert("Erro ao salvar: " + error.message); return; }
+    if(error){ alert(erroSalvar(error)); return; }
     orcamentoId = data[0].id;
   }
 
@@ -16310,8 +16595,12 @@ function resumoFichaOrcamento(){
   const partes = [`<b>${escapeHtml(l ? nomeCod(l) : "Lead não escolhida")}</b>`];
   if(val("o-status")) partes.push(`<span class="tag">${escapeHtml(val("o-status"))}</span>`);
   if(val("o-servico")) partes.push(`<span>${ic("tool")} ${escapeHtml(val("o-servico"))}</span>`);
+  if(val("o-servico") === "Venda do meu carro"){
+    const carro = [val("ovc-modelo"), val("ovc-ano")].filter(Boolean).join(" ");
+    if(carro) partes.push(`<span>${ic("car-suv")} ${escapeHtml(carro)}</span>`);
+  }
   const valor = val("o-final") !== "" ? val("o-final") : val("o-cotado");
-  if(valor !== "") partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(valor))}</span>`);
+  if(valor !== "") partes.push(`<span class="vg-resumo-preco">${val("o-servico") === "Venda do meu carro" ? "comissão " : ""}${formatarMoedaBR(Number(valor))}</span>`);
   if(val("o-data")) partes.push(`<span>${ic("calendar")} ${formatarDataBR(val("o-data"))}</span>`);
   document.getElementById("o-resumo").innerHTML = partes.join("<span class=\"vg-sep\">·</span>");
 }
