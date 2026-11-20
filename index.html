@@ -18014,6 +18014,7 @@ function carregarPassageirosModal(v){
   }));
   clientePontosModal = { embarque: v.cliente_embarque_ponto || "origem", desembarque: v.cliente_desembarque_ponto || "destino" };
   clienteVaiModal = v.cliente_vai_no_carro !== false;
+  escolhaDesceModal = null;
   document.getElementById("vg-cliente-nao-vai").checked = !clienteVaiModal;
 }
 function clienteNaoVaiMudou(naoVai){
@@ -18070,13 +18071,61 @@ function renderPontosPassageiros(){
     pessoasModal.forEach((p,j)=>{ if(p.embarque_ponto === k || p.desembarque_ponto === k) linhas.push(htmlPessoaNoPonto(j, k)); });
     const botoes = [];
     if(k !== "destino") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Outra pessoa embarca aqui</button>`);
-    if(k !== "origem") botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Outra pessoa desce aqui</button>`);
-    el.innerHTML = linhas.join("") + `<div class="vg-pass-botoes">${botoes.join("")}</div>`;
+    if(k !== "origem"){
+      if(quemPodeDescerEm(k).length) botoes.push(`<button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button>`);
+      botoes.push(`<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', false)">+ Pessoa nova desce aqui</button>`);
+    }
+    el.innerHTML = linhas.join("") + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "") + `<div class="vg-pass-botoes">${botoes.join("")}</div>`;
   });
   const dica = document.getElementById("vg-pessoas-dica");
   const outras = pessoasModal.filter(p=>!ehAClienteDaViagem(p)).length;
   const total = outras + (clienteVaiModal ? 1 : 0);
   if(dica) dica.textContent = `${clienteVaiModal ? "Contando a cliente" : "A cliente não vai no carro"}. Na lista do trajeto: ${total} ${total === 1 ? "pessoa" : "pessoas"}.`;
+}
+// Escolher quem desce num ponto (20/11/2026): lista quem embarcou antes e
+// ainda não desce aqui, pelo nome que foi digitado no embarque, com ou sem
+// cadastro. Marca uma ou mais pessoas e elas passam a descer neste ponto.
+let escolhaDesceModal = null;
+function quemPodeDescerEm(ponto){
+  const pos = posicaoPonto(ponto), lista = [];
+  if(clienteVaiModal && posicaoPonto(clientePontosModal.embarque) < pos && clientePontosModal.desembarque !== ponto){
+    const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
+    lista.push({ j: "cliente", nome: c ? c.nome : "Cliente da viagem", desce: clientePontosModal.desembarque, extra: "cliente da viagem" });
+  }
+  pessoasModal.forEach((p,j)=>{
+    if(posicaoPonto(p.embarque_ponto) < pos && p.desembarque_ponto !== ponto && !ehAClienteDaViagem(p))
+      lista.push({ j, nome: p.nome.trim() || "(sem nome)", desce: p.desembarque_ponto, extra: p.cliente_id ? "" : "sem cadastro" });
+  });
+  return lista;
+}
+function abrirEscolhaDesce(ponto){
+  escolhaDesceModal = escolhaDesceModal === ponto ? null : ponto;
+  renderPontosPassageiros();
+  const busca = document.getElementById("vg-escolha-desce-busca");
+  if(busca) busca.focus();
+}
+function htmlEscolhaDesce(ponto){
+  const rotulo = Object.fromEntries(pontosDoTrajeto());
+  const itens = quemPodeDescerEm(ponto).map(o=>`<label class="vg-check vg-escolha-item" data-nome="${escapeHtml(semAcentoMin(o.nome))}" style="margin:0;"><input type="checkbox" value="${o.j}"> <b>${escapeHtml(o.nome)}</b> <span style="color:var(--muted); font-weight:400;">${o.extra ? escapeHtml(o.extra) + " · " : ""}hoje desce em ${escapeHtml((rotulo[o.desce] || "").replace(/^\d+\. /, ""))}</span></label>`).join("");
+  return `<div class="vg-pass" style="border-style:dashed;"><div style="font-weight:600; margin-bottom:6px;">Quem desce aqui? <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma pessoa)</span></div>
+    <input type="text" id="vg-escolha-desce-busca" placeholder="Buscar pelo nome" autocomplete="off" oninput="filtrarEscolhaDesce(this.value)" style="margin-bottom:6px;">
+    <div id="vg-escolha-desce-lista" style="display:flex; flex-direction:column; gap:4px;">${itens}</div>
+    <div class="vg-pass-botoes" style="margin-top:8px;"><button type="button" class="btn small" onclick="confirmarEscolhaDesce('${ponto}')">Descem aqui</button><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${ponto}')">Cancelar</button></div></div>`;
+}
+function filtrarEscolhaDesce(txt){
+  const b = semAcentoMin(txt);
+  document.querySelectorAll("#vg-escolha-desce-lista .vg-escolha-item").forEach(el=>{ el.style.display = !b || el.dataset.nome.includes(b) ? "" : "none"; });
+}
+function confirmarEscolhaDesce(ponto){
+  const marcados = [...document.querySelectorAll("#vg-escolha-desce-lista input:checked")].map(cb=>cb.value);
+  if(!marcados.length){ alert("Marque quem desce neste ponto."); return; }
+  marcados.forEach(v=>{
+    if(v === "cliente") clientePontosModal.desembarque = ponto;
+    else pessoasModal[Number(v)].desembarque_ponto = ponto;
+  });
+  escolhaDesceModal = null;
+  renderPontosPassageiros();
+  showToast(marcados.length === 1 ? "1 pessoa desce aqui." : `${marcados.length} pessoas descem aqui.`);
 }
 function adicionarPessoaViagem(ponto, embarca){
   pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
@@ -18117,8 +18166,12 @@ function htmlLigacaoPessoa(j){
   const busca = semAcentoMin(p.nome);
   if(!busca) return "";
   const achadas = busca.length >= 2 ? clientesTransporte.filter(c=>semAcentoMin(c.nome).includes(busca)).slice(0, 4) : [];
+  // Lead com o mesmo nome (ou WhatsApp) já existe: mostra em vez de criar outro
+  const lead = leads.find(l=>semAcentoMin(l.nome) === busca || (p.telefone.trim() && mesmoTelefone(l.whatsapp, p.telefone)));
   return achadas.map(c=>`<button type="button" class="btn ghost small" onclick="ligarPessoaFicha(${j}, ${c.id})"><svg class=ic aria-hidden=true><use href=#i-link /></svg> ${escapeHtml(nomeCod(c))}</button>`).join(" ")
-    + ` <button type="button" class="btn ghost small" onclick="criarFichaPessoa(${j})">+ Criar ficha</button>`;
+    + ` <button type="button" class="btn ghost small" onclick="criarFichaPessoa(${j})">+ Incluir como cliente de viagem</button>`
+    + (lead ? ` <span>Lead: <a href="#" onclick="event.preventDefault(); openLeadModal(${Number(lead.id)})">${escapeHtml(lead.nome)}</a></span>`
+            : ` <button type="button" class="btn ghost small" onclick="criarLeadPessoa(${j})">+ Incluir como lead</button>`);
 }
 function atualizarLigacaoPessoa(j, ponto){
   const el = document.getElementById(`vg-pass-lig-${j}-${ponto}`);
@@ -18162,6 +18215,34 @@ async function criarFichaPessoa(j){
   await recarregarTabelas("clientes_transporte");
   showToast(`Ficha criada: ${data[0].nome}`);
   ligarPessoaFicha(j, data[0].id);
+}
+// Passageira (o) sem cadastro vira lead de Transporte (20/11/2026), com a
+// viagem anotada nas notas. Não liga à lista (lead não tem ficha de viagem).
+async function criarLeadPessoa(j){
+  const p = pessoasModal[j];
+  const nome = p.nome.trim();
+  if(!nome) return;
+  let whats = p.telefone.trim();
+  if(!whats){
+    whats = prompt(`Incluir ${nome} como lead.\n\nWhatsApp (opcional, pode deixar vazio):`);
+    if(whats === null) return;
+    whats = whats.trim();
+  }
+  const mesma = whats && leads.find(l=>mesmoTelefone(l.whatsapp, whats));
+  if(mesma){ alert(`Esse WhatsApp já é do lead ${mesma.nome}. Nada foi criado.`); return; }
+  const cliente = clientesTransporte.find(c=>c.id===Number(document.getElementById("vg-cliente").value));
+  if(!confirm(`Incluir ${nome}${whats ? " (" + whats + ")" : ""} como lead de Transporte, na etapa Novo lead?`)) return;
+  const hoje = new Date();
+  const { data, error } = await sb.from("leads").insert({
+    nome, whatsapp: whats, categoria: "Transporte", etapa: "Novo lead", origem: "Indicação", responsavel: "Jú",
+    data: `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,"0")}-${String(hoje.getDate()).padStart(2,"0")}`,
+    notas: `Foi junto na viagem${editingViagemId ? " #" + editingViagemId : ""}${cliente ? " de " + nomeCod(cliente) : ""}. Incluída (o) como lead em ${dataComSemana(hoje, true)}.`,
+  }).select();
+  if(error){ alert("Não deu pra incluir como lead: " + error.message); return; }
+  if(!p.telefone.trim() && whats) p.telefone = whats;
+  await recarregarTabelas("leads");
+  showToast(`Lead incluído: ${data[0].nome}`);
+  renderPontosPassageiros();
 }
 // Grava a lista inteira (apaga e reinsere), como as paradas
 async function gravarPassageirosViagem(viagemId){
