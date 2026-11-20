@@ -631,13 +631,6 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
 .formgrid .destaque>input,.formgrid .destaque>select,.formgrid .destaque .campo-moeda>input,.formgrid .destaque .campo-endereco>input{font-size:15px; font-weight:600; padding-top:10px; padding-bottom:10px;}
 .vg-check{display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--text1); font-weight:400; margin:0;}
 .vg-check input{width:auto !important; accent-color:var(--rosa);}
-.vg-trajeto{border:1px dashed var(--border2); border-radius:10px; padding:10px 12px;}
-.vg-ponto{padding:10px 0; border-top:1px solid var(--border);}
-.vg-ponto:first-of-type{border-top:none;}
-.vg-ponto > label, .vg-ponto .obrig label{display:block; margin-top:8px;}
-.vg-ponto-tit{display:flex; align-items:center; gap:6px; font-weight:700; font-size:var(--fs-sm); color:var(--text1);}
-.vg-ponto-linha{display:grid; grid-template-columns:140px 1fr; gap:10px; margin-top:8px;}
-@media (max-width:600px){ .vg-ponto-linha{grid-template-columns:1fr;} }
 .vg-pass-lista{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
 .vg-pass{border:1px solid var(--border); border-radius:9px; padding:8px 10px; background:var(--bg-card2);}
 .vg-pass-topo{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:var(--fs-sm);}
@@ -4178,68 +4171,56 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       </div>
     </section>
 
-    <!-- ── 2. Ida ── -->
-    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
-      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-arrow-right"/></svg>2. Ida</span><span class="vg-pend"></span></div>
+    <!-- ── Trajeto (20/11/2026): a antiga seção "2. Ida" virou uma seção por
+         ponto, cada uma com sua cor: Embarque, Parada 1, Parada 2... e
+         Destino. O número de cada seção acompanha as paradas
+         (numerarSecoesViagem). Os ids dos campos são os mesmos de antes.
+         vg-trajeto-wrap envolve todos os pontos: mudar um endereço mede a
+         rota de novo. ── -->
+    <div id="vg-trajeto-wrap">
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="vg-sec-n" data-rot="Embarque">2. Embarque</span></span><span class="vg-pend"></span></div>
       <div class="formgrid">
-        <!-- Trajeto único: embarque (origem), paradas (garupa) e destino, na
-             mesma caixa e na ordem real da corrida. Origem e destino são os
-             mesmos campos de sempre (viagens.origem_endereco/destino_endereco);
-             só as paradas do meio vão pra viagem_paradas. -->
-        <div class="full vg-trajeto" id="vg-trajeto-wrap">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-            <label style="margin:0; display:flex; align-items:center; gap:6px;"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg>Trajeto <span style="font-weight:400; color:var(--muted);">(na ordem da corrida)</span></label>
-            <div style="display:flex; gap:8px;">
-              <button type="button" class="btn ghost small" onclick="medirRotaViagem(true)" title="Mede de novo no Google e troca km e duração, mesmo os digitados"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg> Medir rota</button>
-              <button type="button" class="btn ghost small" onclick="abrirRotaMaps()"><svg class="ic" aria-hidden="true"><use href="#i-map-pin"/></svg> Ver rota</button>
-              <button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button>
-            </div>
-          </div>
-          <!-- Todo ponto igual (23/10/2026): Endereço, Horário previsto,
-               Observação e Passageiras (os), com o nome do campo sempre à
-               vista. O horário do embarque e a chegada prevista são os mesmos
-               campos de mais abaixo (espelhados, sem duplicar no banco). -->
-          <label class="vg-check" style="margin-top:10px;"><input type="checkbox" id="vg-cliente-nao-vai" onchange="clienteNaoVaiMudou(this.checked)"> A cliente da viagem não vai no carro <span style="color:var(--muted);">(pediu e pagou pra outra pessoa)</span></label>
-          <div class="vg-ponto" style="margin-top:10px;">
-            <div class="vg-ponto-tit">1. Embarque (origem)</div>
-            <div class="obrig destaque">
-              <label>Endereço</label>
-              <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
-            </div>
-            <div class="vg-ponto-linha">
-              <div><label>Horário previsto</label><input type="time" id="vg-origem-horario" oninput="espelharHorario(this.id)"></div>
-              <div><label>Observação</label><input type="text" id="vg-origem-obs" placeholder="Ex.: portaria 2"></div>
-            </div>
-            <label>Passageiras (os) neste ponto</label>
-            <div id="vg-pass-origem" class="vg-pass-lista"></div>
-          </div>
-          <div id="vg-paradas-lista"></div>
-          <div class="vg-ponto">
-            <div class="vg-ponto-tit"><span id="vg-destino-num">2</span>. Destino</div>
-            <div class="obrig destaque">
-              <label>Endereço</label>
-              <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div>
-            </div>
-            <div class="vg-ponto-linha">
-              <div><label>Horário previsto</label><input type="time" id="vg-destino-horario" oninput="espelharHorario(this.id)"></div>
-              <div><label>Observação</label><input type="text" id="vg-destino-obs" placeholder="Ex.: entrada pela rua de trás"></div>
-            </div>
-            <label>Passageiras (os) neste ponto</label>
-            <div id="vg-pass-destino" class="vg-pass-lista"></div>
-          </div>
-          <div id="vg-rota-medida" class="dica" style="display:none; margin-top:8px;"></div>
-          <div id="vg-km-real" class="dica" style="display:none; margin-top:8px; line-height:1.55;"></div>
-        </div>
-        <div class="obrig destaque"><label>Data prevista da ida</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-feriado')"></div>
+        <div class="obrig destaque"><label>Data da viagem</label><input type="date" id="vg-data" onchange="avisarFeriadoViagem('vg-data', 'vg-feriado')"></div>
         <div class="obrig destaque"><label>Horário do embarque</label><input type="time" id="vg-horario-partida" oninput="recalcularHorarioChegada()"></div>
-        <div class="obrig"><label>Duração da ida (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"><span class="dica">Do embarque até o destino, só a ida.</span></div>
-        <div class="sugerido"><label>Chegada prevista no destino <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
-        <div class="obrig"><label>Km da ida</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Se for só ida, é o km da corrida inteira.</span></div>
-        <div><label>Pessoas na ida</label><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span class="dica" id="vg-pessoas-dica">Contando a cliente. Vazio = não informado.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado" onchange="periodoTrechoTrocado()"> <span>Feriado na ida</span></label></div>
+        <div class="full obrig destaque"><label>Endereço do embarque</label>
+          <div class="campo-endereco"><input type="text" id="vg-origem-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
+        <div class="full"><label>Observação</label><input type="text" id="vg-origem-obs" placeholder="Ex.: portaria 2"></div>
+        <div class="full"><label class="vg-check"><input type="checkbox" id="vg-cliente-nao-vai" onchange="clienteNaoVaiMudou(this.checked)"> A cliente da viagem não vai no carro <span style="color:var(--muted);">(pediu e pagou pra outra pessoa)</span></label></div>
+        <div class="full"><div id="vg-pass-origem" class="vg-pass-lista"></div></div>
+      </div>
+      <!-- Espelhos antigos do horário (HORARIO_ESPELHO): ficam escondidos -->
+      <input type="hidden" id="vg-origem-horario"><input type="hidden" id="vg-destino-horario">
+    </section>
+
+    <div id="vg-paradas-lista"></div>
+    <div style="text-align:center; margin-top:10px;"><button type="button" class="btn ghost small" onclick="adicionarParadaViagem()">+ Adicionar parada</button></div>
+
+    <section class="vg-sec" style="--sec-cor:var(--vg-azul);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-target"/></svg><span class="vg-sec-n" data-rot="Destino">3. Destino</span></span><span class="vg-pend"></span></div>
+      <div class="formgrid">
+        <div class="full obrig destaque"><label>Endereço do destino</label>
+          <div class="campo-endereco"><input type="text" id="vg-destino-endereco" autocomplete="off"><div class="sugestoes-endereco"></div></div></div>
+        <div class="sugerido"><label>Chegada prevista <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada"><span class="dica">Calculada: embarque + duração.</span></div>
+        <div><label>Observação</label><input type="text" id="vg-destino-obs" placeholder="Ex.: entrada pela rua de trás"></div>
+        <div class="obrig"><label>Km da corrida (ida)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Do embarque até aqui, passando pelas paradas.</span></div>
+        <div class="obrig"><label>Duração (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"><span class="dica">Do embarque até o destino.</span></div>
+        <div class="full" style="display:flex; gap:16px; flex-wrap:wrap;">
+          <label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label>
+          <label class="vg-check"><input type="checkbox" id="vg-feriado" onchange="periodoTrechoTrocado()"> <span>Feriado na ida</span></label>
+        </div>
+        <div class="full" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn ghost small" onclick="medirRotaViagem(true)" title="Mede de novo no Google e troca km e duração, mesmo os digitados"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg> Medir rota</button>
+          <button type="button" class="btn ghost small" onclick="abrirRotaMaps()"><svg class="ic" aria-hidden="true"><use href="#i-map-pin"/></svg> Ver rota</button>
+        </div>
+        <div class="full"><div id="vg-rota-medida" class="dica" style="display:none;"></div><div id="vg-km-real" class="dica" style="display:none; margin-top:8px; line-height:1.55;"></div></div>
+        <div class="full"><div id="vg-pass-destino" class="vg-pass-lista"></div></div>
+        <!-- "Pessoas na ida" saiu da tela (20/11/2026): quem vai no carro já
+             está nos pontos. Continua guardado nas viagens antigas. -->
+        <div style="display:none;"><input type="number" id="vg-pessoas-ida" min="1" max="20" step="1"><span id="vg-pessoas-dica"></span></div>
       </div>
     </section>
+    </div>
 
     <!-- ── 3. Volta: fechada até marcar "Tem volta". Desmarcar apaga os dados
          da volta (alternarVoltaViagem), senão ficariam escondidos e salvos. ── -->
@@ -18007,7 +17988,7 @@ const listaPassageirosExiste = () => !viagens.length || ("cliente_embarque_ponto
 const semAcentoMin = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const posicaoPonto = k => k === "origem" ? 0 : k === "destino" ? 1000 : Number(String(k).slice(1));
 function pontosDoTrajeto(){
-  return [["origem", "1. Embarque"], ...paradasModal.map((p,i)=>["p" + (i+1), `${i+2}. Parada`]), ["destino", `${paradasModal.length+2}. Destino`]];
+  return [["origem", "Embarque"], ...paradasModal.map((p,i)=>["p" + (i+1), `Parada ${i+1}`]), ["destino", "Destino"]];
 }
 function carregarPassageirosModal(v){
   pessoasModal = viagemPassageiros.filter(p=>p.viagem_id===v.id).sort((a,b)=>a.id-b.id).map(p=>({
@@ -18088,16 +18069,17 @@ function renderPontosPassageiros(){
     });
     const titulo = (txt, n) => `<div class="vg-pass-grupo">${txt}${n ? ` (${n})` : ""}</div>`;
     let html = "";
-    if(k !== "destino"){
+    const blocoEmbarca = () => {
       // Parada sem ninguém embarcando: só o botão, sem título vazio
-      html += (embarcam.length ? titulo("Embarcam aqui", embarcam.length) + embarcam.join("") : k === "origem" ? titulo("Embarcam aqui", 0) + `<div class="dica">Ninguém embarca ainda.</div>` : "")
-        + `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Pessoa embarca aqui</button></div>`;
-    }
-    if(k !== "origem"){
-      html += titulo("Descem aqui", descem.length) + (descem.join("") || `<div class="dica">Ninguém desce neste ponto.</div>`)
-        + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "")
-        + (quemPodeDescerEm(k).length && escolhaDesceModal !== k ? `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button></div>` : "");
-    }
+      let h = embarcam.length ? titulo("Embarcam aqui", embarcam.length) + embarcam.join("") : k === "origem" ? titulo("Embarcam aqui", 0) + `<div class="dica">Ninguém embarca ainda.</div>` : "";
+      return h + `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Pessoa embarca aqui</button></div>`;
+    };
+    const blocoDesce = () => titulo("Descem aqui", descem.length) + (descem.join("") || `<div class="dica">Ninguém desce neste ponto.</div>`)
+      + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "")
+      + (quemPodeDescerEm(k).length && escolhaDesceModal !== k ? `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button></div>` : "");
+    // Em cada ponto: primeiro quem desce, depois quem embarca
+    if(k !== "origem") html += blocoDesce();
+    if(k !== "destino") html += blocoEmbarca();
     el.innerHTML = html;
   });
   const dica = document.getElementById("vg-pessoas-dica");
@@ -18353,6 +18335,10 @@ function htmlGarupaCliente(c){
 }
 // Etiqueta de quantas pessoas, pro cartão da viagem e pro topo do modal
 function textoPessoasViagem(v){
+  // 20/11/2026: com gente na lista do carro, conta a lista (o número
+  // digitado à mão saiu da tela e não passa mais por cima dela).
+  const naLista = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id).length;
+  if(naLista && !v.pessoas_volta){ const t = naLista + (v.cliente_vai_no_carro === false ? 0 : 1); return `${t} ${t === 1 ? "pessoa" : "pessoas"}`; }
   if(v.pessoas_ida && v.pessoas_volta && v.pessoas_ida !== v.pessoas_volta) return `${v.pessoas_ida} na ida · ${v.pessoas_volta} na volta`;
   if(v.pessoas_ida || v.pessoas_volta){ const n = v.pessoas_ida || v.pessoas_volta; return `${n} ${Number(n) === 1 ? "pessoa" : "pessoas"}`; }
   // Soma a cliente só quando ela vai no carro (viagem #67, 11/11/2026: a mãe
@@ -18361,28 +18347,46 @@ function textoPessoasViagem(v){
   const total = n + (v.cliente_vai_no_carro === false ? 0 : 1);
   return n ? `${total} ${total === 1 ? "pessoa" : "pessoas"}` : "";
 }
+// Cada parada é uma seção com cor própria (20/11/2026), em rodízio pra
+// duas paradas vizinhas nunca terem a mesma cor.
+const CORES_PARADA = ["--vg-ambar", "--vg-roxo", "--vg-teal", "--vg-lilas"];
 function renderParadasModal(){
   const el = document.getElementById("vg-paradas-lista");
-  document.getElementById("vg-destino-num").textContent = paradasModal.length + 2;
   el.innerHTML = paradasModal.map((p,i)=>`
-    <div class="vg-ponto">
-      <div class="vg-ponto-tit">${i+2}. Parada
-        <span style="flex:1;"></span>
-        <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
-        <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
-        <button type="button" class="icon-btn" title="Remover parada" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
-      </div>
-      <label>Endereço</label>
-      <div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div>
-      <div class="vg-ponto-linha">
+    <section class="vg-sec" style="--sec-cor:var(${CORES_PARADA[i % CORES_PARADA.length]});">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-flag"/></svg><span class="vg-sec-n" data-rot="Parada ${i+1}">Parada ${i+1}</span></span>
+        <span style="display:flex; gap:4px;">
+          <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
+          <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
+          <button type="button" class="icon-btn" title="Tirar esta parada" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
+        </span></div>
+      <div class="formgrid">
+        <div class="full"><label>Endereço da parada</label>
+          <div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
         <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
-        <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: portaria 2" oninput="paradasModal[${i}].observacao=this.value"></div>
+        <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: em frente ao mercado" oninput="paradasModal[${i}].observacao=this.value"></div>
+        <div class="full"><div id="vg-pass-p${i+1}" class="vg-pass-lista"></div></div>
       </div>
-      <label>Passageiras (os) neste ponto</label>
-      <div id="vg-pass-p${i+1}" class="vg-pass-lista"></div>
-    </div>`).join("");
+    </section>`).join("");
   el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+  numerarSecoesViagem();
   renderPontosPassageiros();
+}
+// Números das seções do modal de viagem seguem a ordem na tela
+// (Pedido, Embarque, Paradas, Destino, Volta, Preço...).
+function numerarSecoesViagem(){
+  let n = 0;
+  document.querySelectorAll("#viagem-modal section.vg-sec").forEach(sec=>{
+    const tit = sec.querySelector(":scope > .vg-sec-tit");
+    if(!tit) return;
+    const alvo = tit.querySelector(".vg-sec-n");
+    if(alvo){ alvo.textContent = `${++n}. ${alvo.dataset.rot}`; return; }
+    const m = tit.querySelector("span");
+    if(!m) return;
+    // Títulos fixos ("4. Preço"): troca só o número do começo
+    const txt = [...m.childNodes].find(x=>x.nodeType === 3 && /^\d+\. /.test(x.textContent));
+    if(txt) txt.textContent = txt.textContent.replace(/^\d+/, String(++n));
+  });
 }
 function adicionarParadaViagem(){
   paradasModal.push({ endereco: "", horario_previsto: "", observacao: "" });
