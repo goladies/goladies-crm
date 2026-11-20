@@ -18034,11 +18034,9 @@ function htmlPessoaNoPonto(j, ponto){
   const ehCliente = j === "cliente";
   const p = ehCliente ? null : pessoasModal[j];
   const embarca = ehCliente ? clientePontosModal.embarque === ponto : p.embarque_ponto === ponto;
-  const outro = ehCliente ? (embarca ? clientePontosModal.desembarque : clientePontosModal.embarque) : (embarca ? p.desembarque_ponto : p.embarque_ponto);
-  const opcoes = pontosDoTrajeto().filter(([k])=> embarca ? posicaoPonto(k) > posicaoPonto(ponto) : posicaoPonto(k) < posicaoPonto(ponto))
-    .map(([k, r])=>`<option value="${k}" ${k===outro?"selected":""}>${r}</option>`).join("");
   const arg = ehCliente ? "'cliente'" : j;
-  const outroSel = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap;">${embarca ? "desce em" : "embarcou em"} <select onchange="mudarOutroPonto(${arg}, ${embarca}, this.value)">${opcoes}</select></label>`;
+  // 20/11/2026: onde a pessoa desce não aparece no embarque; escolhe-se lá
+  // no ponto onde ela desce ("+ Escolher quem desce aqui" ou "trocar pra").
   const acao = `<span class="vg-pass-acao ${embarca ? "emb" : "des"}">${embarca ? "Embarca" : "Desce"}</span>`;
   // Onde desce (20/11/2026): só o nome numa linha curta. Os dados da pessoa
   // ficam uma vez só, no ponto onde ela embarca.
@@ -18055,7 +18053,7 @@ function htmlPessoaNoPonto(j, ponto){
     const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
     const tipoViagem = document.getElementById("vg-tipo-servico").value;
     const tipoTxt = ["Criança", "Adolescente", "Idoso"].includes(tipoViagem) ? " · " + rotuloOpcao(tipoViagem) : "";
-    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem${escapeHtml(tipoTxt)}</span> ${outroSel}</div></div>`;
+    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem${escapeHtml(tipoTxt)}</span></div></div>`;
   }
   const t = p.tipo;
   const campo = (rot, html) => `<div><label>${rot}</label>${html}</div>`;
@@ -18066,7 +18064,7 @@ function htmlPessoaNoPonto(j, ponto){
   if(["sem_conta","adolescente","idosa"].includes(t)) campos += campo("CPF (opcional)", inp("cpf", "text", 'maxlength="14"'));
   if(t === "crianca") campos += campo("Idade", inp("idade", "number", 'min="0" max="11"'));
   if(t === "idosa") campos += `<div style="display:flex; align-items:flex-end;"><label class="vg-check" style="margin:0;"><input type="checkbox" ${p.precisa_ajuda?"checked":""} onchange="pessoasModal[${j}].precisa_ajuda=this.checked; renderPontosPassageiros()"> Precisa de ajuda pra entrar ou sair</label></div>`;
-  return `<div class="vg-pass"><div class="vg-pass-topo">${acao} ${outroSel}<span style="flex:1"></span><button type="button" class="icon-btn" title="Tirar esta pessoa da viagem" onclick="removerPessoaViagem(${j})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div>
+  return `<div class="vg-pass"><div class="vg-pass-topo">${acao}<span style="flex:1"></span><button type="button" class="icon-btn" title="Tirar esta pessoa da viagem" onclick="removerPessoaViagem(${j})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div>
     ${ehAClienteDaViagem(p) ? `<div style="margin:4px 0 8px; padding:6px 8px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber); font-size:var(--fs-xs);">${escapeHtml(p.nome || "Esta pessoa")} já está na viagem como cliente. Esta linha não será salva; pode apagar na lixeira.</div>` : ""}
     <div class="vg-pass-campos">${campos}</div>
     <div class="vg-pass-lig" id="vg-pass-lig-${j}-${ponto}">${htmlLigacaoPessoa(j)}</div></div>`;
