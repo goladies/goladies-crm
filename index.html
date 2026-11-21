@@ -4242,14 +4242,31 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
         <div class="sugerido"><label>Km depois das 20h na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="number" id="vg-km-noite-retorno" step="0.1" min="0" oninput="kmNoiteDigitado(this)"><span class="dica" id="vg-km-noite-retorno-dica">Calculado pelo horário do embarque da volta e a duração.</span></div>
-        <div><label>Pessoas na volta</label><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
+        <!-- "Pessoas na volta" saiu da tela (20/11/2026): quem volta no carro
+             está nos pontos da volta. Continua guardado nas viagens antigas. -->
+        <div style="display:none;"><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"></div>
         <!-- Noite na volta sai do horário do embarque da volta (20/11/2026) -->
         <div style="display:none;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Noite (20h às 6h): +30% na volta</span></label></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado-retorno" onchange="periodoTrechoTrocado()"> <span>Feriado na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
-        <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
+        <div class="full"><div id="vg-passv-origem" class="vg-pass-lista"></div></div>
       </div>
     </section>
+
+    <!-- Volta com paradas e pessoas próprias (20/11/2026, viagem da Claudete
+         de 18/11): paradas da volta e Destino da volta, igual à ida.
+         schema_volta_paradas_pessoas.sql. Aparece junto com "Tem volta". -->
+    <div id="vg-volta-trajeto">
+      <div id="vg-paradas-volta-lista"></div>
+      <div style="text-align:center; margin-top:10px;"><button type="button" class="btn ghost small" onclick="adicionarParadaViagem('volta')">+ Adicionar parada na volta</button></div>
+      <section class="vg-sec" style="--sec-cor:var(--vg-laranja);">
+        <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-target"/></svg><span class="vg-sec-n" data-rot="Destino da volta">Destino da volta</span></span></div>
+        <div class="formgrid">
+          <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
+          <div class="full"><div id="vg-passv-destino" class="vg-pass-lista"></div></div>
+        </div>
+      </section>
+    </div>
 
     <!-- ── 4. Preço ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
@@ -9588,6 +9605,7 @@ function preencherViagemDaCotacao(c){
   if(campos["sim-dia"]) document.getElementById("vg-data").value = campos["sim-dia"];
   if(horas[0] && horas[0].hora) document.getElementById("vg-horario-partida").value = horas[0].hora;
   paradasModal = pontos.slice(1, -1).map((e, i)=>({ tipo: "Parada", endereco: e, passageira_nome: "", horario_previsto: (horas[i+1] && horas[i+1].hora) || "", observacao: "" }));
+  paradasVoltaModal = [];
   renderParadasModal();
   const km = Number(c.km) || 0, min = Number(c.minutos) || 0;
   preencherMedidaRota("vg-distancia-km", km, true);
@@ -17943,7 +17961,7 @@ async function medirRotaViagem(forcar){
   nota.textContent = "Medindo a rota no Google...";
   const [ida, volta] = await Promise.all([
     medirRotaGoogle(origem, destino, paradas),
-    temVolta ? medirRotaGoogle(origemVolta, destinoVolta) : null,
+    temVolta ? medirRotaGoogle(origemVolta, destinoVolta, paradasVoltaModal.map(p=>p.endereco.trim()).filter(Boolean)) : null,
   ]);
   if(minha !== medicaoRotaViagem) return; // mudou endereço no meio: vale a medição mais nova
   const kmTxt = n => String(n).replace(".", ",");
@@ -17974,14 +17992,19 @@ async function medirRotaViagem(forcar){
 document.getElementById("vg-trajeto-wrap").addEventListener("change", e=>{
   if(e.target.closest(".campo-endereco")) medirRotaViagem(false);
 });
-["vg-origem-retorno","vg-destino-retorno","vg-tem-volta"].forEach(id=>{
+["vg-origem-retorno","vg-tem-volta"].forEach(id=>{
   document.getElementById(id).addEventListener("change", ()=>medirRotaViagem(false));
+});
+// Destino e paradas da volta (20/11/2026): mudar um endereço mede de novo
+document.getElementById("vg-volta-trajeto").addEventListener("change", e=>{
+  if(e.target.closest(".campo-endereco")) medirRotaViagem(false);
 });
 
 // ── Paradas (garupa) dentro do modal de Viagem ──
 // A lista vive em memória enquanto o modal está aberto e é gravada inteira
 // ao Salvar (apaga e reinsere na ordem), o que dispensa sincronizar item a item.
 let paradasModal = [];
+let paradasVoltaModal = []; // paradas da volta (schema_volta_paradas_pessoas.sql)
 // A cliente pede pelo app/site com um trajeto único (embarque, paradas,
 // destino), mas o banco grava tudo junto em observacoes_cliente, prefixado
 // "Embarque: "/"Destino: " (ver montarObservacoes() no site). O modal separa
@@ -18033,8 +18056,10 @@ function montarObservacaoCliente(){
   return partes.join("\n") || null;
 }
 function carregarParadasModal(viagemId){
-  paradasModal = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem)
-    .map(p=>({ endereco: p.endereco||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" }));
+  const daViagem = viagemParadas.filter(p=>p.viagem_id===viagemId).sort((a,b)=>a.ordem-b.ordem);
+  const montar = p=>({ endereco: p.endereco||"", horario_previsto: p.horario_previsto ? p.horario_previsto.slice(0,5) : "", observacao: p.observacao||"" });
+  paradasModal = daViagem.filter(p=>(p.trecho || "ida") === "ida").map(montar);
+  paradasVoltaModal = daViagem.filter(p=>p.trecho === "volta").map(montar);
   renderParadasModal();
 }
 // ── Quem vai no carro, ponto a ponto (schema_garupa_lista_passageiros.sql) ──
@@ -18043,8 +18068,15 @@ function carregarParadasModal(viagemId){
 // "destino" ou "p1", "p2"... (parada 1, 2... na ordem). No modal a pessoa
 // aparece nos dois pontos dela (Embarca e Desce). A cliente da viagem também
 // tem os dois pontos (viagens.cliente_embarque_ponto/desembarque_ponto).
+// Volta (20/11/2026, schema_volta_paradas_pessoas.sql): a volta tem paradas
+// e pessoas próprias. Cada pessoa da lista tem na_ida, na_volta e os pontos
+// da volta (volta_embarque_ponto/volta_desembarque_ponto: "origem" =
+// embarque da volta, "p1"... = paradas da volta, "destino" = destino da
+// volta). Sem mudar nada, quem foi na ida volta junto, do embarque ao
+// destino da volta. Trecho = "ida" ou "volta" nas funções abaixo.
 let pessoasModal = [];
 let clientePontosModal = { embarque: "origem", desembarque: "destino" };
+let clienteVoltaModal = { na: true, embarque: "origem", desembarque: "destino" };
 // Falso quando quem pediu e pagou não entra no carro (schema_cliente_nao_vai.sql):
 // a cliente some do trajeto e viaja só quem está na lista.
 let clienteVaiModal = true;
@@ -18053,24 +18085,53 @@ const TIPOS_PASSAGEIRA = [
   ["crianca", "Criança (até 11)"], ["idosa", "Pessoa idosa"], ["nao_informado", "Tipo a confirmar"],
 ];
 const listaPassageirosExiste = () => !viagens.length || ("cliente_embarque_ponto" in viagens[0]);
+const voltaDetalhadaExiste = () => !viagens.length || ("cliente_na_volta" in viagens[0]);
+const temVoltaModal = () => document.getElementById("vg-tem-volta").checked && voltaDetalhadaExiste();
 const semAcentoMin = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const posicaoPonto = k => k === "origem" ? 0 : k === "destino" ? 1000 : Number(String(k).slice(1));
-function pontosDoTrajeto(){
-  return [["origem", "Embarque"], ...paradasModal.map((p,i)=>["p" + (i+1), `Parada ${i+1}`]), ["destino", "Destino"]];
+// Nomes dos campos de cada trecho na pessoa da lista
+const CAMPOS_TRECHO = {
+  ida: { e: "embarque_ponto", d: "desembarque_ponto", na: "na_ida" },
+  volta: { e: "volta_embarque_ponto", d: "volta_desembarque_ponto", na: "na_volta" },
+};
+const clientePtsTrecho = T => T === "volta" ? clienteVoltaModal : clientePontosModal;
+const clienteNoTrecho = T => clienteVaiModal && (T !== "volta" || clienteVoltaModal.na);
+const paradasDoTrecho = T => T === "volta" ? paradasVoltaModal : paradasModal;
+const idListaPonto = (T, k) => (T === "volta" ? "vg-passv-" : "vg-pass-") + k;
+function pontosDoTrajeto(T = "ida"){
+  const v = T === "volta";
+  return [["origem", v ? "Embarque da volta" : "Embarque"], ...paradasDoTrecho(T).map((p,i)=>["p" + (i+1), `Parada ${i+1}${v ? " da volta" : ""}`]), ["destino", v ? "Destino da volta" : "Destino"]];
 }
 function carregarPassageirosModal(v){
   pessoasModal = viagemPassageiros.filter(p=>p.viagem_id===v.id).sort((a,b)=>a.id-b.id).map(p=>({
     tipo: p.tipo, nome: p.nome || "", cliente_id: p.cliente_id || null, telefone: p.telefone || "", cpf: p.cpf || "",
     idade: p.idade ?? "", precisa_ajuda: !!p.precisa_ajuda, embarque_ponto: p.embarque_ponto || "origem", desembarque_ponto: p.desembarque_ponto || "destino",
+    na_ida: p.na_ida !== false, na_volta: p.na_volta !== false,
+    volta_embarque_ponto: p.volta_embarque_ponto || "origem", volta_desembarque_ponto: p.volta_desembarque_ponto || "destino",
   }));
   clientePontosModal = { embarque: v.cliente_embarque_ponto || "origem", desembarque: v.cliente_desembarque_ponto || "destino" };
+  clienteVoltaModal = { na: v.cliente_na_volta !== false, embarque: v.cliente_volta_embarque_ponto || "origem", desembarque: v.cliente_volta_desembarque_ponto || "destino" };
   clienteVaiModal = v.cliente_vai_no_carro !== false;
   escolhaDesceModal = null;
   document.getElementById("vg-cliente-nao-vai").checked = !clienteVaiModal;
 }
 function clienteNaoVaiMudou(naoVai){
   clienteVaiModal = !naoVai;
-  if(naoVai) clientePontosModal = { embarque: "origem", desembarque: "destino" };
+  if(naoVai){
+    clientePontosModal = { embarque: "origem", desembarque: "destino" };
+    clienteVoltaModal = { na: true, embarque: "origem", desembarque: "destino" };
+  }
+  renderPontosPassageiros();
+}
+// A cliente da viagem volta ou não no carro (só a volta; na ida é o
+// "A cliente da viagem não vai no carro")
+function clienteNaVoltaMudou(na){
+  clienteVoltaModal = { na, embarque: "origem", desembarque: "destino" };
+  renderPontosPassageiros();
+}
+// Quem foi na ida e não está na volta: volta junto, do embarque ao destino da volta
+function pessoaVoltaJunto(j){
+  Object.assign(pessoasModal[j], { na_volta: true, volta_embarque_ponto: "origem", volta_desembarque_ponto: "destino" });
   renderPontosPassageiros();
 }
 // A cliente da viagem já tem a linha dela; a mesma ficha como passageira
@@ -18079,161 +18140,220 @@ function ehAClienteDaViagem(p){
   const cid = Number(document.getElementById("vg-cliente").value) || null;
   return !!(p && cid && p.cliente_id === cid);
 }
-function htmlPessoaNoPonto(j, ponto){
+function htmlPessoaNoPonto(j, ponto, T = "ida"){
   const ehCliente = j === "cliente";
   const p = ehCliente ? null : pessoasModal[j];
-  const embarca = ehCliente ? clientePontosModal.embarque === ponto : p.embarque_ponto === ponto;
+  const ch = CAMPOS_TRECHO[T], cp = clientePtsTrecho(T);
+  const embarca = ehCliente ? cp.embarque === ponto : p[ch.e] === ponto;
   const arg = ehCliente ? "'cliente'" : j;
+  const tArg = `'${T}'`;
+  const pontos = pontosDoTrajeto(T);
+  const rotulo = Object.fromEntries(pontos);
+  const lixeira = (onclick, titulo) => `<button type="button" class="icon-btn" title="${titulo}" onclick="${onclick}"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`;
   // 20/11/2026: onde a pessoa desce não aparece no embarque; escolhe-se lá
   // no ponto onde ela desce ("+ Escolher quem desce aqui" ou "trocar pra").
   const acao = `<span class="vg-pass-acao ${embarca ? "emb" : "des"}">${embarca ? "Embarca" : "Desce"}</span>`;
+  const nomeDe = () => {
+    if(!ehCliente) return p.nome.trim() || "(sem nome)";
+    const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
+    return c ? c.nome : "Cliente da viagem";
+  };
   // Onde desce (20/11/2026): só o nome numa linha curta. Os dados da pessoa
   // ficam uma vez só, no ponto onde ela embarca.
   if(!embarca){
-    const c = ehCliente ? clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value)) : null;
-    const nome = ehCliente ? (c ? c.nome : "Cliente da viagem") : (p.nome.trim() || "(sem nome)");
     const extra = ehCliente ? "cliente da viagem" : (p.cliente_id ? "" : "sem cadastro");
-    const rotulo = Object.fromEntries(pontosDoTrajeto());
-    const veio = ehCliente ? clientePontosModal.embarque : p.embarque_ponto;
-    const trocar = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap; color:var(--muted);">trocar pra <select onchange="mudarOutroPonto(${arg}, true, this.value)">${pontosDoTrajeto().filter(([k])=>posicaoPonto(k) > posicaoPonto(veio)).map(([k, r])=>`<option value="${k}" ${k===ponto?"selected":""}>${r}</option>`).join("")}</select></label>`;
-    return `<div class="vg-pass vg-pass-curta"><div class="vg-pass-topo">${acao} <b>${escapeHtml(nome)}</b> <span style="color:var(--muted)">${extra ? escapeHtml(extra) + " · " : ""}embarcou em ${escapeHtml((rotulo[veio] || "").replace(/^\d+\. /, ""))}</span><span style="flex:1"></span>${trocar}</div></div>`;
+    const veio = ehCliente ? cp.embarque : p[ch.e];
+    const trocar = `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap; color:var(--muted);">trocar pra <select onchange="mudarOutroPonto(${arg}, true, this.value, ${tArg})">${pontos.filter(([k])=>posicaoPonto(k) > posicaoPonto(veio)).map(([k, r])=>`<option value="${k}" ${k===ponto?"selected":""}>${r}</option>`).join("")}</select></label>`;
+    return `<div class="vg-pass vg-pass-curta"><div class="vg-pass-topo">${acao} <b>${escapeHtml(nomeDe())}</b> <span style="color:var(--muted)">${extra ? escapeHtml(extra) + " · " : ""}embarcou em ${escapeHtml(rotulo[veio] || "")}</span><span style="flex:1"></span>${trocar}</div></div>`;
   }
   // Onde embarca (20/11/2026, viagem da Claudete de 18/11): a cliente da
   // viagem nem sempre entra no Embarque; outra pessoa pode entrar antes.
   // "trocar pra" lista os pontos antes de onde a pessoa desce.
-  const desceEm = ehCliente ? clientePontosModal.desembarque : p.desembarque_ponto;
-  const opcoesEmbarque = pontosDoTrajeto().filter(([k])=>k !== "destino" && posicaoPonto(k) < posicaoPonto(desceEm));
-  const trocarEmbarque = opcoesEmbarque.length > 1 ? `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap; color:var(--muted);">trocar pra <select onchange="mudarOutroPonto(${arg}, false, this.value)">${opcoesEmbarque.map(([k, r])=>`<option value="${k}" ${k===ponto?"selected":""}>${r}</option>`).join("")}</select></label>` : "";
+  const desceEm = ehCliente ? cp.desembarque : p[ch.d];
+  const opcoesEmbarque = pontos.filter(([k])=>k !== "destino" && posicaoPonto(k) < posicaoPonto(desceEm));
+  const trocarEmbarque = opcoesEmbarque.length > 1 ? `<label style="display:flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap; color:var(--muted);">trocar pra <select onchange="mudarOutroPonto(${arg}, false, this.value, ${tArg})">${opcoesEmbarque.map(([k, r])=>`<option value="${k}" ${k===ponto?"selected":""}>${r}</option>`).join("")}</select></label>` : "";
   if(ehCliente){
-    const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
     const tipoViagem = document.getElementById("vg-tipo-servico").value;
     const tipoTxt = ["Criança", "Adolescente", "Idoso"].includes(tipoViagem) ? " · " + rotuloOpcao(tipoViagem) : "";
-    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(c ? c.nome : "Cliente da viagem")}</b> <span style="color:var(--muted)">cliente da viagem${escapeHtml(tipoTxt)}</span><span style="flex:1"></span>${trocarEmbarque}</div></div>`;
+    const tirar = T === "volta" ? lixeira("clienteNaVoltaMudou(false)", "A cliente da viagem não volta no carro") : "";
+    return `<div class="vg-pass"><div class="vg-pass-topo">${acao} <b>${escapeHtml(nomeDe())}</b> <span style="color:var(--muted)">cliente da viagem${escapeHtml(tipoTxt)}</span><span style="flex:1"></span>${trocarEmbarque}${tirar}</div></div>`;
+  }
+  // Na volta, quem também foi na ida aparece só pelo nome: os dados dela
+  // ficam no embarque da ida.
+  if(T === "volta" && p.na_ida){
+    return `<div class="vg-pass vg-pass-curta"><div class="vg-pass-topo">${acao} <b>${escapeHtml(nomeDe())}</b> <span style="color:var(--muted)">${p.cliente_id ? "" : "sem cadastro · "}também foi na ida</span><span style="flex:1"></span>${trocarEmbarque}${lixeira(`removerPessoaViagem(${j}, 'volta')`, "Esta pessoa não volta no carro")}</div></div>`;
   }
   const t = p.tipo;
+  const chave = (T === "volta" ? "v" : "") + ponto;
   const campo = (rot, html) => `<div><label>${rot}</label>${html}</div>`;
   const inp = (k, tipo, extra) => `<input type="${tipo}" value="${escapeHtml(String(p[k] ?? ""))}" ${extra||""} oninput="pessoasModal[${j}].${k}=this.value" onchange="renderPontosPassageiros()">`;
-  let campos = campo("Nome", `<input type="text" value="${escapeHtml(p.nome)}" oninput="pessoasModal[${j}].nome=this.value; atualizarLigacaoPessoa(${j}, '${ponto}')" onchange="renderPontosPassageiros()">`)
+  let campos = campo("Nome", `<input type="text" value="${escapeHtml(p.nome)}" oninput="pessoasModal[${j}].nome=this.value; atualizarLigacaoPessoa(${j}, '${chave}')" onchange="renderPontosPassageiros()">`)
     + campo("Tipo", `<select onchange="pessoasModal[${j}].tipo=this.value; renderPontosPassageiros()">${TIPOS_PASSAGEIRA.map(([k,r])=>`<option value="${k}" ${k===t?"selected":""}>${r}</option>`).join("")}</select>`);
   if(t !== "crianca") campos += campo(["sem_conta","adolescente"].includes(t) ? "Telefone" : "Telefone (opcional)", inp("telefone", "text", 'inputmode="tel"'));
   if(["sem_conta","adolescente","idosa"].includes(t)) campos += campo("CPF (opcional)", inp("cpf", "text", 'maxlength="14"'));
   if(t === "crianca") campos += campo("Idade", inp("idade", "number", 'min="0" max="11"'));
   if(t === "idosa") campos += `<div style="display:flex; align-items:flex-end;"><label class="vg-check" style="margin:0;"><input type="checkbox" ${p.precisa_ajuda?"checked":""} onchange="pessoasModal[${j}].precisa_ajuda=this.checked; renderPontosPassageiros()"> Precisa de ajuda pra entrar ou sair</label></div>`;
-  return `<div class="vg-pass"><div class="vg-pass-topo">${acao}<span style="flex:1"></span>${trocarEmbarque}<button type="button" class="icon-btn" title="Tirar esta pessoa da viagem" onclick="removerPessoaViagem(${j})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></div>
+  const soVolta = T === "volta" ? `<span style="color:var(--muted); font-size:var(--fs-xs);">só na volta</span>` : "";
+  return `<div class="vg-pass"><div class="vg-pass-topo">${acao} ${soVolta}<span style="flex:1"></span>${trocarEmbarque}${lixeira(`removerPessoaViagem(${j}, ${tArg})`, T === "volta" ? "Esta pessoa não volta no carro" : "Tirar esta pessoa da ida")}</div>
     ${ehAClienteDaViagem(p) ? `<div style="margin:4px 0 8px; padding:6px 8px; border-radius:6px; background:var(--c-amber-bg); color:var(--c-amber); font-size:var(--fs-xs);">${escapeHtml(p.nome || "Esta pessoa")} já está na viagem como cliente. Esta linha não será salva; pode apagar na lixeira.</div>` : ""}
     <div class="vg-pass-campos">${campos}</div>
-    <div class="vg-pass-lig" id="vg-pass-lig-${j}-${ponto}">${htmlLigacaoPessoa(j)}</div></div>`;
+    <div class="vg-pass-lig" id="vg-pass-lig-${j}-${chave}">${htmlLigacaoPessoa(j)}</div></div>`;
 }
 function renderPontosPassageiros(){
   if(!listaPassageirosExiste()){
     document.querySelectorAll(".vg-pass-lista").forEach(el=>{ el.innerHTML = `<div class="dica">Falta rodar o schema_garupa_lista_passageiros.sql no Supabase.</div>`; });
     return;
   }
-  pontosDoTrajeto().forEach(([k])=>{
-    const el = document.getElementById("vg-pass-" + k);
-    if(!el) return;
-    // 20/11/2026: cada ponto em dois grupos. No embarque só se embarca, no
-    // destino só se desce; nas paradas, os dois.
-    const embarcam = [], descem = [];
-    if(clienteVaiModal && clientePontosModal.embarque === k) embarcam.push(htmlPessoaNoPonto("cliente", k));
-    if(clienteVaiModal && clientePontosModal.desembarque === k) descem.push(htmlPessoaNoPonto("cliente", k));
-    pessoasModal.forEach((p,j)=>{
-      if(p.embarque_ponto === k) embarcam.push(htmlPessoaNoPonto(j, k));
-      if(p.desembarque_ponto === k) descem.push(htmlPessoaNoPonto(j, k));
+  ["ida", "volta"].forEach(T=>{
+    if(T === "volta" && !voltaDetalhadaExiste()){
+      const el = document.getElementById("vg-passv-origem");
+      if(el) el.innerHTML = `<div class="dica">Pra marcar quem volta e onde desce, falta rodar o schema_volta_paradas_pessoas.sql no Supabase.</div>`;
+      return;
+    }
+    const ch = CAMPOS_TRECHO[T], cp = clientePtsTrecho(T);
+    pontosDoTrajeto(T).forEach(([k])=>{
+      const el = document.getElementById(idListaPonto(T, k));
+      if(!el) return;
+      // 20/11/2026: cada ponto em dois grupos. No embarque só se embarca, no
+      // destino só se desce; nas paradas, os dois.
+      const embarcam = [], descem = [];
+      if(clienteNoTrecho(T) && cp.embarque === k) embarcam.push(htmlPessoaNoPonto("cliente", k, T));
+      if(clienteNoTrecho(T) && cp.desembarque === k) descem.push(htmlPessoaNoPonto("cliente", k, T));
+      pessoasModal.forEach((p,j)=>{
+        if(!p[ch.na]) return;
+        if(p[ch.e] === k) embarcam.push(htmlPessoaNoPonto(j, k, T));
+        if(p[ch.d] === k) descem.push(htmlPessoaNoPonto(j, k, T));
+      });
+      const titulo = (txt, n) => `<div class="vg-pass-grupo">${txt}${n ? ` (${n})` : ""}</div>`;
+      const chaveEscolha = T + ":" + k;
+      let html = "";
+      const blocoEmbarca = () => {
+        // Parada sem ninguém embarcando: só o botão, sem título vazio
+        let h = embarcam.length ? titulo("Embarcam aqui", embarcam.length) + embarcam.join("") : k === "origem" ? titulo("Embarcam aqui", 0) + `<div class="dica">Ninguém embarca ainda.</div>` : "";
+        let botoes = `<button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true, '${T}')">+ Pessoa embarca aqui</button>`;
+        // No embarque da volta: quem foi na ida e ainda não está na volta
+        if(T === "volta" && k === "origem"){
+          if(clienteVaiModal && !clienteVoltaModal.na) botoes += ` <button type="button" class="btn ghost small" onclick="clienteNaVoltaMudou(true)">+ Cliente da viagem volta no carro</button>`;
+          pessoasModal.forEach((p,j)=>{
+            if(p.na_ida && !p.na_volta && !ehAClienteDaViagem(p)) botoes += ` <button type="button" class="btn ghost small" onclick="pessoaVoltaJunto(${j})">+ ${escapeHtml(p.nome.trim() || "(sem nome)")} volta no carro</button>`;
+          });
+        }
+        return h + `<div class="vg-pass-botoes">${botoes}</div>`;
+      };
+      const blocoDesce = () => titulo("Descem aqui", descem.length) + (descem.join("") || `<div class="dica">Ninguém desce neste ponto.</div>`)
+        + (escolhaDesceModal === chaveEscolha ? htmlEscolhaDesce(k, T) : "")
+        + (quemPodeDescerEm(k, T).length && escolhaDesceModal !== chaveEscolha ? `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}', '${T}')">+ Escolher quem desce aqui</button></div>` : "");
+      // Em cada ponto: primeiro quem desce, depois quem embarca
+      if(k !== "origem") html += blocoDesce();
+      if(k !== "destino") html += blocoEmbarca();
+      el.innerHTML = html;
     });
-    const titulo = (txt, n) => `<div class="vg-pass-grupo">${txt}${n ? ` (${n})` : ""}</div>`;
-    let html = "";
-    const blocoEmbarca = () => {
-      // Parada sem ninguém embarcando: só o botão, sem título vazio
-      let h = embarcam.length ? titulo("Embarcam aqui", embarcam.length) + embarcam.join("") : k === "origem" ? titulo("Embarcam aqui", 0) + `<div class="dica">Ninguém embarca ainda.</div>` : "";
-      return h + `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="adicionarPessoaViagem('${k}', true)">+ Pessoa embarca aqui</button></div>`;
-    };
-    const blocoDesce = () => titulo("Descem aqui", descem.length) + (descem.join("") || `<div class="dica">Ninguém desce neste ponto.</div>`)
-      + (escolhaDesceModal === k ? htmlEscolhaDesce(k) : "")
-      + (quemPodeDescerEm(k).length && escolhaDesceModal !== k ? `<div class="vg-pass-botoes"><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${k}')">+ Escolher quem desce aqui</button></div>` : "");
-    // Em cada ponto: primeiro quem desce, depois quem embarca
-    if(k !== "origem") html += blocoDesce();
-    if(k !== "destino") html += blocoEmbarca();
-    el.innerHTML = html;
   });
   const dica = document.getElementById("vg-pessoas-dica");
-  const outras = pessoasModal.filter(p=>!ehAClienteDaViagem(p)).length;
+  const outras = pessoasModal.filter(p=>p.na_ida && !ehAClienteDaViagem(p)).length;
   const total = outras + (clienteVaiModal ? 1 : 0);
   if(dica) dica.textContent = `${clienteVaiModal ? "Contando a cliente" : "A cliente não vai no carro"}. Na lista do trajeto: ${total} ${total === 1 ? "pessoa" : "pessoas"}.`;
+  if(typeof atualizarResumoViagem === "function" && document.getElementById("vg-resumo")) atualizarResumoViagem();
+}
+// Quantas pessoas vão na ida e na volta, pela lista do modal (contando a
+// cliente quando ela vai no carro). Volta = null quando não tem volta.
+function contarPessoasModal(){
+  const outras = campo => pessoasModal.filter(p=>p[campo] && !ehAClienteDaViagem(p)).length;
+  const ida = outras("na_ida") + (clienteVaiModal ? 1 : 0);
+  const volta = temVoltaModal() ? outras("na_volta") + (clienteNoTrecho("volta") ? 1 : 0) : null;
+  return { ida, volta };
 }
 // Escolher quem desce num ponto (20/11/2026): lista quem embarcou antes e
 // ainda não desce aqui, pelo nome que foi digitado no embarque, com ou sem
 // cadastro. Marca uma ou mais pessoas e elas passam a descer neste ponto.
-let escolhaDesceModal = null;
-function quemPodeDescerEm(ponto){
+let escolhaDesceModal = null; // "ida:p1", "volta:destino"...
+function quemPodeDescerEm(ponto, T = "ida"){
   const pos = posicaoPonto(ponto), lista = [];
-  if(clienteVaiModal && posicaoPonto(clientePontosModal.embarque) < pos && clientePontosModal.desembarque !== ponto){
+  const ch = CAMPOS_TRECHO[T], cp = clientePtsTrecho(T);
+  if(clienteNoTrecho(T) && posicaoPonto(cp.embarque) < pos && cp.desembarque !== ponto){
     const c = clientesTransporte.find(x=>x.id===Number(document.getElementById("vg-cliente").value));
-    lista.push({ j: "cliente", nome: c ? c.nome : "Cliente da viagem", desce: clientePontosModal.desembarque, extra: "cliente da viagem" });
+    lista.push({ j: "cliente", nome: c ? c.nome : "Cliente da viagem", desce: cp.desembarque, extra: "cliente da viagem" });
   }
   pessoasModal.forEach((p,j)=>{
-    if(posicaoPonto(p.embarque_ponto) < pos && p.desembarque_ponto !== ponto && !ehAClienteDaViagem(p))
-      lista.push({ j, nome: p.nome.trim() || "(sem nome)", desce: p.desembarque_ponto, extra: p.cliente_id ? "" : "sem cadastro" });
+    if(p[ch.na] && posicaoPonto(p[ch.e]) < pos && p[ch.d] !== ponto && !ehAClienteDaViagem(p))
+      lista.push({ j, nome: p.nome.trim() || "(sem nome)", desce: p[ch.d], extra: p.cliente_id ? "" : "sem cadastro" });
   });
   return lista;
 }
-function abrirEscolhaDesce(ponto){
-  escolhaDesceModal = escolhaDesceModal === ponto ? null : ponto;
+function abrirEscolhaDesce(ponto, T = "ida"){
+  const chave = T + ":" + ponto;
+  escolhaDesceModal = escolhaDesceModal === chave ? null : chave;
   renderPontosPassageiros();
   const busca = document.getElementById("vg-escolha-desce-busca");
   if(busca) busca.focus();
 }
-function htmlEscolhaDesce(ponto){
-  const rotulo = Object.fromEntries(pontosDoTrajeto());
-  const itens = quemPodeDescerEm(ponto).map(o=>`<label class="vg-check vg-escolha-item" data-nome="${escapeHtml(semAcentoMin(o.nome))}" style="margin:0;"><input type="checkbox" value="${o.j}"> <b>${escapeHtml(o.nome)}</b> <span style="color:var(--muted); font-weight:400;">${o.extra ? escapeHtml(o.extra) + " · " : ""}hoje desce em ${escapeHtml((rotulo[o.desce] || "").replace(/^\d+\. /, ""))}</span></label>`).join("");
+function htmlEscolhaDesce(ponto, T = "ida"){
+  const rotulo = Object.fromEntries(pontosDoTrajeto(T));
+  const itens = quemPodeDescerEm(ponto, T).map(o=>`<label class="vg-check vg-escolha-item" data-nome="${escapeHtml(semAcentoMin(o.nome))}" style="margin:0;"><input type="checkbox" value="${o.j}"> <b>${escapeHtml(o.nome)}</b> <span style="color:var(--muted); font-weight:400;">${o.extra ? escapeHtml(o.extra) + " · " : ""}hoje desce em ${escapeHtml(rotulo[o.desce] || "")}</span></label>`).join("");
   return `<div class="vg-pass" style="border-style:dashed;"><div style="font-weight:600; margin-bottom:6px;">Quem desce aqui? <span style="font-weight:400; color:var(--muted);">(pode marcar mais de uma pessoa)</span></div>
     <input type="text" id="vg-escolha-desce-busca" placeholder="Buscar pelo nome" autocomplete="off" oninput="filtrarEscolhaDesce(this.value)" style="margin-bottom:6px;">
     <div id="vg-escolha-desce-lista" style="display:flex; flex-direction:column; gap:4px;">${itens}</div>
-    <div class="vg-pass-botoes" style="margin-top:8px;"><button type="button" class="btn small" onclick="confirmarEscolhaDesce('${ponto}')">Descem aqui</button><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${ponto}')">Cancelar</button></div></div>`;
+    <div class="vg-pass-botoes" style="margin-top:8px;"><button type="button" class="btn small" onclick="confirmarEscolhaDesce('${ponto}', '${T}')">Descem aqui</button><button type="button" class="btn ghost small" onclick="abrirEscolhaDesce('${ponto}', '${T}')">Cancelar</button></div></div>`;
 }
 function filtrarEscolhaDesce(txt){
   const b = semAcentoMin(txt);
   document.querySelectorAll("#vg-escolha-desce-lista .vg-escolha-item").forEach(el=>{ el.style.display = !b || el.dataset.nome.includes(b) ? "" : "none"; });
 }
-function confirmarEscolhaDesce(ponto){
+function confirmarEscolhaDesce(ponto, T = "ida"){
   const marcados = [...document.querySelectorAll("#vg-escolha-desce-lista input:checked")].map(cb=>cb.value);
   if(!marcados.length){ alert("Marque quem desce neste ponto."); return; }
   marcados.forEach(v=>{
-    if(v === "cliente") clientePontosModal.desembarque = ponto;
-    else pessoasModal[Number(v)].desembarque_ponto = ponto;
+    if(v === "cliente") clientePtsTrecho(T).desembarque = ponto;
+    else pessoasModal[Number(v)][CAMPOS_TRECHO[T].d] = ponto;
   });
   escolhaDesceModal = null;
   renderPontosPassageiros();
   showToast(marcados.length === 1 ? "1 pessoa desce aqui." : `${marcados.length} pessoas descem aqui.`);
 }
-function adicionarPessoaViagem(ponto, embarca){
-  pessoasModal.push({ tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
-    embarque_ponto: embarca ? ponto : "origem", desembarque_ponto: embarca ? "destino" : ponto });
+// Pessoa nova na ida também volta (do embarque ao destino da volta); pessoa
+// nova na volta vai só na volta.
+function adicionarPessoaViagem(ponto, embarca, T = "ida"){
+  const ch = CAMPOS_TRECHO[T];
+  const nova = { tipo: "nao_informado", nome: "", cliente_id: null, telefone: "", cpf: "", idade: "", precisa_ajuda: false,
+    embarque_ponto: "origem", desembarque_ponto: "destino", volta_embarque_ponto: "origem", volta_desembarque_ponto: "destino",
+    na_ida: T === "ida", na_volta: true };
+  nova[ch.e] = embarca ? ponto : "origem";
+  nova[ch.d] = embarca ? "destino" : ponto;
+  pessoasModal.push(nova);
   renderPontosPassageiros();
-  const nova = pessoasModal[pessoasModal.length-1];
-  const cartoes = document.querySelectorAll(`#vg-pass-${nova.embarque_ponto} .vg-pass:not(.vg-pass-curta)`);
+  const cartoes = document.querySelectorAll(`#${idListaPonto(T, nova[ch.e])} .vg-pass:not(.vg-pass-curta)`);
   const campo = cartoes.length && cartoes[cartoes.length-1].querySelector(".vg-pass-campos input[type=text]");
   if(campo) campo.focus();
 }
-function removerPessoaViagem(j){
+// Tirar de um trecho: quem está nos dois continua no outro; quem só estava
+// neste sai da viagem.
+function removerPessoaViagem(j, T = "ida"){
   const p = pessoasModal[j];
-  if(p.nome.trim() && !confirm(`Tirar ${p.nome.trim()} desta viagem? Ela (e) sai do embarque e do desembarque.`)) return;
-  pessoasModal.splice(j, 1);
+  const nome = p.nome.trim();
+  const ficaNoOutro = T === "ida" ? (p.na_volta && temVoltaModal()) : p.na_ida;
+  if(ficaNoOutro){
+    if(nome && !confirm(T === "ida" ? `${nome} não vai na ida? Ela (e) continua na volta.` : `${nome} não volta no carro? Ela (e) continua na ida.`)) return;
+    p[CAMPOS_TRECHO[T].na] = false;
+  }else{
+    if(nome && !confirm(`Tirar ${nome} desta viagem? Ela (e) sai do embarque e do desembarque.`)) return;
+    pessoasModal.splice(j, 1);
+  }
   renderPontosPassageiros();
 }
-function mudarOutroPonto(j, embarca, valor){
-  if(j === "cliente") clientePontosModal[embarca ? "desembarque" : "embarque"] = valor;
-  else pessoasModal[j][embarca ? "desembarque_ponto" : "embarque_ponto"] = valor;
+function mudarOutroPonto(j, embarca, valor, T = "ida"){
+  if(j === "cliente") clientePtsTrecho(T)[embarca ? "desembarque" : "embarque"] = valor;
+  else pessoasModal[j][CAMPOS_TRECHO[T][embarca ? "d" : "e"]] = valor;
   renderPontosPassageiros();
 }
 // Mover ou tirar parada: quem entrava ou descia nela acompanha a parada
-function remapearPontosParadas(mapa){
+function remapearPontosParadas(mapa, T = "ida"){
+  const ch = CAMPOS_TRECHO[T], cp = clientePtsTrecho(T);
   const troca = k => k in mapa ? mapa[k] : k;
-  pessoasModal.forEach(p=>{ p.embarque_ponto = troca(p.embarque_ponto); p.desembarque_ponto = troca(p.desembarque_ponto); });
-  clientePontosModal.embarque = troca(clientePontosModal.embarque);
-  clientePontosModal.desembarque = troca(clientePontosModal.desembarque);
+  pessoasModal.forEach(p=>{ p[ch.e] = troca(p[ch.e]); p[ch.d] = troca(p[ch.d]); });
+  cp.embarque = troca(cp.embarque);
+  cp.desembarque = troca(cp.desembarque);
   [...pessoasModal, null].forEach(p=>{
-    const o = p || clientePontosModal, e = p ? "embarque_ponto" : "embarque", d = p ? "desembarque_ponto" : "desembarque";
+    const o = p || cp, e = p ? ch.e : "embarque", d = p ? ch.d : "desembarque";
     if(posicaoPonto(o[e]) >= posicaoPonto(o[d])){ o[e] = "origem"; o[d] = "destino"; }
   });
 }
@@ -18328,12 +18448,14 @@ async function criarLeadPessoa(j){
 async function gravarPassageirosViagem(viagemId){
   if(!listaPassageirosExiste()) return true;
   pessoasModal = pessoasModal.filter(p=>!ehAClienteDaViagem(p));
+  // Sem volta: quem estava só na volta sai da lista
+  if(voltaDetalhadaExiste() && !temVoltaModal()) pessoasModal = pessoasModal.filter(p=>p.na_ida);
   // Mesma pessoa duas vezes (mesmo nome, ficha e pontos) conta em dobro no
   // cartão (viagem #69, 20/11/2026: "7 pessoas"). Grava uma vez só.
   const vistas = new Set();
   pessoasModal = pessoasModal.filter(p=>{
     if(!p.nome.trim()) return true;
-    const chave = [semAcentoMin(p.nome), p.cliente_id || "", p.embarque_ponto, p.desembarque_ponto].join("|");
+    const chave = [semAcentoMin(p.nome), p.cliente_id || "", p.na_ida, p.embarque_ponto, p.desembarque_ponto, p.na_volta, p.volta_embarque_ponto, p.volta_desembarque_ponto].join("|");
     if(vistas.has(chave)) return false;
     vistas.add(chave); return true;
   });
@@ -18342,32 +18464,44 @@ async function gravarPassageirosViagem(viagemId){
   const del = await sb.from("viagem_passageiros").delete().eq("viagem_id", viagemId);
   if(del.error){ alert("Erro ao salvar quem vai no carro: " + del.error.message); return false; }
   if(pessoasModal.length){
-    const ins = await sb.from("viagem_passageiros").insert(pessoasModal.map(p=>({
+    const comVolta = voltaDetalhadaExiste();
+    const ins = await sb.from("viagem_passageiros").insert(pessoasModal.map(p=>Object.assign({
       viagem_id: viagemId, tipo: p.tipo, nome: p.nome.trim() || "(a confirmar)", cliente_id: p.cliente_id,
       telefone: p.tipo !== "crianca" && p.telefone.trim() ? p.telefone.trim() : null,
       cpf: ["sem_conta","adolescente","idosa"].includes(p.tipo) ? (String(p.cpf||"").replace(/\D/g,"") || null) : null,
       idade: p.tipo === "crianca" && p.idade !== "" ? Number(p.idade) : null,
       precisa_ajuda: p.tipo === "idosa" ? !!p.precisa_ajuda : null,
       embarque_ponto: p.embarque_ponto, desembarque_ponto: p.desembarque_ponto,
-    })));
+    }, comVolta ? {
+      na_ida: !!p.na_ida, na_volta: !!p.na_volta,
+      volta_embarque_ponto: p.volta_embarque_ponto, volta_desembarque_ponto: p.volta_desembarque_ponto,
+    } : {})));
     if(ins.error){ alert("Erro ao salvar quem vai no carro: " + ins.error.message); return false; }
   }
   return true;
 }
 // Antes de salvar: cada pessoa embarca antes de descer; sem nome só com "Tipo a confirmar"
 function conferirPassageirosModal(){
+  const volta = temVoltaModal();
+  const rot = { ida: "", volta: " na volta" };
   for(const p of pessoasModal){
     const quem = p.nome.trim() || "Uma pessoa sem nome";
+    if(!p.na_ida && !(p.na_volta && volta)) continue;
     if(!p.nome.trim() && p.tipo !== "nao_informado") return `${quem} no trajeto: escreva o nome, ou deixe o tipo como "Tipo a confirmar".`;
-    if(posicaoPonto(p.embarque_ponto) >= posicaoPonto(p.desembarque_ponto)) return `${quem}: o ponto onde desce precisa vir depois do ponto onde embarca.`;
+    for(const T of ["ida", "volta"]){
+      const ch = CAMPOS_TRECHO[T];
+      if(T === "volta" && !volta) continue;
+      if(p[ch.na] && posicaoPonto(p[ch.e]) >= posicaoPonto(p[ch.d])) return `${quem}${rot[T]}: o ponto onde desce precisa vir depois do ponto onde embarca.`;
+    }
     if(p.tipo === "crianca" && (p.idade === "" || Number(p.idade) < 0 || Number(p.idade) > 11)) return `${quem}: criança precisa da idade (até 11 anos).`;
   }
   if(!clienteVaiModal){
-    if(!pessoasModal.some(p=>p.tipo !== "crianca" && p.nome.trim() && !ehAClienteDaViagem(p)))
-      return "A cliente não vai no carro: coloque no trajeto quem vai viajar (uma pessoa a partir de 12 anos), com \"+ Outra pessoa embarca aqui\".";
+    if(!pessoasModal.some(p=>p.na_ida && p.tipo !== "crianca" && p.nome.trim() && !ehAClienteDaViagem(p)))
+      return "A cliente não vai no carro: coloque no trajeto quem vai viajar (uma pessoa a partir de 12 anos), com \"+ Pessoa embarca aqui\".";
     return "";
   }
   if(posicaoPonto(clientePontosModal.embarque) >= posicaoPonto(clientePontosModal.desembarque)) return "Cliente da viagem: o ponto onde desce precisa vir depois do ponto onde embarca.";
+  if(volta && clienteVoltaModal.na && posicaoPonto(clienteVoltaModal.embarque) >= posicaoPonto(clienteVoltaModal.desembarque)) return "Cliente da viagem na volta: o ponto onde desce precisa vir depois do ponto onde embarca.";
   return "";
 }
 // Horário do embarque e chegada prevista aparecem também no trajeto
@@ -18447,40 +18581,56 @@ function htmlGarupaCliente(c){
 }
 // Etiqueta de quantas pessoas, pro cartão da viagem e pro topo do modal
 function textoPessoasViagem(v){
+  const txt = n => `${n} ${Number(n) === 1 ? "pessoa" : "pessoas"}`;
   // 20/11/2026: com gente na lista do carro, conta a lista (o número
-  // digitado à mão saiu da tela e não passa mais por cima dela).
-  const naLista = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id).length;
-  if(naLista && !v.pessoas_volta){ const t = naLista + (v.cliente_vai_no_carro === false ? 0 : 1); return `${t} ${t === 1 ? "pessoa" : "pessoas"}`; }
+  // digitado à mão saiu da tela e não passa mais por cima dela). Volta com
+  // pessoas próprias (schema_volta_paradas_pessoas.sql): conta cada trecho.
+  const lista = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id);
+  if(lista.length){
+    const vai = v.cliente_vai_no_carro !== false;
+    const ida = lista.filter(p=>p.na_ida !== false).length + (vai ? 1 : 0);
+    const temVolta = !!(v.data_retorno || v.horario_retorno || v.distancia_km_retorno || v.origem_retorno_endereco || v.destino_retorno_endereco);
+    if(temVolta && "na_volta" in lista[0]){
+      const volta = lista.filter(p=>p.na_volta !== false).length + (vai && v.cliente_na_volta !== false ? 1 : 0);
+      if(volta !== ida) return `${ida} na ida · ${volta} na volta`;
+    }
+    return txt(ida);
+  }
   if(v.pessoas_ida && v.pessoas_volta && v.pessoas_ida !== v.pessoas_volta) return `${v.pessoas_ida} na ida · ${v.pessoas_volta} na volta`;
-  if(v.pessoas_ida || v.pessoas_volta){ const n = v.pessoas_ida || v.pessoas_volta; return `${n} ${Number(n) === 1 ? "pessoa" : "pessoas"}`; }
-  // Soma a cliente só quando ela vai no carro (viagem #67, 11/11/2026: a mãe
-  // pediu e só a filha foi, e o cartão mostrava "2 pessoas").
-  const n = viagemPassageiros.filter(p=>p.viagem_id===v.id && p.cliente_id !== v.cliente_id).length;
-  const total = n + (v.cliente_vai_no_carro === false ? 0 : 1);
-  return n ? `${total} ${total === 1 ? "pessoa" : "pessoas"}` : "";
+  if(v.pessoas_ida || v.pessoas_volta) return txt(v.pessoas_ida || v.pessoas_volta);
+  return "";
 }
 // Cada parada é uma seção com cor própria (20/11/2026), em rodízio pra
-// duas paradas vizinhas nunca terem a mesma cor.
+// duas paradas vizinhas nunca terem a mesma cor. A volta tem as paradas dela
+// (paradasVoltaModal), entre a seção Volta e o Destino da volta.
 const CORES_PARADA = ["--vg-ambar", "--vg-roxo", "--vg-teal", "--vg-lilas"];
-function renderParadasModal(){
-  const el = document.getElementById("vg-paradas-lista");
-  el.innerHTML = paradasModal.map((p,i)=>`
-    <section class="vg-sec" style="--sec-cor:var(${CORES_PARADA[i % CORES_PARADA.length]});">
-      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-flag"/></svg><span class="vg-sec-n" data-rot="Parada ${i+1}">Parada ${i+1}</span></span>
+function htmlParadasTrecho(T){
+  const lista = paradasDoTrecho(T), v = T === "volta";
+  const ref = v ? "paradasVoltaModal" : "paradasModal";
+  const tArg = `'${T}'`;
+  return lista.map((p,i)=>`
+    <section class="vg-sec" style="--sec-cor:var(${CORES_PARADA[(i + (v ? 2 : 0)) % CORES_PARADA.length]});">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-flag"/></svg><span class="vg-sec-n" data-rot="Parada ${i+1}${v ? " da volta" : ""}">Parada ${i+1}${v ? " da volta" : ""}</span></span>
         <span style="display:flex; gap:4px;">
-          <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1)" ${i===0?"disabled":""}>↑</button>
-          <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1)" ${i===paradasModal.length-1?"disabled":""}>↓</button>
-          <button type="button" class="icon-btn" title="Tirar esta parada" onclick="removerParadaViagem(${i})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
+          <button type="button" class="icon-btn" title="Subir" onclick="moverParadaViagem(${i},-1,${tArg})" ${i===0?"disabled":""}>↑</button>
+          <button type="button" class="icon-btn" title="Descer" onclick="moverParadaViagem(${i},1,${tArg})" ${i===lista.length-1?"disabled":""}>↓</button>
+          <button type="button" class="icon-btn" title="Tirar esta parada" onclick="removerParadaViagem(${i},${tArg})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>
         </span></div>
       <div class="formgrid">
         <div class="full"><label>Endereço da parada</label>
-          <div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="paradasModal[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
-        <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="paradasModal[${i}].horario_previsto=this.value"></div>
-        <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: em frente ao mercado" oninput="paradasModal[${i}].observacao=this.value"></div>
-        <div class="full"><div id="vg-pass-p${i+1}" class="vg-pass-lista"></div></div>
+          <div class="campo-endereco"><input type="text" value="${escapeHtml(p.endereco)}" placeholder="Rua, número, bairro" autocomplete="off" oninput="${ref}[${i}].endereco=this.value"><div class="sugestoes-endereco"></div></div></div>
+        <div><label>Horário previsto</label><input type="time" value="${escapeHtml(p.horario_previsto)}" oninput="${ref}[${i}].horario_previsto=this.value"></div>
+        <div><label>Observação</label><input type="text" value="${escapeHtml(p.observacao)}" placeholder="Ex.: em frente ao mercado" oninput="${ref}[${i}].observacao=this.value"></div>
+        <div class="full"><div id="${idListaPonto(T, "p" + (i+1))}" class="vg-pass-lista"></div></div>
       </div>
     </section>`).join("");
-  el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+}
+function renderParadasModal(){
+  [["ida", "vg-paradas-lista"], ["volta", "vg-paradas-volta-lista"]].forEach(([T, id])=>{
+    const el = document.getElementById(id);
+    el.innerHTML = htmlParadasTrecho(T);
+    el.querySelectorAll(".campo-endereco input[type='text']").forEach(configurarBuscaEndereco);
+  });
   numerarSecoesViagem();
   renderPontosPassageiros();
 }
@@ -18489,6 +18639,7 @@ function renderParadasModal(){
 function numerarSecoesViagem(){
   let n = 0;
   document.querySelectorAll("#viagem-modal section.vg-sec").forEach(sec=>{
+    if(sec.closest("#vg-volta-trajeto") && document.getElementById("vg-volta-trajeto").style.display === "none") return;
     const tit = sec.querySelector(":scope > .vg-sec-tit");
     if(!tit) return;
     const alvo = tit.querySelector(".vg-sec-n");
@@ -18500,44 +18651,49 @@ function numerarSecoesViagem(){
     if(txt) txt.textContent = txt.textContent.replace(/^\d+/, String(++n));
   });
 }
-function adicionarParadaViagem(){
-  paradasModal.push({ endereco: "", horario_previsto: "", observacao: "" });
+function adicionarParadaViagem(T = "ida"){
+  paradasDoTrecho(T).push({ endereco: "", horario_previsto: "", observacao: "" });
   renderParadasModal();
-  const campos = document.querySelectorAll("#vg-paradas-lista .campo-endereco input[type=text]");
+  const campos = document.querySelectorAll(`#${T === "volta" ? "vg-paradas-volta-lista" : "vg-paradas-lista"} .campo-endereco input[type=text]`);
   if(campos.length) campos[campos.length-1].focus();
 }
-function removerParadaViagem(i){
-  const k = "p" + (i+1);
-  const afetadas = pessoasModal.filter(p=>p.embarque_ponto===k || p.desembarque_ponto===k).length
-    + (clientePontosModal.embarque===k || clientePontosModal.desembarque===k ? 1 : 0);
-  if(afetadas && !confirm(`${afetadas} ${afetadas===1 ? "pessoa embarca ou desce" : "pessoas embarcam ou descem"} nesta parada. Elas passam pro embarque e pro destino. Tirar a parada?`)) return;
-  pessoasModal.forEach(p=>{ if(p.embarque_ponto===k) p.embarque_ponto = "origem"; if(p.desembarque_ponto===k) p.desembarque_ponto = "destino"; });
-  if(clientePontosModal.embarque===k) clientePontosModal.embarque = "origem";
-  if(clientePontosModal.desembarque===k) clientePontosModal.desembarque = "destino";
+function removerParadaViagem(i, T = "ida"){
+  const k = "p" + (i+1), ch = CAMPOS_TRECHO[T], cp = clientePtsTrecho(T), lista = paradasDoTrecho(T);
+  const afetadas = pessoasModal.filter(p=>p[ch.na] && (p[ch.e]===k || p[ch.d]===k)).length
+    + (clienteNoTrecho(T) && (cp.embarque===k || cp.desembarque===k) ? 1 : 0);
+  const pontas = T === "volta" ? "pro embarque e pro destino da volta" : "pro embarque e pro destino";
+  if(afetadas && !confirm(`${afetadas} ${afetadas===1 ? "pessoa embarca ou desce" : "pessoas embarcam ou descem"} nesta parada. Elas passam ${pontas}. Tirar a parada?`)) return;
+  pessoasModal.forEach(p=>{ if(p[ch.e]===k) p[ch.e] = "origem"; if(p[ch.d]===k) p[ch.d] = "destino"; });
+  if(cp.embarque===k) cp.embarque = "origem";
+  if(cp.desembarque===k) cp.desembarque = "destino";
   const mapa = {};
-  for(let n = i+2; n <= paradasModal.length; n++) mapa["p" + n] = "p" + (n-1);
-  remapearPontosParadas(mapa);
-  paradasModal.splice(i,1);
+  for(let n = i+2; n <= lista.length; n++) mapa["p" + n] = "p" + (n-1);
+  remapearPontosParadas(mapa, T);
+  lista.splice(i,1);
   renderParadasModal();
+  if(T === "volta") medirRotaViagem(false);
 }
-function moverParadaViagem(i, delta){
+function moverParadaViagem(i, delta, T = "ida"){
+  const lista = paradasDoTrecho(T);
   const j = i + delta;
-  if(j < 0 || j >= paradasModal.length) return;
-  [paradasModal[i], paradasModal[j]] = [paradasModal[j], paradasModal[i]];
-  remapearPontosParadas({ ["p" + (i+1)]: "p" + (j+1), ["p" + (j+1)]: "p" + (i+1) });
+  if(j < 0 || j >= lista.length) return;
+  [lista[i], lista[j]] = [lista[j], lista[i]];
+  remapearPontosParadas({ ["p" + (i+1)]: "p" + (j+1), ["p" + (j+1)]: "p" + (i+1) }, T);
   renderParadasModal();
 }
 async function gravarParadasViagem(viagemId){
-  const validas = paradasModal.filter(p=>p.endereco.trim());
+  const comTrecho = voltaDetalhadaExiste();
+  const linhas = (T, lista) => lista.filter(p=>p.endereco.trim()).map((p,i)=>Object.assign({
+    viagem_id: viagemId, ordem: i+1, tipo: "Parada", endereco: p.endereco.trim(),
+    horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
+  }, comTrecho ? { trecho: T } : {}));
+  const validas = [...linhas("ida", paradasModal), ...(comTrecho && temVoltaModal() ? linhas("volta", paradasVoltaModal) : [])];
   const existiam = viagemParadas.some(p=>p.viagem_id===viagemId);
   if(!validas.length && !existiam) return;
   const del = await sb.from("viagem_paradas").delete().eq("viagem_id", viagemId);
   if(del.error){ alert("Erro ao salvar paradas: " + del.error.message); return; }
   if(validas.length){
-    const ins = await sb.from("viagem_paradas").insert(validas.map((p,i)=>({
-      viagem_id: viagemId, ordem: i+1, tipo: "Parada", endereco: p.endereco.trim(),
-      horario_previsto: p.horario_previsto || null, observacao: p.observacao.trim() || null,
-    })));
+    const ins = await sb.from("viagem_paradas").insert(validas);
     if(ins.error){ alert("Erro ao salvar paradas: " + ins.error.message); return; }
   }
 }
@@ -20277,7 +20433,12 @@ function atualizarResumoViagem(){
   const partes = [`<b>${escapeHtml(nome)}</b>`];
   partes.push(ic("calendar") + " " + (val("vg-data") ? `${formatarDataBR(val("vg-data"))}${val("vg-horario-partida") ? " às " + val("vg-horario-partida") : ""}` : "sem data"));
   partes.push(document.getElementById("vg-tem-volta").checked ? ic("arrows-left-right") + " ida e volta" : ic("arrow-right") + " só ida");
-  const pessoas = textoPessoasViagem({ id: editingViagemId, pessoas_ida: Number(val("vg-pessoas-ida")) || null, pessoas_volta: Number(val("vg-pessoas-volta")) || null });
+  let pessoas;
+  if(pessoasModal.length || (temVoltaModal() && !clienteVoltaModal.na)){
+    const conta = contarPessoasModal();
+    const t = n => `${n} ${n === 1 ? "pessoa" : "pessoas"}`;
+    pessoas = conta.volta != null && conta.volta !== conta.ida ? `${conta.ida} na ida · ${conta.volta} na volta` : t(conta.ida);
+  }else pessoas = textoPessoasViagem({ id: editingViagemId, pessoas_ida: Number(val("vg-pessoas-ida")) || null, pessoas_volta: Number(val("vg-pessoas-volta")) || null });
   if(pessoas) partes.push(ic("users") + " " + pessoas);
   if(val("vg-preco-cotado")) partes.push(`<span class="vg-resumo-preco">${formatarMoedaBR(Number(val("vg-preco-cotado")))}</span>`);
   partes.push(`<span class="tag">${escapeHtml(rotuloStatusViagem(val("vg-viagem-status")))}</span>`);
@@ -20295,7 +20456,9 @@ function sincronizarVoltaViagem(){
   const tem = CAMPOS_VOLTA_VIAGEM.some(id=>document.getElementById(id).value !== "") || document.getElementById("vg-adicional-noturno-retorno").checked;
   document.getElementById("vg-tem-volta").checked = tem;
   document.getElementById("vg-volta-campos").style.display = tem ? "" : "none";
+  document.getElementById("vg-volta-trajeto").style.display = tem ? "" : "none";
   document.getElementById("vg-volta-sec").classList.toggle("vg-sec-fechada", !tem);
+  numerarSecoesViagem();
 }
 // Desmarcar "Tem volta" apaga os campos: escondidos, eles continuariam sendo
 // salvos e cobrados sem ninguém ver.
@@ -20307,8 +20470,15 @@ function alternarVoltaViagem(){
     CAMPOS_VOLTA_VIAGEM.forEach(id=>{ document.getElementById(id).value = ""; });
     document.getElementById("vg-adicional-noturno-retorno").checked = false;
     document.getElementById("vg-feriado-retorno").checked = false;
+    // Paradas e pessoas da volta também saem; quem estava só na volta sai da lista
+    paradasVoltaModal = [];
+    pessoasModal = pessoasModal.filter(p=>p.na_ida);
+    pessoasModal.forEach(p=>Object.assign(p, { na_volta: true, volta_embarque_ponto: "origem", volta_desembarque_ponto: "destino" }));
+    clienteVoltaModal = { na: true, embarque: "origem", desembarque: "destino" };
     recalcularCotacao();
   }
+  document.getElementById("vg-volta-trajeto").style.display = cb.checked ? "" : "none";
+  renderParadasModal();
   document.getElementById("vg-volta-campos").style.display = cb.checked ? "" : "none";
   document.getElementById("vg-volta-sec").classList.toggle("vg-sec-fechada", !cb.checked);
   atualizarResumoViagem();
@@ -20446,6 +20616,13 @@ async function saveViagem(){
     Object.assign(payload, feriados);
   }
   // Colunas de schema_garupa_pessoas.sql (23/10/2026): mesmo cuidado.
+  // Com gente na lista (ou a cliente fora da volta), ida e volta são contadas
+  // pela lista (20/11/2026); viagem antiga sem lista guarda o número dela.
+  if(voltaDetalhadaExiste() && (pessoasModal.length || !clienteVoltaModal.na)){
+    const conta = contarPessoasModal();
+    document.getElementById("vg-pessoas-ida").value = conta.ida || "";
+    document.getElementById("vg-pessoas-volta").value = conta.volta || "";
+  }
   const numPessoas = id => document.getElementById(id).value === "" ? null : Math.round(Number(document.getElementById(id).value));
   const pessoas = { pessoas_ida: numPessoas("vg-pessoas-ida"), pessoas_volta: numPessoas("vg-pessoas-volta") };
   if([pessoas.pessoas_ida, pessoas.pessoas_volta].some(n=>n != null && (n < 1 || n > 20))){ alert("Pessoas na ida e na volta: de 1 a 20, contando a cliente."); return; }
@@ -20463,6 +20640,13 @@ async function saveViagem(){
   }
   // Coluna de schema_cliente_nao_vai.sql (30/10/2026): mesmo cuidado.
   if(viagens.length > 0 && ("cliente_vai_no_carro" in viagens[0])) payload.cliente_vai_no_carro = clienteVaiModal;
+  // Colunas de schema_volta_paradas_pessoas.sql (20/11/2026): mesmo cuidado.
+  if(viagens.length > 0 && ("cliente_na_volta" in viagens[0])){
+    const naVolta = clienteVaiModal && temVoltaModal() && clienteVoltaModal.na;
+    payload.cliente_na_volta = !temVoltaModal() || naVolta;
+    payload.cliente_volta_embarque_ponto = naVolta && clienteVoltaModal.embarque !== "origem" ? clienteVoltaModal.embarque : null;
+    payload.cliente_volta_desembarque_ponto = naVolta && clienteVoltaModal.desembarque !== "destino" ? clienteVoltaModal.desembarque : null;
+  }
   // Colunas de schema_desconto_viagem.sql (22/09/2026): mesmo cuidado acima.
   const desconto = {
     preco_tabela: document.getElementById("vg-preco-tabela").value === "" ? null : Number(document.getElementById("vg-preco-tabela").value),
