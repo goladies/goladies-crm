@@ -4206,7 +4206,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="obrig"><label>Km da corrida (ida)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Do embarque até aqui, passando pelas paradas.</span></div>
         <div class="obrig"><label>Duração (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"><span class="dica">Do embarque até o destino.</span></div>
         <div class="full" style="display:flex; gap:16px; flex-wrap:wrap;">
-          <label class="vg-check"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label>
+          <!-- Noite (22h às 6h) sai do horário do embarque (20/11/2026): caixa escondida, marcada sozinha -->
+          <label class="vg-check" style="display:none;"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label>
           <label class="vg-check"><input type="checkbox" id="vg-feriado" onchange="periodoTrechoTrocado()"> <span>Feriado na ida</span></label>
         </div>
         <div class="full" style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -4236,7 +4237,8 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
         <div><label>Pessoas na volta</label><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h): +30% na volta</span></label></div>
+        <!-- Noite na volta sai do horário do embarque da volta (20/11/2026) -->
+        <div style="display:none;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h): +30% na volta</span></label></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado-retorno" onchange="periodoTrechoTrocado()"> <span>Feriado na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
         <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
@@ -18308,6 +18310,21 @@ function sincronizarHorariosTrajeto(){
   Object.entries(HORARIO_ESPELHO).forEach(([a,b])=>{ document.getElementById(a).value = document.getElementById(b).value; });
 }
 ["vg-horario-partida","vg-horario-chegada"].forEach(id=>document.getElementById(id).addEventListener("input", sincronizarHorariosTrajeto));
+// Noite (22h às 6h) vem do horário do embarque da ida e da volta
+// (20/11/2026): a caixa saiu da tela pra não repetir o horário. A tabela de
+// preço continua escolhida por ela.
+const ehHorarioNoite = h => !!h && (h >= "22:00" || h < "06:00");
+function noitePeloHorario(recalcular){
+  let mudou = false;
+  [["vg-horario-partida", "vg-adicional-noturno"], ["vg-horario-retorno", "vg-adicional-noturno-retorno"]].forEach(([h, c])=>{
+    const hora = document.getElementById(h).value, chk = document.getElementById(c);
+    if(!hora) return;
+    const noite = ehHorarioNoite(hora);
+    if(chk.checked !== noite){ chk.checked = noite; mudou = true; }
+  });
+  if(mudou && recalcular) periodoTrechoTrocado();
+}
+["vg-horario-partida","vg-horario-retorno"].forEach(id=>document.getElementById(id).addEventListener("change", ()=>noitePeloHorario(true)));
 // Na ficha da cliente: viagens em que foi junto (pagas por outra pessoa)
 // e quem ela levou junto nas viagens dela
 function htmlGarupaCliente(c){
@@ -19953,7 +19970,7 @@ function openViagemModal(id, opcoes){
   // Ida e volta criadas antes de 26/09/2026: o km da ida guardava a soma dos dois trechos
   document.getElementById("vg-distancia-km-dica").textContent = v.data_retorno && v.distancia_km && v.distancia_km_retorno == null
     ? "Viagem antiga: este km é a soma de ida e volta (a volta não foi medida separada)."
-    : "Se for só ida, é o km da corrida inteira.";
+    : "Do embarque até aqui, passando pelas paradas.";
   document.getElementById("vg-adicional-noturno-retorno").checked = !!v.adicional_noturno_retorno;
   document.getElementById("vg-tarifa-fixa").value = v.tarifa_fixa ?? TAXA_FIXA_CLIENTE;
   document.getElementById("vg-valor-km").value = v.valor_km ?? TARIFA_KM_CLIENTE;
@@ -19961,6 +19978,7 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
   document.getElementById("vg-feriado").checked = !!v.feriado;
   document.getElementById("vg-feriado-retorno").checked = !!v.feriado_retorno;
+  if(!viagemJaPaga()) noitePeloHorario(false);
   prepararTabelaPrecoModal(v);
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
   document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
