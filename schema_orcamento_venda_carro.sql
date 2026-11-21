@@ -26,6 +26,7 @@ comment on column public.orcamentos.venda_carro is
 
 update public.orcamentos
 set venda_carro = jsonb_build_object(
+      'etapa', 'a_venda',
       'modelo', 'Jeep Compass Sport',
       'ano', '2020',
       'cor', 'Cinza Antique',

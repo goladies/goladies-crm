@@ -3684,15 +3684,17 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div class="formgrid">
         <div><label id="o-cotado-rot">Valor cotado (R$)</label><input type="number" id="o-cotado" oninput="resumoFichaOrcamento()"></div>
         <div><label id="o-final-rot">Valor final (R$)</label><input type="number" id="o-final" oninput="resumoFichaOrcamento()"></div>
-        <div><label>Status</label><select id="o-status" onchange="resumoFichaOrcamento()"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select><span class="dica" id="o-status-dica" style="display:none;">Aceito = carro vendido: gera a comissão no Financeiro.</span></div>
-        <div><label>Data</label><input type="date" id="o-data" onchange="resumoFichaOrcamento()"></div>
+        <div id="o-status-wrap"><label>Status</label><select id="o-status" onchange="resumoFichaOrcamento()"><option>Solicitado</option><option>Enviado</option><option>Aceito</option><option>Recusado</option></select></div>
+        <div id="o-etapa-wrap" style="display:none;"><label>Etapa da venda</label><select id="ovc-etapa" onchange="mudouEtapaVendaCarro()"></select><span class="dica" id="ovc-etapa-dica"></span></div>
+        <div><label id="o-data-rot">Data</label><input type="date" id="o-data" onchange="resumoFichaOrcamento()"></div>
+        <div id="ovc-aceite-wrap" style="display:none;"><label>Data do aceite</label><input type="date" id="ovc-aceite-data"><span class="dica">Dia em que a vendedora aceitou o percentual.</span></div>
       </div>
     </section>
 
     <!-- ── Pagamento: com status Aceito, saveOrcamento gera a venda e as parcelas ── -->
     <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-coins"/></svg><span class="vg-num">Pagamento</span></span><span class="vg-tag aut"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>gera no Financeiro</span></div>
-      <p class="lig-sub" style="margin:0 0 12px;">Se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho.</p>
+      <p class="lig-sub" style="margin:0 0 12px;" id="o-pag-explica">Se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho.</p>
       <div class="formgrid">
         <div class="linha-checks">
           <label class="vg-check"><input type="checkbox" id="o-parcelado" onchange="toggleOrcamentoParcelado()"> É parcelado?</label>
@@ -8749,7 +8751,7 @@ function renderOrcamentos(){
       <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro) : "-"}</td>
       <td>${o.valor_cotado!=null?formatarMoedaBR(o.valor_cotado):"-"}</td>
       <td>${o.valor_final!=null?formatarMoedaBR(o.valor_final):"-"}</td>
-      <td><span class="tag ${o.status==='Aceito'?'ganho':o.status==='Recusado'?'perdido':'orc-env'}">${o.status}</span></td>
+      <td><span class="tag ${o.status==='Aceito'?'ganho':o.status==='Recusado'?'perdido':'orc-env'}">${escapeHtml(statusOrcamentoTexto(o))}</span></td>
       <td>${fmtDataBR(o.data)||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()"><button class="act act-edit" onclick="openOrcamentoModal(${o.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteOrcamento(${o.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
@@ -14680,6 +14682,7 @@ function openOrcamentoModal(id){
   const vendaLigada = vendas.find(v=>v.orcamento_id===id);
   document.getElementById("o-venda-aviso").textContent = vendaLigada ? `Venda já registrada no Financeiro (${vendaLigada.servico_produto}, ${formatarMoedaBR(vendaLigada.preco_total)}). Mudar os campos de pagamento aqui não altera parcelas já geradas; edite direto em Financeiro se precisar.` : "";
   preencherVendaCarroOrc(o.venda_carro);
+  document.getElementById("ovc-etapa").value = etapaDoOrcamento(o);
   mostrarVendaCarroOrc();
   resumoFichaOrcamento();
   document.getElementById("orcamento-modal").classList.add("open");
@@ -14712,7 +14715,12 @@ function mostrarVendaCarroOrc(){
   const sim = ehVendaCarroOrc();
   document.getElementById("o-vc-sec-carro").style.display = sim ? "" : "none";
   document.getElementById("o-vc-sec-divulga").style.display = sim ? "" : "none";
-  document.getElementById("o-status-dica").style.display = sim ? "" : "none";
+  document.getElementById("o-status-wrap").style.display = sim ? "none" : "";
+  document.getElementById("o-etapa-wrap").style.display = sim ? "" : "none";
+  document.getElementById("o-pag-explica").textContent = sim
+    ? "Na etapa Vendido pela Go Ladies, gera a comissão e a(s) parcela(s) no Financeiro sozinho."
+    : "Se o status for Aceito, gera a venda e a(s) parcela(s) no Financeiro sozinho.";
+  mudouEtapaVendaCarro(true);
   document.getElementById("o-cotado-rot").textContent = sim ? "Comissão prevista (R$)" : "Valor cotado (R$)";
   document.getElementById("o-final-rot").textContent = sim ? "Comissão real (R$)" : "Valor final (R$)";
   ["o-cotado","o-final"].forEach(id=>{
@@ -14722,9 +14730,55 @@ function mostrarVendaCarroOrc(){
   });
   if(sim) calcVendaCarroOrc();
 }
+// Etapa da venda (20/11/2026): o percentual é aceito pela vendedora (dona do
+// carro); a comissão só nasce quando a Go Ladies vende pra compradora. A etapa
+// fica em venda_carro.etapa e grava o status padrão por baixo, pra painel,
+// contagens e Financeiro seguirem iguais.
+const ETAPAS_VENDA_CARRO = [
+  { v:"proposta",  rot:"Proposta enviada à vendedora",      curto:"Proposta enviada",     status:"Enviado",  data:"Data da proposta",
+    dica:"Ela ainda não aceitou o percentual." },
+  { v:"a_venda",   rot:"Percentual aceito · carro à venda", curto:"Carro à venda",        status:"Enviado",  data:"Atualizado em",
+    dica:"Ela aceitou o percentual. A comissão só é paga se a Go Ladies vender." },
+  { v:"vendido",   rot:"Vendido pela Go Ladies",            curto:"Vendido",              status:"Aceito",   data:"Data da venda",
+    dica:"A compradora veio pela Go Ladies e comprou: gera a comissão no Financeiro." },
+  { v:"encerrado", rot:"Encerrado sem comissão",            curto:"Encerrado",            status:"Recusado", data:"Data do encerramento",
+    dica:"Vendeu por conta própria, desistiu ou saiu do contrato. Não gera comissão." },
+];
+document.getElementById("ovc-etapa").innerHTML = ETAPAS_VENDA_CARRO.map(e=>`<option value="${e.v}">${e.rot}</option>`).join("");
+const etapaVendaCarro = v => ETAPAS_VENDA_CARRO.find(e=>e.v===v) || ETAPAS_VENDA_CARRO[0];
+// Orçamento antigo, sem etapa salva: deduz pelo status e pelo que já foi feito.
+function etapaDoOrcamento(o){
+  const vc = o.venda_carro || {};
+  if(vc.etapa) return vc.etapa;
+  if(o.status === "Aceito") return "vendido";
+  if(o.status === "Recusado") return "encerrado";
+  return (vc.contrato === "Assinado" || (vc.anuncios || []).length) ? "a_venda" : "proposta";
+}
+// Nome que aparece na lista e no topo da ficha.
+function statusOrcamentoTexto(o){
+  return o.servico === SERVICO_VENDA_CARRO ? etapaVendaCarro(etapaDoOrcamento(o)).curto : (o.status || "");
+}
+function mudouEtapaVendaCarro(soMostrar){
+  if(!ehVendaCarroOrc()){
+    document.getElementById("o-data-rot").textContent = "Data";
+    document.getElementById("ovc-aceite-wrap").style.display = "none";
+    return;
+  }
+  const e = etapaVendaCarro(document.getElementById("ovc-etapa").value);
+  document.getElementById("o-status").value = e.status;
+  document.getElementById("o-data-rot").textContent = e.data;
+  document.getElementById("ovc-etapa-dica").textContent = e.dica;
+  const comAceite = e.v === "a_venda" || e.v === "vendido";
+  document.getElementById("ovc-aceite-wrap").style.display = comAceite ? "" : "none";
+  // Ao escolher "carro à venda", a data do aceite começa com a data da etapa.
+  if(!soMostrar && comAceite && !document.getElementById("ovc-aceite-data").value)
+    document.getElementById("ovc-aceite-data").value = e.v === "a_venda" ? document.getElementById("o-data").value : "";
+  resumoFichaOrcamento();
+}
 function preencherVendaCarroOrc(vc){
   vc = vc || {};
   const set = (id, v) => { document.getElementById(id).value = v ?? ""; };
+  set("ovc-aceite-data", vc.aceite_data);
   set("ovc-modelo", vc.modelo); set("ovc-ano", vc.ano); set("ovc-cor", vc.cor);
   set("ovc-km", vc.km); set("ovc-placa", vc.placa); set("ovc-troca", vc.aceita_troca);
   set("ovc-pag-compradora", vc.pagamento_compradora);
@@ -14753,6 +14807,7 @@ function lerVendaCarroOrc(){
   const docs = {};
   document.querySelectorAll("#ovc-docs input[data-doc]").forEach(c=>{ if(c.checked) docs[c.dataset.doc] = true; });
   return {
+    etapa: document.getElementById("ovc-etapa").value, aceite_data: v("ovc-aceite-data"),
     modelo: v("ovc-modelo"), ano: v("ovc-ano"), cor: v("ovc-cor"), km: numOuNull(v("ovc-km")),
     placa: v("ovc-placa").toUpperCase(), aceita_troca: v("ovc-troca"), pagamento_compradora: v("ovc-pag-compradora"),
     fipe: numOuNull(v("ovc-fipe")), fipe_mes: v("ovc-fipe-mes"),
@@ -14903,6 +14958,9 @@ async function saveOrcamento(){
   if(payload.servico === SERVICO_VENDA_CARRO){
     calcVendaCarroOrc();
     payload.venda_carro = lerVendaCarroOrc();
+    payload.status = etapaVendaCarro(payload.venda_carro.etapa).status;
+    // Vendido: a data da etapa é a data da venda, se a seção ainda não tiver.
+    if(payload.venda_carro.etapa === "vendido" && !payload.venda_carro.data_venda && payload.data) payload.venda_carro.data_venda = payload.data;
     payload.valor_cotado = numOuNull(document.getElementById("o-cotado").value);
     payload.valor_final = numOuNull(document.getElementById("o-final").value);
     // A comissão é paga no dia em que o dinheiro da compradora cai.
@@ -14910,7 +14968,7 @@ async function saveOrcamento(){
     const jaTinhaVenda = vendas.some(v=>v.orcamento_id===editingOrcamentoId);
     if(payload.status === "Aceito" && !jaTinhaVenda){
       if(payload.valor_final == null){
-        alert("Pra marcar como Aceito (carro vendido), preencha o acerto (%) e o valor de venda do carro na seção Venda do carro. É com eles que o CRM calcula a comissão que vai pro Financeiro.");
+        alert("Pra marcar como Vendido pela Go Ladies, preencha o acerto (%) e o valor de venda do carro na seção Venda do carro. É com eles que o CRM calcula a comissão que vai pro Financeiro.");
         return;
       }
       if(!confirm(`Marcar o carro como vendido?\n\nVai pro Financeiro a comissão da Go Ladies: ${formatarMoedaBR(payload.valor_final)} (${payload.venda_carro.acerto_pct}% de ${formatarMoedaBR(payload.venda_carro.valor_venda)}).`)) return;
@@ -16606,7 +16664,8 @@ function resumoFichaOrcamento(){
   const val = id => document.getElementById(id).value;
   const l = leads.find(x=>x.id===Number(val("o-lead")));
   const partes = [`<b>${escapeHtml(l ? nomeCod(l) : "Lead não escolhida")}</b>`];
-  if(val("o-status")) partes.push(`<span class="tag">${escapeHtml(val("o-status"))}</span>`);
+  const stTxt = val("o-servico") === "Venda do meu carro" ? etapaVendaCarro(val("ovc-etapa")).curto : val("o-status");
+  if(stTxt) partes.push(`<span class="tag">${escapeHtml(stTxt)}</span>`);
   if(val("o-servico")) partes.push(`<span>${ic("tool")} ${escapeHtml(val("o-servico"))}</span>`);
   if(val("o-servico") === "Venda do meu carro"){
     const carro = [val("ovc-modelo"), val("ovc-ano")].filter(Boolean).join(" ");
