@@ -2196,7 +2196,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Minutos com a cliente</label><input type="number" id="sim-min-cliente" step="1" min="0" value="20" oninput="simular()"></div>
                 <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
                 <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
-                <div class="full"><label>Desses, km com a cliente das 22h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simular()"></div>
+                <div class="full"><label>Desses, km com a cliente das 20h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simular()"></div>
                 <!-- Espera em min ou horas e valor escolhido (11/11/2026) -->
                 <div class="espera-cel"><label for="sim-espera">Espera combinada, além dos 10 min inclusos</label><div class="espera-linha"><input type="number" id="sim-espera" step="any" min="0" value="0" oninput="esperaMudou('sim')"><select id="sim-espera-unid" aria-label="Unidade da espera" onchange="esperaUnidadeTrocada('sim')"><option value="min">min</option><option value="h">horas</option></select></div></div>
                 <div class="espera-cel"><label for="sim-espera-valor" id="sim-espera-valor-rot">Valor da espera (R$ por minuto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="sim-espera-valor" step="0.01" min="0" value="1.00" oninput="esperaMudou('sim')"></div></div>
@@ -2207,7 +2207,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div class="full sim-tabela-preco"><p class="sim-nota" id="sim-tabela-info" style="margin:0;"></p></div>
               </div>
               <label class="sim-check"><input type="checkbox" id="sim-idavolta" onchange="simular()"> <span>Ida e volta (cobra o trecho duas vezes)</span></label>
-              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simTabelaTrocada()"> <span id="sim-noturno-rot">Madrugada (22h às 6h) ou feriado: +30%</span></label>
+              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simTabelaTrocada()"> <span id="sim-noturno-rot">Noite (20h às 6h) ou feriado: +30%</span></label>
               <label class="sim-check"><input type="checkbox" id="sim-premium" onchange="simular()"> <span>Acompanhamento premium: +R$20 por trecho, 100% da motorista</span></label>
             </div>
 
@@ -2297,7 +2297,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <h3 style="margin:0;"><svg class=ic aria-hidden=true><use href=#i-tag /></svg> Tabelas de preço</h3>
             <button type="button" class="btn small" onclick="editarTabelaPreco(null)" id="tp-btn-nova"><svg class=ic aria-hidden=true><use href=#i-plus /></svg> Nova tabela</button>
           </div>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 22h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, "5 km" e a coluna do km que você escolher são exemplos pra comparar (o que a cliente paga); "Motora" e "Go Ladies" mostram quanto fica com cada uma nesse km. O desconto pra cliente sai da parte da Go Ladies; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:6px 0 12px;">A cotação automática (CRM e app) usa, em cada trecho, a tabela ativa que mais combina com o dia, o tipo de serviço e o horário. Primeiro os dias: feriado, sáb e dom ou seg a sex vale mais que "Qualquer dia" (no feriado sem tabela de feriado, vale a de sáb e dom). Depois o tipo exato vale mais que "Todos", e dia ou noite vale mais que "Qualquer horário". Noite é das 20h às 6h. Feriado vem da lista de feriados ou do quadrinho Feriado na viagem. "Menor preço" é o que a cliente paga num trecho bem curto, "5 km" e a coluna do km que você escolher são exemplos pra comparar (o que a cliente paga); "Motora" e "Go Ladies" mostram quanto fica com cada uma nesse km. O desconto pra cliente sai da parte da Go Ladies; passe o mouse no valor pra ver a conta. Clique no título de uma coluna pra ordenar. Mudar uma tabela só vale pras cotações novas; viagem já cotada não muda.</p>
           <div id="tp-conteudo"></div>
           <div id="tp-editor" class="tp-editor" style="display:none;"></div>
         </div>
@@ -4205,9 +4205,12 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Observação</label><input type="text" id="vg-destino-obs" placeholder="Ex.: entrada pela rua de trás"></div>
         <div class="obrig"><label>Km da corrida (ida)</label><input type="number" id="vg-distancia-km" step="0.1" oninput="recalcularCotacao()"><span class="dica" id="vg-distancia-km-dica">Do embarque até aqui, passando pelas paradas.</span></div>
         <div class="obrig"><label>Duração (min)</label><input type="number" id="vg-duracao-min" step="1" oninput="recalcularHorarioChegada()"><span class="dica">Do embarque até o destino.</span></div>
+        <!-- Noite das 20h às 6h (20/11/2026): o preço divide os km entre a
+             tabela do dia e a da noite. Sugerido pelo horário e pela duração. -->
+        <div class="sugerido"><label>Km depois das 20h <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="number" id="vg-km-noite" step="0.1" min="0" oninput="kmNoiteDigitado(this)"><span class="dica" id="vg-km-noite-dica">Calculado pelo horário do embarque e a duração.</span></div>
         <div class="full" style="display:flex; gap:16px; flex-wrap:wrap;">
-          <!-- Noite (22h às 6h) sai do horário do embarque (20/11/2026): caixa escondida, marcada sozinha -->
-          <label class="vg-check" style="display:none;"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Madrugada (22h às 6h): +30% na ida</span></label>
+          <!-- Noite (20h às 6h): caixa escondida, marcada sozinha quando tem km depois das 20h -->
+          <label class="vg-check" style="display:none;"><input type="checkbox" id="vg-adicional-noturno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-rot">Noite (20h às 6h): +30% na ida</span></label>
           <label class="vg-check"><input type="checkbox" id="vg-feriado" onchange="periodoTrechoTrocado()"> <span>Feriado na ida</span></label>
         </div>
         <div class="full" style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -4236,9 +4239,10 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Duração da volta (min)</label><input type="number" id="vg-duracao-retorno-min" step="1" oninput="recalcularHorarioChegadaRetorno()"><span class="dica">Do embarque da volta até o destino final.</span></div>
         <div class="sugerido"><label>Chegada prevista na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="time" id="vg-horario-chegada-retorno"><span class="dica">Calculada: embarque da volta + duração.</span></div>
         <div><label>Km da volta</label><input type="number" id="vg-distancia-retorno-km" step="0.1" oninput="recalcularCotacao()"><span class="dica">Vazio = volta não cobrada à parte.</span></div>
+        <div class="sugerido"><label>Km depois das 20h na volta <span class="vg-tag sug"><svg class="ic" aria-hidden="true"><use href="#i-calculator"/></svg>sugerido</span></label><input type="number" id="vg-km-noite-retorno" step="0.1" min="0" oninput="kmNoiteDigitado(this)"><span class="dica" id="vg-km-noite-retorno-dica">Calculado pelo horário do embarque da volta e a duração.</span></div>
         <div><label>Pessoas na volta</label><input type="number" id="vg-pessoas-volta" min="1" max="20" step="1"><span class="dica">Contando a cliente. Vazio = não informado.</span></div>
         <!-- Noite na volta sai do horário do embarque da volta (20/11/2026) -->
-        <div style="display:none;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Madrugada (22h às 6h): +30% na volta</span></label></div>
+        <div style="display:none;"><label class="vg-check"><input type="checkbox" id="vg-adicional-noturno-retorno" onchange="periodoTrechoTrocado()"> <span id="vg-adicional-noturno-retorno-rot">Noite (20h às 6h): +30% na volta</span></label></div>
         <div style="display:flex; align-items:flex-end; padding-bottom:22px;"><label class="vg-check"><input type="checkbox" id="vg-feriado-retorno" onchange="periodoTrechoTrocado()"> <span>Feriado na volta</span></label></div>
         <div class="full"><label>Embarque da volta</label><div class="campo-endereco"><input type="text" id="vg-origem-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo destino da ida.</span></div>
         <div class="full"><label>Destino da volta</label><div class="campo-endereco"><input type="text" id="vg-destino-retorno" autocomplete="off"><div class="sugestoes-endereco"></div></div><span class="dica">Vazio = o mesmo embarque da ida.</span></div>
@@ -5174,7 +5178,7 @@ function esperaDosCamposSim(campos){
     unidade: horas ? "h" : "min",
   };
 }
-const ADICIONAL_NOTURNO = 0.30;     // +30% com início entre 22h e 6h ou em feriado
+const ADICIONAL_NOTURNO = 0.30;     // +30% à noite (20h às 6h) ou em feriado
 const TAXA_CANCELAMENTO = {         // % do preço cotado que a cliente paga
   "2h":     { pct: 0.50, rotulo: "Cancelou com menos de 2 h: 50%" },
   "noshow": { pct: 1.00, rotulo: "Não compareceu (15 min sem contato): 100%" },
@@ -9588,6 +9592,9 @@ function preencherViagemDaCotacao(c){
   if(min) preencherMedidaRota("vg-duracao-min", min, true);
   const noturno = !!campos["sim-noturno"];
   document.getElementById("vg-adicional-noturno").checked = noturno;
+  // Km de noite do Simulador (medido trecho a trecho) vale como digitado
+  const kmNoiteSim = noturno ? km : (Number(campos["sim-km-noite"]) || 0);
+  if(kmNoiteSim){ const c = document.getElementById("vg-km-noite"); c.value = String(kmNoiteSim); c.dataset.manual = "1"; }
   document.getElementById("vg-feriado").checked = !!simFeriadoNome();
   const esperaSim = esperaDosCamposSim(campos);
   if(esperaSim.minutos > 0) esperaPreencher("vg", esperaSim.minutos, esperaSim.valorMin, esperaSim.unidade);
@@ -9691,10 +9698,10 @@ function caminhosGoogleTxt(medida){
   return `Google achou ${medida.caminhos.length} caminhos: ${lista}. Usei ${kmTxt(medida.km)} km e ${medida.min} min (o maior de cada).`;
 }
 
-// Minutos de um trajeto que caem das 22h às 6h, contando minuto a minuto.
+// Minutos de um trajeto que caem das 20h às 6h, contando minuto a minuto.
 function simMinutosNoite(inicio, min){
   let n = 0;
-  for(let m = 0; m < min; m++){ const h = new Date(inicio.getTime() + m * 60000).getHours(); if(h >= 22 || h < 6) n++; }
+  for(let m = 0; m < min; m++){ const h = new Date(inicio.getTime() + m * 60000).getHours(); if(h >= 20 || h < 6) n++; }
   return n;
 }
 function simHoraTxt(d){ return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
@@ -9733,7 +9740,7 @@ async function simCalcularRotaComHorario(pts, saida, volta){
     const noite = leg.min ? simMinutosNoite(hora, leg.min) : 0;
     kmCliente += leg.km; minCliente += leg.min;
     kmNoite += leg.min ? leg.km * noite / leg.min : 0;
-    linhas.push(`${k+1} → ${k+2}: ${simHoraTxt(hora)} às ${simHoraTxt(chega)}, ${kmTxt(leg.km)} km, ${leg.min} min${noite ? ` (${noite} min depois das 22h)` : ""}`);
+    linhas.push(`${k+1} → ${k+2}: ${simHoraTxt(hora)} às ${simHoraTxt(chega)}, ${kmTxt(leg.km)} km, ${leg.min} min${noite ? ` (${noite} min depois das 20h)` : ""}`);
     hora = chega;
     // Intervalo na parada k+2 (não existe no último endereço)
     const h = pts[k+1].h;
@@ -9798,7 +9805,7 @@ async function simCalcularRotaComHorario(pts, saida, volta){
   // Passou de 1 hora, mostra em horas; o valor que ela escolheu fica.
   esperaPreencher("sim", Math.max(0, esperaMin - (esperaMin ? ESPERA_INCLUSA_MIN : 0)), esperaValorMin("sim"));
   document.getElementById("sim-km-noite").value = Math.round(kmNoite * 10) / 10;
-  if(kmNoite >= 0.1) avisos.push(`${kmTxt(kmNoite)} km com a cliente caem das 22h às 6h: essa parte usa a tabela da noite.`);
+  if(kmNoite >= 0.1) avisos.push(`${kmTxt(kmNoite)} km com a cliente caem das 20h às 6h: essa parte usa a tabela da noite.`);
   const futuro = inicio.getTime() > Date.now() + 60000;
   const quando = `${dataComSemana(inicio)} saindo às ${simHoraTxt(inicio)}`;
   const transito = futuro ? `Trânsito previsto pra ${quando}.` : `Trânsito de agora (o horário ${quando} já passou ou é agora).`;
@@ -9890,7 +9897,7 @@ function simPrepararTabelas(){
   if(!selTipo || !selTab) return;
   const usa = !tabelasPrecoSqlFaltando;
   document.querySelectorAll("#ft-sim .sim-tabela-preco").forEach(el => { el.style.display = usa ? "" : "none"; });
-  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (22h às 6h): usa a tabela da noite" : "Madrugada (22h às 6h) ou feriado: +30%";
+  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (20h às 6h): usa a tabela da noite" : "Noite (20h às 6h) ou feriado: +30%";
   if(!usa) return;
   const tipoAtual = selTipo.value || "Padrão";
   fillSelect(selTipo, TIPO_SERVICO_VIAGEM, tipoAtual);
@@ -9912,7 +9919,7 @@ function simPrecoTabela(v){
   const info = document.getElementById("sim-tabela-info");
   const fer = simFeriadoNome();
   let infoTxt = (fer ? fer + " é feriado. " : "") + "Usando: " + t.nome + " (" + resumoTabelaPreco(t) + ", taxa Go Ladies " + String(Math.round(taxaTabelaPreco(t) * 100) / 100).replace(".", ",") + "%).";
-  // Parte da corrida depois das 22h (26/10/2026): o preço é dividido pelos km,
+  // Parte da corrida depois das 20h (26/10/2026; 22h até 20/11/2026): o preço é dividido pelos km,
   // cada parte com a sua tabela, sem cobrar a tarifa fixa duas vezes. Com a
   // noite marcada ou a tabela escolhida na mão, vale uma tabela só.
   const kmNoite = Math.min(simNum("sim-km-noite"), km);
@@ -10311,8 +10318,8 @@ function abrirFtOa(chave){
   renderFtOutrosApps();
   if(ftOaAberta) document.getElementById("ft-oa-detalhe").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
-// Noite = das 22h às 6h. Corrida sem hora não entra quando o filtro é dia ou noite.
-const oaEhNoite = h => h ? (h >= "22:00" || h < "06:00") : null;
+// Noite = das 20h às 6h (20/11/2026). Corrida sem hora não entra quando o filtro é dia ou noite.
+const oaEhNoite = h => h ? (h >= "20:00" || h < "06:00") : null;
 function renderFtOutrosApps(){
   const el = document.getElementById("ft-outros-apps");
   if(!el) return;
@@ -10470,7 +10477,7 @@ function renderFtOutrosApps(){
     ${outrosAppsSqlFaltando ? `<p class="sim-nota">Falta rodar o <b>schema_corridas_outros_apps.sql</b> no Supabase (SQL Editor) pra aparecerem as corridas de outros apps.</p>` : ""}
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
       ${sel("km", [["", "Todas as faixas de km"], ...FT_FAIXAS_KM.map((x,i)=>[String(i), x.rotulo])], "Faixa de km")}
-      ${sel("turno", [["", "Dia e noite"], ["dia", "Só de dia (6h às 22h)"], ["noite", "Só à noite (22h às 6h)"]], "Dia ou noite")}
+      ${sel("turno", [["", "Dia e noite"], ["dia", "Só de dia (6h às 20h)"], ["noite", "Só à noite (20h às 6h)"]], "Dia ou noite")}
       ${sel("cidade", [["", "Todas as cidades"], ...cidades.map(c=>[c, c])], "Cidade")}
       ${sel("app", [["", "Todos os apps"], ...apps.map(a=>[a, a])], "App")}
       <div class="periodo-grupo" role="group" aria-label="Como mostrar os números">
@@ -18310,21 +18317,44 @@ function sincronizarHorariosTrajeto(){
   Object.entries(HORARIO_ESPELHO).forEach(([a,b])=>{ document.getElementById(a).value = document.getElementById(b).value; });
 }
 ["vg-horario-partida","vg-horario-chegada"].forEach(id=>document.getElementById(id).addEventListener("input", sincronizarHorariosTrajeto));
-// Noite (22h às 6h) vem do horário do embarque da ida e da volta
-// (20/11/2026): a caixa saiu da tela pra não repetir o horário. A tabela de
-// preço continua escolhida por ela.
-const ehHorarioNoite = h => !!h && (h >= "22:00" || h < "06:00");
-function noitePeloHorario(recalcular){
-  let mudou = false;
-  [["vg-horario-partida", "vg-adicional-noturno"], ["vg-horario-retorno", "vg-adicional-noturno-retorno"]].forEach(([h, c])=>{
-    const hora = document.getElementById(h).value, chk = document.getElementById(c);
-    if(!hora) return;
-    const noite = ehHorarioNoite(hora);
-    if(chk.checked !== noite){ chk.checked = noite; mudou = true; }
-  });
-  if(mudou && recalcular) periodoTrechoTrocado();
+// Noite = das 20h às 6h (decisão da Jú, 20/11/2026; antes 22h). A corrida
+// que passa desse horário divide os km: a parte de noite usa a tabela da
+// noite e o resto a do dia (opção 3). "Km depois das 20h" é sugerido pelo
+// horário do embarque e pela duração (minutos de noite ÷ minutos da corrida);
+// digitado por ela, fica como está até apagar o campo.
+function ehHorarioNoite(h){ return !!h && (h >= "20:00" || h < "06:00"); }
+function minutosNoiteDesde(hhmm, min){
+  const [H, M] = String(hhmm).split(":").map(Number);
+  let n = 0;
+  for(let m = 0; m < Math.round(min); m++){ const h = Math.floor((H * 60 + M + m) / 60) % 24; if(h >= 20 || h < 6) n++; }
+  return n;
 }
-["vg-horario-partida","vg-horario-retorno"].forEach(id=>document.getElementById(id).addEventListener("change", ()=>noitePeloHorario(true)));
+const LADOS_NOITE = {
+  ida: { km: "vg-distancia-km", hora: "vg-horario-partida", min: "vg-duracao-min", noite: "vg-km-noite", chk: "vg-adicional-noturno" },
+  volta: { km: "vg-distancia-retorno-km", hora: "vg-horario-retorno", min: "vg-duracao-retorno-min", noite: "vg-km-noite-retorno", chk: "vg-adicional-noturno-retorno" },
+};
+function sugerirKmNoite(lado){
+  const L = LADOS_NOITE[lado], campo = document.getElementById(L.noite), dica = document.getElementById(L.noite + "-dica");
+  const km = Number(document.getElementById(L.km).value) || 0;
+  const hora = document.getElementById(L.hora).value;
+  const min = Number(document.getElementById(L.min).value) || 0;
+  if(!campo.dataset.manual){
+    if(!km || !hora) campo.value = "";
+    else{
+      const kmN = min ? Math.round(km * minutosNoiteDesde(hora, min) / min * 10) / 10 : (ehHorarioNoite(hora) ? km : 0);
+      campo.value = String(Math.min(kmN, km));
+    }
+    if(dica) dica.textContent = lado === "ida" ? "Calculado pelo horário do embarque e a duração." : "Calculado pelo horário do embarque da volta e a duração.";
+  }else if(dica) dica.textContent = "Digitado. Apague o campo pra calcular de novo.";
+  const kmNoite = Number(campo.value) || 0;
+  // A caixa escondida guarda se tem parte de noite (adicional_noturno)
+  document.getElementById(L.chk).checked = km ? kmNoite > 0 : ehHorarioNoite(hora);
+}
+function kmNoiteDigitado(campo){
+  if(campo.value === "") delete campo.dataset.manual; else campo.dataset.manual = "1";
+  periodoTrechoTrocado();
+}
+["vg-horario-partida","vg-duracao-min","vg-horario-retorno","vg-duracao-retorno-min"].forEach(id=>document.getElementById(id).addEventListener("input", ()=>{ if(!viagemJaPaga()) periodoTrechoTrocado(); }));
 // Na ficha da cliente: viagens em que foi junto (pagas por outra pessoa)
 // e quem ela levou junto nas viagens dela
 function htmlGarupaCliente(c){
@@ -18482,10 +18512,10 @@ function viagemJaPaga(){
 }
 // ── Tabelas de preço (schema_tabelas_preco.sql, 21/10/2026) ──────────────
 // Cada trecho usa a tabela ativa que mais combina com os dias (seg a sex, sáb
-// e dom, feriado), o tipo de serviço e o horário (noite = 22h às 6h). Mesma
+// e dom, feriado), o tipo de serviço e o horário (noite = 20h às 6h). Mesma
 // escolha do calcular_cotacao_tabela no banco, que cota os pedidos do app
 // (schema_tabelas_preco_dias.sql, 06/11/2026).
-const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 22h)", noite: "Noite (22h às 6h)", qualquer: "Qualquer horário" };
+const QUANDO_TABELA_PRECO = { dia: "Dia (6h às 20h)", noite: "Noite (20h às 6h)", qualquer: "Qualquer horário" };
 const DIAS_TABELA_PRECO = { semana: "Seg a sex", fim_semana: "Sáb e dom", feriado: "Feriado", qualquer: "Qualquer dia" };
 // O CRM já tem a coluna "dias"? (falta rodar schema_tabelas_preco_dias.sql se não)
 function tabelasPrecoTemDesconto(){ return tabelasPreco.length > 0 && ("desconto_cliente_pct" in tabelasPreco[0]); }
@@ -18544,19 +18574,32 @@ function resumoTabelaPreco(t){
   if(descontoTabelaPreco(t)) partes.push(descontoTabelaPreco(t) + "% de desconto pra cliente");
   return partes.join(", ");
 }
-// A escolhida na mão no modal vale pros dois trechos; senão, automática.
-function tabelasDoModal(){
+// A escolhida na mão no modal vale pros dois trechos, inteira; senão,
+// automática. Trecho que passa das 20h (20/11/2026): km de dia na tabela do
+// dia, km de noite na da noite. A "principal" (a de mais km) dá a tarifa
+// fixa e o valor por km mostrados nos campos.
+function trechoNoiteModal(lado){
+  const L = LADOS_NOITE[lado];
   const tipo = document.getElementById("vg-tipo-servico").value || "Padrão";
   const sel = document.getElementById("vg-tabela-preco");
   const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
   const val = id => document.getElementById(id).value;
-  const marcado = id => document.getElementById(id).checked;
-  return {
-    ida: forcada || escolherTabelaPreco(tipo, marcado("vg-adicional-noturno"), val("vg-data"), marcado("vg-feriado")),
-    volta: forcada || escolherTabelaPreco(tipo, marcado("vg-adicional-noturno-retorno"), val("vg-data-retorno") || val("vg-data"), marcado("vg-feriado-retorno")),
-    forcada: !!forcada,
-  };
+  const data = lado === "ida" ? val("vg-data") : (val("vg-data-retorno") || val("vg-data"));
+  const feriado = document.getElementById(lado === "ida" ? "vg-feriado" : "vg-feriado-retorno").checked;
+  const km = Number(val(L.km)) || 0;
+  const kmNoite = Math.min(Number(val(L.noite)) || 0, km);
+  if(forcada) return { km, kmNoite, tDia: forcada, tNoite: forcada, principal: forcada, dividida: false, forcada: true };
+  const tDia = escolherTabelaPreco(tipo, false, data, feriado), tNoite = escolherTabelaPreco(tipo, true, data, feriado);
+  const mesma = (tDia.id || tDia.nome) === (tNoite.id || tNoite.nome);
+  const noiteManda = km ? kmNoite * 2 > km : document.getElementById(L.chk).checked;
+  return { km, kmNoite, tDia, tNoite, principal: noiteManda ? tNoite : tDia, dividida: !mesma && kmNoite > 0 && kmNoite < km, forcada: false };
 }
+function tabelasDoModal(){
+  const ida = trechoNoiteModal("ida"), volta = trechoNoiteModal("volta");
+  return { ida: ida.principal, volta: volta.principal, forcada: ida.forcada, trechoIda: ida, trechoVolta: volta };
+}
+// Nome guardado na viagem: "Seg à sex + Seg à sex noite" quando dividiu
+const nomeTrechoTabela = tr => tr.dividida ? tr.tDia.nome + " + " + tr.tNoite.nome : tr.principal.nome;
 // Tarifa fixa e valor por km "automáticos" seguem a tabela de cada trecho;
 // digitados por ela valem pros dois trechos (o adicional e o mínimo seguem a tabela).
 function tarifasAutomaticas(){ return document.getElementById("vg-tarifa-fixa").dataset.auto === "1"; }
@@ -18571,13 +18614,21 @@ function atualizarInfoTabelaPreco(){
   const info = document.getElementById("vg-tabela-preco-info");
   const usa = !tabelasPrecoSqlFaltando;
   wrap.style.display = usa ? "" : "none";
-  document.getElementById("vg-adicional-noturno-rot").textContent = usa ? "Noite (22h às 6h) na ida" : "Madrugada (22h às 6h): +30% na ida";
-  document.getElementById("vg-adicional-noturno-retorno-rot").textContent = usa ? "Noite (22h às 6h) na volta" : "Madrugada (22h às 6h): +30% na volta";
+  document.getElementById("vg-adicional-noturno-rot").textContent = usa ? "Noite (20h às 6h) na ida" : "Noite (20h às 6h): +30% na ida";
+  document.getElementById("vg-adicional-noturno-retorno-rot").textContent = usa ? "Noite (20h às 6h) na volta" : "Noite (20h às 6h): +30% na volta";
   if(!usa){ info.textContent = ""; return; }
-  const { ida, volta } = tabelasDoModal();
+  const { trechoIda, trechoVolta } = tabelasDoModal();
   const temVolta = (Number(document.getElementById("vg-distancia-retorno-km").value) || 0) > 0;
-  let txt = "Ida: " + ida.nome + " (" + resumoTabelaPreco(ida) + ")";
-  if(temVolta) txt += " · Volta: " + volta.nome + " (" + resumoTabelaPreco(volta) + ")";
+  const kmTxtBR = n => String(Math.round(n * 10) / 10).replace(".", ",");
+  const textoTrecho = tr => {
+    if(!tr.dividida){
+      const parte = !tr.km ? "" : tr.kmNoite >= tr.km && tr.kmNoite > 0 ? `${kmTxtBR(tr.km)} km, todos de noite: ` : `${kmTxtBR(tr.km)} km: `;
+      return parte + tr.principal.nome + " (" + resumoTabelaPreco(tr.principal) + ")";
+    }
+    return `${kmTxtBR(tr.km)} km no total: ${kmTxtBR(tr.km - tr.kmNoite)} km de dia (${tr.tDia.nome}: ${resumoTabelaPreco(tr.tDia)}) + ${kmTxtBR(tr.kmNoite)} km de noite (${tr.tNoite.nome}: ${resumoTabelaPreco(tr.tNoite)})`;
+  };
+  let txt = "Ida: " + textoTrecho(trechoIda);
+  if(temVolta) txt += " · Volta: " + textoTrecho(trechoVolta);
   if(!tarifasAutomaticas()) txt += ". A tarifa fixa e o valor por km digitados valem pros dois trechos";
   if(!tabelaPrecoMexida && tabelaPrecoNomeSalvo) txt = "Usada na cotação: " + tabelaPrecoNomeSalvo + ". Se refizer o preço: " + txt;
   info.textContent = txt + ".";
@@ -18615,12 +18666,13 @@ function tarifaDigitada(campo){
   recalcularCotacao();
 }
 function dadosTabelaPrecoModal(){
-  const { ida, volta, forcada } = tabelasDoModal();
+  const { ida, volta, forcada, trechoIda, trechoVolta } = tabelasDoModal();
   const temVolta = (Number(document.getElementById("vg-distancia-retorno-km").value) || 0) > 0;
+  const nIda = nomeTrechoTabela(trechoIda), nVolta = nomeTrechoTabela(trechoVolta);
   return {
     tabela_preco_id: ida.id || null,
     tabela_preco_retorno_id: temVolta ? (volta.id || null) : null,
-    tabela_preco_nome: temVolta && volta.nome !== ida.nome ? ida.nome + " / " + volta.nome : ida.nome,
+    tabela_preco_nome: temVolta && nVolta !== nIda ? nIda + " / " + nVolta : nIda,
     tabela_preco_escolhida: forcada,
   };
 }
@@ -18631,19 +18683,28 @@ function calcularTabela(){
   // Cada trecho (ida e, se tiver km, volta) usa a sua tabela; a espera
   // combinada é somada por fora e vai inteira pra motorista. Mesma conta do
   // pedir_viagem_cliente (schema_tabelas_preco.sql).
-  const { ida, volta } = tabelasDoModal();
+  const { trechoIda, trechoVolta } = tabelasDoModal();
   const auto = tarifasAutomaticas();
   const fixaCampo = Number(document.getElementById("vg-tarifa-fixa").value) || 0;
   const kmCampo = Number(document.getElementById("vg-valor-km").value) || 0;
   const trecho = (t, kmTrecho) => precoTrechoTabela(t, kmTrecho,
     auto ? Number(t.tarifa_fixa) || 0 : fixaCampo, auto ? Number(t.valor_km) || 0 : kmCampo);
+  // Trecho que passa das 20h: cada tabela calcula a corrida inteira e entra
+  // na proporção dos km dela (tarifa fixa e mínimo não dobram). Mesma conta
+  // do Simulador e do pedir_viagem_cliente (schema_noite_20h_km_dividido.sql).
+  const precoDoTrecho = tr => {
+    if(!tr.dividida){ const c = trecho(tr.principal, tr.km); return { cliente: c, motorista: c * (1 - taxaTabelaPreco(tr.principal) / 100) }; }
+    const fDia = (tr.km - tr.kmNoite) / tr.km, fNoite = tr.kmNoite / tr.km;
+    const cDia = trecho(tr.tDia, tr.km) * fDia, cNoite = trecho(tr.tNoite, tr.km) * fNoite;
+    return { cliente: cDia + cNoite, motorista: cDia * (1 - taxaTabelaPreco(tr.tDia) / 100) + cNoite * (1 - taxaTabelaPreco(tr.tNoite) / 100) };
+  };
   const kmVolta = Number(document.getElementById("vg-distancia-retorno-km").value) || 0;
-  const pIda = trecho(ida, km);
-  let base = pIda, motorista = pIda * (1 - taxaTabelaPreco(ida) / 100);
+  const pIda = precoDoTrecho(trechoIda);
+  let base = pIda.cliente, motorista = pIda.motorista;
   if(kmVolta){
-    const pVolta = trecho(volta, kmVolta);
-    base += pVolta;
-    motorista += pVolta * (1 - taxaTabelaPreco(volta) / 100);
+    const pVolta = precoDoTrecho(trechoVolta);
+    base += pVolta.cliente;
+    motorista += pVolta.motorista;
   }
   repasseTabelaRatio = base ? motorista / base : null;
   return base + esperaValor("vg");
@@ -18665,6 +18726,7 @@ function preencherTabelaSeVazia(){
   if(tabela != null) campo.value = tabela.toFixed(2);
 }
 function recalcularCotacao(){
+  if(!viagemJaPaga()){ sugerirKmNoite("ida"); sugerirKmNoite("volta"); }
   if(viagemJaPaga()){
     atualizarDesconto();
     atualizarInfoTabelaPreco();
@@ -19978,7 +20040,21 @@ function openViagemModal(id, opcoes){
   document.getElementById("vg-adicional-noturno").checked = !!v.adicional_noturno;
   document.getElementById("vg-feriado").checked = !!v.feriado;
   document.getElementById("vg-feriado-retorno").checked = !!v.feriado_retorno;
-  if(!viagemJaPaga()) noitePeloHorario(false);
+  [["vg-km-noite", v.distancia_km_noite], ["vg-km-noite-retorno", v.distancia_km_noite_retorno]].forEach(([id, val])=>{
+    const c = document.getElementById(id);
+    delete c.dataset.manual;
+    c.value = val == null ? "" : String(val);
+    // Guardado diferente do que o horário sugere: foi digitado, fica
+    if(val != null) c.dataset.manual = "1";
+  });
+  if(!viagemJaPaga()){
+    ["ida","volta"].forEach(lado=>{
+      const c = document.getElementById(LADOS_NOITE[lado].noite);
+      const salvo = c.value;
+      delete c.dataset.manual; sugerirKmNoite(lado);
+      if(salvo !== "" && Number(salvo) !== Number(c.value)){ c.value = salvo; c.dataset.manual = "1"; sugerirKmNoite(lado); }
+    });
+  }
   prepararTabelaPrecoModal(v);
   document.getElementById("vg-cancelamento").value = v.cancelamento_cobrado || "";
   document.getElementById("vg-multa").value = v.multa_cancelamento ?? "";
@@ -20288,6 +20364,12 @@ async function saveViagem(){
   const colunasVoltaExistem = viagens.length > 0 && ("distancia_km_retorno" in viagens[0]);
   if(colunasVoltaExistem || volta.distancia_km_retorno != null || volta.adicional_noturno_retorno){
     Object.assign(payload, volta);
+  }
+  // Colunas de schema_noite_20h_km_dividido.sql (20/11/2026): só se existem.
+  if(viagens.length > 0 && ("distancia_km_noite" in viagens[0])){
+    const kmN = id => document.getElementById(id).value === "" ? null : Number(document.getElementById(id).value);
+    payload.distancia_km_noite = kmN("vg-km-noite");
+    payload.distancia_km_noite_retorno = volta.distancia_km_retorno ? kmN("vg-km-noite-retorno") : null;
   }
   // Colunas de schema_tabelas_preco_dias.sql (06/11/2026): mesmo cuidado.
   const feriados = {
