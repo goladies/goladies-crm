@@ -597,13 +597,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -652,17 +652,17 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#parceira-resultado-modal,#parceira-mensalidade-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig i{color:var(--vg-ambar);}
 /* Tela completa da parceira (o) (23/11/2026). A ficha antiga vira a aba
    Cadastro: o próprio #parceiro-modal entra na tela com a classe .embutida. */
 .pt-voltar{background:none; border:0; padding:0; color:var(--rosa-texto); font:inherit; font-size:var(--fs-md); cursor:pointer; display:inline-flex; align-items:center; gap:6px; min-height:32px;}
@@ -677,7 +677,8 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .pt-cab h3{margin:0;}
 .pt-cab p{margin:4px 0 0; color:var(--muted); font-size:var(--fs-sm);}
 .pt-vazio{color:var(--muted); font-size:var(--fs-sm); margin:0;}
-.pt-grade .tbl td{overflow-wrap:anywhere;}
+.pt-grade .tbl td{overflow-wrap:break-word;}
+.pt-vazio b{white-space:nowrap;}
 .pt-resultado{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start;}
 .pt-resultado canvas{width:100%; height:auto; border-radius:12px; border:1px solid var(--border); display:block;}
 .pt-resultado textarea{width:100%; min-height:330px; box-sizing:border-box; resize:vertical;}
@@ -3442,6 +3443,39 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('parceira-conversa-modal')">Sair</button>
       <button class="btn" onclick="salvarConversaParceira()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="parceira-mensalidade-modal">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">Mensalidade da parceria</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('parceira-mensalidade-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-coins"/></svg><span class="vg-num">Acordo</span></span></div>
+      <p class="pt-vazio" style="margin-bottom:12px;"><span id="pm-plano"></span>O valor pode ser diferente do plano.</p>
+      <div class="formgrid" oninput="ptPreviaMensalidade()">
+        <div class="obrig"><label for="pm-valor">Valor por mês (R$)</label><input type="number" id="pm-valor" min="0" step="0.01" inputmode="decimal"></div>
+        <div class="obrig"><label for="pm-dia">Dia de vencimento</label><input type="number" id="pm-dia" min="1" max="28" step="1" inputmode="numeric"></div>
+        <div class="obrig"><label for="pm-inicio">1ª cobrança a partir de</label><input type="date" id="pm-inicio"></div>
+        <div><label for="pm-fim">Última cobrança até <span style="font-weight:400; color:var(--muted);">(vazio = sem fim)</span></label><input type="date" id="pm-fim"></div>
+        <div><label for="pm-pct">Desconto (%) <span style="font-weight:400; color:var(--muted);">(100 = cortesia)</span></label><input type="number" id="pm-pct" min="0" max="100" step="0.01" inputmode="decimal"></div>
+        <div><label for="pm-meses">Nas primeiras quantas mensalidades</label><input type="number" id="pm-meses" min="0" max="60" step="1" inputmode="numeric"></div>
+      </div>
+    </section>
+    <section class="vg-sec" style="--sec-cor:var(--vg-verde);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-coins"/></svg><span class="vg-num">Cobranças no Financeiro</span></span></div>
+      <div class="formgrid"><div class="full"><label for="pm-gerar">Deixar previstas até</label><select id="pm-gerar" onchange="ptPreviaMensalidade()"><option value="0">Este mês</option><option value="1">Próximo mês</option><option value="3">Daqui a 3 meses</option><option value="6">Daqui a 6 meses</option><option value="12">Daqui a 12 meses</option></select></div></div>
+      <div id="pm-previa" class="pt-grade" style="display:block; margin-top:12px;"></div>
+    </section>
+    <div class="modal-actions">
+      <button class="btn ghost" id="pm-encerrar" style="color:var(--c-red);" onclick="encerrarMensalidade()">Encerrar</button>
+      <button class="btn ghost" onclick="closeModal('parceira-mensalidade-modal')">Sair</button>
+      <button class="btn" onclick="salvarMensalidade()">Salvar</button>
     </div>
   </div>
 </div>
@@ -8906,7 +8940,7 @@ function renderParceiros(){
       <td>${p.classe_carol?`<span class="status-badge ${CLASSE_CAROL_CLASS[p.classe_carol]||''}">${escapeHtml(p.classe_carol)}</span> `:""}${p.nota_google!=null?`<span style="font-size:var(--fs-xs);">${escapeHtml(String(p.nota_google).replace(".",","))} ★ <span style="color:var(--muted);">(${p.avaliacoes_google||0})</span></span>`:""}${p.elegivel_certificacao?'<br><span class="tag" style="font-size:var(--fs-xs);">Elegível à certificação</span>':""}${!p.classe_carol&&p.nota_google==null&&!p.elegivel_certificacao?"-":""}</td>
       <td>${[planoDaParceira(p) ? `<span class="tag svp-tag-plano" title="Plano">${escapeHtml(planoDaParceira(p).nome)}</span>` : "", ...(p.tipo_parceria||"").split(",").map(s=>s.trim()).filter(Boolean).map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${t}</span>`)].filter(Boolean).join(" ")||"-"}</td>
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
-      <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
+      <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span> ${ptSituacaoPagamento(p)}</td>
       <td>${fmtDataBR(ultimoContato)||"-"}</td>
       <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="abrirTelaParceira(${p.id},'cadastro')"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
@@ -14860,7 +14894,7 @@ function renderTelaParceira(){
       <div><h2>${escapeHtml(p.nome)} ${numId(p)} ${etiquetaPJ(p)}</h2>
         <div class="pt-linha"><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${escapeHtml(p.status||"-")}</span>
         ${plano ? `<span class="tag svp-tag-plano">${escapeHtml(plano.nome)}</span>` : ""}${tipos.map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${escapeHtml(t)}</span>`).join(" ")}
-        ${p.selo==="sim" ? '<span class="badge-seal">✓ Go Ladies</span>' : ""}</div></div>
+        ${p.selo==="sim" ? '<span class="badge-seal">✓ Go Ladies</span>' : ""} ${ptSituacaoPagamento(p)}</div></div>
       <div class="pt-linha">${botaoWhatsAcao(primeiroCelularParceiro(p.id), p.nome)}
         ${pagina ? `<a class="act act-edit" href="${escapeHtml(normalizarLink(pagina.link))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Ver no site</a>` : ""}
         <button type="button" class="btn small" onclick="abrirResultadoParceira()">Resultado da parceria</button></div>
@@ -14888,12 +14922,18 @@ function renderTelaParceira(){
   const abrirInd = { motoristas:"openMotoristaModal", clientes_transporte:"openClienteTransporteModal", leads:"openLeadModal" };
   const qInd = inteiro => ptQuadro("Pessoas indicadas", "Quem tem esta parceira (o), ou alguém ligado a ela, no campo \"Indicada por\"",
     ptTabela(["Nome","Papel","Etapa","Chegou"], indicadas.map(({t,r,papel})=>({ abrir:`${abrirInd[t]}(${r.id})`, cels:[escapeHtml(r.nome) + " " + numId(r), papel, escapeHtml(r.status||r.etapa||"-"), ptData(ndDia(r.criado_em))] })), "Ninguém ligado ainda. Preencha \"Indicada por\" na ficha de quem chegou. Se quem indicou foi uma pessoa, ligue ela à empresa em Cadastro › Ligações."), "", inteiro ? "pt-inteiro" : "");
-  const atrasado = e => e.status==="Previsto" && e.data_prevista && e.data_prevista < hojeISO();
+  const mens = ptConfigDe(p), mensFim = mens.fim && mens.fim < hojeISO();
+  const proxMens = entradas.filter(e=>e.status==="Previsto" && e.data_prevista && e.data_prevista >= hojeISO()).sort((a,b)=>a.data_prevista.localeCompare(b.data_prevista))[0];
+  const totAtraso = entradas.filter(ptEntradaAtrasada).reduce((t,e)=>t+Number(e.valor||0), 0);
+  const acaoPag = e => e.status!=="Previsto" ? "" : `<span onclick="event.stopPropagation()"><button type="button" class="act act-edit" onclick="receberDaParceira(${e.id})">Recebi</button> <button type="button" class="act act-whats" onclick="cobrarDaParceira(${e.id})">Lembrar</button></span>`;
+  const linhasPag = inteiro => (inteiro ? entradas : [...entradas.filter(e=>e.status==="Previsto").sort((a,b)=>String(a.data_prevista||"").localeCompare(String(b.data_prevista||""))), ...entradas.filter(e=>e.status!=="Previsto")].slice(0, 4))
+    .map(e=>({ abrir:`abrirEntradaAvulsa(${e.id})`, cels:[escapeHtml(e.descricao), ptData(e.data_recebimento||e.data_prevista), formatarMoedaBR(e.valor), ptEntradaAtrasada(e) ? '<span class="status-badge" style="background:var(--c-red-bg); color:var(--c-red);">Em atraso</span>' : escapeHtml(e.status), ...(inteiro ? [acaoPag(e)] : [])] }));
   const qPag = inteiro => ptQuadro("Pagamentos", "Recebimentos desta parceira (o). Origem: Financeiro",
-    (soTroca && !entradas.length ? `<p class="pt-vazio">Troca de divulgação: nada a receber.</p>`
-      : `<p class="pt-vazio" style="margin-bottom:10px;">${plano ? `Plano ${escapeHtml(plano.nome)}${plano.preco_mes != null ? `: ${formatarMoedaBR(plano.preco_mes)} / mês` : ""}. ` : ""}Recebido: <b>${formatarMoedaBR(recebido)}</b> · A receber: <b>${formatarMoedaBR(aReceber.reduce((s,e)=>s+Number(e.valor||0),0))}</b></p>`
-        + ptTabela(["O quê","Data","Valor","Situação"], entradas.map(e=>({ abrir:`abrirEntradaAvulsa(${e.id})`, cels:[escapeHtml(e.descricao), ptData(e.data_recebimento||e.data_prevista), formatarMoedaBR(e.valor), atrasado(e) ? '<span class="status-badge" style="background:var(--c-red-bg); color:var(--c-red);">Em atraso</span>' : escapeHtml(e.status)] })), "Nenhum recebimento lançado.")),
-    btn("+ Recebimento", "novoRecebimentoParceira()"), inteiro ? "pt-inteiro" : "");
+    (mens.valor ? `<p class="pt-vazio" style="margin-bottom:6px;"><b style="color:var(--text1);">${formatarMoedaBR(mens.valor)} / mês</b>, todo dia ${mens.dia}, desde ${ptData(mens.inicio)}${mens.fim ? ` até ${ptData(mens.fim)}` : ""}${mens.pct && mens.meses ? ` · ${String(mens.pct).replace(".",",")}% de desconto ${mens.meses === 1 ? "na 1ª mensalidade" : `nas ${mens.meses} primeiras`}` : ""}${mensFim ? " · <b>encerrada</b>" : ""}</p>` : plano ? `<p class="pt-vazio" style="margin-bottom:6px;">Plano ${escapeHtml(plano.nome)}${plano.preco_mes != null ? `: ${formatarMoedaBR(plano.preco_mes)} / mês` : ""}, sem mensalidade configurada.</p>` : "")
+    + (soTroca && !entradas.length && !mens.valor ? `<p class="pt-vazio">Troca de divulgação: nada a receber.</p>`
+      : `<p class="pt-vazio" style="margin-bottom:10px;">Recebido: <b>${formatarMoedaBR(recebido)}</b> · A vencer: <b>${formatarMoedaBR(aReceber.filter(e=>!ptEntradaAtrasada(e)).reduce((t,e)=>t+Number(e.valor||0),0))}</b> · Em atraso: <b${totAtraso ? ' style="color:var(--c-red);"' : ""}>${formatarMoedaBR(totAtraso)}</b>${proxMens ? ` · Próximo vencimento: <b>${ptData(proxMens.data_prevista)}</b>` : ""}</p>`
+        + ptTabela(["O quê","Data","Valor","Situação", ...(inteiro ? [""] : [])], linhasPag(inteiro), "Nenhum recebimento lançado.")),
+    `<div class="pt-linha">${btn("Mensalidade", "abrirMensalidade()")}${btn("+ Recebimento", "novoRecebimentoParceira()")}</div>`, inteiro ? "pt-inteiro" : "");
   const proximos = conversas.filter(i=>i.proximos_passos);
   const qProx = ptQuadro("Próximo passo", "O combinado da conversa mais recente", proximos.length
     ? `<p style="margin:0 0 4px; font-size:var(--fs-md);">${escapeHtml(proximos[0].proximos_passos)}</p><p class="pt-vazio">Combinado em ${ptData(proximos[0].data)}${proximos[0].assunto ? " · " + escapeHtml(proximos[0].assunto) : ""}</p>`
@@ -14916,7 +14956,7 @@ function renderTelaParceira(){
     ${card(noAr, noAr===1 ? "Divulgação no ar" : "Divulgações no ar", "divulgacao")}
     ${pagClq ? card(clq30 ? clq30.total : "-", clq30 ? "Cliques em 30 dias" : "Cliques: ainda sem leitura", "cliques") : ""}
     ${card(indicadas.length, indicadas.length===1 ? "Pessoa indicada" : "Pessoas indicadas", "indicacoes")}
-    ${soTroca && !recebido ? card("Troca", "Sem mensalidade", "pagamentos") : card(formatarMoedaBR(recebido), "Recebido até hoje", "pagamentos")}</div>`;
+    ${totAtraso ? card(formatarMoedaBR(totAtraso), "Em atraso", "pagamentos") : soTroca && !recebido && !mens.valor ? card("Troca", "Sem mensalidade", "pagamentos") : card(formatarMoedaBR(recebido), "Recebido até hoje", "pagamentos")}</div>`;
   corpo.innerHTML = aviso + ({
     resumo: cards + `<div class="pt-grade">${qDivulga}${qDela}${ptQuadroCliques(p)}${qInd()}${qPag()}${qProx}${qHist}</div>`,
     divulgacao: `<div class="pt-grade">${qDivulga}${qDela}</div>`,
@@ -15155,6 +15195,152 @@ async function registrarEnvioResultado(){
   closeModal("parceira-resultado-modal");
   showToast("Registrado em Conversas!");
   await recarregarTabelas("parceiro_interacoes");
+}
+// ----- Mensalidade (etapa 3, 23/11/2026, schema_parceira_mensalidade.sql) -----
+// As cobranças são recebimentos previstos do livro-caixa (fin_entradas), um por
+// mês (mens_mes). Nada é criado sozinho: a Jú confere a prévia e gera.
+const ptMensSql = () => parceiros.some(x=>"mens_valor" in x);
+const ptMesMais = (mes, n)=>{ let [a, m] = mes.split("-").map(Number); m += n; a += Math.floor((m - 1) / 12); m = ((m - 1) % 12 + 12) % 12 + 1; return `${a}-${String(m).padStart(2,"0")}`; };
+const ptCentavos = v => Math.round(Number(v) * 100) / 100;
+const ptEntradaAtrasada = e => e.status==="Previsto" && e.data_prevista && e.data_prevista < hojeISO();
+// Plano de cobranças: n-ésima mensalidade a partir da 1ª, até a última (se houver)
+function ptParcelas(c, ate){
+  if(!c.valor || !c.dia || !c.inicio) return [];
+  let mes = c.inicio.slice(0,7);
+  if(`${mes}-${String(c.dia).padStart(2,"0")}` < c.inicio) mes = ptMesMais(mes, 1);
+  const out = [];
+  for(let i = 0; i < 240; i++, mes = ptMesMais(mes, 1)){
+    const venc = `${mes}-${String(c.dia).padStart(2,"0")}`;
+    if(venc > ate || (c.fim && venc > c.fim)) break;
+    const temDesc = c.pct > 0 && i < c.meses;
+    out.push({ mes: mes + "-01", venc, desconto: temDesc ? c.pct : 0, valor: ptCentavos(c.valor * (1 - (temDesc ? c.pct : 0) / 100)) });
+  }
+  return out;
+}
+const ptConfigDe = p => ({ valor: Number(p.mens_valor||0), dia: Number(p.mens_dia||0), inicio: p.mens_inicio||"", fim: p.mens_fim||"", pct: Number(p.mens_desconto_pct||0), meses: Number(p.mens_desconto_meses||0) });
+function ptConfigDoForm(){
+  const v = k => document.getElementById("pm-" + k).value;
+  const n = k => Number(String(v(k)).replace(",", ".") || 0);
+  return { valor: ptCentavos(n("valor")), dia: n("dia"), inicio: v("inicio"), fim: v("fim"), pct: n("pct"), meses: n("meses") };
+}
+// O que muda no livro-caixa: só mexe em previsto que ainda não venceu
+function ptDiferencaMensalidade(pid, c, meses){
+  const ate = ptMesMais(hojeISO().slice(0,7), meses) + "-31", parcelas = ptParcelas(c, ate);
+  const atuais = new Map(finEntradas.filter(e=>e.parceiro_id===pid && e.mens_mes).map(e=>[String(e.mens_mes).slice(0,10), e]));
+  const aberta = e => e.status==="Previsto" && (e.data_prevista||"") >= hojeISO();
+  const planoTodo = new Map(ptParcelas(c, "2999-12-31").map(x=>[x.mes, x]));
+  const criar = parcelas.filter(x=>x.valor > 0 && !atuais.has(x.mes));
+  const mudar = [], tirar = [];
+  atuais.forEach((e, mes)=>{
+    if(!aberta(e)) return;
+    const x = planoTodo.get(mes);
+    if(!x || x.valor <= 0) tirar.push(e);
+    else if(ptCentavos(e.valor) !== x.valor || e.data_prevista !== x.venc) mudar.push({ e, x });
+  });
+  return { parcelas, criar, mudar, tirar };
+}
+function abrirMensalidade(){
+  if(!ptMensSql()){ alert("Falta rodar o arquivo schema_parceira_mensalidade.sql no Supabase (SQL Editor)."); return; }
+  const p = parceiros.find(x=>x.id===telaParceiraId), c = ptConfigDe(p), plano = planoDaParceira(p);
+  const set = (k, v)=>{ document.getElementById("pm-" + k).value = v; };
+  set("valor", c.valor || (plano && plano.preco_mes) || ""); set("dia", c.dia || "10"); set("inicio", c.inicio); set("fim", c.fim);
+  set("pct", c.pct || ""); set("meses", c.meses || ""); set("gerar", "3");
+  document.getElementById("pm-encerrar").style.display = p.mens_valor && !(p.mens_fim && p.mens_fim < hojeISO()) ? "" : "none";
+  document.getElementById("pm-plano").textContent = plano ? `Plano ${plano.nome}${plano.preco_mes != null ? `: ${formatarMoedaBR(plano.preco_mes)} / mês` : ", sem preço definido"}. ` : "Sem plano marcado no Cadastro. ";
+  document.getElementById("parceira-mensalidade-modal").classList.add("open");
+  ptPreviaMensalidade();
+}
+function ptPreviaMensalidade(){
+  const c = ptConfigDoForm(), box = document.getElementById("pm-previa");
+  if(!c.valor || !c.dia || !c.inicio){ box.innerHTML = `<p class="pt-vazio">Preencha valor, dia e 1ª cobrança para ver a prévia.</p>`; return; }
+  const meses = Number(document.getElementById("pm-gerar").value), d = ptDiferencaMensalidade(telaParceiraId, c, meses);
+  const atuais = new Map(finEntradas.filter(e=>e.parceiro_id===telaParceiraId && e.mens_mes).map(e=>[String(e.mens_mes).slice(0,10), e]));
+  const mudam = new Set(d.mudar.map(m=>m.x.mes));
+  const lista = d.parcelas.slice(-12);
+  box.innerHTML = ptTabela(["Vencimento","Valor","O que acontece"], lista.map(x=>{
+    const e = atuais.get(x.mes);
+    const faz = x.valor <= 0 ? "Cortesia: não cobra" : !e ? (x.venc < hojeISO() ? "Nova, já vencida" : "Nova cobrança") : mudam.has(x.mes) ? `Muda de ${formatarMoedaBR(e.valor)}, ${formatarDataBR(e.data_prevista)}` : e.status==="Recebido" ? "Já recebida" : "Já existe, não muda";
+    return { cels:[ptData(x.venc), formatarMoedaBR(x.valor) + (x.desconto ? ` <small style="color:var(--muted);">(-${String(x.desconto).replace(".",",")}%)</small>` : ""), faz] };
+  }), "Nenhuma mensalidade neste período. Aumente os meses ou confira as datas.")
+    + (d.tirar.length ? `<p class="pt-vazio" style="margin-top:8px; color:var(--c-amber);">${d.tirar.length === 1 ? "1 cobrança futura sai" : d.tirar.length + " cobranças futuras saem"} do Financeiro, por ficar fora deste acordo.</p>` : "");
+}
+function ptErroMensalidade(c){
+  if(!(c.valor > 0)) return "Informe o valor da mensalidade.";
+  if(!Number.isInteger(c.dia) || c.dia < 1 || c.dia > 28) return "O dia de vencimento vai de 1 a 28 (assim existe em todos os meses).";
+  if(!c.inicio) return "Informe a data da 1ª cobrança.";
+  if(c.fim && c.fim < c.inicio) return "A última cobrança não pode ser antes da primeira.";
+  if(c.pct < 0 || c.pct > 100) return "O desconto vai de 0 a 100%.";
+  if(!Number.isInteger(c.meses) || c.meses < 0 || c.meses > 60) return "O número de mensalidades com desconto vai de 0 a 60.";
+  if(c.pct > 0 && !c.meses) return "Em quantas mensalidades vale o desconto?";
+  return "";
+}
+let ptSalvandoMens = false;
+async function salvarMensalidade(){
+  if(ptSalvandoMens) return;
+  const p = parceiros.find(x=>x.id===telaParceiraId), c = ptConfigDoForm(), erro = ptErroMensalidade(c);
+  if(erro){ alert(erro); return; }
+  const meses = Number(document.getElementById("pm-gerar").value), d = ptDiferencaMensalidade(p.id, c, meses);
+  const tipos = (p.tipo_parceria||"").split(",").map(t=>t.trim()).filter(Boolean), novoTipo = !tipos.includes("Mensalidade");
+  const vencidas = d.criar.filter(x=>x.venc < hojeISO()).length;
+  const partes = [`Mensalidade de ${formatarMoedaBR(c.valor)}, todo dia ${c.dia}, a partir de ${formatarDataBR(c.inicio)}${c.fim ? " até " + formatarDataBR(c.fim) : ""}.`,
+    d.criar.length ? `${ptQtd(d.criar.length, "cobrança nova entra", "cobranças novas entram")} no Financeiro como previsto${vencidas ? ` (${ptQtd(vencidas, "já vencida", "já vencidas")})` : ""}.` : "Nenhuma cobrança nova.",
+    d.mudar.length ? `${ptQtd(d.mudar.length, "cobrança futura muda", "cobranças futuras mudam")} de valor ou data.` : "",
+    d.tirar.length ? `${ptQtd(d.tirar.length, "cobrança futura sai", "cobranças futuras saem")} do Financeiro.` : "",
+    novoTipo ? `O tipo "Mensalidade" entra no cadastro.` : "",
+    "Nada é enviado para a parceira (o)."].filter(Boolean);
+  if(!confirm("Salvar a mensalidade?\n\n" + partes.join("\n"))) return;
+  ptSalvandoMens = true;
+  try {
+    const payload = { mens_valor: c.valor, mens_dia: c.dia, mens_inicio: c.inicio, mens_fim: c.fim || null, mens_desconto_pct: c.pct || null, mens_desconto_meses: c.pct ? c.meses : null };
+    if(novoTipo) payload.tipo_parceria = [...tipos, "Mensalidade"].join(", ");
+    const falhas = [];
+    const r1 = await sb.from("parceiros").update(payload).eq("id", p.id);
+    if(r1.error){ console.error(r1.error); alert("Não consegui salvar a mensalidade. Confira a internet e tente de novo."); return; }
+    if(d.criar.length){
+      const conta = contaRecebeViagens();
+      const r = await sb.from("fin_entradas").insert(d.criar.map(x=>({ descricao: `Mensalidade ${p.nome} (${ptMes(x.mes)})`, categoria: "Parceiros (os)", valor: x.valor, status: "Previsto", data_prevista: x.venc, parceiro_id: p.id, mens_mes: x.mes, fin_conta_id: conta ? conta.id : null, observacao: x.desconto ? `Desconto de ${String(x.desconto).replace(".",",")}%` : null })));
+      if(r.error) falhas.push(r.error);
+    }
+    // .eq("status") protege quem foi recebida enquanto a janela estava aberta
+    for(const { e, x } of d.mudar){ const r = await sb.from("fin_entradas").update({ valor: x.valor, data_prevista: x.venc, observacao: x.desconto ? `Desconto de ${String(x.desconto).replace(".",",")}%` : null }).eq("id", e.id).eq("status", "Previsto"); if(r.error) falhas.push(r.error); }
+    for(const e of d.tirar){ const r = await sb.from("fin_entradas").delete().eq("id", e.id).eq("status", "Previsto"); if(r.error) falhas.push(r.error); }
+    if(falhas.length){ console.error(falhas); alert("O acordo foi salvo, mas parte das cobranças não. Abra a mensalidade e salve de novo."); }
+    else { closeModal("parceira-mensalidade-modal"); showToast("Mensalidade salva!"); }
+    await recarregarTabelas("parceiros", "fin_entradas");
+  } finally { ptSalvandoMens = false; }
+}
+async function encerrarMensalidade(){
+  const p = parceiros.find(x=>x.id===telaParceiraId);
+  if(!p.mens_valor){ closeModal("parceira-mensalidade-modal"); return; }
+  const tirar = finEntradas.filter(e=>e.parceiro_id===p.id && e.mens_mes && e.status==="Previsto" && (e.data_prevista||"") >= hojeISO());
+  if(!confirm(`Encerrar a mensalidade de ${p.nome}?\n\n${tirar.length ? ptQtd(tirar.length, "cobrança futura sai", "cobranças futuras saem") + " do Financeiro.\n" : ""}O que já foi recebido e o que está em atraso continuam. Nada é enviado para a parceira (o).`)) return;
+  const ontem = ptIsoMais(hojeISO(), -1);
+  const r1 = await sb.from("parceiros").update({ mens_fim: ontem < p.mens_inicio ? p.mens_inicio : ontem }).eq("id", p.id);
+  const r2 = tirar.length ? await sb.from("fin_entradas").delete().in("id", tirar.map(e=>e.id)).eq("status", "Previsto") : {};
+  if(r1.error || r2.error){ console.error(r1.error || r2.error); alert("Não consegui encerrar por completo. Confira a internet e tente de novo."); }
+  else { closeModal("parceira-mensalidade-modal"); showToast("Mensalidade encerrada."); }
+  await recarregarTabelas("parceiros", "fin_entradas");
+}
+async function receberDaParceira(id){
+  const e = finEntradas.find(x=>x.id===id);
+  if(!e || !confirm(`Marcar como recebido hoje?\n\n${e.descricao}: ${formatarMoedaBR(e.valor)}\nEntra no Recebimento realizado do Financeiro. Se foi em outro dia ou outro valor, clique na linha para editar.`)) return;
+  await lcJaFoiEntrada(id);
+}
+function cobrarDaParceira(id){
+  const e = finEntradas.find(x=>x.id===id), p = parceiros.find(x=>x.id===(e||{}).parceiro_id);
+  if(!p) return;
+  const pessoa = ptPessoaPrincipal(p), nome = (pessoa ? pessoa.nome : ehEmpresa(p) ? "" : p.nome || "").trim().split(/\s+/)[0];
+  const quando = ptEntradaAtrasada(e) ? `venceu em ${formatarDataBR(e.data_prevista)}` : `vence em ${formatarDataBR(e.data_prevista)}`;
+  const msg = `Oi${nome ? ", " + nome : ""}! Tudo bem? Passando para lembrar, com carinho, da mensalidade da parceria${e.mens_mes ? " de " + ptMes(String(e.mens_mes)) : ""}: ${formatarMoedaBR(e.valor)}, que ${quando}. Se já pagou, me avisa e desconsidera esta mensagem. Obrigada por caminhar com a gente 🩷`;
+  const link = linkWhats(primeiroCelularParceiro(p.id) || (pessoa && pessoa.whatsapp) || p.whatsapp, msg);
+  if(!link){ alert("Esta parceira (o) não tem celular na ficha. Acrescente em Cadastro › Celular / Telefone."); return; }
+  window.open(link, "_blank", "noopener");
+}
+// Situação curta para a lista e o topo da tela
+function ptSituacaoPagamento(p){
+  const atrasadas = finEntradas.filter(e=>e.parceiro_id===p.id && ptEntradaAtrasada(e));
+  if(!atrasadas.length) return "";
+  return `<span class="status-badge" style="background:var(--c-red-bg); color:var(--c-red);" title="${escapeHtml(atrasadas.map(e=>e.descricao + ": " + formatarMoedaBR(e.valor)).join(" · "))}">${atrasadas.length === 1 ? "1 em atraso" : atrasadas.length + " em atraso"}</span>`;
 }
 function novoRecebimentoParceira(){
   abrirEntradaAvulsa();
