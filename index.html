@@ -2183,7 +2183,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <p class="sim-nota" id="sim-end-resumo" style="display:none;"></p>
                 <div class="sim-cobrar" id="sim-cobrar"></div>
                 <!-- Guardar cotação (schema_cotacoes_guardadas.sql): vai pra lista
-                     "Cotações guardadas" logo abaixo do Simulador, por 30 dias. -->
+                     "Cotações guardadas" logo abaixo do Simulador. -->
                 <div class="sim-guardar">
                   <label>Guardar esta cotação</label>
                   <input type="text" id="sim-guardar-nome" placeholder="Nome de quem pediu">
@@ -2263,7 +2263,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
 
         <div class="panel" id="ft-cotacoes-guardadas">
           <h3><svg class=ic aria-hidden=true><use href=#i-clipboard-check /></svg> Cotações guardadas</h3>
-          <p style="color:var(--muted); font-size:var(--fs-sm); margin:-6px 0 12px;">As dos últimos 30 dias. Aconteceu? Lance como viagem já feita com o preço que você cobrou. Clique no nome pra abrir de novo no Simulador.</p>
+          <p style="color:var(--muted); font-size:var(--fs-sm); margin:-6px 0 12px;">Aconteceu? Lance como viagem já feita com o preço que você cobrou. Não fechou? Escolha o motivo: ela vira um pedido cancelado e entra na contagem dos motivos. Depois de 30 dias sem resposta, aparece como "Sem desfecho". Clique no nome pra abrir de novo no Simulador.</p>
           <div id="cotacoes-guardadas-lista"></div>
         </div>
       </div>
@@ -3148,6 +3148,32 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('pedido-modal')">Sair</button>
       <button class="btn" onclick="savePedido()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="cotacao-nao-fechou-modal">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">Cotação que não fechou</h3>
+      <button class="icon-btn" type="button" onclick="closeModal('cotacao-nao-fechou-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+    </div>
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-ban"/></svg><span class="vg-num">Motivo</span></span></div>
+      <p id="cnf-resumo" style="margin:12px 0; font-size:var(--fs-sm); line-height:1.5;"></p>
+      <div class="formgrid">
+        <div class="full"><label>Cliente *</label><select id="cnf-cliente" onchange="cotacaoParecidas()"></select></div>
+        <div class="full" id="cnf-parecidas" style="display:none; padding:10px; border-radius:8px; background:var(--c-amber-bg); color:var(--ink); font-size:var(--fs-sm);"></div>
+        <div class="full"><label>Motivo *</label><select id="cnf-motivo"></select></div>
+        <div class="full"><label>Detalhe</label><textarea id="cnf-detalhe" rows="2" placeholder="Se quiser contar mais"></textarea></div>
+      </div>
+      <p style="margin:10px 0 0; font-size:var(--fs-sm); color:var(--muted);">Vira um pedido cancelado, nas viagens e na contagem dos motivos. Nenhuma mensagem é enviada e nada aparece no app da cliente. Sem dia escolhido no Simulador, vale o dia da cotação.</p>
+    </section>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('cotacao-nao-fechou-modal')">Voltar</button>
+      <button class="btn" id="cnf-salvar" onclick="salvarCotacaoNaoFechou()">Salvar</button>
     </div>
   </div>
 </div>
@@ -9413,7 +9439,7 @@ function simNovaCotacao(){
 
 // ── Cotações guardadas (23/10/2026, schema_cotacoes_guardadas.sql) ──
 // "Guardar cotação" grava a tela do Simulador com nome e cliente; a lista
-// mostra as dos últimos 30 dias (expira_em). Aconteceu: abre "Lançar viagem
+// mostra as que ainda não têm desfecho (depois de expira_em, com aviso). Aconteceu: abre "Lançar viagem
 // já feita" preenchido com o trajeto, o km e o preço cobrado; ao salvar a
 // viagem a cotação vira "Virou viagem" e sai da lista.
 let simUltimoResultado = null;     // { tabela, cobrado, repasse } da última conta do Simulador
@@ -9477,12 +9503,12 @@ async function guardarCotacaoSimulador(){
   document.getElementById("sim-guardar-nome").value = "";
   delete document.getElementById("sim-guardar-nome").dataset.autoValor;
   document.getElementById("sim-guardar-cliente").value = "";
-  showToast("Cotação guardada por 30 dias.");
+  showToast("Cotação guardada.");
   carregarCotacoesGuardadas();
 }
 async function carregarCotacoesGuardadas(){
   const { data, error } = await sb.from("cotacoes_simulador").select("*")
-    .eq("situacao", "Guardada").gt("expira_em", new Date().toISOString())
+    .eq("situacao", "Guardada")
     .order("criado_em", { ascending: false });
   cotacoesSqlFaltando = !!error;
   cotacoesGuardadas = error ? [] : (data || []);
@@ -9510,14 +9536,15 @@ function renderCotacoesGuardadas(){
     const idaVolta = !!(c.dados && c.dados.campos && c.dados.campos["sim-idavolta"]);
     return `<div class="cot-item">
       <div class="cot-info">
-        <a href="#" onclick="event.preventDefault(); abrirCotacaoNoSimulador(${Number(c.id)})" title="Abrir no Simulador">${escapeHtml(c.nome)}</a> · ${quem}<br>
+        <a href="#" onclick="event.preventDefault(); abrirCotacaoNoSimulador(${Number(c.id)})" title="Abrir no Simulador">${escapeHtml(c.nome)}</a> · ${quem}${c.expira_em && new Date(c.expira_em) < new Date() ? ` <span class="status-badge amber" title="Guardada há mais de 30 dias. Escolha um dos botões.">Sem desfecho</span>` : ""}<br>
         ${dataComSemana(new Date(c.criado_em))} · ${curto(c.origem)} → ${curto(c.destino)} · ${String(c.km ?? "").replace(".", ",")} km${idaVolta ? " · ida e volta" : ""}
       </div>
       <div class="cot-preco">${c.preco_cobrado != null ? formatarMoedaBR(Number(c.preco_cobrado)) : "-"}</div>
       <div class="cot-acoes">
         <button type="button" class="btn small" onclick="viagemDaCotacao(${Number(c.id)}, true)">${ic("clipboard-check")} Aconteceu: lançar viagem já feita</button>
         <button type="button" class="btn secondary small" onclick="viagemDaCotacao(${Number(c.id)}, false)">Virou pedido</button>
-        <button type="button" class="btn ghost small" onclick="cotacaoNaoAconteceu(${Number(c.id)})">Não aconteceu</button>
+        <button type="button" class="btn ghost small" onclick="abrirCotacaoNaoFechou(${Number(c.id)})">Não fechou</button>
+        <button type="button" class="act act-del" onclick="excluirCotacao(${Number(c.id)})">${ic("trash")} Excluir</button>
       </div>
     </div>`;
   }).join("");
@@ -9574,11 +9601,112 @@ async function clienteDeViagemDeLead(leadId, ondeTxt){
   showToast(`Ficha de viagem criada: ${novo.nome}`);
   return novo.id;
 }
-async function cotacaoNaoAconteceu(id){
+// ── Não fechou (23/11/2026, schema_cotacao_nao_fechou.sql) ──
+// A cotação vira um pedido Cancelada com motivo, pra contar por que não
+// aconteceu. Nasce com origem_cotacao_id: não avisa ninguém e não aparece no
+// app da cliente.
+let cotacaoNaoFechouId = null;
+function abrirCotacaoNaoFechou(id){
   const c = cotacoesGuardadas.find(x=>x.id === id);
-  if(!c || !confirm(`Tirar a cotação "${c.nome}" da lista? Ela fica marcada como "Não aconteceu".`)) return;
-  const { error } = await sb.from("cotacoes_simulador").update({ situacao: "Não aconteceu", resolvida_em: new Date().toISOString() }).eq("id", id);
-  if(error){ alert("Erro: " + error.message); return; }
+  if(!c) return;
+  cotacaoNaoFechouId = id;
+  const ordem = (a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
+  const sel = document.getElementById("cnf-cliente");
+  sel.innerHTML = `<option value="">Escolha a cliente</option>` +
+    `<optgroup label="Clientes de viagem">${[...clientesTransporte].sort(ordem).map(x=>`<option value="c:${x.id}">${escapeHtml(x.nome)}${optCod(x)}</option>`).join("")}</optgroup>` +
+    `<optgroup label="Leads (ganham a ficha de viagem)">${[...leads].sort(ordem).map(x=>`<option value="l:${x.id}">${escapeHtml(x.nome)}${optCod(x)}</option>`).join("")}</optgroup>`;
+  sel.value = c.cliente_id ? "c:" + c.cliente_id : c.lead_id ? "l:" + c.lead_id : "";
+  if(sel.selectedIndex < 0) sel.value = "";
+  document.getElementById("cnf-motivo").innerHTML = `<option value="">Escolha o motivo</option>` + MOTIVOS_PERDA.map(m=>`<option>${m}</option>`).join("");
+  document.getElementById("cnf-detalhe").value = "";
+  const curto = e => escapeHtml(String(e || "").split(",")[0]);
+  document.getElementById("cnf-resumo").innerHTML = `<b>${escapeHtml(c.nome)}</b> · ${dataComSemana(new Date(c.criado_em))}<br>${curto(c.origem)} → ${curto(c.destino)}${c.preco_cobrado != null ? " · " + formatarMoedaBR(Number(c.preco_cobrado)) : ""}`;
+  cotacaoParecidas();
+  document.getElementById("cotacao-nao-fechou-modal").classList.add("open");
+}
+// Pedido da mesma cliente, com mesmo embarque e destino, até 30 dias antes ou
+// depois da cotação: provavelmente é o mesmo, pra não contar duas vezes.
+function cotacaoParecidas(){
+  const c = cotacoesGuardadas.find(x=>x.id === cotacaoNaoFechouId);
+  const el = document.getElementById("cnf-parecidas");
+  const [tipo, idTxt] = document.getElementById("cnf-cliente").value.split(":");
+  let cliId = tipo === "c" ? Number(idTxt) : null;
+  if(tipo === "l"){
+    const lead = leads.find(l=>l.id === Number(idTxt));
+    const ficha = lead && lead.whatsapp && clientesTransporte.find(x=>mesmoTelefone(x.whatsapp, lead.whatsapp));
+    cliId = ficha ? ficha.id : null;
+  }
+  const chave = e => String(e || "").split(",")[0].trim().toLowerCase();
+  const perto = v => {
+    const d = v.criado_em || v.data;
+    return d && Math.abs(new Date(d) - new Date(c.criado_em)) <= 30 * 86400000;
+  };
+  const lista = !c || !cliId ? [] : viagens.filter(v=>v.cliente_id === cliId && perto(v) &&
+    chave(v.origem_endereco) === chave(c.origem) && chave(v.destino_endereco) === chave(c.destino));
+  el.style.display = lista.length ? "" : "none";
+  el.innerHTML = lista.length ? `<b>Já existe pedido parecido.</b> Se for o mesmo, use o botão para não contar duas vezes.` + lista.map(v=>`
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
+      <a href="#" onclick="event.preventDefault(); closeModal('cotacao-nao-fechou-modal'); openViagemModal(${v.id})">#${v.id} · ${v.data ? formatarDataBR(v.data) : "sem data"} · ${escapeHtml(v.status || "-")}</a>
+      <button type="button" class="btn secondary small" onclick="cotacaoMesmoPedido(${v.id})">É o mesmo pedido</button>
+    </div>`).join("") : "";
+}
+async function cotacaoMesmoPedido(viagemId){
+  const c = cotacoesGuardadas.find(x=>x.id === cotacaoNaoFechouId);
+  if(!c || !confirm(`Ligar a cotação "${c.nome}" à viagem #${viagemId}? A cotação sai da lista e nenhum pedido novo é criado.`)) return;
+  const { error } = await sb.from("cotacoes_simulador").update({ situacao: "Virou pedido", viagem_id: viagemId, resolvida_em: new Date().toISOString() }).eq("id", c.id);
+  if(error){ console.warn(error.message); alert("Não conseguimos ligar a cotação agora. Tente de novo em instantes."); return; }
+  closeModal("cotacao-nao-fechou-modal");
+  showToast(`Cotação ligada à viagem #${viagemId}. Se ela não aconteceu, confira o motivo nela.`);
+  carregarCotacoesGuardadas();
+}
+async function salvarCotacaoNaoFechou(){
+  const c = cotacoesGuardadas.find(x=>x.id === cotacaoNaoFechouId);
+  if(!c) return;
+  const motivo = document.getElementById("cnf-motivo").value;
+  const detalhe = document.getElementById("cnf-detalhe").value.trim();
+  const [tipo, idTxt] = document.getElementById("cnf-cliente").value.split(":");
+  if(!idTxt){ alert("Escolha a cliente. Se ainda não houver cadastro, crie a ficha em Clientes de viagem ou em Leads e volte aqui."); return; }
+  if(!motivo){ alert("Escolha o motivo de não ter fechado."); return; }
+  if(motivo === "Outro" && !detalhe){ alert("Conte no detalhe qual foi o motivo."); return; }
+  const btn = document.getElementById("cnf-salvar");
+  btn.disabled = true;
+  try{
+    const clienteId = tipo === "l" ? await clienteDeViagemDeLead(Number(idTxt), `pela cotação "${c.nome}"`) : Number(idTxt);
+    if(!clienteId) return;   // desistiu ou deu erro
+    const d = c.dados || {}, campos = d.campos || {};
+    // Cada endereço com a própria hora, sem os vazios
+    const pontos = (d.enderecos || []).map((e, i)=>({ endereco: String(e || "").trim(), hora: ((d.horas || [])[i] || {}).hora || "" })).filter(x=>x.endereco);
+    const { data, error } = await sb.rpc("cotacao_nao_fechou", {
+      p_cotacao_id: c.id, p_cliente_id: clienteId,
+      p_motivo: detalhe ? `${motivo}: ${detalhe}` : motivo,
+      p_viagem: {
+        tipo_servico: TIPO_SERVICO_VIAGEM.includes(campos["sim-tipo"]) ? campos["sim-tipo"] : "Padrão",
+        data: campos["sim-dia"] || "", horario_partida: pontos[0] ? pontos[0].hora : "",
+        ida_volta: !!campos["sim-idavolta"], noturno: !!campos["sim-noturno"],
+        espera_min: esperaDosCamposSim(campos).minutos || 0,
+      },
+      p_paradas: pontos.slice(1, -1),
+    });
+    if(error){
+      console.warn("cotacao_nao_fechou:", error.message);
+      alert(error.code === "PGRST202" ? "Falta rodar o schema_cotacao_nao_fechou.sql no Supabase (SQL Editor)."
+        : /COTACAO_JA_RESOLVIDA/.test(error.message) ? "Esta cotação já teve um desfecho. A lista vai ser atualizada."
+        : "Não conseguimos salvar agora. A cotação continua na lista; tente de novo em instantes.");
+      carregarCotacoesGuardadas();
+      return;
+    }
+    closeModal("cotacao-nao-fechou-modal");
+    showToast(`Pedido #${data} criado como cancelado, com o motivo.`);
+    await recarregarTabelas("viagens", "viagem_paradas");
+    carregarCotacoesGuardadas();
+  } finally { btn.disabled = false; }
+}
+async function excluirCotacao(id){
+  const c = cotacoesGuardadas.find(x=>x.id === id);
+  if(!c || !confirm(`Excluir de vez a cotação "${c.nome}"? Não tem como desfazer. A ficha da cliente e as viagens não mudam.\n\nSe foi um pedido de preço de verdade que não virou viagem, use "Não fechou" para o motivo entrar na contagem.`)) return;
+  const { error } = await sb.from("cotacoes_simulador").delete().eq("id", id);
+  if(error){ console.warn(error.message); alert("Não conseguimos excluir agora. Tente de novo em instantes."); return; }
+  showToast("Cotação excluída.");
   carregarCotacoesGuardadas();
 }
 // Chamada no fim do openViagemModal: preenche a viagem nova com a cotação.
@@ -19837,7 +19965,7 @@ function avisarFeriadoViagem(idData, idCheck){
 // ===== MOTIVO PADRÃO DE "NÃO FECHOU" (27/10/2026) =====
 // Fica no começo do texto do motivo ("Região que ainda não atendemos: pediu
 // pra março"), sem coluna nova; a Procura por região conta por ele.
-const MOTIVOS_PERDA = ["Região que ainda não atendemos", "Sem motorista parceira no horário", "Cliente achou o valor alto", "Cliente desistiu", "Responsável não liberou", "Prazo curto", "Outro"];
+const MOTIVOS_PERDA = ["Região que ainda não atendemos", "Sem motorista parceira no horário", "Cliente achou o valor alto", "Cliente não respondeu", "Fechou com outro transporte", "Só pesquisando preço", "Cancelou depois de confirmar", "Cliente desistiu", "Responsável não liberou", "Prazo curto", "Outro"];
 function motivoPadraoDe(texto){
   const t = String(texto || "");
   return MOTIVOS_PERDA.find(m => t === m || t.startsWith(m + ":")) || "";
