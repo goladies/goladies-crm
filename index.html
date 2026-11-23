@@ -391,6 +391,7 @@ tbody tr:hover td{background:var(--bg-hover);}
 .tag.urg-baixa{background:var(--c-green-bg); color:var(--c-green);}
 .tag.tipo-mensalidade{background:var(--c-green-bg); color:var(--c-green);}
 .tag.tipo-patrocinio{background:var(--c-gray-bg); color:var(--c-gray);}
+.tag.tipo-troca{background:var(--c-teal-bg); color:var(--c-teal);}
 .tag.tipo-embaixadora{background:var(--rosa-bg); color:var(--rosa-texto);}
 .status-badge{display:inline-block; padding:3px 10px; border-radius:6px; font-size:var(--fs-xs); font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap;}
 .status-badge.blue{background:var(--c-blue-bg); color:var(--c-blue);}
@@ -596,13 +597,13 @@ select.conv-menu option.ja-tem{color:var(--green); font-style:italic;}
    nos dois temas: o fundo do modal fica um tom abaixo das seções, cada seção
    tem faixa de título tingida e borda na cor dela (--sec-cor no style da
    seção, sempre uma das --vg-* abaixo). Cores vizinhas nunca da mesma família. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#16161A; --vg-corpo:#222228; --vg-tinta:22%;
   --vg-rosa:#FF6DB9; --vg-azul:#7FB3FF; --vg-laranja:#FF9A4D; --vg-verde:#3DDC97;
   --vg-roxo:#C792F2; --vg-teal:#3ED3C8; --vg-lilas:#9AA5FF; --vg-cinza:#A7A3AC; --vg-ambar:#E0A93B;}
-[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
+[data-tema="claro"] :is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal){--vg-fundo:#FFFFFF; --vg-corpo:#FAF8FB; --vg-tinta:12%;
   --vg-rosa:#D6336C; --vg-azul:#2A6FE0; --vg-laranja:#C2570C; --vg-verde:#158A5B;
   --vg-roxo:#7C4DBD; --vg-teal:#0F8A8A; --vg-lilas:#3B4EC2; --vg-cinza:#6B6470; --vg-ambar:#B7791F;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal{width:760px; padding-top:0; padding-bottom:0; background:var(--vg-fundo);}
 .vg-topo{position:sticky; top:0; z-index:40; background:var(--vg-fundo); padding:18px 0 10px; border-bottom:1px solid var(--border);}
 .vg-resumo{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin-top:8px; font-size:var(--fs-sm); color:var(--text2);}
 .vg-resumo b{color:var(--text1); font-size:var(--fs-md);}
@@ -651,17 +652,41 @@ details.vg-sec:not([open])>summary{border-bottom:none;}
 details.vg-sec>summary::-webkit-details-marker{display:none;}
 details.vg-sec>summary::after{content:""; width:8px; height:8px; border-right:2px solid var(--text3); border-bottom:2px solid var(--text3); transform:rotate(45deg); margin:0 4px 4px 0;}
 details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 0;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .modal-actions{position:sticky; bottom:0; z-index:40; background:var(--vg-fundo); padding:12px 0 18px; border-top:1px solid var(--border);}
 /* Obrigatório no modal de viagem: preenchido fica neutro (só o * rosa no
    título); vazio ganha um sublinhado âmbar. Âmbar = lembrete, não erro:
    pedido do app chega sem duração/km e é salvo aos poucos. */
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig b{color:var(--rosa-texto);}
-:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig i{color:var(--vg-ambar);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label{color:var(--text1); font-weight:600;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>label::after{content:" *"; color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig>.obrig-box{border-color:var(--border2); box-shadow:none;}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>label{color:var(--text1);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>select,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-moeda>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio .campo-endereco>input,:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .formgrid .obrig.vazio>.obrig-box{border-color:var(--border2); border-bottom:2px solid var(--vg-ambar); box-shadow:none; background:var(--bg-input);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig b{color:var(--rosa-texto);}
+:is(#viagem-modal,#cliente-transporte-modal,#motorista-modal,#lead-modal,#parceiro-modal,#orcamento-modal,#evento-modal,#meus-dados-modal,#pedido-modal,#svp-modal,#parceira-acao-modal,#parceira-conversa-modal,#divulgacao-modal,#sede-pedido-modal,#sede-agenda-modal,#link-modal,#vaga-modal,#documento-modal,#avaliacao-modal,#parcela-modal,#conta-pagar-modal,#fin-conta-modal,#fin-conferir-modal,#outro-app-modal,#fin-transf-modal,#fin-entrada-modal,#parabens-modal) .legenda-obrig i{color:var(--vg-ambar);}
+/* Tela completa da parceira (o) (23/11/2026). A ficha antiga vira a aba
+   Cadastro: o próprio #parceiro-modal entra na tela com a classe .embutida. */
+.pt-voltar{background:none; border:0; padding:0; color:var(--rosa-texto); font:inherit; font-size:var(--fs-md); cursor:pointer; display:inline-flex; align-items:center; gap:6px; min-height:32px;}
+.pt-topo{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin:8px 0 16px;}
+.pt-topo h2{margin:0; font-size:var(--fs-xl); overflow-wrap:anywhere;}
+.pt-linha{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.pt-topo h2+.pt-linha{margin-top:8px;}
+.pt-grade{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;}
+.pt-grade .panel{margin:0;}
+.pt-grade .pt-inteiro{grid-column:1 / -1;}
+.pt-cab{display:flex; justify-content:space-between; align-items:flex-start; gap:8px 12px; flex-wrap:wrap; margin-bottom:12px;}
+.pt-cab h3{margin:0;}
+.pt-cab p{margin:4px 0 0; color:var(--muted); font-size:var(--fs-sm);}
+.pt-vazio{color:var(--muted); font-size:var(--fs-sm); margin:0;}
+.pt-grade .tbl td{overflow-wrap:anywhere;}
+#parceiro-modal.embutida{position:static; display:block; background:none; backdrop-filter:none; z-index:auto;}
+#parceiro-modal.embutida .modal{width:100%; max-width:none; max-height:none; overflow:visible; box-shadow:none; background:none; border:0; border-radius:0; padding:0;}
+#parceiro-modal.embutida .vg-topo{display:none;}
+#parceiro-modal.embutida .modal-actions{background:var(--bg-app);}
+@media (min-width:1200px){
+  #parceiro-modal.embutida .modal{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; align-items:start;}
+  #parceiro-modal.embutida .modal>.legenda-obrig, #parceiro-modal.embutida .modal>.modal-actions{grid-column:1 / -1;}
+}
+@media (max-width:900px){ .pt-grade{grid-template-columns:minmax(0,1fr);} }
 /* Fichas no modelo da viagem (03/11/2026, 1ª: cliente de transporte). Número
    da seção por contador (seção escondida não conta, não pula número); blocos
    montados por render* trazem o próprio <h4>, que some porque o título já
@@ -1854,6 +1879,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     </div>
 
     <div id="tab-parceiros" style="display:none;">
+      <!-- 23/11/2026: cada parceira (o) abre na tela completa (renderTelaParceira) -->
+      <div id="parceira-tela" style="display:none;">
+        <div id="pt-cabeca"></div>
+        <div id="pt-corpo"></div>
+        <div id="pt-cadastro" style="display:none;"></div>
+      </div>
+      <div id="parceiros-lista-tela">
       <!-- 31/10/2026: Leads e Ativas (os) em abas, como Contatos. Ativa = status "Parceria ativa". -->
       <div class="subnav">
         <button type="button" class="subnav-item active" data-subparc="leads" onclick="mostrarSubParceiros('leads')"><svg class=ic aria-hidden=true><use href=#i-users /></svg> Leads parceiras (os)<b class="nav-conta" id="subparc-conta-leads"></b></button>
@@ -1881,6 +1913,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
           <thead><tr id="thead-parceiros"></tr></thead>
           <tbody id="parceiros-body"></tbody>
         </table>
+      </div>
       </div>
     </div>
 
@@ -3276,6 +3309,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
             <label class="chip-check"><input type="checkbox" value="Mensalidade"> Mensalidade</label>
             <label class="chip-check"><input type="checkbox" value="Patrocínio"> Patrocínio</label>
             <label class="chip-check"><input type="checkbox" value="Embaixadora"> Embaixadora</label>
+            <label class="chip-check"><input type="checkbox" value="Troca de divulgação"> Troca de divulgação</label>
           </div>
         </div>
         <div><label>% comissão / acordo</label><input type="text" id="p-comissao"></div>
@@ -3347,6 +3381,58 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('parceiro-modal')">Sair</button>
       <button class="btn" onclick="saveParceiro()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="parceira-acao-modal">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="parceira-acao-modal-title" style="margin:0;">Nova divulgação</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('parceira-acao-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-speakerphone"/></svg><span class="vg-num">O que e quando</span></span></div>
+      <div class="formgrid">
+        <div class="full obrig"><label for="pac-titulo">O quê</label><input type="text" id="pac-titulo" placeholder="Ex.: Página da parceria, story, live"></div>
+        <div><label for="pac-lado">De quem</label><select id="pac-lado"><option value="Go Ladies">A Go Ladies divulga</option><option value="Parceira">A parceira (o) faz por nós</option></select></div>
+        <div><label for="pac-canal">Onde</label><select id="pac-canal"></select></div>
+        <div><label for="pac-inicio">Início</label><input type="date" id="pac-inicio"></div>
+        <div><label for="pac-fim">Fim <span style="font-weight:400; color:var(--muted);">(vazio = sem fim)</span></label><input type="date" id="pac-fim"></div>
+        <div><label for="pac-situacao">Situação</label><select id="pac-situacao"></select></div>
+        <div><label for="pac-link">Link</label><input type="text" id="pac-link" placeholder="https://"></div>
+        <div class="full"><label for="pac-obs">Observação</label><textarea id="pac-obs" rows="2"></textarea></div>
+      </div>
+    </section>
+    <div class="modal-actions">
+      <button class="btn ghost" id="pac-excluir" style="color:var(--c-red);" onclick="excluirAcaoParceira()">Excluir</button><button class="btn ghost" onclick="closeModal('parceira-acao-modal')">Sair</button>
+      <button class="btn" onclick="salvarAcaoParceira()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="parceira-conversa-modal">
+  <div class="modal ficha-secoes">
+    <div class="vg-topo">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="parceira-conversa-modal-title" style="margin:0;">Nova conversa</h3>
+        <button class="icon-btn" type="button" onclick="closeModal('parceira-conversa-modal')" style="font-size:18px;" aria-label="Fechar">✕</button>
+      </div>
+    </div>
+    <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
+      <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-message-dots"/></svg><span class="vg-num">Conversa</span></span></div>
+      <div class="formgrid">
+        <div><label for="pcv-data">Data</label><input type="date" id="pcv-data"></div>
+        <div class="obrig"><label for="pcv-assunto">Assunto</label><input type="text" id="pcv-assunto"></div>
+        <div class="full"><label for="pcv-proximos">Próximo passo</label><input type="text" id="pcv-proximos" placeholder="O que ficou combinado"></div>
+        <div class="full"><label for="pcv-link">Link do Google Drive <span style="font-weight:400; color:var(--muted);">(documentos da parceria)</span></label><input type="text" id="pcv-link" placeholder="https://"></div>
+      </div>
+    </section>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('parceira-conversa-modal')">Sair</button>
+      <button class="btn" onclick="salvarConversaParceira()">Salvar</button>
     </div>
   </div>
 </div>
@@ -3786,6 +3872,7 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
         <div><label>Aniversário</label><input type="date" id="mt-aniversario"></div>
         <div><label>CPF</label><input type="text" id="mt-cpf"></div>
         <div><label>Origem</label><select id="mt-origem"><option>Site</option><option>Instagram</option><option>Facebook</option><option>Networking</option><option>Indicação</option><option>Outro</option></select></div>
+        <div id="mt-indicada-wrap" class="full" style="display:none;"><label for="mt-indicada">Indicada por <span style="font-weight:400; color:var(--muted);">(mesmo que tenha chegado pelo site)</span></label><input type="text" id="mt-indicada" list="lista-indicacao" autocomplete="off" placeholder="Nome ou código de quem indicou (ex.: #42K)"><span class="dica">Escolha da lista para ligar à ficha de quem indicou. Se a pessoa não tem cadastro, escreva o nome.</span></div>
       </div>
     </section>
 
@@ -5285,8 +5372,8 @@ const CRITERIO_MULHER = ["A confirmar","Sim","Não"];
 const STATUS_PECA = ["Aberto","Em busca","Encontrado","Não encontrado","Encerrado"];
 const STATUS_PECA_CLASS = {"Aberto":"indigo","Em busca":"amber","Encontrado":"green","Não encontrado":"red","Encerrado":"green"};
 
-const TIPO_PARCERIA = ["Mensalidade","Patrocínio","Embaixadora"];
-const TIPO_PARCERIA_CLASS = {"Mensalidade":"tipo-mensalidade","Patrocínio":"tipo-patrocinio","Embaixadora":"tipo-embaixadora"};
+const TIPO_PARCERIA = ["Mensalidade","Patrocínio","Embaixadora","Troca de divulgação"];
+const TIPO_PARCERIA_CLASS = {"Mensalidade":"tipo-mensalidade","Patrocínio":"tipo-patrocinio","Embaixadora":"tipo-embaixadora","Troca de divulgação":"tipo-troca"};
 
 // Formato agrupado: o grupo diz em que aba do site entra (Eventos ou Cursos).
 const DIVULGACAO_FORMATOS_GRUPOS = {
@@ -5474,6 +5561,8 @@ let pagamentosMotorista = [];
 let pagamentosCliente = [];
 let parceiroContatos = [];
 let parceiroInteracoes = [];
+let parceiroAcoes = [];           // schema_parceira_tela.sql
+let parceiroAcoesSqlFaltando = false;
 let parceiroEnderecos = [];
 let leadInteracoes = [];
 let vendas = [];
@@ -5756,7 +5845,7 @@ function buscaGlobal(texto){
   const grupos = [
     { titulo:"Viagens", itens: codigo == null ? [] : viagens.filter(v=>v.id===codigo).map(v=>({nome:`Viagem #${v.id} · ${nomeClienteViagem(v)}`, sub:[v.status, (v.data || v.data_hora) ? formatarDataBR(v.data || String(v.data_hora).slice(0,10)) : ""].filter(Boolean).join(" · "), abrir:()=>openViagemModal(v.id)})) },
     { titulo:"Leads e clientes", itens: porCodigo(leads, l=>l.nome, l=>l.whatsapp, l=>l.email).map(l=>({nome:l.nome, sub:[codigoCadastro(l),l.whatsapp,l.etapa].filter(Boolean).join(" · "), abrir:()=>openLeadModal(l.id)})) },
-    { titulo:"Parceiras (os)", itens: porCodigo(parceiros, p=>p.nome, p=>contatosDe(p.id)).map(p=>({nome:p.nome, sub:[codigoCadastro(p),p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>openParceiroModal(p.id)})) },
+    { titulo:"Parceiras (os)", itens: porCodigo(parceiros, p=>p.nome, p=>contatosDe(p.id)).map(p=>({nome:p.nome, sub:[codigoCadastro(p),p.categoria,p.status].filter(Boolean).join(" · "), abrir:()=>abrirTelaParceira(p.id)})) },
     { titulo:"Motoristas", itens: porCodigo(motoristas, m=>m.nome, m=>m.whatsapp, m=>m.email).map(m=>({nome:m.nome, sub:[codigoCadastro(m),m.whatsapp,m.status].filter(Boolean).join(" · "), abrir:()=>openMotoristaModal(m.id)})) },
     { titulo:"Clientes de viagem", itens: porCodigo(clientesTransporte, c=>c.nome, c=>c.whatsapp, c=>c.email).map(c=>({nome:c.nome, sub:[codigoCadastro(c),c.whatsapp,c.segmento].filter(Boolean).join(" · "), abrir:()=>openClienteTransporteModal(c.id)})) },
   ].filter(g=>g.itens.length);
@@ -6219,6 +6308,7 @@ async function carregarDadosInterno(){
       sb.from("cotas_patrocinio").select("*").order("ordem").order("id"),
     ]),
     sb.from("cadastro_redes").select("*").order("id"),
+    sb.from("parceiro_acoes").select("*").order("id"),
   ].map(c=>Promise.resolve(c));
   tabelasComFalha = [];
   const [rlead, rparc, rorc] = await q[0];
@@ -6357,6 +6447,10 @@ async function carregarDadosInterno(){
   const rredes = await q[21];
   cadastroRedesSqlFaltando = !!rredes.error;
   if(!rredes.error) cadastroRedes = rredes.data || [];
+  // Divulgações e contrapartidas das parceiras (schema_parceira_tela.sql): tolerante.
+  const rpac = await q[22];
+  parceiroAcoesSqlFaltando = !!rpac.error;
+  if(!rpac.error) parceiroAcoes = rpac.data || [];
 
   renderAll();
   marcarAtualizado();
@@ -6451,6 +6545,7 @@ document.querySelectorAll(".nav-item[data-tab]").forEach(el=>{
     document.querySelectorAll("[id^=tab-]").forEach(t=>t.style.display="none");
     document.getElementById("tab-"+el.dataset.tab).style.display="block";
     localStorage.setItem("crm-ultima-aba", el.dataset.tab);
+    if(el.dataset.tab === "parceiros") fecharTelaParceira();
     fecharMenu();
     renderAll();
   });
@@ -6469,6 +6564,7 @@ const TABELA_ATUALIZA = {
   pagamentos_cliente: v => pagamentosCliente = v,
   parceiro_contatos: v => parceiroContatos = v,
   parceiro_interacoes: v => parceiroInteracoes = v,
+  parceiro_acoes: v => parceiroAcoes = v,
   parceiro_enderecos: v => parceiroEnderecos = v,
   lead_interacoes: v => leadInteracoes = v,
   vendas: v => vendas = v,
@@ -8764,7 +8860,7 @@ function renderParceiros(){
   document.getElementById("parceiros-body").innerHTML = lista.map(p=>{
     const celular = primeiroCelularParceiro(p.id);
     const ultimoContato = ultimoContatoParceiro(p.id);
-    return `<tr class="tr-click" onclick="openParceiroModal(${p.id})">
+    return `<tr class="tr-click" onclick="abrirTelaParceira(${p.id})">
       <td><span class="nome-tbl">${escapeHtml(p.nome)}</span>${numId(p)}${etiquetaPJ(p)}${p.exemplo?' <span style="color:var(--muted); font-size:var(--fs-xs);">(exemplo)</span>':''}</td>
       <td>${escapeHtml(p.categoria||"-")}</td>
       <td>${escapeHtml(p.regiao||"-")}</td>
@@ -8773,9 +8869,10 @@ function renderParceiros(){
       <td>${p.selo==="sim"?'<span class="badge-seal">✓ Go Ladies</span>':'-'}</td>
       <td><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${p.status||"-"}</span></td>
       <td>${fmtDataBR(ultimoContato)||"-"}</td>
-      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="openParceiroModal(${p.id})"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
+      <td class="acoes-cel" onclick="event.stopPropagation()">${botaoWhatsAcao(celular, p.nome)} <button class="act act-edit" onclick="abrirTelaParceira(${p.id},'cadastro')"><svg class=ic aria-hidden=true><use href=#i-pencil /></svg> Editar</button> <button class="act act-del" title="Excluir" onclick="deleteParceiro(${p.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button></td>
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="9">Nenhuma parceira (o) encontrada</td></tr>`;
+  renderTelaParceira();
 }
 
 function renderOrcamentos(){
@@ -11413,6 +11510,7 @@ function restaurarSubAba(aba){
 }
 let parceirosSub = "leads";
 function mostrarSubParceiros(nome){
+  if(!fecharTelaParceira()) return;
   parceirosSub = nome;
   lembrarSubAba("parceiros", nome);
   document.querySelectorAll("#tab-parceiros .subnav-item[data-subparc]").forEach(b=>b.classList.toggle("active", b.dataset.subparc===nome));
@@ -13529,9 +13627,13 @@ function toggleOrigemOutro(){
 // indicação virar número em Números do negócio e na Sede. Sem cadastro,
 // guarda o nome escrito. Antes do SQL rodar, o campo não aparece.
 const temCampoIndicacao = () => [...leads, ...clientesTransporte].some(r=>"indicada_por_cadastro_id" in r);
+const temIndicacaoMotorista = () => motoristas.some(r=>"indicada_por_cadastro_id" in r);
 const temCampoContatoPref = () => leads.some(r=>"contato_preferido" in r);
 const rotuloIndicacao = c => `${c.nome} #${c.codigo}`;
 function toggleIndicada(pre){
+  // Motorista (schema_parceira_tela.sql): vale com qualquer origem, porque a
+  // indicada muitas vezes se candidata pelo site.
+  if(pre === "mt"){ document.getElementById("mt-indicada-wrap").style.display = temIndicacaoMotorista() ? "block" : "none"; return; }
   const origem = document.getElementById(pre === "f" ? "f-origem" : "ct-origem").value;
   document.getElementById(pre + "-indicada-wrap").style.display = temCampoIndicacao() && origem === "Indicação" ? "block" : "none";
 }
@@ -13547,7 +13649,7 @@ function preencherIndicada(pre, r){
 }
 // Para o payload: escolhido da lista (ou "#42K") liga ao cadastro; o resto vira texto.
 function lerIndicada(pre, origem){
-  if(!temCampoIndicacao()) return {};
+  if(!(pre === "mt" ? temIndicacaoMotorista() : temCampoIndicacao())) return {};
   const txt = document.getElementById(pre + "-indicada").value.trim();
   if(origem !== "Indicação" || !txt) return { indicada_por_cadastro_id: null, indicada_por_texto: null };
   const cad = cadastros.find(c=>rotuloIndicacao(c) === txt) || cadastrosPorId.get(cadastroDaBusca(txt));
@@ -14502,6 +14604,7 @@ function renderProspeccaoParceiro(p){
     </div>`;
 }
 function openParceiroModal(id){
+  if(!ptEmbutindo) soltarFichaParceira();
   editingParceiroId = id || null;
   datasPendentes.p = []; redesPendentes.p = []; parceiraDaLeadId = null;
   parceiroContatosPendentes = []; parceiroEnderecosPendentes = [];
@@ -14551,6 +14654,7 @@ function openParceiroModal(id){
   resumoFichaParceiro();
   document.getElementById("parceiro-modal").classList.add("open");
   document.querySelector("#parceiro-modal .modal").scrollTop = 0;
+  ptMexeu = false;
 }
 async function saveParceiro(){
   const nome = document.getElementById("p-nome").value.trim();
@@ -14593,13 +14697,243 @@ async function saveParceiro(){
   }
   await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_enderecos", "parceiro_interacoes", "datas_especiais", "cadastro_redes");
   if(isNew){ renderContatosParceiro(); renderEnderecosParceiro(); renderInteracoesParceiro(); renderLigacoes("p"); }
-  else { closeModal("parceiro-modal"); }
+  else { ptMexeu = false; closeModal("parceiro-modal"); }
 }
 async function deleteParceiro(id){
-  if(!confirm("Excluir esta parceira (o)? Os contatos, links, endereços e o histórico de conversa dela(e) também são excluídos.")) return;
+  if(!confirm("Excluir esta parceira (o)? Os contatos, links, endereços, divulgações e o histórico de conversa dela(e) também são excluídos.")) return;
   const { error } = await sb.from("parceiros").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
-  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes");
+  await recarregarTabelas("parceiros", "parceiro_contatos", "parceiro_links", "parceiro_enderecos", "parceiro_interacoes", ...(parceiroAcoesSqlFaltando ? [] : ["parceiro_acoes"]));
+}
+
+// ===== TELA COMPLETA DA PARCEIRA (O) (23/11/2026, schema_parceira_tela.sql) =====
+// Abre no lugar da lista. A aba Cadastro é a própria ficha (#parceiro-modal)
+// encaixada na tela, então nenhum campo se perde. Recebimentos vêm do
+// livro-caixa (fin_entradas), eventos e cursos de divulgacoes.
+let telaParceiraId = null, ptAba = "resumo", ptEmbutindo = false, ptMexeu = false, editingAcaoId = null;
+const PT_ABAS = [["resumo","Resumo"],["divulgacao","Divulgação"],["indicacoes","Indicações"],["pagamentos","Pagamentos"],["conversas","Conversas"],["cadastro","Cadastro"]];
+const PT_CANAIS = ["Site","Instagram","Facebook","YouTube","LinkedIn","TikTok","WhatsApp","Evento","Outro"];
+const PT_SITUACOES = ["Planejado","No ar","Feito","Encerrado"];
+const PT_CORES = { "No ar":"green", "Feito":"blue", "Planejado":"amber", "Encerrado":"gray" };
+const PT_SEMANA = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+const ptDia = iso => PT_SEMANA[new Date(String(iso).slice(0,10) + "T12:00:00").getDay()];
+const ptData = iso => iso ? `${formatarDataBR(String(iso).slice(0,10))} (${ptDia(iso).slice(0,3)})` : "-";
+const ptEtiqueta = s => `<span class="status-badge" style="background:var(--c-${PT_CORES[s]||"gray"}-bg); color:var(--c-${PT_CORES[s]||"gray"});">${escapeHtml(s)}</span>`;
+// Passou da data de fim, conta como encerrada mesmo que ninguém tenha marcado
+const ptSituacao = a => a.situacao === "No ar" && a.data_fim && a.data_fim < hojeISO() ? "Encerrado" : a.situacao;
+document.getElementById("parceiro-modal").addEventListener("input", ()=>{ ptMexeu = true; });
+
+function soltarFichaParceira(){
+  const el = document.getElementById("parceiro-modal");
+  if(!el.classList.contains("embutida")) return;
+  el.classList.remove("embutida", "open");
+  document.body.appendChild(el);
+  ptMexeu = false;
+  if(ptAba === "cadastro") ptAba = "resumo";
+}
+function ptPodeSair(){
+  const el = document.getElementById("parceiro-modal");
+  return !(el.classList.contains("embutida") && ptMexeu) || confirm("O Cadastro tem mudanças que não foram salvas.\n\nSair sem salvar?");
+}
+function abrirTelaParceira(id, aba){
+  irParaAba("parceiros");
+  if(telaParceiraId != null) return; // ela escolheu continuar no cadastro não salvo
+  const p = parceiros.find(x=>x.id===id);
+  if(!p) return;
+  telaParceiraId = id; ptAba = "resumo";
+  document.getElementById("parceiros-lista-tela").style.display = "none";
+  document.getElementById("parceira-tela").style.display = "block";
+  mostrarAbaParceira(aba || "resumo");
+  window.scrollTo(0, 0);
+}
+// Devolve false quando ela prefere continuar no cadastro não salvo
+function fecharTelaParceira(){
+  if(telaParceiraId == null) return true;
+  if(!ptPodeSair()) return false;
+  soltarFichaParceira();
+  telaParceiraId = null;
+  document.getElementById("parceira-tela").style.display = "none";
+  document.getElementById("parceiros-lista-tela").style.display = "";
+  return true;
+}
+function mostrarAbaParceira(aba){
+  if(aba === ptAba && aba === "cadastro") return;
+  if(ptAba === "cadastro"){ if(!ptPodeSair()) return; soltarFichaParceira(); }
+  ptAba = aba;
+  if(aba === "cadastro"){
+    const el = document.getElementById("parceiro-modal");
+    ptEmbutindo = true;
+    el.classList.add("embutida");
+    document.getElementById("pt-cadastro").appendChild(el);
+    openParceiroModal(telaParceiraId);
+    ptEmbutindo = false;
+  }
+  renderTelaParceira();
+}
+// Pessoas ligadas à empresa (Ligações) e o próprio cadastro: quem conta como "ela"
+function ptCadastrosDaParceira(p){
+  const ids = new Set(p.cadastro_id != null ? [p.cadastro_id] : []);
+  vinculosCadastros.filter(v=>v.tipo==="empresa" && v.b_tabela==="parceiros" && v.b_id===p.id).forEach(v=>{
+    const cad = cadastroDaTabela(v.a_tabela), r = cad && cad.lista().find(x=>x.id===v.a_id);
+    if(r && r.cadastro_id != null) ids.add(r.cadastro_id);
+  });
+  return ids;
+}
+function ptIndicadas(p){
+  const ids = ptCadastrosDaParceira(p), vistos = new Set();
+  return [["motoristas", motoristas, "Motorista"], ["clientes_transporte", clientesTransporte, "Cliente de viagem"], ["leads", leads, "Lead"]]
+    .flatMap(([t, lista, papel])=>lista.filter(r=>r.indicada_por_cadastro_id != null && ids.has(r.indicada_por_cadastro_id)).map(r=>({ t, r, papel })))
+    .filter(({ r })=>{ const k = r.cadastro_id ?? "x" + r.id; if(vistos.has(k)) return false; vistos.add(k); return true; });
+}
+function ptTabela(cab, linhas, vazio){
+  return linhas.length
+    ? `<table class="tbl"><thead><tr>${cab.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${linhas.map(l=>`<tr${l.abrir ? ` class="tr-click" title="Abrir" onclick="${l.abrir}"` : ""}>${l.cels.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+    : `<p class="pt-vazio">${vazio}</p>`;
+}
+function ptQuadro(titulo, sub, corpo, botao, classe){
+  return `<div class="panel ${classe||""}"><div class="pt-cab"><div><h3>${titulo}</h3><p>${sub}</p></div>${botao||""}</div>${corpo}</div>`;
+}
+function renderTelaParceira(){
+  if(telaParceiraId == null) return;
+  const p = parceiros.find(x=>x.id===telaParceiraId);
+  if(!p){ ptMexeu = false; fecharTelaParceira(); return; }
+  const btn = (txt, acao)=>`<button type="button" class="btn secondary small" onclick="${acao}">${txt}</button>`;
+  const ltLink = u => u ? `<a href="${escapeHtml(normalizarLink(u))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir link</a>` : "-";
+  const acoes = parceiroAcoes.filter(a=>a.parceiro_id===p.id).sort((a,b)=>(b.data_inicio||"").localeCompare(a.data_inicio||"") || b.id-a.id);
+  const nossas = acoes.filter(a=>a.lado==="Go Ladies"), dela = acoes.filter(a=>a.lado==="Parceira");
+  const eventosDiv = divulgacoes.filter(d=>d.parceiro_id===p.id);
+  const indicadas = ptIndicadas(p);
+  const entradas = finEntradas.filter(e=>e.parceiro_id===p.id).sort((a,b)=>String(b.data_recebimento||b.data_prevista||"").localeCompare(String(a.data_recebimento||a.data_prevista||"")));
+  const recebido = entradas.filter(e=>e.status==="Recebido").reduce((s,e)=>s+Number(e.valor||0), 0);
+  const aReceber = entradas.filter(e=>e.status==="Previsto");
+  const tipos = (p.tipo_parceria||"").split(",").map(t=>t.trim()).filter(Boolean);
+  const plano = planoDaParceira(p);
+  const soTroca = tipos.includes("Troca de divulgação") && !plano && !tipos.includes("Mensalidade") && !tipos.includes("Patrocínio");
+  const conversas = parceiroInteracoes.filter(i=>i.parceiro_id===p.id).sort((a,b)=>(b.data||"").localeCompare(a.data||"") || b.id-a.id);
+  const pagina = nossas.find(a=>a.canal==="Site" && a.link && ptSituacao(a)==="No ar");
+  const inicioSite = nossas.filter(a=>a.canal==="Site" && ptSituacao(a)==="No ar" && a.data_inicio).map(a=>a.data_inicio).sort()[0];
+  const noAr = nossas.filter(a=>ptSituacao(a)==="No ar").length;
+
+  document.getElementById("pt-cabeca").innerHTML = `
+    <button type="button" class="pt-voltar" onclick="fecharTelaParceira()"><svg class=ic aria-hidden=true><use href=#i-arrow-left /></svg> Voltar para a lista</button>
+    <div class="pt-topo">
+      <div><h2>${escapeHtml(p.nome)} ${numId(p)} ${etiquetaPJ(p)}</h2>
+        <div class="pt-linha"><span class="status-badge ${PARCEIRO_ETAPA_CLASS[p.status]||''}">${escapeHtml(p.status||"-")}</span>
+        ${plano ? `<span class="tag svp-tag-plano">${escapeHtml(plano.nome)}</span>` : ""}${tipos.map(t=>`<span class="tag ${TIPO_PARCERIA_CLASS[t]||''}">${escapeHtml(t)}</span>`).join(" ")}
+        ${p.selo==="sim" ? '<span class="badge-seal">✓ Go Ladies</span>' : ""}</div></div>
+      <div class="pt-linha">${botaoWhatsAcao(primeiroCelularParceiro(p.id), p.nome)}
+        ${pagina ? `<a class="act act-edit" href="${escapeHtml(normalizarLink(pagina.link))}" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-external-link /></svg> Ver no site</a>` : ""}</div>
+    </div>
+    <div class="subnav">${PT_ABAS.map(([k,t])=>`<button type="button" class="subnav-item ${ptAba===k?"active":""}" onclick="mostrarAbaParceira('${k}')">${t}</button>`).join("")}</div>`;
+  const corpo = document.getElementById("pt-corpo");
+  document.getElementById("pt-cadastro").style.display = ptAba==="cadastro" ? "block" : "none";
+  if(ptAba==="cadastro"){ corpo.innerHTML = ""; return; }
+
+  const aviso = parceiroAcoesSqlFaltando ? `<div class="note" style="margin-bottom:14px;">Para guardar divulgações e contrapartidas, falta rodar o arquivo schema_parceira_tela.sql no Supabase.</div>` : "";
+  const completo = ptAba === "divulgacao";
+  const linhaAcao = a => ({ abrir:`abrirAcaoParceira(${a.id})`, cels: completo
+    ? [escapeHtml(a.titulo), escapeHtml(a.canal||"-"), ptData(a.data_inicio), a.data_fim ? ptData(a.data_fim) : "Sem fim", ptEtiqueta(ptSituacao(a)), ltLink(a.link), escapeHtml(a.observacao||"-")]
+    : [escapeHtml(a.titulo), ptData(a.data_inicio), a.data_fim ? ptData(a.data_fim) : "Sem fim", ptEtiqueta(ptSituacao(a))] });
+  const linhaDela = a => ({ abrir:`abrirAcaoParceira(${a.id})`, cels: completo
+    ? [escapeHtml(a.titulo), escapeHtml(a.canal||"-"), ptData(a.data_inicio), ptEtiqueta(ptSituacao(a)), ltLink(a.link), escapeHtml(a.observacao||"-")]
+    : [escapeHtml(a.titulo), ptData(a.data_inicio), ptEtiqueta(ptSituacao(a))] });
+  const linhaEvento = d => ({ abrir:`openDivulgacaoModal(${d.id})`, cels: completo
+    ? [escapeHtml(d.titulo), escapeHtml(d.formato||"Evento"), ptData(d.data_inicio), ptData(d.data_fim), escapeHtml(d.status||"-"), ltLink(d.link_inscricao), "Vem de Divulgação"]
+    : [escapeHtml(d.titulo), ptData(d.data_inicio), ptData(d.data_fim), escapeHtml(d.status||"-")] });
+  const qDivulga = ptQuadro("O que a Go Ladies divulga", "O que está no ar, onde e desde quando",
+    ptTabela(completo ? ["O quê","Onde","Início","Fim","Situação","Link","Observação"] : ["O quê","Desde","Até","Situação"], [...nossas.map(linhaAcao), ...eventosDiv.map(linhaEvento)], "Nada registrado ainda."), btn("+ Nova divulgação", "abrirAcaoParceira(null,'Go Ladies')"), completo ? "pt-inteiro" : "");
+  const qDela = ptQuadro("O que a parceira (o) faz por nós", "A outra parte da parceria (só a equipe vê)",
+    ptTabela(completo ? ["O quê","Onde","Quando","Situação","Link","Observação"] : ["O quê","Quando","Situação"], dela.map(linhaDela), "Nada registrado ainda."), btn("+ Nova contrapartida", "abrirAcaoParceira(null,'Parceira')"), completo ? "pt-inteiro" : "");
+  const abrirInd = { motoristas:"openMotoristaModal", clientes_transporte:"openClienteTransporteModal", leads:"openLeadModal" };
+  const qInd = inteiro => ptQuadro("Pessoas indicadas", "Quem tem esta parceira (o), ou alguém ligado a ela, no campo \"Indicada por\"",
+    ptTabela(["Nome","Papel","Etapa","Chegou"], indicadas.map(({t,r,papel})=>({ abrir:`${abrirInd[t]}(${r.id})`, cels:[escapeHtml(r.nome) + " " + numId(r), papel, escapeHtml(r.status||r.etapa||"-"), ptData(ndDia(r.criado_em))] })), "Ninguém ligado ainda. Preencha \"Indicada por\" na ficha de quem chegou. Se quem indicou foi uma pessoa, ligue ela à empresa em Cadastro › Ligações."), "", inteiro ? "pt-inteiro" : "");
+  const atrasado = e => e.status==="Previsto" && e.data_prevista && e.data_prevista < hojeISO();
+  const qPag = inteiro => ptQuadro("Pagamentos", "Recebimentos desta parceira (o). Origem: Financeiro",
+    (soTroca && !entradas.length ? `<p class="pt-vazio">Troca de divulgação: nada a receber.</p>`
+      : `<p class="pt-vazio" style="margin-bottom:10px;">${plano ? `Plano ${escapeHtml(plano.nome)}${plano.preco_mes != null ? `: ${formatarMoedaBR(plano.preco_mes)} / mês` : ""}. ` : ""}Recebido: <b>${formatarMoedaBR(recebido)}</b> · A receber: <b>${formatarMoedaBR(aReceber.reduce((s,e)=>s+Number(e.valor||0),0))}</b></p>`
+        + ptTabela(["O quê","Data","Valor","Situação"], entradas.map(e=>({ abrir:`abrirEntradaAvulsa(${e.id})`, cels:[escapeHtml(e.descricao), ptData(e.data_recebimento||e.data_prevista), formatarMoedaBR(e.valor), atrasado(e) ? '<span class="status-badge" style="background:var(--c-red-bg); color:var(--c-red);">Em atraso</span>' : escapeHtml(e.status)] })), "Nenhum recebimento lançado.")),
+    btn("+ Recebimento", "novoRecebimentoParceira()"), inteiro ? "pt-inteiro" : "");
+  const proximos = conversas.filter(i=>i.proximos_passos);
+  const qProx = ptQuadro("Próximo passo", "O combinado da conversa mais recente", proximos.length
+    ? `<p style="margin:0 0 4px; font-size:var(--fs-md);">${escapeHtml(proximos[0].proximos_passos)}</p><p class="pt-vazio">Combinado em ${ptData(proximos[0].data)}${proximos[0].assunto ? " · " + escapeHtml(proximos[0].assunto) : ""}</p>`
+    : `<p class="pt-vazio">Nenhum próximo passo anotado.</p>`, btn("+ Conversa", "abrirConversaParceira()"));
+  const historico = [...conversas.map(i=>({ d:i.data||"", txt:`Conversa: ${i.assunto||"sem assunto"}`, abrir:"mostrarAbaParceira('conversas')" })),
+    ...acoes.filter(a=>a.data_inicio && a.data_inicio <= hojeISO()).map(a=>({ d:a.data_inicio, txt:`${a.lado==="Parceira" ? "Parceira (o)" : "Go Ladies"}: ${a.titulo}`, abrir:`abrirAcaoParceira(${a.id})` })),
+    ...entradas.filter(e=>e.status==="Recebido" && e.data_recebimento).map(e=>({ d:e.data_recebimento, txt:`Recebimento: ${formatarMoedaBR(e.valor)}`, abrir:`abrirEntradaAvulsa(${e.id})` }))]
+    .sort((a,b)=>b.d.localeCompare(a.d)).slice(0, 8);
+  const qHist = ptQuadro("Histórico", "Os últimos 8 acontecimentos, o mais novo primeiro",
+    ptTabela(["Data","O que houve"], historico.map(h=>({ abrir:h.abrir, cels:[ptData(h.d), escapeHtml(h.txt)] })), "Nada ainda."));
+  const qConv = ptQuadro("Conversas", "O que foi falado e combinado, da mais nova para a mais antiga",
+    ptTabela(["Data","Assunto","Próximo passo","Documentos",""], conversas.map(i=>({ cels:[ptData(i.data), escapeHtml(i.assunto||"-"), escapeHtml(i.proximos_passos||"-"), ltLink(i.link_drive), `<button type="button" class="act act-del" title="Excluir conversa" onclick="deleteInteracaoParceiro(${i.id})"><svg class=ic aria-hidden=true><use href=#i-trash /></svg></button>`] })), "Nenhuma conversa registrada ainda."), btn("+ Conversa", "abrirConversaParceira()"), "pt-inteiro");
+  const card = (num, label, aba)=>`<div class="card card-link" title="Ver detalhes" onclick="mostrarAbaParceira('${aba}')"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+  const cards = `<div class="cards">
+    ${card(inicioSite ? formatarDataBR(inicioSite) : "-", inicioSite ? `No site desde (${ptDia(inicioSite)})` : "Ainda não está no site", "divulgacao")}
+    ${card(noAr, noAr===1 ? "Divulgação no ar" : "Divulgações no ar", "divulgacao")}
+    ${card(indicadas.length, indicadas.length===1 ? "Pessoa indicada" : "Pessoas indicadas", "indicacoes")}
+    ${soTroca && !recebido ? card("Troca", "Sem mensalidade", "pagamentos") : card(formatarMoedaBR(recebido), "Recebido até hoje", "pagamentos")}</div>`;
+  corpo.innerHTML = aviso + ({
+    resumo: cards + `<div class="pt-grade">${qDivulga}${qDela}${qInd()}${qPag()}${qProx}${qHist}</div>`,
+    divulgacao: `<div class="pt-grade">${qDivulga}${qDela}</div>`,
+    indicacoes: `<div class="pt-grade">${qInd(true)}</div>`,
+    pagamentos: `<div class="pt-grade">${qPag(true)}</div>`,
+    conversas: `<div class="pt-grade">${qConv}</div>`,
+  }[ptAba] || "");
+  aplicarRotulos();
+}
+function novoRecebimentoParceira(){
+  abrirEntradaAvulsa();
+  document.getElementById("fe-parceiro").value = String(telaParceiraId);
+}
+function abrirAcaoParceira(id, lado){
+  if(parceiroAcoesSqlFaltando){ alert("Falta rodar o arquivo schema_parceira_tela.sql no Supabase (SQL Editor)."); return; }
+  const a = parceiroAcoes.find(x=>x.id===id) || {};
+  editingAcaoId = id || null;
+  const l = a.lado || lado || "Go Ladies";
+  fillSelect(document.getElementById("pac-canal"), PT_CANAIS, a.canal || "Site");
+  fillSelect(document.getElementById("pac-situacao"), PT_SITUACOES, a.situacao || (l==="Parceira" ? "Feito" : "No ar"));
+  document.getElementById("pac-lado").value = l;
+  document.getElementById("pac-titulo").value = a.titulo || "";
+  document.getElementById("pac-inicio").value = a.data_inicio || (id ? "" : hojeISO());
+  document.getElementById("pac-fim").value = a.data_fim || "";
+  document.getElementById("pac-link").value = a.link || "";
+  document.getElementById("pac-obs").value = a.observacao || "";
+  document.getElementById("pac-excluir").style.display = id ? "" : "none";
+  document.getElementById("parceira-acao-modal-title").textContent = (id ? "Editar " : "Nova ") + (l==="Parceira" ? "contrapartida" : "divulgação");
+  document.getElementById("parceira-acao-modal").classList.add("open");
+}
+async function salvarAcaoParceira(){
+  const v = k => document.getElementById("pac-" + k).value.trim();
+  if(!v("titulo")){ alert("Escreva o que é."); return; }
+  if(v("inicio") && v("fim") && v("fim") < v("inicio")){ alert("O fim não pode ser antes do início."); return; }
+  const payload = { parceiro_id: telaParceiraId, lado: v("lado"), titulo: v("titulo"), canal: v("canal"), link: v("link") ? normalizarLink(v("link")) : null,
+    data_inicio: v("inicio") || null, data_fim: v("fim") || null, situacao: v("situacao"), observacao: v("obs") || null };
+  const { error } = editingAcaoId ? await sb.from("parceiro_acoes").update(payload).eq("id", editingAcaoId) : await sb.from("parceiro_acoes").insert(payload);
+  if(error){ console.error(error); alert("Não consegui salvar. Confira a internet e tente de novo."); return; }
+  closeModal("parceira-acao-modal");
+  showToast("Salvo!");
+  await recarregarTabelas("parceiro_acoes");
+}
+async function excluirAcaoParceira(){
+  const a = parceiroAcoes.find(x=>x.id===editingAcaoId);
+  if(!a || !confirm(`Excluir "${a.titulo}"?\n\nO registro sai da tela e do histórico desta parceira (o). Para só tirar do ar, mude a situação para Encerrado.`)) return;
+  const { error } = await sb.from("parceiro_acoes").delete().eq("id", a.id);
+  if(error){ console.error(error); alert("Não consegui excluir. Confira a internet e tente de novo."); return; }
+  closeModal("parceira-acao-modal");
+  await recarregarTabelas("parceiro_acoes");
+}
+function abrirConversaParceira(){
+  document.getElementById("pcv-data").value = hojeISO();
+  ["assunto","proximos","link"].forEach(k=>{ document.getElementById("pcv-" + k).value = ""; });
+  document.getElementById("parceira-conversa-modal").classList.add("open");
+}
+async function salvarConversaParceira(){
+  const v = k => document.getElementById("pcv-" + k).value.trim();
+  if(!v("assunto")){ alert("Escreva o assunto da conversa."); return; }
+  const { error } = await sb.from("parceiro_interacoes").insert({ parceiro_id: telaParceiraId, data: v("data") || hojeISO(), assunto: v("assunto"), proximos_passos: v("proximos"), link_drive: v("link") ? normalizarLink(v("link")) : "" });
+  if(error){ console.error(error); alert("Não consegui salvar. Confira a internet e tente de novo."); return; }
+  closeModal("parceira-conversa-modal");
+  showToast("Salvo!");
+  await recarregarTabelas("parceiro_interacoes");
 }
 
 // Contatos (celular/fixo) do parceiro
@@ -16159,6 +16493,7 @@ function openMotoristaModal(id){
   document.getElementById("mt-status").value = m.status||MOTORISTA_STATUS_PADRAO;
   document.getElementById("mt-certificada-ate").value = m.certificada_ate||"";
   document.getElementById("mt-origem").value = m.origem||"Site";
+  preencherIndicada("mt", m);
   document.getElementById("mt-auth-uid").value = m.auth_user_id||"";
   document.getElementById("mt-pasta-drive").value = m.pasta_drive_url||"";
   document.getElementById("mt-recursos").innerHTML = Preferencias.htmlRecursos(m.recursos);
@@ -16507,6 +16842,7 @@ async function saveMotorista(){
     auth_user_id: document.getElementById("mt-auth-uid").value.trim() || null,
     pasta_drive_url: document.getElementById("mt-pasta-drive").value.trim() || null,
     recursos: Preferencias.lerRecursos(document.getElementById("mt-recursos")),
+    ...lerIndicada("mt", "Indicação"),
   };
   const isNew = !editingMotoristaId;
   const { data, error } = editingMotoristaId
@@ -17429,7 +17765,7 @@ function renderLigacoes(pre){
   // Quem esta pessoa indicou ("Indicada por" nas leads e clientes de viagem),
   // uma linha por código (a mesma pessoa pode ser lead e cliente).
   const vistos = new Set();
-  const indicou = meu.cadastro_id == null ? [] : [["clientes_transporte", clientesTransporte], ["leads", leads]]
+  const indicou = meu.cadastro_id == null ? [] : [["motoristas", motoristas], ["clientes_transporte", clientesTransporte], ["leads", leads]]
     .flatMap(([t, lista])=>lista.filter(r=>r.indicada_por_cadastro_id === meu.cadastro_id).map(r=>({ t, r })))
     .filter(({ r })=>{ const k = r.cadastro_id ?? "x" + r.id; if(vistos.has(k)) return false; vistos.add(k); return true; });
   const blocoIndicou = indicou.length
@@ -23689,7 +24025,7 @@ function ndPessoasParceiras(){
   return parceiros.filter(p=>!p.exemplo).map(p=>{
     const ents = finEntradas.filter(e=>e.parceiro_id===p.id && e.status==="Recebido");
     const datasPg = ents.map(e=>ndDia(e.data_recebimento)).filter(Boolean).sort();
-    return { servico: "parceiras", nome: p.nome, abrir: `openParceiroModal(${p.id})`,
+    return { servico: "parceiras", nome: p.nome, abrir: `abrirTelaParceira(${p.id})`,
       entrou: ndDia(p.criado_em), origem: p.tipo_parceria || p.categoria || "Sem origem",
       compromisso: ents.length > 0 || ["Apresentação","Proposta","Parceria ativa"].includes(p.status),
       pagou: ents.length > 0, voltou: ents.length >= 2,
@@ -23805,7 +24141,7 @@ function renderIndicacoesNumeros(ps){
   const porQuem = {};
   indicadas.filter(p=>p.indicadaPor != null).forEach(p=>{ porQuem[p.indicadaPor] = (porQuem[p.indicadaPor] || 0) + 1; });
   const abrirCad = id => {
-    for(const [lista, abrir] of [[clientesTransporte, "openClienteTransporteModal"], [leads, "openLeadModal"], [parceiros, "openParceiroModal"], [motoristas, "openMotoristaModal"]]){
+    for(const [lista, abrir] of [[clientesTransporte, "openClienteTransporteModal"], [leads, "openLeadModal"], [parceiros, "abrirTelaParceira"], [motoristas, "openMotoristaModal"]]){
       const r = (lista||[]).find(x=>x.cadastro_id === id);
       if(r && typeof window[abrir] === "function") return `${abrir}(${r.id})`;
     }
@@ -24178,7 +24514,12 @@ async function excluirSaldoCaixa(id){
   await recarregarTabelas("gestao_saldos");
 }
 
-function closeModal(id){ document.getElementById(id).classList.remove("open"); }
+function closeModal(id){
+  const el = document.getElementById(id);
+  // Ficha da parceira dentro da tela completa: Sair volta para o Resumo
+  if(id === "parceiro-modal" && el.classList.contains("embutida")){ mostrarAbaParceira("resumo"); return; }
+  el.classList.remove("open");
+}
 let toastTimer;
 function showToast(msg, erro){
   let el = document.getElementById("toast");
