@@ -6919,6 +6919,8 @@ const EVENTOS_SITE = {
   "parceira_conexao_whatsapp": "Conexão: Falar com a Cris",
   "parceira_conexao_instagram": "Conexão: Instagram",
   "parceira_conexao_live": "Conexão: Assistir à live",
+  "parceira_conexao_transporte": "Conexão: Ir com a Go Ladies",
+  "parceira_conexao_goladies": "Conexão: Site da Go Ladies",
   "gerar_lead": "Pedido de orçamento",
   "candidatura_motorista": "Candidatura de motorista",
   "candidatura_vaga": "Candidatura a vaga",
@@ -14973,7 +14975,7 @@ function renderTelaParceira(){
 const PT_MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 const ptMes = k => `${PT_MESES[Number(k.slice(5,7)) - 1]} de ${k.slice(0,4)}`;
 const PT_CLIQUES = {
-  "conexao-familia-automotiva": { prefixo: "parceira_conexao", botoes: { whatsapp: "Falar com a Cris", instagram: "Instagram", live: "Assistir à live" } },
+  "conexao-familia-automotiva": { prefixo: "parceira_conexao", botoes: { whatsapp: "Falar com a Cris", instagram: "Instagram", live: "Assistir à live", evento: "Inscrição em evento", transporte: "Ir com a Go Ladies", goladies: "Site da Go Ladies" } },
 };
 let ptCliquesDados = {}, ptCliquesDias = 30, ptDesenho = 0, ptFonteMarca = null;   // ptCliquesDados[parceiro] = { linhas, erro, carregando }
 function ptPaginaDaParceira(id){
@@ -15000,12 +15002,14 @@ async function ptCarregarCliques(id){
 const ptIsoMais = (iso, n)=>{ const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return isoLocal(d); };
 // Soma entre duas datas (inclusive): { visitas, botoes: {whatsapp: n}, total }
 function ptSomarCliques(id, de, ate){
-  const pg = ptPaginaDaParceira(id), dados = ptCliquesDados[id], r = { visitas: 0, botoes: {}, total: 0 };
+  const pg = ptPaginaDaParceira(id), dados = ptCliquesDados[id], r = { visitas: 0, botoes: {}, eventos: {}, total: 0 };
   if(!pg || !dados) return r;
   Object.keys(pg.botoes).forEach(b=>{ r.botoes[b] = 0; });
   dados.linhas.filter(l=>(!de || l.dia >= de) && (!ate || l.dia <= ate)).forEach(l=>{
     if(l.metrica === "pagina"){ r.visitas += Number(l.valor||0); return; }
-    const b = String(l.chave).slice(pg.prefixo.length + 1);
+    // "evento_12" = clique na inscrição da divulgação 12
+    const chave = String(l.chave).slice(pg.prefixo.length + 1), ev = chave.match(/^evento_(\d+)$/), b = ev ? "evento" : chave;
+    if(ev) r.eventos[ev[1]] = (r.eventos[ev[1]]||0) + Number(l.valor||0);
     if(b in r.botoes){ r.botoes[b] += Number(l.valor||0); r.total += Number(l.valor||0); }
   });
   return r;
@@ -15030,6 +15034,11 @@ function ptQuadroCliques(p, inteiro){
     ...Object.entries(pg.botoes).map(([k,t])=>({ abrir, cels:["Clique: " + escapeHtml(t), v(a.botoes[k], b.botoes[k])] })),
     { abrir, cels:["Total de cliques", v(a.total, b.total)] }], "");
   corpo += `<p class="pt-vazio" style="margin-top:10px;">De ${ptData(per.de)} a ${ptData(per.fim)}. "Antes" são os ${ptCliquesDias} dias anteriores. A contagem por botão começou em ${ptData("2026-11-23")}.</p>`;
+  const evs = Object.entries(a.eventos).sort((x, y)=>y[1]-x[1]);
+  if(inteiro && evs.length) corpo += `<h3 style="margin:22px 0 10px;">Por evento</h3>` + ptTabela(["Evento","Cliques em inscrição"], evs.map(([id, n])=>{
+    const d = divulgacoes.find(x=>x.id===Number(id));
+    return { abrir: d ? `openDivulgacaoModal(${d.id})` : abrir, cels:[d ? escapeHtml(d.titulo) : "Evento que não está mais na Divulgação", n] };
+  }), "");
   if(inteiro){
     const meses = [...new Set(dados.linhas.map(l=>l.dia.slice(0,7)))].sort().reverse();
     corpo += `<h3 style="margin:22px 0 10px;">Mês a mês</h3>` + ptTabela(["Mês","Visitas",...Object.values(pg.botoes).map(escapeHtml),"Total de cliques"], meses.map(m=>{
