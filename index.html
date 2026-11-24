@@ -3533,12 +3533,13 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
       <div><label>Parceira (o) ligada</label><select id="dv-parceiro"><option value="">-</option></select></div>
       <div><label>Status</label><select id="dv-status"></select></div>
       <div class="full">
-        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel ou no site; pode marcar mais de um)</span></label>
+        <label>Público-alvo <span style="font-weight:400; color:var(--muted);">(quem vê isso no próprio painel ou nos sites; pode marcar mais de um. Só "Página da parceira (o)": não vai para a agenda da Go Ladies)</span></label>
         <div id="dv-publico-alvo-wrap" style="display:flex; flex-wrap:wrap; gap:6px;">
           <label class="chip-check"><input type="checkbox" value="Motoristas"> Motoristas</label>
           <label class="chip-check"><input type="checkbox" value="Clientes"> Clientes</label>
           <label class="chip-check"><input type="checkbox" value="Parceiras (os)"> Parceiras (os)</label>
-          <label class="chip-check" title="Aparece em goladies.com.br, na Comunidade, com status Divulgado, Inscrições abertas ou Em andamento"><input type="checkbox" value="Site"> Site (público)</label>
+          <label class="chip-check" title="Aparece em goladies.com.br, na Comunidade, com status Divulgado, Inscrições abertas ou Em andamento"><input type="checkbox" value="Site"> Site da Go Ladies</label>
+          <label class="chip-check" title="Aparece na página da parceira (o) ligada, com status Divulgado, Inscrições abertas ou Em andamento"><input type="checkbox" value="Página da parceira (o)"> Página da parceira (o)</label>
         </div>
       </div>
       <div><label>Data início</label><input type="date" id="dv-data-inicio"></div>
@@ -5462,6 +5463,7 @@ const DIVULGACAO_FORMATOS_GRUPOS = {
 const DIVULGACAO_FORMATOS = Object.values(DIVULGACAO_FORMATOS_GRUPOS).flat();
 const DIVULGACAO_MODALIDADES = ["Presencial","Online","Híbrido"];
 const DIVULGACAO_TIPOS = ["Próprio Go Ladies","Go Ladies convidada","Parceria (co-realização)","Terceiro - divulgação","Terceiro - com comissão"];
+const DV_PAGINA_PARCEIRA = "Página da parceira (o)";   // público-alvo lido por divulgacoes_da_parceira_site
 const DIVULGACAO_STATUS = ["Planejado","Divulgado","Inscrições abertas","Em andamento","Concluído","Cancelado"];
 const DIVULGACAO_STATUS_CLASS = {"Planejado":"indigo","Divulgado":"amber","Inscrições abertas":"pink","Em andamento":"teal","Concluído":"green","Cancelado":"red"};
 
@@ -13963,7 +13965,7 @@ function renderDivulgacoes(){
   document.getElementById("divulgacoes-body").innerHTML = filtered.map(d=>{
     const parceiro = parceiros.find(p=>p.id===d.parceiro_id);
     return `<tr class="tr-click" onclick="openDivulgacaoModal(${d.id})">
-      <td><strong>${escapeHtml(d.titulo)}</strong></td>
+      <td><strong>${escapeHtml(d.titulo)}</strong>${String(d.publico_alvo||"").trim()===DV_PAGINA_PARCEIRA?` <span class="vg-tag aut" style="white-space:nowrap;">Só da parceira (o)</span>`:""}</td>
       <td>${escapeHtml(d.formato)}${d.modalidade?` <span style="color:var(--muted);">· ${escapeHtml(d.modalidade)}</span>`:""}</td>
       <td>${escapeHtml(d.tipo)}</td>
       <td>${parceiro ? escapeHtml(parceiro.nome) + numId(parceiro) : "-"}</td>
@@ -14043,6 +14045,9 @@ async function aplicarLinkDivulgacao(d, imagem, vez){
     const achadas = parceiros.filter(p=>{ const n = semAcentoDv(p.nome); return n.length > 5 && (org.includes(n) || n.includes(org)); });
     if(achadas.length === 1){ el("dv-parceiro").value = achadas[0].id; postos.push("parceira (o)"); }
   }
+  // Evento de parceira (o) com página: começa só na página dela; o Site da Go Ladies quem marca é a pessoa
+  const pub = [...document.querySelectorAll("#dv-publico-alvo-wrap input[type=checkbox]")];
+  if(!pub.some(cb=>cb.checked) && ptPaginaDaParceira(Number(el("dv-parceiro").value))){ pub.find(cb=>cb.value===DV_PAGINA_PARCEIRA).checked = true; postos.push("público-alvo (só a página da parceira (o))"); }
   if(imagem){
     const temArte = arteDivulgacaoPendente && arteDivulgacaoPendente !== "remover" || el("dv-arte-preview").style.display !== "none";
     if(temArte) mantidos.push("arte");
@@ -14054,7 +14059,7 @@ async function aplicarLinkDivulgacao(d, imagem, vez){
     }catch(e){ console.error("arte do evento:", e); }
   }
   const alerta = d.cancelado ? "Atenção: no Sympla este evento está cancelado. " : d.encerrado ? "Atenção: no Sympla as inscrições estão encerradas. " : "";
-  dvColarAviso(alerta + (postos.length ? "Preenchi: " + postos.join(", ") + ". " : "") + (mantidos.length ? "Mantive o que você já tinha em: " + mantidos.join(", ") + ". " : "") + "Confira tudo (formato também), marque o público-alvo e o status, e salve.", alerta ? "var(--red)" : "var(--green)");
+  dvColarAviso(alerta + (postos.length ? "Preenchi: " + postos.join(", ") + ". " : "") + (mantidos.length ? "Mantive o que você já tinha em: " + mantidos.join(", ") + ". " : "") + "Confira tudo (formato e público-alvo também), marque o status, e salve.", alerta ? "var(--red)" : "var(--green)");
 }
 function openDivulgacaoModal(id){
   dvLeitura++; document.getElementById("dv-colar-link").value = ""; document.getElementById("dv-colar-btn").disabled = false; dvColarAviso("");
@@ -14104,7 +14109,11 @@ async function saveDivulgacao(){
   // Site marcado + status que o site não mostra (divulgacoes_do_site): pergunta antes de salvar
   const statusEl = document.getElementById("dv-status");
   const marcouSite = document.querySelector('#dv-publico-alvo-wrap input[value="Site"]').checked;
-  if(marcouSite && statusEl.value==="Planejado"){
+  const marcouPagina = document.querySelector(`#dv-publico-alvo-wrap input[value="${DV_PAGINA_PARCEIRA}"]`).checked;
+  const parceiraId = Number(document.getElementById("dv-parceiro").value);
+  if(marcouPagina && !parceiraId){ alert('Para aparecer na página da parceira (o), escolha qual é em "Parceira (o) ligada".'); return; }
+  if(marcouPagina && !ptPaginaDaParceira(parceiraId) && !confirm("Não encontrei uma página desta parceira (o) no site, então o evento não vai aparecer lá.\n\nSalvar assim mesmo?")) return;
+  if((marcouSite || marcouPagina) && statusEl.value==="Planejado"){
     if(confirm(`Com o status "${statusEl.value}" isso não aparece no site.\n\nMudar para "Divulgado" e salvar?\n(Cancelar salva do jeito que está.)`)) statusEl.value = "Divulgado";
   }
   const payload = {
