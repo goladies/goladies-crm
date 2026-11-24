@@ -679,6 +679,10 @@ details.vg-sec[open]>summary::after{transform:rotate(-135deg); margin:4px 4px 0 
 .pt-vazio{color:var(--muted); font-size:var(--fs-sm); margin:0;}
 .pt-grade .tbl td{overflow-wrap:break-word;}
 .pt-vazio b{white-space:nowrap;}
+.dv-colar-linha{display:flex; gap:8px; align-items:stretch;}
+.dv-colar-linha input{flex:1; min-width:0; margin:0 !important;}
+.dv-colar-linha .btn{flex:none;}
+#dv-colar-status{margin:8px 0 0; font-size:var(--fs-sm, 13px); line-height:1.5; overflow-wrap:anywhere;}
 .pt-resultado{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start;}
 .pt-resultado canvas{width:100%; height:auto; border-radius:12px; border:1px solid var(--border); display:block;}
 .pt-resultado textarea{width:100%; min-height:330px; box-sizing:border-box; resize:vertical;}
@@ -3518,6 +3522,11 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
     <section class="vg-sec" style="--sec-cor:var(--vg-rosa);">
       <div class="vg-sec-tit"><span><svg class="ic g" aria-hidden="true"><use href="#i-speakerphone"/></svg><span class="vg-num">Divulgação</span></span></div>
       <div class="formgrid">
+      <div class="full dv-colar">
+        <label for="dv-colar-link">Colar link do evento <span style="font-weight:400; color:var(--muted);">(Sympla; preenche a ficha para você conferir)</span></label>
+        <div class="dv-colar-linha"><input type="url" id="dv-colar-link" placeholder="https://www.sympla.com.br/evento/..." onkeydown="if(event.key==='Enter'){ event.preventDefault(); lerLinkDivulgacao(); }"><button type="button" class="btn secondary small" id="dv-colar-btn" onclick="lerLinkDivulgacao()">Preencher</button></div>
+        <p id="dv-colar-status" role="status" style="display:none;"></p>
+      </div>
       <div class="full"><label>Título *</label><input type="text" id="dv-titulo"></div>
       <div><label>Formato</label><select id="dv-formato"></select></div>
       <div><label>Tipo</label><select id="dv-tipo"></select></div>
@@ -13963,7 +13972,91 @@ function renderDivulgacoes(){
     </tr>`;
   }).join("") || `<tr><td class="empty" colspan="7">Nenhuma divulgação cadastrada</td></tr>`;
 }
+// "Colar link do evento": a função ler-evento (Supabase) lê a página do Sympla e a ficha
+// é preenchida só onde está vazia. Nada é salvo: quem salva é a pessoa, depois de conferir.
+let dvLeitura = 0;
+function dvColarAviso(txt, cor){
+  const el = document.getElementById("dv-colar-status");
+  el.textContent = txt; el.style.color = cor || "var(--muted)"; el.style.display = txt ? "" : "none";
+}
+// "MARKETING DIGITAL." vira "Marketing digital"
+function dvTituloLimpo(t){
+  t = String(t||"").trim().replace(/[.\s]+$/, "");
+  if(t.length > 6 && t === t.toLocaleUpperCase("pt-BR")){ t = t.toLocaleLowerCase("pt-BR"); t = t.charAt(0).toLocaleUpperCase("pt-BR") + t.slice(1); }
+  return t;
+}
+function dvFormatoPeloTexto(t){
+  const x = semAcentoDv(t);
+  return [["workshop","Workshop / oficina"],["palestra","Palestra"],["webinar","Webinar"],["podcast","Podcast"],["mentoria","Mentoria"],["treinamento","Treinamento"],["curso","Curso"],["roda de conversa","Roda de conversa"],["painel","Painel / debate"],["feira","Feira / exposição"],["encontro","Encontro / meetup"],["live","Live"]]
+    .find(([k])=>new RegExp("\\b" + k + "\\b").test(x))?.[1] || "";
+}
+function semAcentoDv(t){ return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+async function lerLinkDivulgacao(){
+  const campo = document.getElementById("dv-colar-link"), btn = document.getElementById("dv-colar-btn"), url = campo.value.trim();
+  if(!url){ dvColarAviso("Cole aqui o link do evento no Sympla.", "var(--amber)"); campo.focus(); return; }
+  if(!/^https:\/\/(www\.)?sympla\.com\.br\//i.test(url)){ dvColarAviso("Por enquanto leio só links do Sympla. Para outros, dá para preencher a ficha normalmente.", "var(--amber)"); return; }
+  const vez = ++dvLeitura;
+  btn.disabled = true; dvColarAviso("Lendo o evento...");
+  try{
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session){ if(vez === dvLeitura) dvColarAviso("A sua sessão terminou. Entre de novo no CRM, por favor.", "var(--red)"); return; }
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ler-evento`, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const r = await resp.json().catch(()=>({}));
+    if(vez !== dvLeitura) return; // a ficha mudou enquanto lia
+    if(!resp.ok || !r.dados){
+      dvColarAviso(r.error || (resp.status === 404 ? "A leitura de links ainda não foi ligada no Supabase (função ler-evento)." : "Não consegui ler o evento agora. Dá para preencher a ficha normalmente."), "var(--red)");
+      return;
+    }
+    await aplicarLinkDivulgacao(r.dados, r.imagem, vez);
+  }catch(e){
+    console.error("ler-evento:", e);
+    if(vez === dvLeitura) dvColarAviso("Não consegui ler o evento agora. Confira a internet e tente de novo.", "var(--red)");
+  }finally{ if(vez === dvLeitura) btn.disabled = false; }
+}
+async function aplicarLinkDivulgacao(d, imagem, vez){
+  const el = id=>document.getElementById(id), postos = [], mantidos = [];
+  const por = (id, valor, nome)=>{
+    if(valor === null || valor === undefined || valor === "") return;
+    const x = el(id), atual = x.value.trim();
+    if(atual && atual !== String(valor)){ mantidos.push(nome); return; }
+    if(!atual){ x.value = valor; postos.push(nome); }
+  };
+  // O mesmo link já está em outra divulgação: avisa e não preenche, para não repetir o evento
+  const igual = divulgacoes.find(x=>x.id !== editingDivulgacaoId && x.link_inscricao && String(x.link_inscricao).split(/[?#]/)[0].replace(/\/$/, "") === String(d.link||"").replace(/\/$/, ""));
+  if(igual){ dvColarAviso(`Este evento já está na Divulgação: "${igual.titulo}". Não preenchi, para não repetir. Para mudar algo, abra a ficha dele.`, "var(--amber)"); return; }
+  const nova = !editingDivulgacaoId && !el("dv-titulo").value.trim();
+  if(nova){ el("dv-modalidade").value = d.online ? "Online" : "Presencial"; ajustarLocalDivulgacao(); }
+  por("dv-titulo", dvTituloLimpo(d.titulo), "título");
+  if(nova){ const f = dvFormatoPeloTexto(d.titulo) || dvFormatoPeloTexto(d.descricao); if(f){ el("dv-formato").value = f; postos.push("formato"); } }
+  por("dv-data-inicio", d.data_inicio, "data");
+  if(d.data_fim && d.data_fim !== d.data_inicio) por("dv-data-fim", d.data_fim, "data fim");
+  por("dv-hora-inicio", d.hora_inicio, "horário"); por("dv-hora-fim", d.hora_fim, "horário fim");
+  por("dv-local", d.local, "local"); por("dv-link", d.link, "link"); por("dv-preco", d.preco, "preço"); por("dv-descricao", d.descricao, "descrição");
+  // Organizadora com o nome de uma parceira (o) do CRM: liga, se só uma combinar
+  const org = semAcentoDv(d.organizador);
+  if(org && !el("dv-parceiro").value){
+    const achadas = parceiros.filter(p=>{ const n = semAcentoDv(p.nome); return n.length > 5 && (org.includes(n) || n.includes(org)); });
+    if(achadas.length === 1){ el("dv-parceiro").value = achadas[0].id; postos.push("parceira (o)"); }
+  }
+  if(imagem){
+    const temArte = arteDivulgacaoPendente && arteDivulgacaoPendente !== "remover" || el("dv-arte-preview").style.display !== "none";
+    if(temArte) mantidos.push("arte");
+    else try{
+      const bytes = Uint8Array.from(atob(imagem.base64), ch=>ch.charCodeAt(0));
+      const pronta = await prepararArteDivulgacao(new Blob([bytes], { type: imagem.tipo }));
+      if(vez !== dvLeitura) return;
+      arteDivulgacaoPendente = pronta; mostrarArteDivulgacao(URL.createObjectURL(pronta)); postos.push("arte");
+    }catch(e){ console.error("arte do evento:", e); }
+  }
+  const alerta = d.cancelado ? "Atenção: no Sympla este evento está cancelado. " : d.encerrado ? "Atenção: no Sympla as inscrições estão encerradas. " : "";
+  dvColarAviso(alerta + (postos.length ? "Preenchi: " + postos.join(", ") + ". " : "") + (mantidos.length ? "Mantive o que você já tinha em: " + mantidos.join(", ") + ". " : "") + "Confira tudo (formato também), marque o público-alvo e o status, e salve.", alerta ? "var(--red)" : "var(--green)");
+}
 function openDivulgacaoModal(id){
+  dvLeitura++; document.getElementById("dv-colar-link").value = ""; document.getElementById("dv-colar-btn").disabled = false; dvColarAviso("");
   editingDivulgacaoId = id || null;
   fillSelectGrupos(document.getElementById("dv-formato"), DIVULGACAO_FORMATOS_GRUPOS, "Evento");
   fillSelect(document.getElementById("dv-modalidade"), DIVULGACAO_MODALIDADES, "Presencial");
