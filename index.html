@@ -6927,6 +6927,7 @@ const EVENTOS_SITE = {
   "clique_whatsapp": "Clique no WhatsApp",
   "parceira_conexao_whatsapp": "Conexão: Falar com a Cris",
   "parceira_conexao_instagram": "Conexão: Instagram",
+  "parceira_conexao_youtube": "Conexão: YouTube",
   "parceira_conexao_live": "Conexão: Assistir à live",
   "parceira_conexao_transporte": "Conexão: Ir com a Go Ladies",
   "parceira_conexao_goladies": "Conexão: Site da Go Ladies",
@@ -15068,7 +15069,7 @@ function renderTelaParceira(){
 const PT_MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 const ptMes = k => `${PT_MESES[Number(k.slice(5,7)) - 1]} de ${k.slice(0,4)}`;
 const PT_CLIQUES = {
-  "conexao-familia-automotiva": { prefixo: "parceira_conexao", botoes: { whatsapp: "Falar com a Cris", instagram: "Instagram", live: "Assistir à live", evento: "Inscrição em evento", transporte: "Ir com a Go Ladies", goladies: "Site da Go Ladies" } },
+  "conexao-familia-automotiva": { prefixo: "parceira_conexao", botoes: { whatsapp: "Falar com a Cris", instagram: "Instagram", youtube: "YouTube", live: "Assistir à live", evento: "Inscrição em evento", transporte: "Ir com a Go Ladies", goladies: "Site da Go Ladies" } },
 };
 let ptCliquesDados = {}, ptCliquesDias = 30, ptDesenho = 0, ptFonteMarca = null;   // ptCliquesDados[parceiro] = { linhas, erro, carregando }
 function ptPaginaDaParceira(id){
