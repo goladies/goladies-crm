@@ -2243,7 +2243,9 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div><label>Minutos com a cliente</label><input type="number" id="sim-min-cliente" step="1" min="0" value="20" oninput="simular()"></div>
                 <div><label>Km vazio</label><input type="number" id="sim-km-vazio" step="0.1" min="0" value="6" oninput="simular()"></div>
                 <div><label>Minutos vazios</label><input type="number" id="sim-min-vazio" step="1" min="0" value="20" oninput="simular()"></div>
-                <div class="full"><label>Desses, km com a cliente das 20h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simular()"></div>
+                <!-- Noite pelo horário (27/11/2026): sem caixa "Noite"; o "Sai às"
+                     e os minutos dão os km depois das 20h, igual à viagem. -->
+                <div class="full"><label for="sim-km-noite">Desses, km com a cliente das 20h às 6h</label><input type="number" id="sim-km-noite" step="0.1" min="0" value="0" oninput="simKmNoiteDigitado(this)"><p class="sim-nota" id="sim-km-noite-dica" style="margin:4px 0 0;"></p></div>
                 <!-- Espera em min ou horas e valor escolhido (11/11/2026) -->
                 <div class="espera-cel"><label for="sim-espera">Espera combinada, além dos 10 min inclusos</label><div class="espera-linha"><input type="number" id="sim-espera" step="any" min="0" value="0" oninput="esperaMudou('sim')"><select id="sim-espera-unid" aria-label="Unidade da espera" onchange="esperaUnidadeTrocada('sim')"><option value="min">min</option><option value="h">horas</option></select></div></div>
                 <div class="espera-cel"><label for="sim-espera-valor" id="sim-espera-valor-rot">Valor da espera (R$ por minuto)</label><div class="campo-moeda"><span class="prefixo">R$</span><input type="number" id="sim-espera-valor" step="0.01" min="0" value="1.00" oninput="esperaMudou('sim')"></div></div>
@@ -2254,7 +2256,6 @@ select.sag-fc{padding:4px 8px; background:var(--bg-input); width:auto;}
                 <div class="full sim-tabela-preco"><p class="sim-nota" id="sim-tabela-info" style="margin:0;"></p></div>
               </div>
               <label class="sim-check"><input type="checkbox" id="sim-idavolta" onchange="simular()"> <span>Ida e volta (cobra o trecho duas vezes)</span></label>
-              <label class="sim-check"><input type="checkbox" id="sim-noturno" onchange="simTabelaTrocada()"> <span id="sim-noturno-rot">Noite (20h às 6h) ou feriado: +30%</span></label>
               <label class="sim-check"><input type="checkbox" id="sim-premium" onchange="simular()"> <span>Acompanhamento premium: +R$20 por trecho, 100% da motorista</span></label>
             </div>
 
@@ -9509,6 +9510,8 @@ function simAjustarHoras(){
 }
 function simHoraMudou(i, campo, valor){
   simHoras[i][campo] = valor;
+  // Horário trocado: a medida de noite do Calcular rota já não vale
+  if(campo === "hora"){ delete document.getElementById("sim-km-noite").dataset.rota; simular(); }
   if(campo === "outro") simGuardar(); else simRenderEnderecos();
 }
 
@@ -9572,6 +9575,7 @@ function simDadosAtuais(){
     campos, enderecos: simEnderecos, horas: simHoras,
     cobradoManual: !!document.getElementById("sim-cobrado").dataset.manual,
     repasseManual: !!document.getElementById("sim-repasse").dataset.manual,
+    kmNoiteOrigem: simKmNoiteOrigem(),
     resumo: resumo.style.display === "none" ? "" : resumo.innerHTML,
   };
   return dados;
@@ -9582,6 +9586,9 @@ function simRestaurar(){
   let dados = null;
   try{ dados = JSON.parse(localStorage.getItem(SIM_CHAVE_COTACAO) || "null"); }catch(e){}
   if(!dados) return;
+  // A tabela escolhida na mão não volta sozinha (27/11/2026): toda cotação
+  // nova começa na Automática. Cotação guardada aberta da lista mantém a dela.
+  if(dados.campos) delete dados.campos["sim-tabela-preco"];
   simAplicarDados(dados);
 }
 function simAplicarDados(dados){
@@ -9597,6 +9604,10 @@ function simAplicarDados(dados){
   });
   if(dados.cobradoManual) document.getElementById("sim-cobrado").dataset.manual = "1";
   if(dados.repasseManual) document.getElementById("sim-repasse").dataset.manual = "1";
+  const campoNoite = document.getElementById("sim-km-noite");
+  delete campoNoite.dataset.manual; delete campoNoite.dataset.rota;
+  if(dados.kmNoiteOrigem === "manual") campoNoite.dataset.manual = "1";
+  else if(dados.kmNoiteOrigem === "rota") campoNoite.dataset.rota = "1";
   if(Array.isArray(dados.enderecos) && dados.enderecos.length >= 2) simEnderecos = dados.enderecos.slice(0, SIM_MAX_ENDERECOS);
   simHoras = Array.isArray(dados.horas) ? dados.horas.map(h=>Object.assign(simHoraNova(), h)) : [];
   simRenderEnderecos();
@@ -9613,7 +9624,10 @@ function simNovaCotacao(){
   simRenderEnderecos();
   ["sim-km-cliente","sim-min-cliente","sim-km-vazio","sim-min-vazio","sim-espera","sim-km-noite"].forEach(id=>{ document.getElementById(id).value = 0; });
   esperaPreencher("sim", 0, VALOR_MIN_ESPERA, "min");
-  ["sim-idavolta","sim-noturno","sim-premium"].forEach(id=>{ document.getElementById(id).checked = false; });
+  ["sim-idavolta","sim-premium"].forEach(id=>{ document.getElementById(id).checked = false; });
+  delete document.getElementById("sim-km-noite").dataset.manual;
+  delete document.getElementById("sim-km-noite").dataset.rota;
+  document.getElementById("sim-tabela-preco").value = "";
   const elCobrado = document.getElementById("sim-cobrado");
   delete elCobrado.dataset.manual;
   const resumo = document.getElementById("sim-end-resumo");
@@ -9866,7 +9880,8 @@ async function salvarCotacaoNaoFechou(){
       p_viagem: {
         tipo_servico: TIPO_SERVICO_VIAGEM.includes(campos["sim-tipo"]) ? campos["sim-tipo"] : "Padrão",
         data: campos["sim-dia"] || "", horario_partida: pontos[0] ? pontos[0].hora : "",
-        ida_volta: !!campos["sim-idavolta"], noturno: !!campos["sim-noturno"],
+        ida_volta: !!campos["sim-idavolta"],
+        noturno: !!campos["sim-noturno"] || (Number(campos["sim-km-noite"]) || 0) * 2 > (Number(campos["sim-km-cliente"]) || 0),
         espera_min: esperaDosCamposSim(campos).minutos || 0,
       },
       p_paradas: pontos.slice(1, -1),
@@ -9925,7 +9940,9 @@ function preencherViagemDaCotacao(c){
   const noturno = !!campos["sim-noturno"];
   document.getElementById("vg-adicional-noturno").checked = noturno;
   // Km de noite do Simulador (medido trecho a trecho) vale como digitado
-  const kmNoiteSim = noturno ? km : (Number(campos["sim-km-noite"]) || 0);
+  // Calculado só pelo "Sai às" (27/11/2026) a viagem calcula de novo sozinha
+  const origemNoite = c.dados ? c.dados.kmNoiteOrigem : undefined;
+  const kmNoiteSim = noturno ? km : (origemNoite === "" ? 0 : (Number(campos["sim-km-noite"]) || 0));
   if(kmNoiteSim){ const c = document.getElementById("vg-km-noite"); c.value = String(kmNoiteSim); c.dataset.manual = "1"; }
   document.getElementById("vg-feriado").checked = !!simFeriadoNome();
   const esperaSim = esperaDosCamposSim(campos);
@@ -10136,7 +10153,9 @@ async function simCalcularRotaComHorario(pts, saida, volta){
   if(!saida && minVazio) document.getElementById("sim-min-vazio").value = Math.ceil(minVazio);
   // Passou de 1 hora, mostra em horas; o valor que ela escolheu fica.
   esperaPreencher("sim", Math.max(0, esperaMin - (esperaMin ? ESPERA_INCLUSA_MIN : 0)), esperaValorMin("sim"));
-  document.getElementById("sim-km-noite").value = Math.round(kmNoite * 10) / 10;
+  const campoNoite = document.getElementById("sim-km-noite");
+  campoNoite.value = Math.round(kmNoite * 10) / 10;
+  delete campoNoite.dataset.manual; campoNoite.dataset.rota = "1";
   if(kmNoite >= 0.1) avisos.push(`${kmTxt(kmNoite)} km com a cliente caem das 20h às 6h: essa parte usa a tabela da noite.`);
   const futuro = inicio.getTime() > Date.now() + 60000;
   const quando = `${dataComSemana(inicio)} saindo às ${simHoraTxt(inicio)}`;
@@ -10181,7 +10200,9 @@ async function simCalcularRota(){
     else partes.push(`Volta pra casa: não consegui medir`);
   }
   document.getElementById("sim-km-cliente").value = Math.round(corrida.km * 10) / 10;
-  document.getElementById("sim-km-noite").value = 0;
+  // Sem horário nos endereços: os km de noite voltam a sair do "Sai às"
+  delete document.getElementById("sim-km-noite").dataset.manual;
+  delete document.getElementById("sim-km-noite").dataset.rota;
   document.getElementById("sim-min-cliente").value = Math.ceil(corrida.min);
   if(saida){
     const kmVazio = (ate ? ate.km : 0) + (retorno ? retorno.km : 0);
@@ -10213,11 +10234,44 @@ function simAbrirMaps(){
 // Tabela do simulador (21/10/2026): a escolhida no select ou a automática
 // pelo tipo de serviço e pela noite, igual à viagem (escolherTabelaPreco).
 // Sem o schema_tabelas_preco.sql, cai no padrão do sistema (25 + 4/km, +30%).
+// Noite pelo horário (27/11/2026): antes era uma caixa "Noite" que ficava
+// marcada da última cotação e cobrava a noite numa viagem de dia. Agora a
+// tabela principal é a da noite só quando mais da metade dos km é depois das 20h.
 function simTabelaAtual(){
   const sel = document.getElementById("sim-tabela-preco");
   const forcada = sel && sel.value ? tabelasPreco.find(t => String(t.id) === sel.value) : null;
   const tipo = (document.getElementById("sim-tipo") || {}).value || "Padrão";
-  return forcada || escolherTabelaPreco(tipo, simCheck("sim-noturno"), simDiaIso(), !!simFeriadoNome());
+  const km = simNum("sim-km-cliente"), kmNoite = simKmNoite();
+  const noiteManda = km ? kmNoite * 2 > km : false;
+  return forcada || escolherTabelaPreco(tipo, noiteManda, simDiaIso(), !!simFeriadoNome());
+}
+// Km com a cliente depois das 20h: digitado por ela ou medido no Calcular rota
+// (trecho a trecho) fica como está; senão, sai do "Sai às" e dos minutos com a
+// cliente (mesma conta da viagem, sugerirKmNoite). Sem horário = de dia.
+function simKmNoite(){
+  const campo = document.getElementById("sim-km-noite"), dica = document.getElementById("sim-km-noite-dica");
+  const km = simNum("sim-km-cliente");
+  if(campo.dataset.manual || campo.dataset.rota){
+    if(dica) dica.textContent = campo.dataset.manual ? "Digitado. Apague o campo pra calcular de novo pelo horário." : "Medido trecho a trecho no Calcular rota.";
+    return Math.min(Number(campo.value) || 0, km);
+  }
+  const hora = (simHoras[0] || {}).hora || "";
+  const min = simNum("sim-min-cliente");
+  let kmN = 0;
+  if(hora && km) kmN = min ? Math.round(km * minutosNoiteDesde(hora, min) / min * 10) / 10 : (ehHorarioNoite(hora) ? km : 0);
+  kmN = Math.min(kmN, km);
+  campo.value = String(kmN);
+  if(dica) dica.textContent = hora ? "Calculado pelo \"Sai às\" e os minutos com a cliente." : "Sem o \"Sai às\" no embarque, conta como viagem de dia.";
+  return kmN;
+}
+function simKmNoiteDigitado(campo){
+  delete campo.dataset.rota;
+  if(campo.value === "") delete campo.dataset.manual; else campo.dataset.manual = "1";
+  simTabelaTrocada();
+}
+function simKmNoiteOrigem(){
+  const c = document.getElementById("sim-km-noite");
+  return c.dataset.manual ? "manual" : c.dataset.rota ? "rota" : "";
 }
 // Dia da viagem do simulador (sáb e dom têm tabela própria) e feriado pela
 // lista, na cidade do primeiro endereço (06/11/2026).
@@ -10229,7 +10283,6 @@ function simPrepararTabelas(){
   if(!selTipo || !selTab) return;
   const usa = !tabelasPrecoSqlFaltando;
   document.querySelectorAll("#ft-sim .sim-tabela-preco").forEach(el => { el.style.display = usa ? "" : "none"; });
-  document.getElementById("sim-noturno-rot").textContent = usa ? "Noite (20h às 6h): usa a tabela da noite" : "Noite (20h às 6h) ou feriado: +30%";
   if(!usa) return;
   const tipoAtual = selTipo.value || "Padrão";
   fillSelect(selTipo, TIPO_SERVICO_VIAGEM, tipoAtual);
@@ -10254,12 +10307,17 @@ function simPrecoTabela(v){
   // Parte da corrida depois das 20h (26/10/2026; 22h até 20/11/2026): o preço é dividido pelos km,
   // cada parte com a sua tabela, sem cobrar a tarifa fixa duas vezes. Com a
   // noite marcada ou a tabela escolhida na mão, vale uma tabela só.
-  const kmNoite = Math.min(simNum("sim-km-noite"), km);
+  const kmNoite = simKmNoite();
   const sel = document.getElementById("sim-tabela-preco");
-  if(kmNoite > 0 && km > 0 && !simCheck("sim-noturno") && !(sel && sel.value)){
-    const tNoite = escolherTabelaPreco((document.getElementById("sim-tipo") || {}).value || "Padrão", true, simDiaIso(), !!simFeriadoNome());
-    base = (precoCom(t) * (km - kmNoite) / km + precoCom(tNoite) * kmNoite / km) * v.trechos;
-    infoTxt += ` ${String(kmNoite).replace(".", ",")} de ${String(km).replace(".", ",")} km na noite: essa parte usa ${tNoite.nome} (${resumoTabelaPreco(tNoite)}).`;
+  if(kmNoite > 0 && km > 0 && !(sel && sel.value)){
+    const tipoSim = (document.getElementById("sim-tipo") || {}).value || "Padrão";
+    const tDia = escolherTabelaPreco(tipoSim, false, simDiaIso(), !!simFeriadoNome());
+    const tNoite = escolherTabelaPreco(tipoSim, true, simDiaIso(), !!simFeriadoNome());
+    if((tDia.id || tDia.nome) !== (tNoite.id || tNoite.nome) && kmNoite < km){
+      base = (precoCom(tDia) * (km - kmNoite) / km + precoCom(tNoite) * kmNoite / km) * v.trechos;
+      infoTxt = (fer ? fer + " é feriado. " : "") + `${String(km - Math.round(kmNoite * 10) / 10).replace(".", ",")} km de dia: ${tDia.nome} (${resumoTabelaPreco(tDia)}). ` +
+        `${String(kmNoite).replace(".", ",")} km depois das 20h: ${tNoite.nome} (${resumoTabelaPreco(tNoite)}). Taxa Go Ladies ${String(Math.round(taxaTabelaPreco(t) * 100) / 100).replace(".", ",")}%.`;
+    }
   }
   if(info) info.textContent = infoTxt;
   const elRep = document.getElementById("sim-repasse");
